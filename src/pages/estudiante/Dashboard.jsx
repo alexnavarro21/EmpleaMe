@@ -1,42 +1,43 @@
 import { Link } from "react-router-dom";
+import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, StatCard, PageHeader } from "../../components/ui";
 
 const feed = [
   {
-    icon: "🎯",
-    title: "Nuevo match con TechCorp",
-    desc: "Tu perfil interesó a TechCorp para su práctica en Desarrollo Web",
+    icon: "fluent:handshake-32-regular",
+    title: "Nuevo match con Automotriz Salinas",
+    desc: "Tu perfil interesó a Automotriz Salinas para su práctica en Gestión Administrativa",
     time: "Hace 2 horas",
     badge: { label: "Match", color: "blue" },
   },
   {
-    icon: "📋",
+    icon: "mdi:clipboard-list-outline",
     title: "Evaluación recibida",
-    desc: "Prof. García evaluó tus competencias técnicas: 4.5/5.0",
+    desc: "Prof. Morales evaluó tus competencias técnicas: 6.2 / 7.0",
     time: "Ayer",
     badge: { label: "Evaluación", color: "green" },
   },
   {
-    icon: "🏅",
+    icon: "solar:medal-ribbons-star-bold-duotone",
     title: "Insignia obtenida",
     desc: 'Completaste tu perfil al 100% y ganaste la insignia "Perfil Destacado"',
     time: "Hace 3 días",
     badge: { label: "Logro", color: "yellow" },
   },
   {
-    icon: "💼",
+    icon: "temaki:suitcase",
     title: "Nueva práctica disponible",
-    desc: "DataSoft publicó una práctica en Análisis de Datos que coincide con tu perfil",
+    desc: "ContaServ Chile publicó una práctica en Administración de Oficina que coincide con tu perfil",
     time: "Hace 4 días",
     badge: { label: "Práctica", color: "orange" },
   },
 ];
 
 const practices = [
-  { company: "TechCorp", role: "Practicante Frontend", area: "Desarrollo Web", match: 92 },
-  { company: "DataSoft", role: "Practicante Datos", area: "Análisis de Datos", match: 85 },
-  { company: "CloudSys", role: "Practicante DevOps", area: "Infraestructura", match: 78 },
+  { company: "Automotriz Salinas", role: "Asistente Administrativo", area: "Administración", match: 92 },
+  { company: "ContaServ Chile", role: "Practicante Contabilidad", area: "Contabilidad", match: 85 },
+  { company: "Mutual de Seguridad", role: "Asistente de Gestión", area: "Administración", match: 78 },
 ];
 
 export default function EstudianteDashboard() {
@@ -49,8 +50,8 @@ export default function EstudianteDashboard() {
   return (
     <div>
       <PageHeader
-        title="Hola, Carlos 👋"
-        subtitle="Instituto Técnico Nacional · Desarrollo de Software · Sem. 6"
+        title="Hola, Catalina"
+        subtitle="C.E. Cardenal J.M. Caro · Administración · 4to semestre"
         action={
           <Link
             to="/estudiante/perfil"
@@ -68,7 +69,6 @@ export default function EstudianteDashboard() {
         <StatCard label="Matches activos" value="7" sub="Empresas interesadas" />
       </div>
 
-      {/* Main grid */}
       <div className="grid grid-cols-3 gap-6">
         {/* Feed */}
         <div className="col-span-2 flex flex-col gap-4">
@@ -76,8 +76,8 @@ export default function EstudianteDashboard() {
           {feed.map((item) => (
             <Card key={item.title}>
               <div className="flex items-start gap-3">
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-lg flex-shrink-0 ${S}`}>
-                  {item.icon}
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
+                  <Icon icon={item.icon} width={20} className="text-[#378ADD]" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -94,7 +94,6 @@ export default function EstudianteDashboard() {
 
         {/* Sidebar */}
         <div className="flex flex-col gap-4">
-          {/* Profile completion */}
           <Card>
             <p className={`text-sm font-medium ${T} mb-3`}>Completitud del perfil</p>
             <div className="flex items-center justify-between mb-1.5">
@@ -114,22 +113,20 @@ export default function EstudianteDashboard() {
                 { done: false, label: "Habilidades completas" },
               ].map((s) => (
                 <li key={s.label} className="flex items-center gap-2">
-                  <span className={s.done ? "text-green-500" : isDark ? "text-[#3a3a38]" : "text-[#D3D1C7]"}>
-                    {s.done ? "✓" : "○"}
-                  </span>
+                  <Icon
+                    icon={s.done ? "mdi:check-circle" : "mdi:circle-outline"}
+                    width={14}
+                    className={s.done ? "text-green-500" : isDark ? "text-[#3a3a38]" : "text-[#D3D1C7]"}
+                  />
                   {s.label}
                 </li>
               ))}
             </ul>
-            <Link
-              to="/estudiante/perfil"
-              className="block text-center mt-4 text-xs text-[#378ADD] hover:underline"
-            >
+            <Link to="/estudiante/perfil" className="block text-center mt-4 text-xs text-[#378ADD] hover:underline">
               Completar perfil →
             </Link>
           </Card>
 
-          {/* Recommended practices */}
           <Card>
             <p className={`text-sm font-medium ${T} mb-3`}>Prácticas recomendadas</p>
             {practices.map((p, i) => (

@@ -4,9 +4,7 @@ export function FormField({ label, type = "text", placeholder, value, onChange, 
   const { isDark } = useDark();
   return (
     <div className={`mb-3 ${className}`}>
-      <label className={`block text-xs mb-1.5 ${isDark ? "text-[#B4B2A9]" : "text-[#5F5E5A]"}`}>
-        {label}
-      </label>
+      <label className={`block text-xs mb-1.5 ${isDark ? "text-[#B4B2A9]" : "text-[#5F5E5A]"}`}>{label}</label>
       <input
         type={type}
         placeholder={placeholder}
@@ -27,9 +25,7 @@ export function TextAreaField({ label, placeholder, rows = 4 }) {
   const { isDark } = useDark();
   return (
     <div className="mb-3">
-      <label className={`block text-xs mb-1.5 ${isDark ? "text-[#B4B2A9]" : "text-[#5F5E5A]"}`}>
-        {label}
-      </label>
+      <label className={`block text-xs mb-1.5 ${isDark ? "text-[#B4B2A9]" : "text-[#5F5E5A]"}`}>{label}</label>
       <textarea
         placeholder={placeholder}
         rows={rows}
@@ -123,9 +119,7 @@ export function SelectField({ label, children, className = "" }) {
   const { isDark } = useDark();
   return (
     <div className={`mb-3 ${className}`}>
-      <label className={`block text-xs mb-1.5 ${isDark ? "text-[#B4B2A9]" : "text-[#5F5E5A]"}`}>
-        {label}
-      </label>
+      <label className={`block text-xs mb-1.5 ${isDark ? "text-[#B4B2A9]" : "text-[#5F5E5A]"}`}>{label}</label>
       <select
         className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all
           focus:border-[#378ADD] focus:ring-2 focus:ring-[#B5D4F4]
@@ -136,6 +130,33 @@ export function SelectField({ label, children, className = "" }) {
       >
         {children}
       </select>
+    </div>
+  );
+}
+
+export function SoftSkillBar({ label, percentage }) {
+  const { isDark } = useDark();
+  const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
+  const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
+  const S = isDark ? "bg-[#313130]" : "bg-[#F0F4F8]";
+
+  const color =
+    percentage >= 85 ? "#22c55e" :
+    percentage >= 70 ? "#378ADD" :
+    "#f59e0b";
+
+  return (
+    <div className="mb-4 last:mb-0">
+      <div className="flex justify-between items-center mb-1.5">
+        <span className={`text-sm ${T}`}>{label}</span>
+        <span className="text-xs font-semibold" style={{ color }}>{percentage}%</span>
+      </div>
+      <div className={`w-full h-2 rounded-full ${S}`}>
+        <div
+          className="h-2 rounded-full transition-all duration-500"
+          style={{ width: `${percentage}%`, backgroundColor: color }}
+        />
+      </div>
     </div>
   );
 }

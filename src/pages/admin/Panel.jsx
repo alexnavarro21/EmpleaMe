@@ -1,29 +1,30 @@
 import { Link } from "react-router-dom";
+import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, StatCard, PageHeader } from "../../components/ui";
 
 const recentActivity = [
-  { icon: "👤", text: "María López completó su registro como estudiante", time: "Hace 10 min", type: "registro" },
-  { icon: "🏢", text: "TechCorp publicó una nueva vacante: Practicante Frontend", time: "Hace 32 min", type: "vacante" },
-  { icon: "📋", text: "Prof. García registró evaluación para 5 estudiantes", time: "Hace 1 hora", type: "evaluacion" },
-  { icon: "📊", text: "Se importaron 48 notas del semestre 2024-II", time: "Hace 3 horas", type: "notas" },
-  { icon: "🤝", text: "Carlos Mendoza y TechCorp iniciaron conversación", time: "Hace 5 horas", type: "match" },
-  { icon: "🧪", text: "Se cargó el test socioemocional DISC para 2do año", time: "Ayer", type: "test" },
+  { icon: "mynaui:user-solid", text: "Valentina Soto completó su registro como estudiante", time: "Hace 10 min" },
+  { icon: "cuida:building-outline", text: "Automotriz Salinas publicó una nueva vacante: Practicante Mecánico", time: "Hace 32 min" },
+  { icon: "mdi:clipboard-list-outline", text: "Prof. Morales registró evaluación para 4 estudiantes", time: "Hace 1 hora" },
+  { icon: "icon-park-outline:excel", text: "Se importaron 42 notas del semestre 2024-II", time: "Hace 3 horas" },
+  { icon: "fluent:handshake-32-regular", text: "Felipe Rojas y Automotriz Salinas iniciaron conversación", time: "Hace 5 horas" },
+  { icon: "hugeicons:brain-02", text: "Se cargó el test DISC para los estudiantes de 2do año", time: "Ayer" },
 ];
 
 const alerts = [
-  { text: "3 estudiantes con perfil incompleto por más de 30 días", color: "yellow" },
-  { text: "2 vacantes sin respuesta llevan más de 14 días activas", color: "orange" },
-  { text: "Pendiente revisión de 5 evidencias nuevas", color: "blue" },
+  { text: "3 estudiantes con perfil incompleto por más de 30 días" },
+  { text: "2 vacantes sin respuesta llevan más de 14 días activas" },
+  { text: "Pendiente revisión de 5 evidencias nuevas" },
 ];
 
 const quickLinks = [
-  { to: "/admin/usuarios", icon: "👥", label: "Gestión de usuarios", desc: "Ver y administrar cuentas" },
-  { to: "/admin/evaluaciones", icon: "📋", label: "Registrar evaluaciones", desc: "Competencias técnicas y blandas" },
-  { to: "/admin/notas", icon: "📊", label: "Importar notas", desc: "Excel / CSV con calificaciones" },
-  { to: "/admin/tests", icon: "🧪", label: "Tests socioemocionales", desc: "Cargar y asignar tests" },
-  { to: "/admin/mensajeria", icon: "💬", label: "Bandeja de mensajería", desc: "Supervisión de comunicaciones" },
-  { to: "/admin/monitoreo", icon: "📈", label: "Monitoreo", desc: "Estado general de la plataforma" },
+  { to: "/admin/usuarios", icon: "mdi:account-group-outline", label: "Gestión de usuarios", desc: "Ver y administrar cuentas" },
+  { to: "/admin/evaluaciones", icon: "mdi:clipboard-list-outline", label: "Registrar evaluaciones", desc: "Competencias técnicas y blandas" },
+  { to: "/admin/notas", icon: "icon-park-outline:excel", label: "Importar notas", desc: "Excel / CSV con calificaciones" },
+  { to: "/admin/tests", icon: "hugeicons:brain-02", label: "Tests socioemocionales", desc: "Cargar y asignar tests" },
+  { to: "/admin/mensajeria", icon: "flowbite:messages-solid", label: "Bandeja de mensajería", desc: "Supervisión de comunicaciones" },
+  { to: "/admin/monitoreo", icon: "material-symbols:signal-cellular-alt", label: "Monitoreo", desc: "Estado general de la plataforma" },
 ];
 
 export default function AdminPanel() {
@@ -37,27 +38,27 @@ export default function AdminPanel() {
     <div>
       <PageHeader
         title="Panel Administrativo"
-        subtitle="Instituto Técnico Nacional · Admin/Profesor"
+        subtitle="C.E. Cardenal José María Caro · Lo Espejo, Santiago"
       />
 
-      {/* Stats */}
       <div className="grid grid-cols-4 gap-4 mb-6">
-        <StatCard label="Estudiantes registrados" value="142" sub="+8 este mes" />
-        <StatCard label="Empresas activas" value="23" sub="+2 este mes" />
-        <StatCard label="Prácticas en curso" value="17" sub="9 finalizadas" />
-        <StatCard label="Evaluaciones pendientes" value="31" sub="Por calificar" subColor="text-orange-500" />
+        <StatCard label="Estudiantes registrados" value="86" sub="+6 este mes" />
+        <StatCard label="Empresas activas" value="14" sub="+2 este mes" />
+        <StatCard label="Prácticas en curso" value="11" sub="7 finalizadas" />
+        <StatCard label="Evaluaciones pendientes" value="24" sub="Por calificar" subColor="text-orange-500" />
       </div>
 
       <div className="grid grid-cols-3 gap-6">
-        {/* Quick links */}
         <div className="col-span-2">
           <h2 className={`text-sm font-semibold ${T} mb-3`}>Acceso rápido</h2>
           <div className="grid grid-cols-2 gap-3 mb-6">
             {quickLinks.map((ql) => (
               <Link key={ql.to} to={ql.to}>
-                <Card className={`hover:border-[#378ADD] transition-colors cursor-pointer`}>
+                <Card className="hover:border-[#378ADD] transition-colors cursor-pointer">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{ql.icon}</span>
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${S}`}>
+                      <Icon icon={ql.icon} width={20} className="text-[#378ADD]" />
+                    </div>
                     <div>
                       <p className={`text-sm font-medium ${T}`}>{ql.label}</p>
                       <p className={`text-xs ${M}`}>{ql.desc}</p>
@@ -68,7 +69,6 @@ export default function AdminPanel() {
             ))}
           </div>
 
-          {/* Recent activity */}
           <h2 className={`text-sm font-semibold ${T} mb-3`}>Actividad reciente</h2>
           <Card className="p-0">
             {recentActivity.map((item, i) => (
@@ -76,7 +76,9 @@ export default function AdminPanel() {
                 key={i}
                 className={`flex items-start gap-3 px-5 py-3.5 ${i < recentActivity.length - 1 ? `border-b ${B}` : ""}`}
               >
-                <span className="text-lg flex-shrink-0">{item.icon}</span>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
+                  <Icon icon={item.icon} width={16} className="text-[#378ADD]" />
+                </div>
                 <div className="flex-1">
                   <p className={`text-sm ${T}`}>{item.text}</p>
                   <p className={`text-xs ${M} mt-0.5`}>{item.time}</p>
@@ -86,13 +88,12 @@ export default function AdminPanel() {
           </Card>
         </div>
 
-        {/* Alerts sidebar */}
         <div className="flex flex-col gap-4">
           <Card>
             <p className={`text-sm font-semibold ${T} mb-3`}>Alertas</p>
             {alerts.map((a, i) => (
               <div key={i} className={`flex items-start gap-2 mb-3 last:mb-0`}>
-                <span className="text-base mt-0.5">⚠️</span>
+                <Icon icon="mdi:alert-circle-outline" width={16} className="text-orange-400 flex-shrink-0 mt-0.5" />
                 <p className={`text-xs ${M} leading-snug`}>{a.text}</p>
               </div>
             ))}
@@ -116,22 +117,17 @@ export default function AdminPanel() {
           <Card>
             <p className={`text-sm font-semibold ${T} mb-3`}>Resumen semestral</p>
             <div className={`flex flex-col gap-2 text-xs ${M}`}>
-              <div className={`flex justify-between pb-2 border-b ${B}`}>
-                <span>Estudiantes evaluados</span>
-                <strong className={T}>89 / 142</strong>
-              </div>
-              <div className={`flex justify-between pb-2 border-b ${B}`}>
-                <span>Notas importadas</span>
-                <strong className={T}>142</strong>
-              </div>
-              <div className={`flex justify-between pb-2 border-b ${B}`}>
-                <strong className="flex justify-between">Tests aplicados</strong>
-                <strong className={T}>3</strong>
-              </div>
-              <div className="flex justify-between">
-                <span>Matches realizados</span>
-                <strong className={T}>34</strong>
-              </div>
+              {[
+                { label: "Estudiantes evaluados", value: "62 / 86" },
+                { label: "Notas importadas", value: "86" },
+                { label: "Tests aplicados", value: "2" },
+                { label: "Matches realizados", value: "21" },
+              ].map((row) => (
+                <div key={row.label} className={`flex justify-between pb-2 border-b ${B} last:border-0`}>
+                  <span>{row.label}</span>
+                  <strong className={T}>{row.value}</strong>
+                </div>
+              ))}
             </div>
           </Card>
         </div>

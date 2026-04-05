@@ -1,21 +1,22 @@
 import { useState } from "react";
+import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge, PageHeader } from "../../components/ui";
 
 const conversations = [
   {
     id: 1,
-    student: "Carlos Mendoza",
-    company: "TechCorp SAC",
-    lastMsg: "Hola Carlos, hemos revisado tu perfil y...",
+    student: "Felipe Rojas",
+    company: "Automotriz Salinas",
+    lastMsg: "Hola Felipe, revisamos tu perfil y nos parece muy completo...",
     time: "10:32",
     unread: 2,
     status: "activa",
   },
   {
     id: 2,
-    student: "María López",
-    company: "TechCorp SAC",
+    student: "Catalina Muñoz",
+    company: "ContaServ Chile",
     lastMsg: "Perfecto, ¿puedes venir el jueves a las 3pm?",
     time: "09:15",
     unread: 0,
@@ -23,18 +24,18 @@ const conversations = [
   },
   {
     id: 3,
-    student: "Ana Torres",
-    company: "DataSoft Perú",
-    lastMsg: "Adjunto encontrará los requisitos del puesto.",
+    student: "Valentina Soto",
+    company: "Mutual de Seguridad",
+    lastMsg: "Adjunta encontrarás los requisitos de la práctica.",
     time: "Ayer",
     unread: 0,
     status: "activa",
   },
   {
     id: 4,
-    student: "Luis García",
-    company: "CloudSys",
-    lastMsg: "Gracias por tu interés, te contactaremos.",
+    student: "Sebastián Contreras",
+    company: "Mecánica del Sur",
+    lastMsg: "Gracias por tu interés, te contactaremos pronto.",
     time: "Lun",
     unread: 0,
     status: "cerrada",
@@ -43,14 +44,14 @@ const conversations = [
 
 const messages = {
   1: [
-    { from: "empresa", sender: "TechCorp SAC", text: "Hola Carlos, hemos revisado tu perfil y nos parece muy interesante tu experiencia con React.", time: "10:15" },
-    { from: "estudiante", sender: "Carlos Mendoza", text: "¡Muchas gracias! Estoy muy interesado en la posición de practicante frontend.", time: "10:20" },
-    { from: "empresa", sender: "TechCorp SAC", text: "Hola Carlos, hemos revisado tu perfil y nos gustaría coordinar una entrevista técnica.", time: "10:32" },
+    { from: "empresa", sender: "Automotriz Salinas", text: "Hola Felipe, revisamos tu perfil y nos parece muy completo. Tenemos una vacante de Practicante Mecánico.", time: "10:15" },
+    { from: "estudiante", sender: "Felipe Rojas", text: "¡Buenas tardes! Me interesa mucho la posición. Tengo experiencia en diagnóstico con escáner OBD-II.", time: "10:20" },
+    { from: "empresa", sender: "Automotriz Salinas", text: "Hola Felipe, revisamos tu perfil y nos gustaría coordinar una entrevista técnica esta semana.", time: "10:32" },
   ],
   2: [
-    { from: "empresa", sender: "TechCorp SAC", text: "Buenos días María, vimos tu perfil y nos interesa mucho tu experiencia en Python.", time: "08:30" },
-    { from: "estudiante", sender: "María López", text: "¡Hola! Gracias por contactarme, con gusto me gustaría conocer más sobre la posición.", time: "08:45" },
-    { from: "empresa", sender: "TechCorp SAC", text: "Perfecto, ¿puedes venir el jueves a las 3pm?", time: "09:15" },
+    { from: "empresa", sender: "ContaServ Chile", text: "Buenos días Catalina, vimos tu perfil y nos interesa tu manejo de Excel avanzado y contabilidad.", time: "08:30" },
+    { from: "estudiante", sender: "Catalina Muñoz", text: "Hola, muchas gracias por contactarme. Me gustaría saber más sobre la práctica disponible.", time: "08:45" },
+    { from: "empresa", sender: "ContaServ Chile", text: "Perfecto, ¿puedes venir el jueves a las 3pm?", time: "09:15" },
   ],
 };
 
@@ -78,13 +79,18 @@ export default function AdminMensajeria() {
         {/* Conversation list */}
         <div className={`w-72 flex-shrink-0 border-r ${B} flex flex-col ${cardBg}`}>
           <div className={`p-3 border-b ${B}`}>
-            <input
-              type="text"
-              placeholder="Buscar conversación..."
-              className={`w-full px-3 py-2 rounded-lg text-xs outline-none border transition-all focus:border-[#378ADD] ${
-                isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
-              }`}
-            />
+            <div className="relative">
+              <Icon icon="mdi:search" width={15} className={`absolute left-3 top-1/2 -translate-y-1/2 ${M}`} />
+              <input
+                type="text"
+                placeholder="Buscar conversación..."
+                className={`w-full pl-8 pr-3 py-2 rounded-lg text-xs outline-none border transition-all focus:border-[#378ADD] ${
+                  isDark
+                    ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
+                    : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
+                }`}
+              />
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto">
             {conversations.map((c) => (
@@ -121,7 +127,7 @@ export default function AdminMensajeria() {
           <div className={`px-5 py-3 border-b ${B} ${cardBg} flex items-center justify-between flex-shrink-0`}>
             <div>
               <p className={`text-sm font-semibold ${T}`}>
-                {conv?.student} ↔ {conv?.company}
+                {conv?.student} — {conv?.company}
               </p>
               <p className={`text-xs ${M}`}>Supervisión de admin · {msgs.length} mensajes</p>
             </div>
@@ -132,15 +138,16 @@ export default function AdminMensajeria() {
           </div>
 
           {/* Admin notice */}
-          <div className={`px-5 py-2 text-xs ${isDark ? "bg-[#1a2e42] text-[#B5D4F4]" : "bg-[#E6F1FB] text-[#185FA5]"} flex-shrink-0`}>
-            ℹ️ Como administrador puedes ver esta conversación pero los participantes no ven tu presencia
+          <div className={`px-5 py-2 text-xs flex items-center gap-2 ${isDark ? "bg-[#1a2e42] text-[#B5D4F4]" : "bg-[#E6F1FB] text-[#185FA5]"} flex-shrink-0`}>
+            <Icon icon="mdi:information-outline" width={14} />
+            Como administrador puedes ver esta conversación, pero los participantes no ven tu presencia
           </div>
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
             {msgs.map((msg, i) => (
               <div key={i} className={`flex ${msg.from === "empresa" ? "justify-start" : "justify-end"}`}>
-                <div className={`max-w-xs ${msg.from === "empresa" ? "items-start" : "items-end"} flex flex-col`}>
+                <div className={`max-w-xs flex flex-col ${msg.from === "empresa" ? "items-start" : "items-end"}`}>
                   <span className={`text-xs ${M} mb-1`}>{msg.sender}</span>
                   <div className={`px-4 py-2.5 rounded-2xl text-sm ${
                     msg.from === "empresa"
@@ -165,7 +172,9 @@ export default function AdminMensajeria() {
                 value={adminNote}
                 onChange={(e) => setAdminNote(e.target.value)}
                 className={`flex-1 px-3 py-2 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
-                  isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
+                  isDark
+                    ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
+                    : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
                 }`}
               />
               <button

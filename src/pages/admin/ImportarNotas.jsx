@@ -1,18 +1,20 @@
 import { useState } from "react";
+import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, SecondaryButton, PageHeader, SelectField } from "../../components/ui";
 
 const previewData = [
-  { dni: "12345678", name: "Carlos Mendoza", career: "Desarrollo de Software", semester: 6, avg: 17.2, status: "ok" },
-  { dni: "87654321", name: "María López", career: "Desarrollo de Software", semester: 8, avg: 19.0, status: "ok" },
-  { dni: "11223344", name: "Ana Torres", career: "Sistemas de Información", semester: 7, avg: 18.5, status: "ok" },
-  { dni: "44332211", name: "Luis García", career: "Redes y Comunicaciones", semester: 6, avg: 16.8, status: "advertencia" },
-  { dni: "55667788", name: "Diego Ríos", career: "Desarrollo de Software", semester: 8, avg: 18.1, status: "ok" },
+  { rut: "21.345.678-9", name: "Catalina Muñoz", career: "Administración", semester: 4, avg: 6.5, status: "ok" },
+  { rut: "20.876.543-2", name: "Felipe Rojas", career: "Mecánica Automotriz", semester: 3, avg: 6.2, status: "ok" },
+  { rut: "21.111.222-3", name: "Valentina Soto", career: "Administración", semester: 6, avg: 5.9, status: "ok" },
+  { rut: "20.555.444-K", name: "Sebastián Contreras", career: "Mecánica Automotriz", semester: 5, avg: 5.8, status: "advertencia" },
+  { rut: "21.888.999-1", name: "Camila Fuentes", career: "Administración", semester: 4, avg: 6.1, status: "ok" },
+  { rut: "20.333.111-5", name: "Diego Castillo", career: "Mecánica Automotriz", semester: 6, avg: 6.4, status: "ok" },
 ];
 
 export default function AdminImportarNotas() {
   const { isDark } = useDark();
-  const [step, setStep] = useState("upload"); // upload | preview | done
+  const [step, setStep] = useState("upload");
   const [dragging, setDragging] = useState(false);
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -23,11 +25,11 @@ export default function AdminImportarNotas() {
     <div>
       <PageHeader
         title="Importación Masiva de Notas"
-        subtitle="Carga calificaciones desde archivos Excel o CSV"
+        subtitle="Carga calificaciones desde archivos Excel o CSV · Escala 1.0 – 7.0"
       />
 
       {/* Step indicator */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-2 mb-6">
         {[
           { key: "upload", label: "1. Subir archivo" },
           { key: "preview", label: "2. Previsualizar" },
@@ -41,10 +43,12 @@ export default function AdminImportarNotas() {
                 `${S} ${M}`
               }`}
             >
-              {((step === "preview" && i === 0) || step === "done") ? "✓" : i + 1}
+              {((step === "preview" && i === 0) || step === "done")
+                ? <Icon icon="mdi:check" width={14} />
+                : i + 1}
             </span>
             <span className={`text-sm ${step === s.key ? T : M}`}>{s.label}</span>
-            {i < 2 && <span className={`text-sm ${M} mx-1`}>→</span>}
+            {i < 2 && <Icon icon="mdi:chevron-right" width={16} className={M} />}
           </div>
         ))}
       </div>
@@ -60,9 +64,8 @@ export default function AdminImportarNotas() {
               </SelectField>
               <SelectField label="Carrera">
                 <option>Todas las carreras</option>
-                <option>Desarrollo de Software</option>
-                <option>Sistemas de Información</option>
-                <option>Redes y Comunicaciones</option>
+                <option>Mecánica Automotriz</option>
+                <option>Administración</option>
               </SelectField>
 
               <div
@@ -75,10 +78,14 @@ export default function AdminImportarNotas() {
                     : isDark ? "border-[#3a3a38] hover:border-[#378ADD]" : "border-[#D3D1C7] hover:border-[#378ADD]"
                 }`}
               >
-                <span className="text-5xl mb-4">📊</span>
+                <Icon icon="icon-park-outline:excel" width={52} className={`${M} mb-4`} />
                 <p className={`text-base font-medium ${T} mb-1`}>Arrastra tu archivo aquí</p>
-                <p className={`text-sm ${M} mb-4`}>Formatos permitidos: .xlsx, .csv</p>
-                <PrimaryButton onClick={() => setStep("preview")}>
+                <p className={`text-sm ${M} mb-4`}>Formatos: .xlsx, .csv</p>
+                <PrimaryButton
+                  className="flex items-center gap-2"
+                  onClick={() => setStep("preview")}
+                >
+                  <Icon icon="material-symbols:upload" width={16} />
                   Seleccionar archivo
                 </PrimaryButton>
               </div>
@@ -88,25 +95,24 @@ export default function AdminImportarNotas() {
           <div className="flex flex-col gap-4">
             <Card>
               <p className={`text-sm font-medium ${T} mb-3`}>Formato requerido</p>
-              <p className={`text-xs ${M} mb-3`}>El archivo debe tener las siguientes columnas en orden:</p>
+              <p className={`text-xs ${M} mb-3`}>El archivo debe contener las columnas:</p>
               <div className={`rounded-lg p-3 ${S} font-mono text-xs ${T}`}>
-                <p className="mb-1">DNI | Nombres | Apellidos</p>
+                <p className="mb-1">RUT | Nombres | Apellidos</p>
                 <p className="mb-1">Carrera | Semestre</p>
-                <p className="mb-1">Nota_C1 | Nota_C2 | ...</p>
-                <p>Promedio</p>
+                <p className="mb-1">Nota_M1 | Nota_M2 | ...</p>
+                <p>Promedio (1.0 – 7.0)</p>
               </div>
-              <div className="mt-3">
-                <button className="text-xs text-[#378ADD] hover:underline">
-                  Descargar plantilla Excel →
-                </button>
-              </div>
+              <button className="text-xs text-[#378ADD] hover:underline mt-3 flex items-center gap-1">
+                <Icon icon="material-symbols:download" width={14} />
+                Descargar plantilla Excel
+              </button>
             </Card>
 
             <Card>
               <p className={`text-sm font-medium ${T} mb-2`}>Importaciones anteriores</p>
               {[
-                { label: "2024-II — 142 registros", date: "Feb 2025" },
-                { label: "2024-I — 138 registros", date: "Ago 2024" },
+                { label: "2024-II — 86 registros", date: "Feb 2025" },
+                { label: "2024-I — 82 registros", date: "Ago 2024" },
               ].map((imp) => (
                 <div key={imp.label} className={`flex justify-between items-center text-xs py-2 border-b ${B} last:border-0`}>
                   <span className={M}>{imp.label}</span>
@@ -133,19 +139,19 @@ export default function AdminImportarNotas() {
           <table className="w-full">
             <thead>
               <tr className={`border-b ${B} ${S}`}>
-                {["DNI", "Nombre", "Carrera", "Semestre", "Promedio", "Estado"].map((h) => (
+                {["RUT", "Nombre", "Carrera", "Semestre", "Promedio", "Estado"].map((h) => (
                   <th key={h} className={`text-left text-xs font-medium ${M} px-5 py-3`}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {previewData.map((row) => (
-                <tr key={row.dni} className={`border-b ${B} last:border-0`}>
-                  <td className={`px-5 py-3 text-sm ${M}`}>{row.dni}</td>
+                <tr key={row.rut} className={`border-b ${B} last:border-0`}>
+                  <td className={`px-5 py-3 text-sm ${M} font-mono`}>{row.rut}</td>
                   <td className={`px-5 py-3 text-sm font-medium ${T}`}>{row.name}</td>
                   <td className={`px-5 py-3 text-sm ${M}`}>{row.career}</td>
                   <td className={`px-5 py-3 text-sm ${M}`}>Sem. {row.semester}</td>
-                  <td className={`px-5 py-3 text-sm font-semibold ${T}`}>{row.avg}</td>
+                  <td className={`px-5 py-3 text-sm font-semibold ${T}`}>{row.avg.toFixed(1)}</td>
                   <td className="px-5 py-3">
                     <Badge color={row.status === "ok" ? "green" : "yellow"}>
                       {row.status === "ok" ? "OK" : "Revisar"}
@@ -160,11 +166,16 @@ export default function AdminImportarNotas() {
 
       {step === "done" && (
         <Card className="text-center py-16">
-          <div className="text-6xl mb-4">✅</div>
+          <Icon icon="mdi:check-circle" width={64} className="mx-auto mb-4 text-green-500" />
           <p className={`text-xl font-semibold ${T} mb-2`}>Importación exitosa</p>
-          <p className={`text-sm ${M} mb-6`}>{previewData.length} registros importados correctamente para el período 2025-I</p>
+          <p className={`text-sm ${M} mb-6`}>
+            {previewData.length} registros importados para el período 2025-I
+          </p>
           <div className="flex gap-3 justify-center">
-            <PrimaryButton onClick={() => setStep("upload")}>Nueva importación</PrimaryButton>
+            <PrimaryButton onClick={() => setStep("upload")} className="flex items-center gap-2">
+              <Icon icon="material-symbols:upload" width={16} />
+              Nueva importación
+            </PrimaryButton>
             <SecondaryButton>Ver historial</SecondaryButton>
           </div>
         </Card>
