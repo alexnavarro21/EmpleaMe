@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS empleame_db;
-USE empleame_db;
+-- CREATE DATABASE IF NOT EXISTS empleame_db;
+USE railway;
 
 -- Drop en orden inverso para respetar las foreign keys
 DROP TABLE IF EXISTS vacantes;
@@ -109,3 +109,12 @@ INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio,
     (1, 1, 'Intermedio', FALSE),
     (1, 2, 'Avanzado',   TRUE),
     (1, 3, 'Avanzado',   TRUE);
+
+SELECT * FROM usuarios;
+SELECT * FROM perfiles_estudiantes;
+SELECT * FROM perfiles_empresas;
+SELECT * FROM habilidades;
+SELECT * FROM habilidades_estudiantes;
+SELECT * FROM items_portafolio;
+SELECT * FROM vacantes;
+
