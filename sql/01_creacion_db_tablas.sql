@@ -1,6 +1,15 @@
 CREATE DATABASE IF NOT EXISTS empleame_db;
 USE empleame_db;
 
+-- Drop en orden inverso para respetar las foreign keys
+DROP TABLE IF EXISTS vacantes;
+DROP TABLE IF EXISTS items_portafolio;
+DROP TABLE IF EXISTS habilidades_estudiantes;
+DROP TABLE IF EXISTS habilidades;
+DROP TABLE IF EXISTS perfiles_empresas;
+DROP TABLE IF EXISTS perfiles_estudiantes;
+DROP TABLE IF EXISTS usuarios;
+
 -- 1. Tabla de Usuarios (Login unificado)
 CREATE TABLE usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
