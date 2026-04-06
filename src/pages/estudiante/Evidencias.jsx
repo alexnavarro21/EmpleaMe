@@ -90,7 +90,7 @@ export default function EstudianteEvidencias() {
 
         <div className="flex flex-col gap-4">
           <Card>
-            <p className={`text-sm font-medium ${T} mb-3`}>Espacio utilizado</p>
+            <p className={`text-sm font-medium ${T} mb-3`}>Walalala</p>
             <div className="flex items-end gap-1 mb-1.5">
               <span className={`text-2xl font-semibold ${T}`}>67.3</span>
               <span className={`text-sm ${M} mb-0.5`}>MB / 500 MB</span>
