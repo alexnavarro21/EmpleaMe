@@ -4,17 +4,19 @@ import { useDark } from "../context/DarkModeContext";
 
 const navLinks = {
   estudiante: [
-    { to: "/estudiante/dashboard", label: "Inicio" },
+    { to: "/estudiante/dashboard", label: "Dashboard" },
     { to: "/estudiante/perfil", label: "Mi Perfil" },
     { to: "/estudiante/evidencias", label: "Evidencias" },
+    { to: "/estudiante/mensajeria", label: "Mensajería" }, // <--- NUEVO ENLACE
   ],
   empresa: [
-    { to: "/empresa/dashboard", label: "Inicio" },
+    { to: "/empresa/dashboard", label: "Dashboard" },
     { to: "/empresa/publicar", label: "Publicar Vacante" },
     { to: "/empresa/buscador", label: "Buscar Estudiantes" },
+    { to: "/empresa/mensajeria", label: "Mensajería" }, // <--- NUEVO ENLACE
   ],
   admin: [
-    { to: "/admin/panel", label: "Inicio" },
+    { to: "/admin/panel", label: "Panel" },
     { to: "/admin/usuarios", label: "Usuarios" },
     { to: "/admin/evaluaciones", label: "Evaluaciones" },
     { to: "/admin/notas", label: "Importar Notas" },
