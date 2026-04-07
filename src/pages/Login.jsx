@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 import { autenticarUsuario } from "../data/mockUsuarios";
 
@@ -53,18 +54,26 @@ export default function Login() {
             <span className="text-sm bg-[#378ADD] text-[#E6F1FB] px-4 py-1.5 rounded-lg cursor-pointer">
               Publicar práctica
             </span>
-            <button
-              onClick={() => setIsDark(!isDark)}
-              className={`w-8 h-[18px] rounded-full relative transition-colors duration-200 flex-shrink-0 ${
-                isDark ? "bg-[#378ADD]" : "bg-[#D3D1C7]"
-              }`}
-            >
-              <span
-                className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white transition-all duration-200 ${
-                  isDark ? "left-[16px]" : "left-[2px]"
-                }`}
+            <div className="flex items-center gap-1.5">
+              <Icon
+                icon={isDark ? "ph:moon-fill" : "ph:sun-fill"}
+                width={16}
+                className={isDark ? "text-[#85B7EB]" : "text-yellow-300"}
               />
-            </button>
+              <button
+                onClick={() => setIsDark(!isDark)}
+                title={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+                className={`w-8 h-[18px] rounded-full relative transition-colors duration-200 flex-shrink-0 ${
+                  isDark ? "bg-[#378ADD]" : "bg-[#D3D1C7]"
+                }`}
+              >
+                <span
+                  className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white transition-all duration-200 ${
+                    isDark ? "left-[16px]" : "left-[2px]"
+                  }`}
+                />
+              </button>
+            </div>
           </div>
         </nav>
 

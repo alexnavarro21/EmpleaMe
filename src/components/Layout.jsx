@@ -1,19 +1,20 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 
 const navLinks = {
   estudiante: [
-    { to: "/estudiante/dashboard", label: "Dashboard" },
+    { to: "/estudiante/dashboard", label: "Inicio" },
     { to: "/estudiante/perfil", label: "Mi Perfil" },
     { to: "/estudiante/evidencias", label: "Evidencias" },
   ],
   empresa: [
-    { to: "/empresa/dashboard", label: "Dashboard" },
+    { to: "/empresa/dashboard", label: "Inicio" },
     { to: "/empresa/publicar", label: "Publicar Vacante" },
     { to: "/empresa/buscador", label: "Buscar Estudiantes" },
   ],
   admin: [
-    { to: "/admin/panel", label: "Panel" },
+    { to: "/admin/panel", label: "Inicio" },
     { to: "/admin/usuarios", label: "Usuarios" },
     { to: "/admin/evaluaciones", label: "Evaluaciones" },
     { to: "/admin/notas", label: "Importar Notas" },
@@ -21,6 +22,12 @@ const navLinks = {
     { to: "/admin/mensajeria", label: "Mensajería" },
     { to: "/admin/monitoreo", label: "Monitoreo" },
   ],
+};
+
+const homePaths = {
+  estudiante: "/estudiante/dashboard",
+  empresa: "/empresa/dashboard",
+  admin: "/admin/panel",
 };
 
 export default function Layout() {
@@ -43,7 +50,7 @@ export default function Layout() {
         {/* Navbar */}
         <nav className="bg-[#0C447C] h-14 flex items-center justify-between px-6 sticky top-0 z-50 shadow-sm">
           <div className="flex items-center gap-6">
-            <Link to="/" className="text-lg font-medium text-[#E6F1FB] tracking-tight flex-shrink-0">
+            <Link to={homePaths[role]} className="text-lg font-medium text-[#E6F1FB] tracking-tight flex-shrink-0">
               Emplea<span className="text-[#85B7EB]">Me</span>
             </Link>
             <div className="hidden md:flex items-center gap-0.5">
@@ -83,22 +90,29 @@ export default function Layout() {
             </select>
 
             {/* Dark mode toggle */}
-            <button
-              onClick={() => setIsDark(!isDark)}
-              title="Modo oscuro"
-              className={`w-8 h-[18px] rounded-full relative transition-colors duration-200 flex-shrink-0 ${
-                isDark ? "bg-[#378ADD]" : "bg-[#D3D1C7]"
-              }`}
-            >
-              <span
-                className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white transition-all duration-200 ${
-                  isDark ? "left-[16px]" : "left-[2px]"
-                }`}
+            <div className="flex items-center gap-1.5">
+              <Icon
+                icon={isDark ? "ph:moon-fill" : "ph:sun-fill"}
+                width={16}
+                className={isDark ? "text-[#85B7EB]" : "text-yellow-300"}
               />
-            </button>
+              <button
+                onClick={() => setIsDark(!isDark)}
+                title={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+                className={`w-8 h-[18px] rounded-full relative transition-colors duration-200 flex-shrink-0 ${
+                  isDark ? "bg-[#378ADD]" : "bg-[#D3D1C7]"
+                }`}
+              >
+                <span
+                  className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white transition-all duration-200 ${
+                    isDark ? "left-[16px]" : "left-[2px]"
+                  }`}
+                />
+              </button>
+            </div>
 
             <Link to="/" className="text-xs text-[#B5D4F4] hover:text-[#E6F1FB] transition-colors">
-              Salir
+              Cerrar Sesion
             </Link>
           </div>
         </nav>
