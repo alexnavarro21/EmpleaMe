@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
-import { loginUsuario } from "../services/api";
+import { loginUsuario, registrarUsuario } from "../services/api";
 
 const RUTAS_ROL = {
   estudiante: "/estudiante/dashboard",
@@ -13,32 +13,83 @@ const RUTAS_ROL = {
 export default function Login() {
   const { isDark, setIsDark } = useDark();
   const [activeTab, setActiveTab] = useState("login");
-  const [activeRole, setActiveRole] = useState("estudiante");
+
+  // Login state
   const [correo, setCorreo] = useState("");
   const [contrasena, setContrasena] = useState("");
-  const [error, setError] = useState("");
+  const [loginError, setLoginError] = useState("");
+
+  // Register state
+  const [activeRole, setActiveRole] = useState("estudiante");
+  const [regNombreCompleto, setRegNombreCompleto] = useState("");
+  const [regCarrera, setRegCarrera] = useState("");
+  const [regNombreEmpresa, setRegNombreEmpresa] = useState("");
+  const [regCorreo, setRegCorreo] = useState("");
+  const [regContrasena, setRegContrasena] = useState("");
+  const [regConfirm, setRegConfirm] = useState("");
+  const [regError, setRegError] = useState("");
+  const [regLoading, setRegLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError("");
+    setLoginError("");
     try {
       const { token, usuario } = await loginUsuario(correo, contrasena);
       localStorage.setItem("token", token);
       localStorage.setItem("usuario", JSON.stringify(usuario));
       navigate(RUTAS_ROL[usuario.rol]);
     } catch (err) {
-      setError(err.message);
+      setLoginError(err.message);
     }
   };
 
-  const handleRegister = () => {
-    const dest = activeRole === "empresa"
-      ? "/empresa/dashboard"
-      : activeRole === "admin"
-      ? "/admin/panel"
-      : "/estudiante/dashboard";
-    navigate(dest);
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setRegError("");
+
+    if (!regCorreo || !regContrasena) {
+      setRegError("Completa todos los campos.");
+      return;
+    }
+    if (activeRole === "estudiante" && (!regNombreCompleto || !regCarrera)) {
+      setRegError("Completa nombre completo y carrera.");
+      return;
+    }
+    if (activeRole === "empresa" && !regNombreEmpresa) {
+      setRegError("Ingresa el nombre de la empresa.");
+      return;
+    }
+    if (regContrasena.length < 8) {
+      setRegError("La contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+    if (regContrasena !== regConfirm) {
+      setRegError("Las contraseñas no coinciden.");
+      return;
+    }
+
+    setRegLoading(true);
+    try {
+      // El backend devuelve { mensaje, id }, sin token → hacemos auto-login
+      await registrarUsuario({
+        correo: regCorreo,
+        contrasena: regContrasena,
+        rol: activeRole === "admin" ? "centro" : activeRole,
+        nombre_completo: regNombreCompleto || undefined,
+        carrera: regCarrera || undefined,
+        nombre_empresa: regNombreEmpresa || undefined,
+      });
+      const { token, usuario } = await loginUsuario(regCorreo, regContrasena);
+      localStorage.setItem("token", token);
+      localStorage.setItem("usuario", JSON.stringify(usuario));
+      navigate(RUTAS_ROL[usuario.rol]);
+    } catch (err) {
+      setRegError(err.message);
+    } finally {
+      setRegLoading(false);
+    }
   };
 
   return (
@@ -153,8 +204,8 @@ export default function Login() {
                   onChange={(e) => setContrasena(e.target.value)}
                   isDark={isDark}
                 />
-                {error && (
-                  <p className="text-xs text-red-500 mt-1">{error}</p>
+                {loginError && (
+                  <p className="text-xs text-red-500 mt-1">{loginError}</p>
                 )}
                 <div className="text-right mb-3">
                   <a href="#" className="text-xs text-[#378ADD]">¿Olvidaste tu contraseña?</a>
@@ -171,7 +222,7 @@ export default function Login() {
             )}
 
             {activeTab === "register" && (
-              <div className="flex flex-col gap-1">
+              <form className="flex flex-col gap-1" onSubmit={handleRegister}>
                 <div className="grid grid-cols-3 gap-2 mb-3">
                   {[
                     { id: "estudiante", label: "Estudiante", desc: "Busco práctica" },
@@ -179,6 +230,7 @@ export default function Login() {
                     { id: "admin", label: "Admin/Docente", desc: "Gestión y evaluación" },
                   ].map((role) => (
                     <button
+                      type="button"
                       key={role.id}
                       onClick={() => setActiveRole(role.id)}
                       className={`rounded-lg p-3 text-center border transition-all ${
@@ -194,24 +246,41 @@ export default function Login() {
                     </button>
                   ))}
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <FormField label="Nombre" type="text" placeholder="Tu nombre" isDark={isDark} />
-                  <FormField label="Apellido" type="text" placeholder="Tu apellido" isDark={isDark} />
-                </div>
-                <FormField label="Correo electrónico" type="email" placeholder="tucorreo@email.com" isDark={isDark} />
-                <FormField label="Contraseña" type="password" placeholder="Mínimo 8 caracteres" isDark={isDark} />
+                {activeRole === "estudiante" && (
+                  <>
+                    <FormField label="Nombre completo" type="text" placeholder="Tu nombre y apellido" value={regNombreCompleto} onChange={(e) => setRegNombreCompleto(e.target.value)} isDark={isDark} />
+                    <SelectField label="Carrera" value={regCarrera} onChange={(e) => setRegCarrera(e.target.value)} isDark={isDark}>
+                      <option value="">Selecciona tu carrera</option>
+                      <option value="Administracion">Administración</option>
+                      <option value="Mecanica Automotriz">Mecánica Automotriz</option>
+                    </SelectField>
+                  </>
+                )}
+                {activeRole === "empresa" && (
+                  <FormField label="Nombre de la empresa" type="text" placeholder="Ej: Automotriz Salinas" value={regNombreEmpresa} onChange={(e) => setRegNombreEmpresa(e.target.value)} isDark={isDark} />
+                )}
+                {activeRole === "admin" && (
+                  <FormField label="Nombre completo" type="text" placeholder="Tu nombre y apellido" value={regNombreCompleto} onChange={(e) => setRegNombreCompleto(e.target.value)} isDark={isDark} />
+                )}
+                <FormField label="Correo electrónico" type="email" placeholder="tucorreo@email.com" value={regCorreo} onChange={(e) => setRegCorreo(e.target.value)} isDark={isDark} />
+                <FormField label="Contraseña" type="password" placeholder="Mínimo 8 caracteres" value={regContrasena} onChange={(e) => setRegContrasena(e.target.value)} isDark={isDark} />
+                <FormField label="Confirmar contraseña" type="password" placeholder="Repite tu contraseña" value={regConfirm} onChange={(e) => setRegConfirm(e.target.value)} isDark={isDark} />
+                {regError && (
+                  <p className="text-xs text-red-500 mt-1">{regError}</p>
+                )}
                 <button
-                  onClick={handleRegister}
-                  className="w-full py-2.5 bg-[#185FA5] hover:bg-[#0C447C] text-[#E6F1FB] rounded-lg text-sm font-medium transition-colors mt-1"
+                  type="submit"
+                  disabled={regLoading}
+                  className="w-full py-2.5 bg-[#185FA5] hover:bg-[#0C447C] disabled:opacity-60 text-[#E6F1FB] rounded-lg text-sm font-medium transition-colors mt-1"
                 >
-                  Crear cuenta gratis
+                  {regLoading ? "Creando cuenta..." : "Crear cuenta gratis"}
                 </button>
                 <p className="text-xs text-[#888780] text-center mt-3 leading-relaxed">
                   Al registrarte aceptas nuestros{" "}
                   <a href="#" className="text-[#378ADD]">Términos de uso</a> y{" "}
                   <a href="#" className="text-[#378ADD]">Política de privacidad</a>
                 </p>
-              </div>
+              </form>
             )}
           </div>
         </div>
@@ -236,6 +305,26 @@ function FormField({ label, type, placeholder, isDark, value, onChange }) {
             : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
           }`}
       />
+    </div>
+  );
+}
+
+function SelectField({ label, value, onChange, isDark, children }) {
+  return (
+    <div className="mb-3">
+      <label className={`block text-xs mb-1.5 ${isDark ? "text-[#B4B2A9]" : "text-[#5F5E5A]"}`}>{label}</label>
+      <select
+        value={value}
+        onChange={onChange}
+        className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all
+          focus:border-[#378ADD] focus:ring-2 focus:ring-[#B5D4F4]
+          ${isDark
+            ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
+            : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
+          }`}
+      >
+        {children}
+      </select>
     </div>
   );
 }
