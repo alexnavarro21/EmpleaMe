@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDark } from "../context/DarkModeContext";
-import { autenticarUsuario } from "../data/mockUsuarios";
+import { loginUsuario } from "../services/api";
 
 const RUTAS_ROL = {
   estudiante: "/estudiante/dashboard",
@@ -18,15 +18,17 @@ export default function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
-    const usuario = autenticarUsuario(correo, contrasena);
-    if (!usuario) {
-      setError("Correo o contraseña incorrectos.");
-      return;
+    try {
+      const { token, usuario } = await loginUsuario(correo, contrasena);
+      localStorage.setItem("token", token);
+      localStorage.setItem("usuario", JSON.stringify(usuario));
+      navigate(RUTAS_ROL[usuario.rol]);
+    } catch (err) {
+      setError(err.message);
     }
-    navigate(RUTAS_ROL[usuario.rol]);
   };
 
   const handleRegister = () => {
