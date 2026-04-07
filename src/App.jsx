@@ -6,11 +6,13 @@ import Login from "./pages/Login";
 import EstudianteDashboard from "./pages/estudiante/Dashboard";
 import EstudiantePerfil from "./pages/estudiante/Perfil";
 import EstudianteEvidencias from "./pages/estudiante/Evidencias";
+import EstudianteMensajeria from "./pages/estudiante/EstudianteMensajeria";
 
 import EmpresaDashboard from "./pages/empresa/Dashboard";
 import EmpresaPublicar from "./pages/empresa/PublicarVacante";
 import EmpresaBuscador from "./pages/empresa/BuscadorEstudiantes";
 import EmpresaCandidato from "./pages/empresa/PerfilCandidato";
+import EmpresaMensajeria from "./pages/empresa/EmpresaMensajeria";
 
 import AdminPanel from "./pages/admin/Panel";
 import AdminUsuarios from "./pages/admin/Usuarios";
@@ -20,6 +22,7 @@ import AdminTests from "./pages/admin/Tests";
 import AdminMensajeria from "./pages/admin/Mensajeria";
 import AdminMonitoreo from "./pages/admin/Monitoreo";
 
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -27,15 +30,20 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Login />} />
           <Route element={<Layout />}>
+
             {/* Estudiante */}
             <Route path="/estudiante/dashboard" element={<EstudianteDashboard />} />
             <Route path="/estudiante/perfil" element={<EstudiantePerfil />} />
             <Route path="/estudiante/evidencias" element={<EstudianteEvidencias />} />
+            <Route path="/estudiante/mensajeria" element={<EstudianteMensajeria />} /> 
+
             {/* Empresa */}
             <Route path="/empresa/dashboard" element={<EmpresaDashboard />} />
             <Route path="/empresa/publicar" element={<EmpresaPublicar />} />
             <Route path="/empresa/buscador" element={<EmpresaBuscador />} />
             <Route path="/empresa/candidato/:id" element={<EmpresaCandidato />} />
+            <Route path="/empresa/mensajeria" element={<EmpresaMensajeria />} />
+            
             {/* Admin / Profesor */}
             <Route path="/admin/panel" element={<AdminPanel />} />
             <Route path="/admin/usuarios" element={<AdminUsuarios />} />
