@@ -1,15 +1,32 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDark } from "../context/DarkModeContext";
+import { autenticarUsuario } from "../data/mockUsuarios";
+
+const RUTAS_ROL = {
+  estudiante: "/estudiante/dashboard",
+  empresa: "/empresa/dashboard",
+  centro: "/admin/panel",
+};
 
 export default function Login() {
   const { isDark, setIsDark } = useDark();
   const [activeTab, setActiveTab] = useState("login");
   const [activeRole, setActiveRole] = useState("estudiante");
+  const [correo, setCorreo] = useState("");
+  const [contrasena, setContrasena] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = () => {
-    navigate("/estudiante/dashboard");
+  const handleLogin = (e) => {
+    e.preventDefault();
+    setError("");
+    const usuario = autenticarUsuario(correo, contrasena);
+    if (!usuario) {
+      setError("Correo o contraseña incorrectos.");
+      return;
+    }
+    navigate(RUTAS_ROL[usuario.rol]);
   };
 
   const handleRegister = () => {
@@ -108,21 +125,38 @@ export default function Login() {
             </div>
 
             {activeTab === "login" && (
-              <div className="flex flex-col gap-1">
-                <FormField label="Correo electrónico" type="email" placeholder="tucorreo@email.com" isDark={isDark} />
-                <FormField label="Contraseña" type="password" placeholder="••••••••" isDark={isDark} />
+              <form className="flex flex-col gap-1" onSubmit={handleLogin}>
+                <FormField
+                  label="Correo electrónico"
+                  type="email"
+                  placeholder="tucorreo@email.com"
+                  value={correo}
+                  onChange={(e) => setCorreo(e.target.value)}
+                  isDark={isDark}
+                />
+                <FormField
+                  label="Contraseña"
+                  type="password"
+                  placeholder="••••••••"
+                  value={contrasena}
+                  onChange={(e) => setContrasena(e.target.value)}
+                  isDark={isDark}
+                />
+                {error && (
+                  <p className="text-xs text-red-500 mt-1">{error}</p>
+                )}
                 <div className="text-right mb-3">
                   <a href="#" className="text-xs text-[#378ADD]">¿Olvidaste tu contraseña?</a>
                 </div>
                 <button
-                  onClick={handleLogin}
+                  type="submit"
                   className="w-full py-2.5 bg-[#185FA5] hover:bg-[#0C447C] text-[#E6F1FB] rounded-lg text-sm font-medium transition-colors mt-1"
                 >
                   Iniciar sesión
                 </button>
                 <Divider isDark={isDark} />
                 <GoogleButton isDark={isDark} />
-              </div>
+              </form>
             )}
 
             {activeTab === "register" && (
@@ -175,13 +209,15 @@ export default function Login() {
   );
 }
 
-function FormField({ label, type, placeholder, isDark }) {
+function FormField({ label, type, placeholder, isDark, value, onChange }) {
   return (
     <div className="mb-3">
       <label className={`block text-xs mb-1.5 ${isDark ? "text-[#B4B2A9]" : "text-[#5F5E5A]"}`}>{label}</label>
       <input
         type={type}
         placeholder={placeholder}
+        value={value}
+        onChange={onChange}
         className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all
           focus:border-[#378ADD] focus:ring-2 focus:ring-[#B5D4F4]
           ${isDark
