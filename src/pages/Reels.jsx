@@ -10,7 +10,7 @@ const initialReels = [
     id: 1,
     student: "Felipe Rojas",
     role: "Practicante Mecánico",
-    description: "Diagnosticando un motor con escáner OBD-II 🚗🔧",
+    description: "Diagnosticando un motor con escáner OBD-II",
     likes: 124,
     videoPlaceholder: "bg-[#1a2e42]" // Simulamos el video con un color
 },
@@ -18,7 +18,7 @@ const initialReels = [
     id: 2,
     student: "Valentina Soto",
     role: "Desarrolladora Front-End",
-    description: "Mi primer componente interactivo en React 💻✨",
+    description: "Mi primer componente interactivo en React",
     likes: 89,
     videoPlaceholder: "bg-[#2a2416]"
 },
@@ -26,7 +26,7 @@ const initialReels = [
     id: 3,
     student: "Diego Tapia",
     role: "Técnico Electricista",
-    description: "Armando un tablero de control industrial ⚡",
+    description: "Armando un tablero de control industrial",
     likes: 210,
     videoPlaceholder: "bg-[#1e1e1c]"
 }
