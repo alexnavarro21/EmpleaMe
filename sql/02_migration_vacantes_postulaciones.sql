@@ -7,7 +7,7 @@ USE railway;
 
 -- 1. Nuevos campos en perfiles_estudiantes
 ALTER TABLE perfiles_estudiantes
-  ADD COLUMN semestre TINYINT DEFAULT NULL,
+  ADD COLUMN semestre SMALLINT DEFAULT NULL,
   ADD COLUMN promedio DECIMAL(3,1) DEFAULT NULL,
   ADD COLUMN calificacion_docente DECIMAL(3,1) DEFAULT NULL;
 
