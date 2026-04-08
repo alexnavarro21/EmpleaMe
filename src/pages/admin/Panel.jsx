@@ -37,7 +37,7 @@ export default function AdminPanel() {
   return (
     <div>
       <PageHeader
-        title="Panel Administrativo Ricardo y Alex los amo"
+        title="Panel Administrativo"
         subtitle="C.E. Cardenal José María Caro · Lo Espejo, Santiago"
       />
 
