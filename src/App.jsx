@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { DarkModeProvider } from "./context/DarkModeContext";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
+import Reels from "./pages/Reels";
 
 import EstudianteDashboard from "./pages/estudiante/Dashboard";
 import EstudiantePerfil from "./pages/estudiante/Perfil";
