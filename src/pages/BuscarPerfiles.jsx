@@ -215,13 +215,13 @@ export default function BuscarPerfiles() {
                             padding: "2px 6px",
                             borderRadius: "9999px",
                             backgroundColor:
-                              s.rol === "admin" ? "#fee2e2" :
+                              s.rol === "centro" ? "#fee2e2" :
                               s.rol === "empresa" ? "#f3e8ff" : "#dbeafe",
                             color:
-                              s.rol === "admin" ? "#dc2626" :
+                              s.rol === "centro" ? "#dc2626" :
                               s.rol === "empresa" ? "#9333ea" : "#2563eb",
                           }}>
-                            {s.rol}
+                            {s.rol === "centro" ? "admin" : s.rol}
                           </span>
                         )}
                       </div>
