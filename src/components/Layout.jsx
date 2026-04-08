@@ -1,5 +1,3 @@
-import { Outlet, Link, useLocation } from "react-router-dom";
-import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 
 const navLinks = {
@@ -9,7 +7,6 @@ const navLinks = {
     { to: "/estudiante/evidencias", label: "Evidencias" },
     { to: "/estudiante/buscar", label: "Buscar Perfiles" },
     { to: "/estudiante/mensajeria", label: "Mensajería" },
-    { to: "/estudiante/reels", label: "Reels" }, 
   ],
   empresa: [
     { to: "/empresa/inicio", label: "Inicio" },
@@ -18,7 +15,6 @@ const navLinks = {
     { to: "/empresa/buscador", label: "Buscar Estudiantes" },
     { to: "/empresa/buscar", label: "Buscar Perfiles" },
     { to: "/empresa/mensajeria", label: "Mensajería" },
-    { to: "/empresa/reels", label: "Ver Reels" },
   ],
   admin: [
     { to: "/admin/inicio", label: "Inicio" },
