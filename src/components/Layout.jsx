@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, Link, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 
@@ -37,7 +37,6 @@ const homePaths = {
 export default function Layout() {
   const { isDark, setIsDark } = useDark();
   const location = useLocation();
-  const navigate = useNavigate();
 
   const role = location.pathname.startsWith("/admin")
     ? "admin"
@@ -75,24 +74,6 @@ export default function Layout() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Demo: role switcher */}
-            <select
-              value={role}
-              onChange={(e) => {
-                const r = e.target.value;
-                navigate(
-                  r === "empresa" ? "/empresa/inicio" :
-                  r === "admin" ? "/admin/inicio" :
-                  "/estudiante/dashboard"
-                );
-              }}
-              className="text-xs bg-[#185FA5] text-[#E6F1FB] border border-[#378ADD]/60 rounded-lg px-2.5 py-1.5 outline-none cursor-pointer"
-            >
-              <option value="estudiante">Estudiante</option>
-              <option value="empresa">Empresa</option>
-              <option value="admin">Admin/Profesor</option>
-            </select>
-
             {/* Dark mode toggle */}
             <div className="flex items-center gap-1.5">
               <Icon
