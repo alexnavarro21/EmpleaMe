@@ -82,8 +82,10 @@ router.get("/estudiantes", verificarToken, async (req, res) => {
     const [rows] = await db.query(
       `SELECT pe.usuario_id, pe.nombre_completo, pe.carrera, pe.semestre,
               pe.promedio, pe.calificacion_docente, pe.biografia,
+              u.rol,
               GROUP_CONCAT(h.nombre SEPARATOR '||') AS habilidades_raw
        FROM perfiles_estudiantes pe
+       JOIN usuarios u ON u.id = pe.usuario_id
        LEFT JOIN habilidades_estudiantes he ON he.estudiante_id = pe.usuario_id
        LEFT JOIN habilidades h ON h.id = he.habilidad_id
        GROUP BY pe.usuario_id`

@@ -40,25 +40,28 @@ export default function BuscarPerfiles() {
 
   useEffect(() => {
     getEstudiantes()
-      .then(setStudents)
+      .then((data) => { console.log("estudiantes:", data); setStudents(data); })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
   const uniqueCareers = ["Todas", ...new Set(students.map((s) => s.carrera))];
 
+  const canFilterAdvanced = role === "admin" || role === "empresa";
+
   const filtered = students.filter((s) => {
     const nombreCarrera = careerDisplay[s.carrera] || s.carrera;
     const matchSearch =
       s.nombre_completo.toLowerCase().includes(search.toLowerCase()) ||
-      (s.habilidades || []).some((sk) =>
-        sk.toLowerCase().includes(search.toLowerCase())
-      );
+      (canFilterAdvanced &&
+        (s.habilidades || []).some((sk) =>
+          sk.toLowerCase().includes(search.toLowerCase())
+        ));
     const matchCareer =
       selectedCareer === "Todas" ||
       s.carrera === selectedCareer ||
       nombreCarrera === selectedCareer;
-    const matchGpa = !s.promedio || s.promedio >= minGpa;
+    const matchGpa = !canFilterAdvanced || !s.promedio || s.promedio >= minGpa;
     return matchSearch && matchCareer && matchGpa;
   });
 
@@ -94,7 +97,7 @@ export default function BuscarPerfiles() {
                 />
                 <input
                   type="text"
-                  placeholder="Nombre o habilidad..."
+                  placeholder={canFilterAdvanced ? "Nombre o habilidad..." : "Nombre..."}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className={`w-full pl-8 pr-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
@@ -142,28 +145,30 @@ export default function BuscarPerfiles() {
               })}
             </div>
 
-            <div className="mb-4">
-              <label className={`block text-xs mb-2 ${M}`}>
-                Nota mínima:{" "}
-                <strong className={T}>
-                  {minGpa > 1 ? minGpa.toFixed(1) : "Sin filtro"}
-                </strong>
-              </label>
-              <input
-                type="range"
-                min="1"
-                max="7"
-                step="0.1"
-                value={minGpa}
-                onChange={(e) => setMinGpa(parseFloat(e.target.value))}
-                className="w-full accent-[#185FA5]"
-              />
-              <div className={`flex justify-between text-xs ${M} mt-1`}>
-                <span>1.0</span>
-                <span>4.0</span>
-                <span>7.0</span>
+            {canFilterAdvanced && (
+              <div className="mb-4">
+                <label className={`block text-xs mb-2 ${M}`}>
+                  Nota mínima:{" "}
+                  <strong className={T}>
+                    {minGpa > 1 ? minGpa.toFixed(1) : "Sin filtro"}
+                  </strong>
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="7"
+                  step="0.1"
+                  value={minGpa}
+                  onChange={(e) => setMinGpa(parseFloat(e.target.value))}
+                  className="w-full accent-[#185FA5]"
+                />
+                <div className={`flex justify-between text-xs ${M} mt-1`}>
+                  <span>1.0</span>
+                  <span>4.0</span>
+                  <span>7.0</span>
+                </div>
               </div>
-            </div>
+            )}
 
             <button
               onClick={() => {
@@ -199,9 +204,27 @@ export default function BuscarPerfiles() {
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-semibold ${T} truncate`}>
-                        {s.nombre_completo}
-                      </p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className={`text-sm font-semibold ${T} truncate`}>
+                          {s.nombre_completo}
+                        </p>
+                        {s.rol && (
+                          <span style={{
+                            fontSize: "10px",
+                            fontWeight: 600,
+                            padding: "2px 6px",
+                            borderRadius: "9999px",
+                            backgroundColor:
+                              s.rol === "admin" ? "#fee2e2" :
+                              s.rol === "empresa" ? "#f3e8ff" : "#dbeafe",
+                            color:
+                              s.rol === "admin" ? "#dc2626" :
+                              s.rol === "empresa" ? "#9333ea" : "#2563eb",
+                          }}>
+                            {s.rol}
+                          </span>
+                        )}
+                      </div>
                       <p className={`text-xs ${M}`}>
                         {nombreCarrera}
                         {s.semestre ? ` · Sem. ${s.semestre}` : ""}
@@ -209,29 +232,31 @@ export default function BuscarPerfiles() {
                     </div>
                   </div>
 
-                  <div className={`flex gap-4 mb-3 pb-3 border-b ${B}`}>
-                    <div>
-                      <p className={`text-xs ${M}`}>Promedio</p>
-                      <p className={`text-sm font-semibold ${T}`}>
-                        {s.promedio ? parseFloat(s.promedio).toFixed(1) : "—"}
-                      </p>
-                    </div>
-                    {s.calificacion_docente && (
+                  {canFilterAdvanced && (
+                    <div className={`flex gap-4 mb-3 pb-3 border-b ${B}`}>
                       <div>
-                        <p className={`text-xs ${M}`}>Eval. docente</p>
-                        <p
-                          className={`text-sm font-semibold ${T} flex items-center gap-1`}
-                        >
-                          <Icon
-                            icon="solar:star-bold-duotone"
-                            width={14}
-                            className="text-yellow-400"
-                          />
-                          {parseFloat(s.calificacion_docente).toFixed(1)}
+                        <p className={`text-xs ${M}`}>Promedio</p>
+                        <p className={`text-sm font-semibold ${T}`}>
+                          {s.promedio ? parseFloat(s.promedio).toFixed(1) : "—"}
                         </p>
                       </div>
-                    )}
-                  </div>
+                      {s.calificacion_docente && (
+                        <div>
+                          <p className={`text-xs ${M}`}>Eval. docente</p>
+                          <p
+                            className={`text-sm font-semibold ${T} flex items-center gap-1`}
+                          >
+                            <Icon
+                              icon="solar:star-bold-duotone"
+                              width={14}
+                              className="text-yellow-400"
+                            />
+                            {parseFloat(s.calificacion_docente).toFixed(1)}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {s.habilidades && s.habilidades.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mb-4">
