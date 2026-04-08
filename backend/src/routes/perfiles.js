@@ -33,11 +33,13 @@ router.get("/estudiante/:id", verificarToken, async (req, res) => {
 
 // PUT /api/perfiles/estudiante/:id
 router.put("/estudiante/:id", verificarToken, async (req, res) => {
-  const { nombre_completo, carrera, telefono, biografia } = req.body;
+  const { nombre_completo, carrera, telefono, biografia, semestre, promedio } = req.body;
   try {
     await db.query(
-      "UPDATE perfiles_estudiantes SET nombre_completo=?, carrera=?, telefono=?, biografia=? WHERE usuario_id=?",
-      [nombre_completo, carrera, telefono, biografia, req.params.id]
+      `UPDATE perfiles_estudiantes
+       SET nombre_completo=?, carrera=?, telefono=?, biografia=?, semestre=?, promedio=?
+       WHERE usuario_id=?`,
+      [nombre_completo, carrera, telefono || null, biografia || null, semestre || null, promedio || null, req.params.id]
     );
     res.json({ mensaje: "Perfil actualizado" });
   } catch (err) {
@@ -74,14 +76,24 @@ router.put("/empresa/:id", verificarToken, async (req, res) => {
   }
 });
 
-// GET /api/perfiles/estudiantes  — para buscador de empresas
+// GET /api/perfiles/estudiantes  — lista para buscador de empresas (incluye habilidades)
 router.get("/estudiantes", verificarToken, async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT pe.usuario_id, pe.nombre_completo, pe.carrera, pe.biografia
-       FROM perfiles_estudiantes pe`
+      `SELECT pe.usuario_id, pe.nombre_completo, pe.carrera, pe.semestre,
+              pe.promedio, pe.calificacion_docente, pe.biografia,
+              GROUP_CONCAT(h.nombre SEPARATOR '||') AS habilidades_raw
+       FROM perfiles_estudiantes pe
+       LEFT JOIN habilidades_estudiantes he ON he.estudiante_id = pe.usuario_id
+       LEFT JOIN habilidades h ON h.id = he.habilidad_id
+       GROUP BY pe.usuario_id`
     );
-    res.json(rows);
+    const result = rows.map((r) => ({
+      ...r,
+      habilidades: r.habilidades_raw ? r.habilidades_raw.split("||") : [],
+      habilidades_raw: undefined,
+    }));
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }
