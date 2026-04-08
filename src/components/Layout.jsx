@@ -1,3 +1,5 @@
+import { Link, Outlet, useLocation } from "react-router-dom";
+import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 
 const navLinks = {
