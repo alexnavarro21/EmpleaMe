@@ -1,23 +1,13 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, StatCard, PageHeader, PrimaryButton } from "../../components/ui";
-
-const vacantes = [
-  { title: "Asistente Administrativo", area: "Administración", modality: "Presencial", applicants: 9, status: "activa" },
-  { title: "Practicante Mecánico Automotriz", area: "Mecánica", modality: "Presencial", applicants: 6, status: "activa" },
-  { title: "Auxiliar Contable", area: "Contabilidad", modality: "Presencial", applicants: 3, status: "cerrada" },
-];
-
-const postulantes = [
-  { name: "Catalina Muñoz", career: "Administración", gpa: 6.5, match: 95, status: "nuevo" },
-  { name: "Felipe Rojas", career: "Mecánica Automotriz", gpa: 6.2, match: 92, status: "revisado" },
-  { name: "Valentina Soto", career: "Administración", gpa: 5.9, match: 88, status: "nuevo" },
-  { name: "Sebastián Contreras", career: "Mecánica Automotriz", gpa: 5.8, match: 84, status: "entrevista" },
-];
+import { getVacantesEmpresa, getPostulantesEmpresa, actualizarEstadoPostulacion } from "../../services/api";
 
 const statusColor = { activa: "green", cerrada: "gray", pausada: "yellow" };
-const postColor = { nuevo: "blue", revisado: "gray", entrevista: "orange" };
+const postColor = { pendiente: "blue", aceptado: "green", rechazado: "gray" };
+const postLabel = { pendiente: "nuevo", aceptado: "aceptado", rechazado: "rechazado" };
 
 export default function EmpresaDashboard() {
   const { isDark } = useDark();
@@ -26,11 +16,58 @@ export default function EmpresaDashboard() {
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
   const S = isDark ? "bg-[#313130]" : "bg-[#F7F6F3]";
 
+  const [vacantes, setVacantes] = useState([]);
+  const [postulantes, setPostulantes] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+
+  useEffect(() => {
+    async function cargarDatos() {
+      try {
+        const [vacs, posts] = await Promise.all([
+          getVacantesEmpresa(usuario.id),
+          getPostulantesEmpresa(),
+        ]);
+        setVacantes(vacs);
+        setPostulantes(posts);
+      } catch (err) {
+        console.error("Error cargando dashboard:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    cargarDatos();
+  }, [usuario.id]);
+
+  const handleEstado = async (postulacionId, nuevoEstado) => {
+    try {
+      await actualizarEstadoPostulacion(postulacionId, nuevoEstado);
+      setPostulantes((prev) =>
+        prev.map((p) => (p.id === postulacionId ? { ...p, estado: nuevoEstado } : p))
+      );
+    } catch (err) {
+      console.error("Error actualizando estado:", err);
+    }
+  };
+
+  const vacantesActivas = vacantes.filter((v) => v.esta_activa).length;
+  const totalPostulantes = vacantes.reduce((acc, v) => acc + (v.total_postulantes || 0), 0);
+
+  if (loading) {
+    return (
+      <div className={`flex items-center justify-center py-24 ${M}`}>
+        <Icon icon="mdi:loading" width={28} className="animate-spin mr-2" />
+        Cargando...
+      </div>
+    );
+  }
+
   return (
     <div>
       <PageHeader
         title="Dashboard Empresa"
-        subtitle="Automotriz Salinas · Lo Espejo, Santiago"
+        subtitle={usuario.nombre_empresa || "Mi empresa"}
         action={
           <Link
             to="/empresa/publicar"
@@ -43,10 +80,10 @@ export default function EmpresaDashboard() {
       />
 
       <div className="grid grid-cols-4 gap-4 mb-6">
-        <StatCard label="Vacantes activas" value="2" sub="1 cerrada este mes" />
-        <StatCard label="Total postulantes" value="18" sub="+4 esta semana" />
-        <StatCard label="Perfiles vistos" value="41" sub="Últimos 30 días" />
-        <StatCard label="Matches sugeridos" value="12" sub="Estudiantes compatibles" />
+        <StatCard label="Vacantes activas" value={String(vacantesActivas)} sub={`${vacantes.length} en total`} />
+        <StatCard label="Total postulantes" value={String(totalPostulantes)} sub="Acumulado" />
+        <StatCard label="Vacantes" value={String(vacantes.length)} sub="Publicadas" />
+        <StatCard label="Postulantes recientes" value={String(postulantes.length)} sub="Últimas 20" />
       </div>
 
       <div className="grid grid-cols-2 gap-6">
@@ -56,25 +93,37 @@ export default function EmpresaDashboard() {
               <Icon icon="mdi:clipboard-list-outline" width={16} className="text-[#378ADD]" />
               Mis vacantes
             </h2>
-            <Link to="/empresa/publicar" className="text-xs text-[#378ADD] hover:underline">Ver todas</Link>
+            <Link to="/empresa/publicar" className="text-xs text-[#378ADD] hover:underline">+ Nueva</Link>
           </div>
-          <div className="flex flex-col gap-3">
-            {vacantes.map((v) => (
-              <div key={v.title} className={`p-3 rounded-lg border ${B}`}>
-                <div className="flex items-center justify-between mb-1">
-                  <p className={`text-sm font-medium ${T}`}>{v.title}</p>
-                  <Badge color={statusColor[v.status]}>{v.status}</Badge>
+
+          {vacantes.length === 0 ? (
+            <p className={`text-xs ${M} text-center py-8`}>No tienes vacantes publicadas aún.</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {vacantes.map((v) => (
+                <div key={v.id} className={`p-3 rounded-lg border ${B}`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <p className={`text-sm font-medium ${T}`}>{v.titulo}</p>
+                    <Badge color={v.esta_activa ? "green" : "gray"}>
+                      {v.esta_activa ? "activa" : "cerrada"}
+                    </Badge>
+                  </div>
+                  <p className={`text-xs ${M} mb-2`}>
+                    {v.area || "—"} · {v.modalidad || "presencial"}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className={`text-xs ${M}`}>{v.total_postulantes || 0} postulantes</span>
+                    <Link
+                      to={`/empresa/buscador`}
+                      className="text-xs text-[#378ADD] hover:underline"
+                    >
+                      Ver postulantes →
+                    </Link>
+                  </div>
                 </div>
-                <p className={`text-xs ${M} mb-2`}>{v.area} · {v.modality}</p>
-                <div className="flex items-center justify-between">
-                  <span className={`text-xs ${M}`}>{v.applicants} postulantes</span>
-                  <Link to="/empresa/buscador" className="text-xs text-[#378ADD] hover:underline">
-                    Ver postulantes →
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </Card>
 
         <Card>
@@ -85,29 +134,53 @@ export default function EmpresaDashboard() {
             </h2>
             <Link to="/empresa/buscador" className="text-xs text-[#378ADD] hover:underline">Ver todos</Link>
           </div>
-          <div className="flex flex-col gap-3">
-            {postulantes.map((p) => (
-              <div key={p.name} className={`flex items-center gap-3 p-3 rounded-lg border ${B}`}>
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
-                  <Icon icon="mynaui:user-solid" width={20} className="text-[#378ADD]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className={`text-sm font-medium ${T} truncate`}>{p.name}</p>
-                    <Badge color={postColor[p.status]}>{p.status}</Badge>
+
+          {postulantes.length === 0 ? (
+            <p className={`text-xs ${M} text-center py-8`}>Aún no hay postulaciones.</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {postulantes.slice(0, 6).map((p) => (
+                <div key={p.id} className={`flex items-center gap-3 p-3 rounded-lg border ${B}`}>
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
+                    <Icon icon="mynaui:user-solid" width={20} className="text-[#378ADD]" />
                   </div>
-                  <p className={`text-xs ${M}`}>{p.career} · Nota: {p.gpa.toFixed(1)}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className={`text-sm font-medium ${T} truncate`}>{p.nombre_completo}</p>
+                      <Badge color={postColor[p.estado]}>{postLabel[p.estado]}</Badge>
+                    </div>
+                    <p className={`text-xs ${M}`}>
+                      {p.carrera} {p.promedio ? `· Nota: ${parseFloat(p.promedio).toFixed(1)}` : ""}
+                    </p>
+                  </div>
+                  <div className="flex gap-1 flex-shrink-0">
+                    {p.estado === "pendiente" && (
+                      <>
+                        <button
+                          onClick={() => handleEstado(p.id, "aceptado")}
+                          className="text-xs px-2 py-1 rounded bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                        >
+                          Aceptar
+                        </button>
+                        <button
+                          onClick={() => handleEstado(p.id, "rechazado")}
+                          className="text-xs px-2 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+                        >
+                          Rechazar
+                        </button>
+                      </>
+                    )}
+                    <Link
+                      to={`/empresa/candidato/${p.estudiante_id}`}
+                      className={`${M} hover:text-[#378ADD] transition-colors`}
+                    >
+                      <Icon icon="mdi:chevron-right" width={20} />
+                    </Link>
+                  </div>
                 </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="text-sm font-semibold text-[#378ADD]">{p.match}%</p>
-                  <p className={`text-xs ${M}`}>match</p>
-                </div>
-                <Link to="/empresa/candidato/1" className={`${M} hover:text-[#378ADD] transition-colors flex-shrink-0`}>
-                  <Icon icon="mdi:chevron-right" width={20} />
-                </Link>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </Card>
       </div>
 

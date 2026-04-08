@@ -1,0 +1,132 @@
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+
+function getToken() {
+  return localStorage.getItem("token");
+}
+
+function authHeaders() {
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${getToken()}`,
+  };
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+
+export async function loginUsuario(correo, contrasena) {
+  const res = await fetch(`${BASE_URL}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ correo, contrasena }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al iniciar sesión");
+  return data; // { token, usuario: { id, correo, rol } }
+}
+
+// rol: "estudiante" | "empresa" | "centro"
+export async function registrarUsuario({ correo, contrasena, rol, nombre_completo, carrera, nombre_empresa }) {
+  const res = await fetch(`${BASE_URL}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ correo, contrasena, rol, nombre_completo, carrera, nombre_empresa }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al crear la cuenta");
+  return data; // { mensaje, id }
+}
+
+// ── Vacantes ──────────────────────────────────────────────────────────────────
+
+export async function getVacantesEmpresa(empresaId) {
+  const res = await fetch(`${BASE_URL}/vacantes/empresa/${empresaId}`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener vacantes");
+  return data;
+}
+
+export async function crearVacante(datos) {
+  const res = await fetch(`${BASE_URL}/vacantes`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al crear vacante");
+  return data; // { id, mensaje }
+}
+
+// ── Perfiles ──────────────────────────────────────────────────────────────────
+
+export async function getEstudiantes() {
+  const res = await fetch(`${BASE_URL}/perfiles/estudiantes`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener estudiantes");
+  return data;
+}
+
+export async function getEstudianteById(id) {
+  const res = await fetch(`${BASE_URL}/perfiles/estudiante/${id}`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener perfil");
+  return data;
+}
+
+export async function actualizarPerfilEstudiante(id, datos) {
+  const res = await fetch(`${BASE_URL}/perfiles/estudiante/${id}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al actualizar perfil");
+  return data;
+}
+
+// ── Postulaciones ─────────────────────────────────────────────────────────────
+
+export async function postularAVacante(vacanteId) {
+  const res = await fetch(`${BASE_URL}/postulaciones`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ vacante_id: vacanteId }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al postular");
+  return data;
+}
+
+export async function getPostulantesEmpresa() {
+  const res = await fetch(`${BASE_URL}/postulaciones/empresa`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener postulantes");
+  return data;
+}
+
+export async function getPostulantesPorVacante(vacanteId) {
+  const res = await fetch(`${BASE_URL}/postulaciones/vacante/${vacanteId}`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener postulantes");
+  return data;
+}
+
+export async function actualizarEstadoPostulacion(postulacionId, estado) {
+  const res = await fetch(`${BASE_URL}/postulaciones/${postulacionId}/estado`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify({ estado }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al actualizar estado");
+  return data;
+}

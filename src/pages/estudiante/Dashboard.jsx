@@ -1,145 +1,440 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
-import { Card, Badge, StatCard, PageHeader } from "../../components/ui";
+import { Badge } from "../../components/ui";
 
-const feed = [
+const posts = [
   {
-    icon: "fluent:handshake-32-regular",
-    title: "Nuevo match con Automotriz Salinas",
-    desc: "Tu perfil interesó a Automotriz Salinas para su práctica en Gestión Administrativa",
+    id: 1,
+    type: "match",
+    company: "Automotriz Salinas",
+    companyInitial: "A",
+    companyColor: "bg-[#185FA5]",
+    role: "Asistente Administrativo",
     time: "Hace 2 horas",
+    content:
+      "¡Tu perfil fue destacado para la práctica en Gestión Administrativa! Automotriz Salinas está buscando candidatos con tus competencias.",
+    match: 92,
     badge: { label: "Match", color: "blue" },
+    icon: "fluent:handshake-32-regular",
+    likes: 0,
+    liked: false,
+    area: "Administración",
+    location: "Santiago, RM",
   },
   {
-    icon: "mdi:clipboard-list-outline",
-    title: "Evaluación recibida",
-    desc: "Prof. Morales evaluó tus competencias técnicas: 6.2 / 7.0",
-    time: "Ayer",
-    badge: { label: "Evaluación", color: "green" },
-  },
-  {
-    icon: "solar:medal-ribbons-star-bold-duotone",
-    title: "Insignia obtenida",
-    desc: 'Completaste tu perfil al 100% y ganaste la insignia "Perfil Destacado"',
-    time: "Hace 3 días",
-    badge: { label: "Logro", color: "yellow" },
-  },
-  {
-    icon: "temaki:suitcase",
-    title: "Nueva práctica disponible",
-    desc: "ContaServ Chile publicó una práctica en Administración de Oficina que coincide con tu perfil",
-    time: "Hace 4 días",
+    id: 2,
+    type: "vacante",
+    company: "ContaServ Chile",
+    companyInitial: "C",
+    companyColor: "bg-emerald-600",
+    role: "Practicante Contabilidad",
+    time: "Hace 4 horas",
+    content:
+      "Estamos buscando estudiantes de Contabilidad o Administración para práctica profesional. Modalidad híbrida, 6 meses de duración. Ideal para quienes quieren su primera experiencia real en una empresa contable.",
+    match: 85,
     badge: { label: "Práctica", color: "orange" },
+    icon: "temaki:suitcase",
+    likes: 5,
+    liked: false,
+    area: "Contabilidad",
+    location: "Providencia, RM",
+    tags: ["Contabilidad", "Excel", "Atención al cliente"],
+  },
+  {
+    id: 3,
+    type: "evaluacion",
+    company: "Prof. Morales · C.E. Cardenal J.M. Caro",
+    companyInitial: "P",
+    companyColor: "bg-purple-600",
+    role: "Evaluación de competencias",
+    time: "Ayer",
+    content:
+      "Tus competencias técnicas han sido evaluadas. Obtuviste 6.2 / 7.0 en la rúbrica de Habilidades de Oficina. ¡Sigue así!",
+    match: null,
+    badge: { label: "Evaluación", color: "green" },
+    icon: "mdi:clipboard-list-outline",
+    likes: 2,
+    liked: false,
+    area: null,
+    nota: "6.2 / 7.0",
+  },
+  {
+    id: 4,
+    type: "logro",
+    company: "EmpleaMe",
+    companyInitial: "E",
+    companyColor: "bg-[#378ADD]",
+    role: "Insignia desbloqueada",
+    time: "Hace 3 días",
+    content:
+      '¡Completaste tu perfil al 100% y obtuviste la insignia "Perfil Destacado"! Los estudiantes con perfil completo tienen 3x más chances de ser contactados.',
+    match: null,
+    badge: { label: "Logro", color: "yellow" },
+    icon: "solar:medal-ribbons-star-bold-duotone",
+    likes: 12,
+    liked: false,
+    area: null,
+  },
+  {
+    id: 5,
+    type: "vacante",
+    company: "Mutual de Seguridad",
+    companyInitial: "M",
+    companyColor: "bg-orange-500",
+    role: "Asistente de Gestión",
+    time: "Hace 4 días",
+    content:
+      "Buscamos practicante para apoyar área de gestión documental y atención de usuarios internos. Excelente ambiente de trabajo y posibilidad de continuidad.",
+    match: 78,
+    badge: { label: "Práctica", color: "orange" },
+    icon: "temaki:suitcase",
+    likes: 3,
+    liked: false,
+    area: "Administración",
+    location: "Las Condes, RM",
+    tags: ["Gestión", "Documentación", "Office"],
   },
 ];
 
-const practices = [
-  { company: "Automotriz Salinas", role: "Asistente Administrativo", area: "Administración", match: 92 },
-  { company: "ContaServ Chile", role: "Practicante Contabilidad", area: "Contabilidad", match: 85 },
-  { company: "Mutual de Seguridad", role: "Asistente de Gestión", area: "Administración", match: 78 },
+const suggestions = [
+  { company: "Banco Estado", role: "Práctica Adm. Finanzas", match: 88, initial: "B", color: "bg-red-500" },
+  { company: "Entel", role: "Asistente Comercial", match: 80, initial: "E", color: "bg-[#185FA5]" },
+  { company: "Sodexo Chile", role: "Gestión de Oficina", match: 74, initial: "S", color: "bg-green-600" },
 ];
+
+const profileSteps = [
+  { done: true, label: "Datos personales" },
+  { done: true, label: "Info académica" },
+  { done: true, label: "CV subido" },
+  { done: false, label: "Video de presentación" },
+  { done: false, label: "Subir evidencias" },
+  { done: false, label: "Habilidades completas" },
+];
+
+function Avatar({ initial, color, size = "md" }) {
+  const s = size === "lg" ? "w-14 h-14 text-xl" : size === "sm" ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm";
+  return (
+    <div className={`${s} rounded-full ${color} flex items-center justify-center text-white font-semibold flex-shrink-0`}>
+      {initial}
+    </div>
+  );
+}
+
+function PostCard({ post, isDark }) {
+  const [liked, setLiked] = useState(post.liked);
+  const [likes, setLikes] = useState(post.likes);
+  const [saved, setSaved] = useState(false);
+
+  const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
+  const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
+  const B = isDark ? "border-[#3a3a38]" : "border-[#E8E6E1]";
+  const BG = isDark ? "bg-[#262624]" : "bg-white";
+  const HV = isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]";
+
+  function toggleLike() {
+    if (liked) {
+      setLikes((l) => l - 1);
+    } else {
+      setLikes((l) => l + 1);
+    }
+    setLiked((l) => !l);
+  }
+
+  return (
+    <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
+      {/* Header */}
+      <div className="flex items-start justify-between px-4 pt-4 pb-3">
+        <div className="flex items-center gap-3">
+          <Avatar initial={post.companyInitial} color={post.companyColor} />
+          <div>
+            <p className={`text-sm font-semibold leading-tight ${T}`}>{post.company}</p>
+            <p className={`text-xs ${M}`}>{post.role}</p>
+            <p className={`text-xs ${M}`}>{post.time}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge color={post.badge.color}>{post.badge.label}</Badge>
+          <button
+            onClick={() => setSaved((s) => !s)}
+            className={`p-1.5 rounded-lg transition-colors ${HV}`}
+            title={saved ? "Guardado" : "Guardar"}
+          >
+            <Icon
+              icon={saved ? "mdi:bookmark" : "mdi:bookmark-outline"}
+              width={16}
+              className={saved ? "text-[#378ADD]" : M}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="px-4 pb-3">
+        <p className={`text-sm leading-relaxed ${T}`}>{post.content}</p>
+      </div>
+
+      {/* Match / Nota / Tags */}
+      {(post.match || post.nota || post.tags || post.location) && (
+        <div className={`mx-4 mb-3 p-3 rounded-lg border ${B} ${isDark ? "bg-[#1e1e1c]" : "bg-[#F7F6F3]"}`}>
+          <div className="flex flex-wrap gap-3 items-center">
+            {post.match && (
+              <div className="flex items-center gap-1.5">
+                <Icon icon="mdi:target" width={14} className="text-[#378ADD]" />
+                <span className="text-xs font-semibold text-[#378ADD]">{post.match}% compatibilidad</span>
+              </div>
+            )}
+            {post.nota && (
+              <div className="flex items-center gap-1.5">
+                <Icon icon="mdi:star" width={14} className="text-amber-500" />
+                <span className={`text-xs font-semibold ${T}`}>{post.nota}</span>
+              </div>
+            )}
+            {post.location && (
+              <div className="flex items-center gap-1.5">
+                <Icon icon="mdi:map-marker-outline" width={14} className={M} />
+                <span className={`text-xs ${M}`}>{post.location}</span>
+              </div>
+            )}
+            {post.area && (
+              <Badge color="blue">{post.area}</Badge>
+            )}
+          </div>
+          {post.tags && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {post.tags.map((tag) => (
+                <span key={tag} className={`text-xs px-2 py-0.5 rounded-full border ${B} ${M}`}>
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Divider + Actions */}
+      <div className={`border-t ${B}`} />
+      <div className="flex items-center px-2 py-1">
+        <button
+          onClick={toggleLike}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${HV} ${
+            liked ? "text-[#378ADD]" : M
+          }`}
+        >
+          <Icon icon={liked ? "mdi:thumb-up" : "mdi:thumb-up-outline"} width={16} />
+          {likes > 0 ? likes : "Me interesa"}
+        </button>
+        <button className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${HV} ${M}`}>
+          <Icon icon="mdi:comment-outline" width={16} />
+          Comentar
+        </button>
+        {(post.type === "vacante" || post.type === "match") && (
+          <Link
+            to="/estudiante/perfil"
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${HV} ${M}`}
+          >
+            <Icon icon="mdi:send-outline" width={16} />
+            Postular
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function EstudianteDashboard() {
   const { isDark } = useDark();
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
-  const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
+  const B = isDark ? "border-[#3a3a38]" : "border-[#E8E6E1]";
+  const BG = isDark ? "bg-[#262624]" : "bg-white";
   const S = isDark ? "bg-[#313130]" : "bg-[#F7F6F3]";
 
   return (
-    <div>
-      <PageHeader
-        title="Hola, Catalina"
-        subtitle="C.E. Cardenal J.M. Caro · Administración · 4to semestre"
-        action={
-          <Link
-            to="/estudiante/perfil"
-            className="text-sm bg-[#185FA5] hover:bg-[#0C447C] text-[#E6F1FB] px-4 py-2 rounded-lg transition-colors"
-          >
-            Ver mi perfil
-          </Link>
-        }
-      />
+    <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_260px] gap-5 items-start">
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <StatCard label="Postulaciones" value="3" sub="+1 esta semana" />
-        <StatCard label="Vistas al perfil" value="24" sub="Últimos 30 días" />
-        <StatCard label="Matches activos" value="7" sub="Empresas interesadas" />
-      </div>
+      {/* ── LEFT SIDEBAR ── */}
+      <div className="flex flex-col gap-4 sticky top-20">
+        {/* Profile card */}
+        <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
+          {/* Banner */}
+          <div className="h-16 bg-gradient-to-r from-[#0C447C] to-[#378ADD]" />
+          <div className="px-4 pb-4">
+            <div className="-mt-7 mb-3">
+              <Avatar initial="C" color="bg-[#185FA5]" size="lg" />
+            </div>
+            <p className={`text-sm font-semibold ${T}`}>Catalina Rodríguez</p>
+            <p className={`text-xs ${M} mt-0.5`}>Administración · 4to semestre</p>
+            <p className={`text-xs ${M}`}>C.E. Cardenal J.M. Caro</p>
 
-      <div className="grid grid-cols-3 gap-6">
-        {/* Feed */}
-        <div className="col-span-2 flex flex-col gap-4">
-          <h2 className={`text-sm font-semibold ${T}`}>Actividad reciente</h2>
-          {feed.map((item) => (
-            <Card key={item.title}>
-              <div className="flex items-start gap-3">
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
-                  <Icon icon={item.icon} width={20} className="text-[#378ADD]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <p className={`text-sm font-medium ${T}`}>{item.title}</p>
-                    <Badge color={item.badge.color}>{item.badge.label}</Badge>
-                  </div>
-                  <p className={`text-xs ${M}`}>{item.desc}</p>
-                  <p className={`text-xs ${M} mt-2`}>{item.time}</p>
-                </div>
+            <div className={`flex gap-4 mt-3 pt-3 border-t ${B}`}>
+              <div className="text-center">
+                <p className={`text-base font-semibold ${T}`}>3</p>
+                <p className={`text-xs ${M}`}>Postulaciones</p>
               </div>
-            </Card>
-          ))}
+              <div className="text-center">
+                <p className={`text-base font-semibold ${T}`}>7</p>
+                <p className={`text-xs ${M}`}>Matches</p>
+              </div>
+              <div className="text-center">
+                <p className={`text-base font-semibold ${T}`}>24</p>
+                <p className={`text-xs ${M}`}>Visitas</p>
+              </div>
+            </div>
+
+            <Link
+              to="/estudiante/perfil"
+              className="block text-center mt-3 text-xs font-medium text-[#185FA5] hover:text-[#0C447C] border border-[#185FA5] hover:bg-[#E6F1FB] py-1.5 rounded-lg transition-colors"
+            >
+              Ver mi perfil
+            </Link>
+          </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="flex flex-col gap-4">
-          <Card>
-            <p className={`text-sm font-medium ${T} mb-3`}>Completitud del perfil</p>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className={`text-xs ${M}`}>72%</span>
-              <span className="text-xs text-[#378ADD]">Faltan 3 pasos</span>
-            </div>
-            <div className={`w-full h-2 rounded-full ${S}`}>
-              <div className="h-2 bg-[#378ADD] rounded-full" style={{ width: "72%" }} />
-            </div>
-            <ul className={`mt-3 flex flex-col gap-1.5 text-xs ${M}`}>
-              {[
-                { done: true, label: "Datos personales" },
-                { done: true, label: "Info académica" },
-                { done: true, label: "CV subido" },
-                { done: false, label: "Video de presentación" },
-                { done: false, label: "Subir evidencias" },
-                { done: false, label: "Habilidades completas" },
-              ].map((s) => (
-                <li key={s.label} className="flex items-center gap-2">
-                  <Icon
-                    icon={s.done ? "mdi:check-circle" : "mdi:circle-outline"}
-                    width={14}
-                    className={s.done ? "text-green-500" : isDark ? "text-[#3a3a38]" : "text-[#D3D1C7]"}
-                  />
-                  {s.label}
-                </li>
-              ))}
-            </ul>
-            <Link to="/estudiante/perfil" className="block text-center mt-4 text-xs text-[#378ADD] hover:underline">
-              Completar perfil →
-            </Link>
-          </Card>
+        {/* Completitud */}
+        <div className={`rounded-xl border ${B} ${BG} p-4`}>
+          <div className="flex items-center justify-between mb-2">
+            <p className={`text-xs font-semibold ${T}`}>Completitud del perfil</p>
+            <span className="text-xs font-semibold text-[#378ADD]">72%</span>
+          </div>
+          <div className={`w-full h-1.5 rounded-full ${S} mb-3`}>
+            <div className="h-1.5 bg-[#378ADD] rounded-full" style={{ width: "72%" }} />
+          </div>
+          <ul className={`flex flex-col gap-2 text-xs ${M}`}>
+            {profileSteps.map((s) => (
+              <li key={s.label} className="flex items-center gap-2">
+                <Icon
+                  icon={s.done ? "mdi:check-circle" : "mdi:circle-outline"}
+                  width={13}
+                  className={s.done ? "text-green-500 flex-shrink-0" : `flex-shrink-0 ${isDark ? "text-[#3a3a38]" : "text-[#D3D1C7]"}`}
+                />
+                <span className={s.done ? "line-through opacity-60" : ""}>{s.label}</span>
+              </li>
+            ))}
+          </ul>
+          <Link to="/estudiante/perfil" className="block text-center mt-3 text-xs text-[#378ADD] hover:underline">
+            Completar perfil →
+          </Link>
+        </div>
 
-          <Card>
-            <p className={`text-sm font-medium ${T} mb-3`}>Prácticas recomendadas</p>
-            {practices.map((p, i) => (
-              <div key={p.company} className={`${i < practices.length - 1 ? `pb-3 mb-3 border-b ${B}` : ""}`}>
-                <div className="flex items-center justify-between mb-0.5">
-                  <p className={`text-sm font-medium ${T}`}>{p.company}</p>
-                  <span className="text-xs text-[#378ADD] font-medium">{p.match}%</span>
-                </div>
-                <p className={`text-xs ${M} mb-1`}>{p.role}</p>
-                <Badge color="blue">{p.area}</Badge>
+        {/* Quick links */}
+        <div className={`rounded-xl border ${B} ${BG} p-4`}>
+          <p className={`text-xs font-semibold ${T} mb-2`}>Accesos rápidos</p>
+          {[
+            { icon: "mdi:file-account-outline", label: "Mi CV", to: "/estudiante/perfil" },
+            { icon: "mdi:folder-multiple-outline", label: "Mis Evidencias", to: "/estudiante/evidencias" },
+            { icon: "mdi:bookmark-multiple-outline", label: "Guardados", to: "/estudiante/dashboard" },
+          ].map((link) => (
+            <Link
+              key={link.label}
+              to={link.to}
+              className={`flex items-center gap-2.5 py-2 text-xs rounded-lg px-2 -mx-2 transition-colors ${
+                isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"
+              } ${M}`}
+            >
+              <Icon icon={link.icon} width={15} />
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* ── CENTER FEED ── */}
+      <div className="flex flex-col gap-4">
+        {/* Create post box */}
+        <div className={`rounded-xl border ${B} ${BG} p-4`}>
+          <div className="flex items-center gap-3">
+            <Avatar initial="C" color="bg-[#185FA5]" size="sm" />
+            <button
+              className={`flex-1 text-left text-sm px-4 py-2.5 rounded-full border ${B} ${S} ${M} transition-colors ${
+                isDark ? "hover:bg-[#3a3a38]" : "hover:bg-[#EEECEA]"
+              }`}
+            >
+              Comparte una actualización...
+            </button>
+          </div>
+          <div className={`flex gap-1 mt-3 pt-3 border-t ${B}`}>
+            {[
+              { icon: "mdi:file-document-outline", label: "Subir CV" },
+              { icon: "mdi:video-outline", label: "Video" },
+              { icon: "mdi:image-outline", label: "Evidencia" },
+            ].map((btn) => (
+              <button
+                key={btn.label}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${M} ${
+                  isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"
+                }`}
+              >
+                <Icon icon={btn.icon} width={15} />
+                {btn.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Feed posts */}
+        {posts.map((post) => (
+          <PostCard key={post.id} post={post} isDark={isDark} />
+        ))}
+      </div>
+
+      {/* ── RIGHT SIDEBAR ── */}
+      <div className="flex flex-col gap-4 sticky top-20">
+        {/* Suggested practices */}
+        <div className={`rounded-xl border ${B} ${BG} p-4`}>
+          <p className={`text-xs font-semibold ${T} mb-3`}>Prácticas recomendadas</p>
+          {suggestions.map((s, i) => (
+            <div key={s.company} className={`flex items-center gap-3 ${i < suggestions.length - 1 ? `pb-3 mb-3 border-b ${B}` : ""}`}>
+              <Avatar initial={s.initial} color={s.color} size="sm" />
+              <div className="flex-1 min-w-0">
+                <p className={`text-xs font-semibold ${T} truncate`}>{s.company}</p>
+                <p className={`text-xs ${M} truncate`}>{s.role}</p>
+              </div>
+              <button className="text-xs font-medium text-[#185FA5] hover:text-[#0C447C] border border-[#185FA5] hover:bg-[#E6F1FB] px-2 py-0.5 rounded-full transition-colors flex-shrink-0">
+                Ver
+              </button>
+            </div>
+          ))}
+          <Link to="/estudiante/perfil" className="block text-center mt-1 text-xs text-[#378ADD] hover:underline">
+            Ver todas →
+          </Link>
+        </div>
+
+        {/* Badges */}
+        <div className={`rounded-xl border ${B} ${BG} p-4`}>
+          <p className={`text-xs font-semibold ${T} mb-3`}>Mis insignias</p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { icon: "solar:medal-ribbons-star-bold-duotone", label: "Perfil Destacado", color: "text-amber-500" },
+              { icon: "mdi:check-decagram", label: "CV Verificado", color: "text-[#378ADD]" },
+              { icon: "mdi:school", label: "4to semestre", color: "text-purple-500" },
+            ].map((b) => (
+              <div
+                key={b.label}
+                title={b.label}
+                className={`flex flex-col items-center gap-1 p-2 rounded-lg border ${B} ${S} w-[72px]`}
+              >
+                <Icon icon={b.icon} width={22} className={b.color} />
+                <span className={`text-[10px] text-center leading-tight ${M}`}>{b.label}</span>
               </div>
             ))}
-          </Card>
+          </div>
+        </div>
+
+        {/* Actividad reciente compacta */}
+        <div className={`rounded-xl border ${B} ${BG} p-4`}>
+          <p className={`text-xs font-semibold ${T} mb-3`}>Esta semana</p>
+          {[
+            { icon: "mdi:eye-outline", label: "24 vistas al perfil", color: "text-[#378ADD]" },
+            { icon: "fluent:handshake-32-regular", label: "7 matches activos", color: "text-green-500" },
+            { icon: "mdi:send-check-outline", label: "3 postulaciones", color: "text-purple-500" },
+          ].map((item) => (
+            <div key={item.label} className="flex items-center gap-2.5 mb-2 last:mb-0">
+              <Icon icon={item.icon} width={14} className={`${item.color} flex-shrink-0`} />
+              <span className={`text-xs ${M}`}>{item.label}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
