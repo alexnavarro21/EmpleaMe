@@ -130,3 +130,67 @@ export async function actualizarEstadoPostulacion(postulacionId, estado) {
   if (!res.ok) throw new Error(data.error || "Error al actualizar estado");
   return data;
 }
+
+// ── Conversaciones ────────────────────────────────────────────────────────────
+
+export async function getConversaciones() {
+  const res = await fetch(`${BASE_URL}/conversaciones`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener conversaciones");
+  return data;
+}
+
+export async function iniciarConversacion(estudianteId) {
+  const res = await fetch(`${BASE_URL}/conversaciones`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ estudiante_id: estudianteId }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al iniciar conversación");
+  return data; // { id }
+}
+
+export async function getMensajes(conversacionId) {
+  const res = await fetch(`${BASE_URL}/conversaciones/${conversacionId}/mensajes`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener mensajes");
+  return data;
+}
+
+export async function enviarMensaje(conversacionId, contenido) {
+  const res = await fetch(`${BASE_URL}/conversaciones/${conversacionId}/mensajes`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ contenido }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al enviar mensaje");
+  return data;
+}
+
+// ── Publicaciones ─────────────────────────────────────────────────────────────
+
+export async function getPublicaciones() {
+  const res = await fetch(`${BASE_URL}/publicaciones`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener publicaciones");
+  return data;
+}
+
+export async function crearPublicacion(datos) {
+  const res = await fetch(`${BASE_URL}/publicaciones`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al crear publicación");
+  return data; // { id, mensaje }
+}
