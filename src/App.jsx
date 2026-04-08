@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { DarkModeProvider } from "./context/DarkModeContext";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
-import Reels from "./pages/Reels";
 
 import EstudianteDashboard from "./pages/estudiante/Dashboard";
 import EstudiantePerfil from "./pages/estudiante/Perfil";
@@ -41,7 +40,6 @@ export default function App() {
             <Route path="/estudiante/mensajeria" element={<EstudianteMensajeria />} />
             <Route path="/estudiante/buscar" element={<BuscarPerfiles />} />
             <Route path="/estudiante/candidato/:id" element={<EmpresaCandidato />} />
-            <Route path="/estudiante/reels" element={<Reels />} />
 
             {/* Empresa */}
             <Route path="/empresa/inicio" element={<EstudianteDashboard />} />
@@ -51,7 +49,6 @@ export default function App() {
             <Route path="/empresa/buscar" element={<BuscarPerfiles />} />
             <Route path="/empresa/candidato/:id" element={<EmpresaCandidato />} />
             <Route path="/empresa/mensajeria" element={<EmpresaMensajeria />} />
-            <Route path="/empresa/reels" element={<Reels />} />
 
             {/* Admin / Profesor */}
             <Route path="/admin/inicio" element={<EstudianteDashboard />} />
@@ -64,7 +61,6 @@ export default function App() {
             <Route path="/admin/monitoreo" element={<AdminMonitoreo />} />
             <Route path="/admin/buscar" element={<BuscarPerfiles />} />
             <Route path="/admin/candidato/:id" element={<EmpresaCandidato />} />
-            <Route path="/admin/reels" element={<Reels />} />
           </Route>
         </Routes>
       </DarkModeProvider>
