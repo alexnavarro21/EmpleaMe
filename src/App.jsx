@@ -40,6 +40,7 @@ export default function App() {
             <Route path="/estudiante/reels" element={<Reels />} />
 
             {/* Empresa */}
+            <Route path="/empresa/inicio" element={<EstudianteDashboard />} />
             <Route path="/empresa/dashboard" element={<EmpresaDashboard />} />
             <Route path="/empresa/publicar" element={<EmpresaPublicar />} />
             <Route path="/empresa/buscador" element={<EmpresaBuscador />} />
@@ -48,6 +49,7 @@ export default function App() {
             <Route path="/empresa/reels" element={<Reels />} />
 
             {/* Admin / Profesor */}
+            <Route path="/admin/inicio" element={<EstudianteDashboard />} />
             <Route path="/admin/panel" element={<AdminPanel />} />
             <Route path="/admin/usuarios" element={<AdminUsuarios />} />
             <Route path="/admin/evaluaciones" element={<AdminEvaluaciones />} />

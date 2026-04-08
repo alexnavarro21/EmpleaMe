@@ -6,8 +6,8 @@ import { loginUsuario, registrarUsuario } from "../services/api";
 
 const RUTAS_ROL = {
   estudiante: "/estudiante/dashboard",
-  empresa: "/empresa/dashboard",
-  centro: "/admin/panel",
+  empresa: "/empresa/inicio",
+  centro: "/admin/inicio",
 };
 
 export default function Login() {
