@@ -18,13 +18,14 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Credenciales inválidas" });
 
     const usuario = rows[0];
+    const hash = String(usuario.contrasena_hash);
 
     // Soporte para contraseñas en texto plano (datos de prueba) y bcrypt
     let valido = false;
-    if (usuario.contrasena_hash.startsWith("$2")) {
-      valido = await bcrypt.compare(contrasena, usuario.contrasena_hash);
+    if (hash.startsWith("$2")) {
+      valido = await bcrypt.compare(contrasena, hash);
     } else {
-      valido = contrasena === usuario.contrasena_hash;
+      valido = contrasena === hash;
     }
 
     if (!valido)

@@ -1,6 +1,6 @@
 -- CREATE DATABASE IF NOT EXISTS empleame_db;
 USE railway;
-
+SELECT * FROM perfiles_estudiantes;
 -- Drop en orden inverso para respetar las foreign keys
 DROP TABLE IF EXISTS vacantes;
 DROP TABLE IF EXISTS items_portafolio;
