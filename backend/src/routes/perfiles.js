@@ -101,18 +101,7 @@ router.get("/estudiantes", verificarToken, async (req, res) => {
        FROM perfiles_empresas pr
        JOIN usuarios u ON u.id = pr.usuario_id
 
-       UNION ALL
-
-       SELECT u.id AS usuario_id, u.correo AS nombre_completo,
-              NULL AS carrera, NULL AS semestre,
-              NULL AS promedio, NULL AS calificacion_docente,
-              NULL AS biografia,
-              u.rol,
-              NULL AS habilidades_raw
-       FROM usuarios u
-       WHERE u.rol = 'centro'
-         AND u.id NOT IN (SELECT usuario_id FROM perfiles_estudiantes)
-         AND u.id NOT IN (SELECT usuario_id FROM perfiles_empresas)`
+       `
     );
     const result = rows.map((r) => ({
       ...r,
