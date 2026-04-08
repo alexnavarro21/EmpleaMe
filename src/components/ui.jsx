@@ -1,6 +1,6 @@
 import { useDark } from "../context/DarkModeContext";
 
-export function FormField({ label, type = "text", placeholder, value, onChange, className = "" }) {
+export function FormField({ label, type = "text", placeholder, value, onChange, className = "", ...props }) {
   const { isDark } = useDark();
   return (
     <div className={`mb-3 ${className}`}>
@@ -12,16 +12,18 @@ export function FormField({ label, type = "text", placeholder, value, onChange, 
         onChange={onChange}
         className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all
           focus:border-[#378ADD] focus:ring-2 focus:ring-[#B5D4F4]
+          disabled:opacity-60 disabled:cursor-not-allowed
           ${isDark
             ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
             : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
           }`}
+        {...props}
       />
     </div>
   );
 }
 
-export function TextAreaField({ label, placeholder, rows = 4 }) {
+export function TextAreaField({ label, placeholder, rows = 4, value, onChange, ...props }) {
   const { isDark } = useDark();
   return (
     <div className="mb-3">
@@ -29,12 +31,16 @@ export function TextAreaField({ label, placeholder, rows = 4 }) {
       <textarea
         placeholder={placeholder}
         rows={rows}
+        value={value}
+        onChange={onChange}
         className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all resize-none
           focus:border-[#378ADD] focus:ring-2 focus:ring-[#B5D4F4]
+          disabled:opacity-60 disabled:cursor-not-allowed
           ${isDark
             ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
             : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
           }`}
+        {...props}
       />
     </div>
   );
@@ -115,18 +121,22 @@ export function PageHeader({ title, subtitle, action }) {
   );
 }
 
-export function SelectField({ label, children, className = "" }) {
+export function SelectField({ label, children, className = "", value, onChange, ...props }) {
   const { isDark } = useDark();
   return (
     <div className={`mb-3 ${className}`}>
       <label className={`block text-xs mb-1.5 ${isDark ? "text-[#B4B2A9]" : "text-[#5F5E5A]"}`}>{label}</label>
       <select
+        value={value}
+        onChange={onChange}
         className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all
           focus:border-[#378ADD] focus:ring-2 focus:ring-[#B5D4F4]
+          disabled:opacity-60 disabled:cursor-not-allowed
           ${isDark
             ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
             : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
           }`}
+        {...props}
       >
         {children}
       </select>
@@ -137,7 +147,6 @@ export function SelectField({ label, children, className = "" }) {
 export function SoftSkillBar({ label, percentage }) {
   const { isDark } = useDark();
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
-  const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const S = isDark ? "bg-[#313130]" : "bg-[#F0F4F8]";
 
   const color =

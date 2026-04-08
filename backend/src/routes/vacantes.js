@@ -2,7 +2,7 @@ const router = require("express").Router();
 const db = require("../db");
 const { verificarToken, soloRol } = require("../middleware/auth");
 
-// GET /api/vacantes  — vacantes activas
+// GET /api/vacantes  — vacantes activas (para estudiantes)
 router.get("/", verificarToken, async (req, res) => {
   try {
     const [rows] = await db.query(
@@ -18,11 +18,15 @@ router.get("/", verificarToken, async (req, res) => {
   }
 });
 
-// GET /api/vacantes/empresa/:id  — vacantes de una empresa específica
+// GET /api/vacantes/empresa/:id  — vacantes de una empresa con conteo de postulantes
 router.get("/empresa/:id", verificarToken, async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT * FROM vacantes WHERE empresa_id = ? ORDER BY fecha_creacion DESC",
+      `SELECT v.*,
+              (SELECT COUNT(*) FROM postulaciones p WHERE p.vacante_id = v.id) AS total_postulantes
+       FROM vacantes v
+       WHERE v.empresa_id = ?
+       ORDER BY v.fecha_creacion DESC`,
       [req.params.id]
     );
     res.json(rows);
@@ -33,13 +37,22 @@ router.get("/empresa/:id", verificarToken, async (req, res) => {
 
 // POST /api/vacantes  — publicar vacante (solo empresa)
 router.post("/", verificarToken, soloRol("empresa"), async (req, res) => {
-  const { titulo, descripcion, requisitos } = req.body;
+  const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, remuneracion, direccion, beneficios, fecha_limite } = req.body;
   if (!titulo || !descripcion)
     return res.status(400).json({ error: "titulo y descripcion son requeridos" });
   try {
     const [result] = await db.query(
-      "INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos) VALUES (?, ?, ?, ?)",
-      [req.usuario.id, titulo, descripcion, requisitos || null]
+      `INSERT INTO vacantes
+         (empresa_id, titulo, descripcion, requisitos, area, modalidad, duracion, horario, remuneracion, direccion, beneficios, fecha_limite)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        req.usuario.id, titulo, descripcion,
+        requisitos || null, area || null,
+        modalidad || "presencial",
+        duracion || null, horario || null,
+        remuneracion || null, direccion || null,
+        beneficios || null, fecha_limite || null,
+      ]
     );
     res.status(201).json({ id: result.insertId, mensaje: "Vacante publicada" });
   } catch (err) {
