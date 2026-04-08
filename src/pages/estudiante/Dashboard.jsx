@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge } from "../../components/ui";
+import { getEstudianteById } from "../../services/api";
 
 const posts = [
   {
@@ -104,14 +105,6 @@ const suggestions = [
   { company: "Sodexo Chile", role: "Gestión de Oficina", match: 74, initial: "S", color: "bg-green-600" },
 ];
 
-const profileSteps = [
-  { done: true, label: "Datos personales" },
-  { done: true, label: "Info académica" },
-  { done: true, label: "CV subido" },
-  { done: false, label: "Video de presentación" },
-  { done: false, label: "Subir evidencias" },
-  { done: false, label: "Habilidades completas" },
-];
 
 function Avatar({ initial, color, size = "md" }) {
   const s = size === "lg" ? "w-14 h-14 text-xl" : size === "sm" ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm";
@@ -243,6 +236,11 @@ function PostCard({ post, isDark }) {
   );
 }
 
+const careerDisplay = {
+  "Administracion": "Administración",
+  "Mecanica Automotriz": "Mecánica Automotriz",
+};
+
 export default function EstudianteDashboard() {
   const { isDark } = useDark();
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
@@ -251,21 +249,59 @@ export default function EstudianteDashboard() {
   const BG = isDark ? "bg-[#262624]" : "bg-white";
   const S = isDark ? "bg-[#313130]" : "bg-[#F7F6F3]";
 
+  const location = useLocation();
+  const isEstudiante = location.pathname.startsWith("/estudiante");
+
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+  const [perfil, setPerfil] = useState(null);
+
+  useEffect(() => {
+    if (usuario.id) {
+      getEstudianteById(usuario.id).then(setPerfil).catch(console.error);
+    }
+  }, [usuario.id]);
+
+  const nombre = perfil?.nombre_completo || "";
+  const carrera = perfil?.carrera || "";
+  const semestre = perfil?.semestre || "";
+  const telefono = perfil?.telefono || "";
+  const biografia = perfil?.biografia || "";
+  const promedio = perfil?.promedio || "";
+  const habilidades = perfil?.habilidades || [];
+
+  const nombreCarrera = careerDisplay[carrera] || carrera;
+  const inicial = nombre ? nombre.charAt(0).toUpperCase() : "?";
+  const subtitleParts = [nombreCarrera, semestre ? `${semestre}° semestre` : ""].filter(Boolean);
+
+  const pctCompleto = Math.round(
+    [nombre, carrera, telefono, biografia, semestre ? String(semestre) : "", promedio ? String(promedio) : ""]
+      .filter(Boolean).length / 6 * 100
+  );
+
+  const profileSteps = [
+    { done: !!(nombre && telefono), label: "Datos personales" },
+    { done: !!(carrera && semestre), label: "Info académica" },
+    { done: false, label: "CV subido" },
+    { done: false, label: "Video de presentación" },
+    { done: false, label: "Subir evidencias" },
+    { done: habilidades.length > 0, label: "Habilidades completas" },
+  ];
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_260px] gap-5 items-start">
+    <div className={isEstudiante ? "grid grid-cols-1 lg:grid-cols-[280px_1fr_260px] gap-5 items-start" : "max-w-2xl mx-auto w-full flex flex-col gap-4"}>
 
       {/* ── LEFT SIDEBAR ── */}
-      <div className="flex flex-col gap-4 sticky top-20">
+      {isEstudiante && <div className="flex flex-col gap-4 sticky top-20">
         {/* Profile card */}
         <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
           {/* Banner */}
           <div className="h-16 bg-gradient-to-r from-[#0C447C] to-[#378ADD]" />
           <div className="px-4 pb-4">
             <div className="-mt-7 mb-3">
-              <Avatar initial="C" color="bg-[#185FA5]" size="lg" />
+              <Avatar initial={inicial} color="bg-[#185FA5]" size="lg" />
             </div>
-            <p className={`text-sm font-semibold ${T}`}>Catalina Rodríguez</p>
-            <p className={`text-xs ${M} mt-0.5`}>Administración · 4to semestre</p>
+            <p className={`text-sm font-semibold ${T}`}>{nombre || "Sin nombre"}</p>
+            <p className={`text-xs ${M} mt-0.5`}>{subtitleParts.join(" · ") || "Sin carrera"}</p>
             <p className={`text-xs ${M}`}>C.E. Cardenal J.M. Caro</p>
 
             <div className={`flex gap-4 mt-3 pt-3 border-t ${B}`}>
@@ -296,10 +332,10 @@ export default function EstudianteDashboard() {
         <div className={`rounded-xl border ${B} ${BG} p-4`}>
           <div className="flex items-center justify-between mb-2">
             <p className={`text-xs font-semibold ${T}`}>Completitud del perfil</p>
-            <span className="text-xs font-semibold text-[#378ADD]">72%</span>
+            <span className="text-xs font-semibold text-[#378ADD]">{pctCompleto}%</span>
           </div>
           <div className={`w-full h-1.5 rounded-full ${S} mb-3`}>
-            <div className="h-1.5 bg-[#378ADD] rounded-full" style={{ width: "72%" }} />
+            <div className="h-1.5 bg-[#378ADD] rounded-full" style={{ width: `${pctCompleto}%` }} />
           </div>
           <ul className={`flex flex-col gap-2 text-xs ${M}`}>
             {profileSteps.map((s) => (
@@ -338,14 +374,14 @@ export default function EstudianteDashboard() {
             </Link>
           ))}
         </div>
-      </div>
+      </div>}
 
       {/* ── CENTER FEED ── */}
       <div className="flex flex-col gap-4">
         {/* Create post box */}
         <div className={`rounded-xl border ${B} ${BG} p-4`}>
           <div className="flex items-center gap-3">
-            <Avatar initial="C" color="bg-[#185FA5]" size="sm" />
+            <Avatar initial={inicial} color="bg-[#185FA5]" size="sm" />
             <button
               className={`flex-1 text-left text-sm px-4 py-2.5 rounded-full border ${B} ${S} ${M} transition-colors ${
                 isDark ? "hover:bg-[#3a3a38]" : "hover:bg-[#EEECEA]"
@@ -380,7 +416,7 @@ export default function EstudianteDashboard() {
       </div>
 
       {/* ── RIGHT SIDEBAR ── */}
-      <div className="flex flex-col gap-4 sticky top-20">
+      {isEstudiante && <div className="flex flex-col gap-4 sticky top-20">
         {/* Suggested practices */}
         <div className={`rounded-xl border ${B} ${BG} p-4`}>
           <p className={`text-xs font-semibold ${T} mb-3`}>Prácticas recomendadas</p>
@@ -436,7 +472,7 @@ export default function EstudianteDashboard() {
             </div>
           ))}
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
