@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge } from "../../components/ui";
-import { getEstudianteById, getPublicaciones } from "../../services/api";
+import { getEstudianteById, getPublicaciones, postularAVacante } from "../../services/api";
 import CrearPublicacion from "../../components/CrearPublicacion";
 import VerMasModal from "../../components/VerMasModal";
 
@@ -159,6 +159,7 @@ function FeedCard({ pub, isDark }) {
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(0);
   const [verMas, setVerMas] = useState(false);
+  const [estadoPostula, setEstadoPostula] = useState("idle"); // idle | loading | ok | duplicado | error
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#E8E6E1]";
@@ -166,8 +167,22 @@ function FeedCard({ pub, isDark }) {
   const HV = isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]";
 
   const inicial = pub.autor_nombre ? pub.autor_nombre.charAt(0).toUpperCase() : "?";
-  const badge = TIPO_BADGE[pub.tipo] || { label: pub.tipo, color: "blue" };
+  const badge = pub.tipo === "vacante"
+    ? { label: pub.vacante_tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica", color: pub.vacante_tipo === "puesto_laboral" ? "green" : "orange" }
+    : (TIPO_BADGE[pub.tipo] || { label: pub.tipo, color: "blue" });
   const BASE_URL = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+
+  const handlePostular = async () => {
+    if (!pub.vacante_id || estadoPostula !== "idle") return;
+    setEstadoPostula("loading");
+    try {
+      await postularAVacante(pub.vacante_id);
+      setEstadoPostula("ok");
+    } catch (err) {
+      setEstadoPostula(err.message?.toLowerCase().includes("ya") ? "duplicado" : "error");
+    }
+  };
 
   return (
     <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
@@ -259,6 +274,33 @@ function FeedCard({ pub, isDark }) {
           <Icon icon="mdi:comment-outline" width={16} />
           Ver más
         </button>
+        {pub.tipo === "vacante" && usuario.rol === "estudiante" && (
+          <button
+            onClick={handlePostular}
+            disabled={estadoPostula !== "idle"}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${
+              estadoPostula === "ok"        ? "text-green-600" :
+              estadoPostula === "duplicado" ? "text-amber-500" :
+              estadoPostula === "error"     ? "text-red-500"   :
+              estadoPostula === "loading"   ? M                : M
+            } ${estadoPostula === "idle" ? HV : ""}`}
+          >
+            <Icon
+              icon={
+                estadoPostula === "ok"        ? "mdi:check-circle-outline" :
+                estadoPostula === "duplicado" ? "mdi:information-outline"  :
+                estadoPostula === "error"     ? "mdi:alert-circle-outline" :
+                estadoPostula === "loading"   ? "mdi:loading"              : "mdi:send-outline"
+              }
+              width={16}
+              className={estadoPostula === "loading" ? "animate-spin" : ""}
+            />
+            {estadoPostula === "ok"        ? "Postulado" :
+             estadoPostula === "duplicado" ? "Ya postulaste" :
+             estadoPostula === "error"     ? "Error, reintentar" :
+             estadoPostula === "loading"   ? "Enviando..." : "Postular"}
+          </button>
+        )}
       </div>
 
       {verMas && <VerMasModal pub={pub} onClose={() => setVerMas(false)} />}
