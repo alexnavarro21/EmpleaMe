@@ -307,3 +307,23 @@ export async function crearPublicacion(datos) {
   if (!res.ok) throw new Error(data.error || "Error al crear publicación");
   return data;
 }
+
+export async function getComentarios(publicacionId) {
+  const res = await fetch(`${BASE_URL}/publicaciones/${publicacionId}/comentarios`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener comentarios");
+  return data;
+}
+
+export async function crearComentario(publicacionId, contenido) {
+  const res = await fetch(`${BASE_URL}/publicaciones/${publicacionId}/comentarios`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ contenido }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al comentar");
+  return data;
+}

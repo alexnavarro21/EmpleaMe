@@ -5,6 +5,7 @@ import { useDark } from "../../context/DarkModeContext";
 import { Badge } from "../../components/ui";
 import { getEstudianteById, getPublicaciones } from "../../services/api";
 import CrearPublicacion from "../../components/CrearPublicacion";
+import VerMasModal from "../../components/VerMasModal";
 
 const suggestions = [
   { company: "Banco Estado", role: "Práctica Adm. Finanzas", match: 88, initial: "B", color: "bg-red-500" },
@@ -161,6 +162,7 @@ function tiempoRelativo(fecha) {
 function FeedCard({ pub, isDark }) {
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(0);
+  const [verMas, setVerMas] = useState(false);
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#E8E6E1]";
@@ -254,11 +256,16 @@ function FeedCard({ pub, isDark }) {
           <Icon icon={liked ? "mdi:thumb-up" : "mdi:thumb-up-outline"} width={16} />
           {likes > 0 ? likes : "Me interesa"}
         </button>
-        <button className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${HV} ${M}`}>
+        <button
+          onClick={() => setVerMas(true)}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${HV} ${M}`}
+        >
           <Icon icon="mdi:comment-outline" width={16} />
-          Comentar
+          Ver más
         </button>
       </div>
+
+      {verMas && <VerMasModal pub={pub} onClose={() => setVerMas(false)} />}
     </div>
   );
 }
