@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const db = require("../db");
 const { verificarToken, soloRol } = require("../middleware/auth");
-const upload = require("../middleware/multerConfig");
+const { upload, uploadToS3 } = require("../middleware/multerConfig");
 
 // GET /api/vacantes  — vacantes activas (para estudiantes)
 router.get("/", verificarToken, async (req, res) => {
@@ -57,7 +57,7 @@ router.post("/", verificarToken, soloRol("empresa"), upload.single("archivo_mult
     );
 
     // Crear publicación en el feed vinculada a la vacante
-    const url_multimedia = req.file ? `/uploads/${req.file.filename}` : null;
+    const url_multimedia = req.file ? await uploadToS3(req.file) : null;
     const [[tipoVacante]] = await db.query("SELECT id FROM tipos_publicacion WHERE nombre = 'vacante'");
     if (tipoVacante) {
       await db.query(
