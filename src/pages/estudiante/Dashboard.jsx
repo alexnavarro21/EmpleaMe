@@ -7,11 +7,7 @@ import { getEstudianteById, getPublicaciones } from "../../services/api";
 import CrearPublicacion from "../../components/CrearPublicacion";
 import VerMasModal from "../../components/VerMasModal";
 
-const suggestions = [
-  { company: "Banco Estado", role: "Práctica Adm. Finanzas", match: 88, initial: "B", color: "bg-red-500" },
-  { company: "Entel", role: "Asistente Comercial", match: 80, initial: "E", color: "bg-[#185FA5]" },
-  { company: "Sodexo Chile", role: "Gestión de Oficina", match: 74, initial: "S", color: "bg-green-600" },
-];
+const AVATAR_COLORS = ["bg-[#185FA5]", "bg-red-500", "bg-green-600", "bg-purple-600", "bg-amber-500"];
 
 function Avatar({ initial, color, size = "md" }) {
   const s = size === "lg" ? "w-14 h-14 text-xl" : size === "sm" ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm";
@@ -436,24 +432,31 @@ export default function EstudianteDashboard() {
       {/* ── RIGHT SIDEBAR ── */}
       {isEstudiante && <div className="flex flex-col gap-4 sticky top-20">
         {/* Suggested practices */}
-        <div className={`rounded-xl border ${B} ${BG} p-4`}>
-          <p className={`text-xs font-semibold ${T} mb-3`}>Prácticas recomendadas</p>
-          {suggestions.map((s, i) => (
-            <div key={s.company} className={`flex items-center gap-3 ${i < suggestions.length - 1 ? `pb-3 mb-3 border-b ${B}` : ""}`}>
-              <Avatar initial={s.initial} color={s.color} size="sm" />
-              <div className="flex-1 min-w-0">
-                <p className={`text-xs font-semibold ${T} truncate`}>{s.company}</p>
-                <p className={`text-xs ${M} truncate`}>{s.role}</p>
-              </div>
-              <button className="text-xs font-medium text-[#185FA5] hover:text-[#0C447C] border border-[#185FA5] hover:bg-[#E6F1FB] px-2 py-0.5 rounded-full transition-colors flex-shrink-0">
-                Ver
-              </button>
+        {(() => {
+          const vacantes = publicaciones.filter((p) => p.tipo === "vacante").slice(0, 3);
+          return (
+            <div className={`rounded-xl border ${B} ${BG} p-4`}>
+              <p className={`text-xs font-semibold ${T} mb-3`}>Prácticas recomendadas</p>
+              {vacantes.length === 0 ? (
+                <p className={`text-xs ${M}`}>No hay prácticas publicadas aún.</p>
+              ) : (
+                vacantes.map((v, i) => {
+                  const inicial = v.autor_nombre ? v.autor_nombre.charAt(0).toUpperCase() : "?";
+                  const color = AVATAR_COLORS[i % AVATAR_COLORS.length];
+                  return (
+                    <div key={v.id} className={`flex items-center gap-3 ${i < vacantes.length - 1 ? `pb-3 mb-3 border-b ${B}` : ""}`}>
+                      <Avatar initial={inicial} color={color} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-xs font-semibold ${T} truncate`}>{v.autor_nombre}</p>
+                        <p className={`text-xs ${M} truncate`}>{v.titulo || v.area || "Práctica"}</p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
-          ))}
-          <Link to="/estudiante/perfil" className="block text-center mt-1 text-xs text-[#378ADD] hover:underline">
-            Ver todas →
-          </Link>
-        </div>
+          );
+        })()}
 
         {/* Badges */}
         <div className={`rounded-xl border ${B} ${BG} p-4`}>
