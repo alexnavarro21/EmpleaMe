@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, PrimaryButton, SecondaryButton, FormField, TextAreaField, SelectField, PageHeader } from "../../components/ui";
-import { crearVacante } from "../../services/api";
+import { crearVacante, getHabilidades } from "../../services/api";
 import FileUploader from "../../components/FileUploader";
 
 const modalidades = [
@@ -28,12 +28,24 @@ export default function EmpresaPublicarVacante() {
   const [beneficios, setBeneficios] = useState("");
   const [fechaLimite, setFechaLimite] = useState("");
   const [archivo, setArchivo] = useState(null);
+  const [habilidadesSeleccionadas, setHabilidadesSeleccionadas] = useState([]);
+  const [catalogoHabilidades, setCatalogoHabilidades] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
+
+  useEffect(() => {
+    getHabilidades().then(setCatalogoHabilidades).catch(console.error);
+  }, []);
+
+  function toggleHabilidad(id) {
+    setHabilidadesSeleccionadas((prev) =>
+      prev.includes(id) ? prev.filter((h) => h !== id) : [...prev, id]
+    );
+  }
 
   const handlePublicar = async () => {
     if (!titulo.trim() || !descripcion.trim()) {
@@ -47,6 +59,7 @@ export default function EmpresaPublicarVacante() {
         titulo, descripcion, requisitos, area, modalidad,
         duracion, horario, remuneracion, direccion, beneficios,
         fecha_limite: fechaLimite || undefined,
+        habilidades: habilidadesSeleccionadas,
       }, archivo);
       navigate("/empresa/dashboard");
     } catch (err) {
@@ -154,6 +167,42 @@ export default function EmpresaPublicarVacante() {
               value={beneficios}
               onChange={(e) => setBeneficios(e.target.value)}
             />
+            {catalogoHabilidades.length > 0 && (
+              <div className="mb-4">
+                <label className={`block text-xs mb-2 ${M}`}>Habilidades que buscas</label>
+                {["tecnica", "blanda"].map((cat) => {
+                  const grupo = catalogoHabilidades.filter((h) => h.categoria === cat);
+                  if (grupo.length === 0) return null;
+                  return (
+                    <div key={cat} className="mb-3">
+                      <p className={`text-xs font-medium ${T} mb-1.5 capitalize`}>
+                        {cat === "tecnica" ? "Técnicas" : "Blandas"}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {grupo.map((h) => {
+                          const activo = habilidadesSeleccionadas.includes(h.id);
+                          return (
+                            <button
+                              key={h.id}
+                              type="button"
+                              onClick={() => toggleHabilidad(h.id)}
+                              className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+                                activo
+                                  ? "bg-[#185FA5] border-[#185FA5] text-white"
+                                  : `${B} ${M} hover:border-[#378ADD] hover:text-[#378ADD]`
+                              }`}
+                            >
+                              {h.nombre}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             <FormField
               label="Fecha límite de postulación"
               type="date"
@@ -202,6 +251,18 @@ export default function EmpresaPublicarVacante() {
                 {area && <span className="text-xs bg-[#E6F1FB] text-[#185FA5] px-2 py-0.5 rounded-full">{area}</span>}
                 <span className="text-xs bg-[#E6F1FB] text-[#185FA5] px-2 py-0.5 rounded-full capitalize">{modalidad}</span>
               </div>
+              {habilidadesSeleccionadas.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {habilidadesSeleccionadas.map((id) => {
+                    const h = catalogoHabilidades.find((x) => x.id === id);
+                    return h ? (
+                      <span key={id} className="text-xs bg-[#185FA5]/10 text-[#185FA5] border border-[#185FA5]/30 px-2 py-0.5 rounded-full">
+                        {h.nombre}
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              )}
             </div>
           </Card>
 
