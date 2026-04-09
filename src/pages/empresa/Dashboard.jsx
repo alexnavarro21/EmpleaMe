@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, StatCard, PageHeader, PrimaryButton } from "../../components/ui";
-import { getVacantesEmpresa, getPostulantesEmpresa, actualizarEstadoPostulacion, iniciarConversacion } from "../../services/api";
+import { getVacantesEmpresa, getPostulantesEmpresa, actualizarEstadoPostulacion, iniciarConversacion, activarVacante, desactivarVacante } from "../../services/api";
 import PostulantesVacanteModal from "../../components/PostulantesVacanteModal";
 
 const statusColor = { activa: "green", cerrada: "gray", pausada: "yellow" };
@@ -23,6 +23,7 @@ export default function EmpresaDashboard() {
   const [loading, setLoading] = useState(true);
   const [contactandoId, setContactandoId] = useState(null);
   const [vacanteSeleccionada, setVacanteSeleccionada] = useState(null);
+  const [toggling, setToggling] = useState(null);
 
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
@@ -43,6 +44,24 @@ export default function EmpresaDashboard() {
     }
     cargarDatos();
   }, [usuario.id]);
+
+  const handleToggleVacante = async (vacante) => {
+    setToggling(vacante.id);
+    try {
+      if (vacante.esta_activa) {
+        await desactivarVacante(vacante.id);
+      } else {
+        await activarVacante(vacante.id);
+      }
+      setVacantes((prev) =>
+        prev.map((v) => v.id === vacante.id ? { ...v, esta_activa: !v.esta_activa } : v)
+      );
+    } catch (err) {
+      console.error("Error al cambiar estado de vacante:", err);
+    } finally {
+      setToggling(null);
+    }
+  };
 
   const handleContactar = async (estudianteId) => {
     setContactandoId(estudianteId);
@@ -68,6 +87,7 @@ export default function EmpresaDashboard() {
   };
 
   const vacantesActivas = vacantes.filter((v) => v.esta_activa).length;
+  const vacantesInactivas = vacantes.length - vacantesActivas;
   const totalPostulantes = vacantes.reduce((acc, v) => acc + (v.total_postulantes || 0), 0);
 
   if (loading) {
@@ -97,8 +117,8 @@ export default function EmpresaDashboard() {
 
       <div className="grid grid-cols-4 gap-4 mb-6">
         <StatCard label="Vacantes activas" value={String(vacantesActivas)} sub={`${vacantes.length} en total`} />
+        <StatCard label="Vacantes inactivas" value={String(vacantesInactivas)} sub="Cerradas o pausadas" subColor="text-[#888780]" />
         <StatCard label="Total postulantes" value={String(totalPostulantes)} sub="Acumulado" />
-        <StatCard label="Vacantes" value={String(vacantes.length)} sub="Publicadas" />
         <StatCard label="Postulantes recientes" value={String(postulantes.length)} sub="Últimas 20" />
       </div>
 
@@ -117,24 +137,42 @@ export default function EmpresaDashboard() {
           ) : (
             <div className="flex flex-col gap-3">
               {vacantes.map((v) => (
-                <div key={v.id} className={`p-3 rounded-lg border ${B}`}>
+                <div key={v.id} className={`p-3 rounded-lg border ${B} ${!v.esta_activa ? (isDark ? "opacity-60" : "opacity-70") : ""}`}>
                   <div className="flex items-center justify-between mb-1">
-                    <p className={`text-sm font-medium ${T}`}>{v.titulo}</p>
+                    <p className={`text-sm font-medium ${T} truncate pr-2`}>{v.titulo}</p>
                     <Badge color={v.esta_activa ? "green" : "gray"}>
-                      {v.esta_activa ? "activa" : "cerrada"}
+                      {v.esta_activa ? "activa" : "inactiva"}
                     </Badge>
                   </div>
                   <p className={`text-xs ${M} mb-2`}>
-                    {v.area || "—"} · {v.modalidad || "presencial"}
+                    {v.tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica"} · {v.area || "—"} · {v.modalidad || "presencial"}
                   </p>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <span className={`text-xs ${M}`}>{v.total_postulantes || 0} postulantes</span>
-                    <button
-                      onClick={() => setVacanteSeleccionada(v)}
-                      className="text-xs text-[#378ADD] hover:underline"
-                    >
-                      Ver postulantes →
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleToggleVacante(v)}
+                        disabled={toggling === v.id}
+                        className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors ${
+                          v.esta_activa
+                            ? "bg-red-50 text-red-600 hover:bg-red-100"
+                            : "bg-green-50 text-green-700 hover:bg-green-100"
+                        } disabled:opacity-50`}
+                      >
+                        <Icon
+                          icon={toggling === v.id ? "mdi:loading" : v.esta_activa ? "mdi:pause-circle-outline" : "mdi:play-circle-outline"}
+                          width={14}
+                          className={toggling === v.id ? "animate-spin" : ""}
+                        />
+                        {v.esta_activa ? "Desactivar" : "Activar"}
+                      </button>
+                      <button
+                        onClick={() => setVacanteSeleccionada(v)}
+                        className="text-xs text-[#378ADD] hover:underline"
+                      >
+                        Ver postulantes →
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}

@@ -7,6 +7,13 @@ router.post("/", verificarToken, soloRol("estudiante"), async (req, res) => {
   const { vacante_id } = req.body;
   if (!vacante_id) return res.status(400).json({ error: "vacante_id es requerido" });
   try {
+    const [[vacante]] = await db.query(
+      "SELECT esta_activa FROM vacantes WHERE id = ?",
+      [vacante_id]
+    );
+    if (!vacante) return res.status(404).json({ error: "Vacante no encontrada" });
+    if (!vacante.esta_activa) return res.status(403).json({ error: "Esta vacante ya no está activa" });
+
     const [result] = await db.query(
       "INSERT INTO postulaciones (vacante_id, estudiante_id) VALUES (?, ?)",
       [vacante_id, req.usuario.id]

@@ -118,4 +118,19 @@ router.put("/:id/desactivar", verificarToken, soloRol("empresa"), async (req, re
   }
 });
 
+// PUT /api/vacantes/:id/activar  — reactivar vacante (solo empresa)
+router.put("/:id/activar", verificarToken, soloRol("empresa"), async (req, res) => {
+  try {
+    const [result] = await db.query(
+      "UPDATE vacantes SET esta_activa = TRUE WHERE id = ? AND empresa_id = ?",
+      [req.params.id, req.usuario.id]
+    );
+    if (result.affectedRows === 0)
+      return res.status(404).json({ error: "Vacante no encontrada o sin permisos" });
+    res.json({ mensaje: "Vacante activada" });
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
 module.exports = router;

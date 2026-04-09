@@ -57,6 +57,26 @@ export async function getVacantesEmpresa(empresaId) {
   return data;
 }
 
+export async function desactivarVacante(vacanteId) {
+  const res = await fetch(`${BASE_URL}/vacantes/${vacanteId}/desactivar`, {
+    method: "PUT",
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al desactivar vacante");
+  return data;
+}
+
+export async function activarVacante(vacanteId) {
+  const res = await fetch(`${BASE_URL}/vacantes/${vacanteId}/activar`, {
+    method: "PUT",
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al activar vacante");
+  return data;
+}
+
 export async function crearVacante(datos, archivo = null) {
   let body, headers;
   if (archivo) {
