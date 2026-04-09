@@ -44,9 +44,9 @@ export default function Layout() {
   const { isDark, setIsDark } = useDark();
   const location = useLocation();
 
-  const role = location.pathname.startsWith("/admin")
+  const role = location.pathname.startsWith("/admin/") || location.pathname === "/admin"
     ? "admin"
-    : location.pathname.startsWith("/empresa")
+    : location.pathname.startsWith("/empresa/") || location.pathname === "/empresa"
     ? "empresa"
     : "estudiante";
 
