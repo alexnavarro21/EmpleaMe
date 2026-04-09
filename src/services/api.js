@@ -37,6 +37,15 @@ export async function registrarUsuario({ correo, contrasena, rol, nombre_complet
   return data; // { mensaje, id }
 }
 
+// ── Habilidades ───────────────────────────────────────────────────────────────
+
+export async function getHabilidades() {
+  const res = await fetch(`${BASE_URL}/habilidades`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener habilidades");
+  return data; // [{ id, nombre, categoria }]
+}
+
 // ── Vacantes ──────────────────────────────────────────────────────────────────
 
 export async function getVacantesEmpresa(empresaId) {
@@ -52,7 +61,11 @@ export async function crearVacante(datos, archivo = null) {
   let body, headers;
   if (archivo) {
     const formData = new FormData();
-    Object.entries(datos).forEach(([k, v]) => { if (v !== undefined) formData.append(k, v); });
+    Object.entries(datos).forEach(([k, v]) => {
+      if (v === undefined) return;
+      // Arrays (habilidades) se serializan como JSON
+      formData.append(k, Array.isArray(v) ? JSON.stringify(v) : v);
+    });
     formData.append("archivo_multimedia", archivo);
     body = formData;
     headers = { Authorization: `Bearer ${getToken()}` };
