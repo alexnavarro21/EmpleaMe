@@ -3,102 +3,8 @@ import { Link, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge } from "../../components/ui";
-import { getEstudianteById } from "../../services/api";
+import { getEstudianteById, getPublicaciones } from "../../services/api";
 import CrearPublicacion from "../../components/CrearPublicacion";
-
-const posts = [
-  {
-    id: 1,
-    type: "match",
-    company: "Automotriz Salinas",
-    companyInitial: "A",
-    companyColor: "bg-[#185FA5]",
-    role: "Asistente Administrativo",
-    time: "Hace 2 horas",
-    content:
-      "¡Tu perfil fue destacado para la práctica en Gestión Administrativa! Automotriz Salinas está buscando candidatos con tus competencias.",
-    match: 92,
-    badge: { label: "Match", color: "blue" },
-    icon: "fluent:handshake-32-regular",
-    likes: 0,
-    liked: false,
-    area: "Administración",
-    location: "Santiago, RM",
-  },
-  {
-    id: 2,
-    type: "vacante",
-    company: "ContaServ Chile",
-    companyInitial: "C",
-    companyColor: "bg-emerald-600",
-    role: "Practicante Contabilidad",
-    time: "Hace 4 horas",
-    content:
-      "Estamos buscando estudiantes de Contabilidad o Administración para práctica profesional. Modalidad híbrida, 6 meses de duración. Ideal para quienes quieren su primera experiencia real en una empresa contable.",
-    match: 85,
-    badge: { label: "Práctica", color: "orange" },
-    icon: "temaki:suitcase",
-    likes: 5,
-    liked: false,
-    area: "Contabilidad",
-    location: "Providencia, RM",
-    tags: ["Contabilidad", "Excel", "Atención al cliente"],
-  },
-  {
-    id: 3,
-    type: "evaluacion",
-    company: "Prof. Morales · C.E. Cardenal J.M. Caro",
-    companyInitial: "P",
-    companyColor: "bg-purple-600",
-    role: "Evaluación de competencias",
-    time: "Ayer",
-    content:
-      "Tus competencias técnicas han sido evaluadas. Obtuviste 6.2 / 7.0 en la rúbrica de Habilidades de Oficina. ¡Sigue así!",
-    match: null,
-    badge: { label: "Evaluación", color: "green" },
-    icon: "mdi:clipboard-list-outline",
-    likes: 2,
-    liked: false,
-    area: null,
-    nota: "6.2 / 7.0",
-  },
-  {
-    id: 4,
-    type: "logro",
-    company: "EmpleaMe",
-    companyInitial: "E",
-    companyColor: "bg-[#378ADD]",
-    role: "Insignia desbloqueada",
-    time: "Hace 3 días",
-    content:
-      '¡Completaste tu perfil al 100% y obtuviste la insignia "Perfil Destacado"! Los estudiantes con perfil completo tienen 3x más chances de ser contactados.',
-    match: null,
-    badge: { label: "Logro", color: "yellow" },
-    icon: "solar:medal-ribbons-star-bold-duotone",
-    likes: 12,
-    liked: false,
-    area: null,
-  },
-  {
-    id: 5,
-    type: "vacante",
-    company: "Mutual de Seguridad",
-    companyInitial: "M",
-    companyColor: "bg-orange-500",
-    role: "Asistente de Gestión",
-    time: "Hace 4 días",
-    content:
-      "Buscamos practicante para apoyar área de gestión documental y atención de usuarios internos. Excelente ambiente de trabajo y posibilidad de continuidad.",
-    match: 78,
-    badge: { label: "Práctica", color: "orange" },
-    icon: "temaki:suitcase",
-    likes: 3,
-    liked: false,
-    area: "Administración",
-    location: "Las Condes, RM",
-    tags: ["Gestión", "Documentación", "Office"],
-  },
-];
 
 const suggestions = [
   { company: "Banco Estado", role: "Práctica Adm. Finanzas", match: 88, initial: "B", color: "bg-red-500" },
@@ -236,6 +142,84 @@ function PostCard({ post, isDark }) {
   );
 }
 
+const TIPO_BADGE = {
+  vacante:    { label: "Práctica",   color: "orange" },
+  logro:      { label: "Logro",      color: "yellow" },
+  evaluacion: { label: "Evaluación", color: "green"  },
+  match:      { label: "Match",      color: "blue"   },
+  general:    { label: "General",    color: "blue"   },
+};
+
+function tiempoRelativo(fecha) {
+  const diff = Math.floor((Date.now() - new Date(fecha)) / 1000);
+  if (diff < 60)   return "Ahora mismo";
+  if (diff < 3600) return `Hace ${Math.floor(diff / 60)} min`;
+  if (diff < 86400) return `Hace ${Math.floor(diff / 3600)} h`;
+  return `Hace ${Math.floor(diff / 86400)} días`;
+}
+
+function FeedCard({ pub, isDark }) {
+  const [liked, setLiked] = useState(false);
+  const [likes, setLikes] = useState(0);
+  const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
+  const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
+  const B = isDark ? "border-[#3a3a38]" : "border-[#E8E6E1]";
+  const BG = isDark ? "bg-[#262624]" : "bg-white";
+  const HV = isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]";
+
+  const inicial = pub.autor_nombre ? pub.autor_nombre.charAt(0).toUpperCase() : "?";
+  const badge = TIPO_BADGE[pub.tipo] || { label: pub.tipo, color: "blue" };
+  const BASE_URL = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
+
+  return (
+    <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
+      <div className="flex items-start justify-between px-4 pt-4 pb-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#185FA5] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+            {inicial}
+          </div>
+          <div>
+            <p className={`text-sm font-semibold leading-tight ${T}`}>{pub.autor_nombre}</p>
+            <p className={`text-xs ${M}`}>{tiempoRelativo(pub.publicado_en)}</p>
+          </div>
+        </div>
+        <Badge color={badge.color}>{badge.label}</Badge>
+      </div>
+
+      {pub.contenido && (
+        <div className="px-4 pb-3">
+          <p className={`text-sm leading-relaxed ${T}`}>{pub.contenido}</p>
+        </div>
+      )}
+
+      {pub.url_multimedia && (
+        <div className="px-4 pb-3">
+          <img
+            src={`${BASE_URL}${pub.url_multimedia}`}
+            alt="Multimedia"
+            className="rounded-lg max-h-72 w-full object-cover border"
+          />
+        </div>
+      )}
+
+      <div className={`border-t ${B}`} />
+      <div className="flex items-center px-2 py-1">
+        <button
+          onClick={() => { setLiked((l) => !l); setLikes((n) => liked ? n - 1 : n + 1); }}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${HV} ${liked ? "text-[#378ADD]" : M}`}
+        >
+          <Icon icon={liked ? "mdi:thumb-up" : "mdi:thumb-up-outline"} width={16} />
+          {likes > 0 ? likes : "Me interesa"}
+        </button>
+        <button className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${HV} ${M}`}>
+          <Icon icon="mdi:comment-outline" width={16} />
+          Comentar
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const careerDisplay = {
   "Administracion": "Administración",
   "Mecanica Automotriz": "Mecánica Automotriz",
@@ -254,11 +238,17 @@ export default function EstudianteDashboard() {
 
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
   const [perfil, setPerfil] = useState(null);
+  const [publicaciones, setPublicaciones] = useState([]);
+
+  const cargarPublicaciones = () => {
+    getPublicaciones().then(setPublicaciones).catch(console.error);
+  };
 
   useEffect(() => {
     if (usuario.id) {
       getEstudianteById(usuario.id).then(setPerfil).catch(console.error);
     }
+    cargarPublicaciones();
   }, [usuario.id]);
 
   const nombre = perfil?.nombre_completo || "";
@@ -378,14 +368,19 @@ export default function EstudianteDashboard() {
 
       {/* ── CENTER FEED ── */}
       <div className="flex flex-col gap-4">
-        
-        {/* COMPONENTE DE PUBLICACIÓN REAL INSERTADO AQUÍ */}
-        <CrearPublicacion />
+        <CrearPublicacion onPublicado={cargarPublicaciones} />
 
-        {/* Feed posts */}
-        {posts.map((post) => (
-          <PostCard key={post.id} post={post} isDark={isDark} />
-        ))}
+        {publicaciones.length === 0 ? (
+          <div className={`rounded-xl border ${B} ${BG} p-10 text-center ${M}`}>
+            <Icon icon="mdi:newspaper-variant-outline" width={40} className="mx-auto mb-3 opacity-40" />
+            <p className={`text-sm font-medium ${T}`}>Aún no hay publicaciones</p>
+            <p className="text-xs mt-1">¡Sé el primero en compartir algo!</p>
+          </div>
+        ) : (
+          publicaciones.map((pub) => (
+            <FeedCard key={pub.id} pub={pub} isDark={isDark} />
+          ))
+        )}
       </div>
 
       {/* ── RIGHT SIDEBAR ── */}

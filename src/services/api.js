@@ -278,18 +278,25 @@ export async function getPublicaciones() {
   return data;
 }
 
-export async function crearPublicacion(formData) {
+export async function crearPublicacion(datos) {
+  // Si trae archivo usamos multipart/form-data (requiere multer en backend)
+  // Si no, enviamos JSON para compatibilidad con el backend actual
+  const tieneArchivo = datos instanceof FormData && datos.get("archivo_multimedia");
+
   const res = await fetch(`${BASE_URL}/publicaciones`, {
     method: "POST",
-    // ⚠️ IMPORTANTE: Solo enviamos el Token. 
-    // NO usamos authHeaders() porque no queremos el Content-Type: application/json.
-    // El navegador pondrá automáticamente 'multipart/form-data' al ver que es un FormData.
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
-    body: formData, // Se envía crudo, SIN JSON.stringify()
+    headers: tieneArchivo
+      ? { Authorization: `Bearer ${getToken()}` }
+      : authHeaders(),
+    body: tieneArchivo
+      ? datos
+      : JSON.stringify({
+          titulo:      datos.get("titulo"),
+          contenido:   datos.get("contenido"),
+          tipo_nombre: datos.get("tipo_nombre"),
+        }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al crear publicación");
-  return data; 
+  return data;
 }

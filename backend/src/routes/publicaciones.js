@@ -1,52 +1,36 @@
 const router = require("express").Router();
 const db = require("../db");
 const { verificarToken } = require("../middleware/auth");
-const upload = require("../middleware/multerConfig"); // 👈 1. IMPORTAMOS MULTER
+const upload = require("../middleware/multerConfig");
 
-// POST /api/publicaciones — crear publicación (Soporta archivos y detecta errores)
+// POST /api/publicaciones — crear publicación con soporte de archivos
 router.post("/", verificarToken, upload.single("archivo_multimedia"), async (req, res) => {
-  
-  // --- EL DETECTOR ---
-  console.log("\n====== NUEVO INTENTO DE PUBLICACIÓN ======");
-  console.log("1. Datos de texto (req.body):", req.body);
-  console.log("2. Archivo (req.file):", req.file);
-  console.log("=========================================\n");
-
   const { titulo, contenido, tipo_nombre, vacante_id, tipo } = req.body;
-  const archivo = req.file; // AQUÍ CAE EL ARCHIVO FÍSICO
-  
-  // Ajustes de variables por defecto
+  const archivo = req.file;
+
   const tituloFinal = titulo || "Actualización de estado";
-  const tipoFinal = tipo_nombre || tipo || (archivo ? "multimedia" : "texto");
+  const tipoFinal = tipo_nombre || tipo || (archivo ? "multimedia" : "general");
 
   try {
     const [tipoDb] = await db.query(
       "SELECT id FROM tipos_publicacion WHERE nombre = ?",
       [tipoFinal]
     );
-    
-    const tipoId = tipoDb.length > 0 ? tipoDb[0].id : 1; 
+    const tipoId = tipoDb.length > 0 ? tipoDb[0].id : 1;
 
-    let url_multimedia = null;
-    if (archivo) {
-      url_multimedia = `/uploads/${archivo.filename}`;
-    }
+    const url_multimedia = archivo ? `/uploads/${archivo.filename}` : null;
 
     const [result] = await db.query(
       "INSERT INTO publicaciones (autor_id, tipo_id, vacante_id, titulo, contenido, url_multimedia) VALUES (?, ?, ?, ?, ?, ?)",
       [req.usuario.id, tipoId, vacante_id || null, tituloFinal, contenido || null, url_multimedia]
     );
-    
-    res.status(201).json({ 
-      id: result.insertId, 
-      mensaje: "Publicación creada con éxito",
-      url_multimedia 
-    });
+
+    res.status(201).json({ id: result.insertId, mensaje: "Publicación creada con éxito", url_multimedia });
   } catch (err) {
-    console.error("Error al crear:", err);
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }
 });
+
 // GET /api/publicaciones — feed de publicaciones activas
 router.get("/", verificarToken, async (req, res) => {
   try {
@@ -70,51 +54,6 @@ router.get("/", verificarToken, async (req, res) => {
     );
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ error: "Error del servidor", detalle: err.message });
-  }
-});
-
-// POST /api/publicaciones — crear publicación (AHORA SOPORTA ARCHIVOS)
-// 👈 2. AGREGAMOS upload.single('archivo_multimedia') EN LA RUTA
-router.post("/", verificarToken, upload.single("archivo_multimedia"), async (req, res) => {
-  // Nota: Desde React solo enviamos 'contenido' y 'tipo'. Si no viene 'titulo', 
-  // le ponemos un valor por defecto o puedes ajustar el Frontend luego.
-  const { titulo, contenido, tipo_nombre, vacante_id, tipo } = req.body;
-  const archivo = req.file; // 👈 AQUÍ CAE EL ARCHIVO FÍSICO
-  
-  // Ajustamos variables para que no choque con lo que envía React actualmente
-  const tituloFinal = titulo || "Actualización de estado";
-  const tipoFinal = tipo_nombre || tipo || (archivo ? "multimedia" : "texto");
-
-  try {
-    // 1. Buscamos el ID del tipo de publicación
-    const [tipoDb] = await db.query(
-      "SELECT id FROM tipos_publicacion WHERE nombre = ?",
-      [tipoFinal]
-    );
-    
-    // Si no existe el tipo exacto, forzamos al menos un ID válido para que no explote
-    const tipoId = tipoDb.length > 0 ? tipoDb[0].id : 1; 
-
-    // 2. Preparamos la URL del archivo si es que el usuario subió uno
-    let url_multimedia = null;
-    if (archivo) {
-      url_multimedia = `/uploads/${archivo.filename}`;
-    }
-
-    // 3. 👈 INSERTAMOS EN LA BASE DE DATOS (Incluyendo la URL del archivo)
-    const [result] = await db.query(
-      "INSERT INTO publicaciones (autor_id, tipo_id, vacante_id, titulo, contenido, url_multimedia) VALUES (?, ?, ?, ?, ?, ?)",
-      [req.usuario.id, tipoId, vacante_id || null, tituloFinal, contenido || null, url_multimedia]
-    );
-    
-    res.status(201).json({ 
-      id: result.insertId, 
-      mensaje: "Publicación creada con éxito",
-      url_multimedia 
-    });
-  } catch (err) {
-    console.error("Error al crear:", err);
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }
 });
