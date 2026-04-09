@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 import { loginUsuario, registrarUsuario } from "../services/api";
 
@@ -11,7 +10,7 @@ const RUTAS_ROL = {
 };
 
 export default function Login() {
-  const { isDark, setIsDark } = useDark();
+  const { isDark } = useDark();
   const [activeTab, setActiveTab] = useState("login");
 
   // Login state
@@ -96,45 +95,19 @@ export default function Login() {
     <div className={isDark ? "dark" : ""}>
       <div className={`min-h-screen font-sans ${isDark ? "bg-[#1e1e1c]" : "bg-white"}`}>
 
-        {/* Navbar */}
-        <nav className="bg-[#0C447C] h-14 flex items-center justify-between px-8">
-          <span className="text-lg font-medium text-[#E6F1FB] tracking-tight">
-            Emplea<span className="text-[#85B7EB]">Me</span>
-          </span>
-          <div className="flex items-center gap-6">
-            <span className="text-sm text-[#B5D4F4] cursor-pointer hidden md:block">Empleos</span>
-            <span className="text-sm text-[#B5D4F4] cursor-pointer hidden md:block">Empresas</span>
-            <span className="text-sm bg-[#378ADD] text-[#E6F1FB] px-4 py-1.5 rounded-lg cursor-pointer">
-              Publicar práctica
-            </span>
-            <div className="flex items-center gap-1.5">
-              <Icon
-                icon={isDark ? "ph:moon-fill" : "ph:sun-fill"}
-                width={16}
-                className={isDark ? "text-[#85B7EB]" : "text-yellow-300"}
-              />
-              <button
-                onClick={() => setIsDark(!isDark)}
-                title={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-                className={`w-8 h-[18px] rounded-full relative transition-colors duration-200 flex-shrink-0 ${
-                  isDark ? "bg-[#378ADD]" : "bg-[#D3D1C7]"
-                }`}
-              >
-                <span
-                  className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white transition-all duration-200 ${
-                    isDark ? "left-[16px]" : "left-[2px]"
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-        </nav>
-
         {/* Main grid */}
-        <div className="grid md:grid-cols-2 min-h-[calc(100vh-56px)]">
+        <div className="grid md:grid-cols-2 min-h-screen">
 
           {/* Left panel */}
-          <div className={`flex flex-col justify-center px-10 py-16 ${isDark ? "bg-[#02192e]" : "bg-[#042C53]"}`}>
+          <div className={`relative flex flex-col justify-center px-10 py-16 ${isDark ? "bg-[#02192e]" : "bg-[#042C53]"}`}>
+            {/* Logo top-left */}
+            <div className="absolute top-6 left-8 flex items-center gap-2">
+              <img src="/empleame-icono.svg" alt="EmpleaMe" className="h-8 w-8" />
+              <span className="text-lg font-semibold tracking-tight">
+                <span className="text-white">Emplea</span>
+                <span className="text-[#85B7EB]">Me</span>
+              </span>
+            </div>
             <span className="inline-block text-md px-3 py-1 rounded-lg bg-[#185FA5] text-[#B5D4F4] mb-4 w-fit">
               Para estudiantes técnicos
             </span>
