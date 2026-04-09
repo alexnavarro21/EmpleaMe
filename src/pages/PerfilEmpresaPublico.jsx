@@ -1,23 +1,28 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
-import { Card, Badge, SecondaryButton, PageHeader } from "../components/ui";
-import { getEmpresaById, getVacantesEmpresa } from "../services/api";
+import { Card, Badge, SecondaryButton, PrimaryButton, PageHeader } from "../components/ui";
+import { getEmpresaById, getVacantesEmpresa, postularAVacante } from "../services/api";
 
 export default function PerfilEmpresaPublico() {
   const { isDark } = useDark();
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
 
   const [empresa, setEmpresa] = useState(null);
   const [vacantes, setVacantes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  // { [vacanteId]: "idle" | "loading" | "ok" | "error" | "duplicado" }
+  const [postulando, setPostulando] = useState({});
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
+
+  const esEstudiante = location.pathname.startsWith("/estudiante");
 
   useEffect(() => {
     Promise.allSettled([getEmpresaById(id), getVacantesEmpresa(id)])
@@ -28,6 +33,17 @@ export default function PerfilEmpresaPublico() {
       })
       .finally(() => setLoading(false));
   }, [id]);
+
+  const handlePostular = async (vacanteId) => {
+    setPostulando((p) => ({ ...p, [vacanteId]: "loading" }));
+    try {
+      await postularAVacante(vacanteId);
+      setPostulando((p) => ({ ...p, [vacanteId]: "ok" }));
+    } catch (err) {
+      const estado = err.message.toLowerCase().includes("ya") ? "duplicado" : "error";
+      setPostulando((p) => ({ ...p, [vacanteId]: estado }));
+    }
+  };
 
   if (loading) {
     return (
@@ -55,8 +71,8 @@ export default function PerfilEmpresaPublico() {
   return (
     <div>
       <PageHeader
-        title="Perfil de Empresa"
-        subtitle="Información pública"
+        title={empresa.nombre_empresa}
+        subtitle="Perfil de empresa"
         action={<SecondaryButton onClick={() => navigate(-1)}>← Volver</SecondaryButton>}
       />
 
@@ -111,18 +127,55 @@ export default function PerfilEmpresaPublico() {
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {vacantesActivas.map((v) => (
-                  <div key={v.id} className={`p-4 rounded-lg border ${B}`}>
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <p className={`text-sm font-semibold ${T}`}>{v.titulo}</p>
-                      <Badge color="green">Activa</Badge>
+                {vacantesActivas.map((v) => {
+                  const estado = postulando[v.id] || "idle";
+                  return (
+                    <div key={v.id} className={`p-4 rounded-lg border ${B}`}>
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <p className={`text-sm font-semibold ${T}`}>{v.titulo}</p>
+                        <Badge color="green">Activa</Badge>
+                      </div>
+                      <p className={`text-xs ${M} mb-2`}>{v.area || "—"} · {v.modalidad || "Presencial"}</p>
+                      {v.descripcion && (
+                        <p className={`text-xs ${M} mb-3`}>{v.descripcion}</p>
+                      )}
+
+                      {esEstudiante && (
+                        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-dashed" style={{ borderColor: isDark ? "#3a3a38" : "#D3D1C7" }}>
+                          {estado === "ok" ? (
+                            <p className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
+                              <Icon icon="mdi:check-circle" width={15} />
+                              Postulación enviada
+                            </p>
+                          ) : estado === "duplicado" ? (
+                            <p className="flex items-center gap-1.5 text-xs text-amber-600 font-medium">
+                              <Icon icon="mdi:information-outline" width={15} />
+                              Ya postulaste a esta vacante
+                            </p>
+                          ) : estado === "error" ? (
+                            <p className="flex items-center gap-1.5 text-xs text-red-500 font-medium">
+                              <Icon icon="mdi:alert-circle-outline" width={15} />
+                              Error al postular, intenta de nuevo
+                            </p>
+                          ) : (
+                            <PrimaryButton
+                              onClick={() => handlePostular(v.id)}
+                              disabled={estado === "loading"}
+                              className="flex items-center gap-2"
+                            >
+                              {estado === "loading" ? (
+                                <Icon icon="mdi:loading" width={15} className="animate-spin" />
+                              ) : (
+                                <Icon icon="mdi:send-outline" width={15} />
+                              )}
+                              {estado === "loading" ? "Enviando..." : "Postular a esta práctica"}
+                            </PrimaryButton>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <p className={`text-xs ${M} mb-2`}>{v.area || "—"} · {v.modalidad || "Presencial"}</p>
-                    {v.descripcion && (
-                      <p className={`text-xs ${M} line-clamp-2`}>{v.descripcion}</p>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </Card>
