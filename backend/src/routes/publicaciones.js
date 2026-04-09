@@ -31,10 +31,30 @@ router.post("/", verificarToken, upload.single("archivo_multimedia"), async (req
   }
 });
 
+// Detecta si la columna `tipo` ya existe en vacantes (migración 08 aplicada)
+let vacanteTipoDisponible = null;
+async function tieneColumnaTipo() {
+  if (vacanteTipoDisponible !== null) return vacanteTipoDisponible;
+  try {
+    const [cols] = await db.query(
+      "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='vacantes' AND COLUMN_NAME='tipo' LIMIT 1"
+    );
+    vacanteTipoDisponible = cols.length > 0;
+  } catch {
+    vacanteTipoDisponible = false;
+  }
+  return vacanteTipoDisponible;
+}
+
 // GET /api/publicaciones — feed de publicaciones activas (opcionalmente filtrado por autor_id)
 router.get("/", verificarToken, async (req, res) => {
   const { autor_id } = req.query;
   try {
+    const conTipo = await tieneColumnaTipo();
+    const vacanteTipoField = conTipo
+      ? "COALESCE(v.tipo, 'practica') AS vacante_tipo"
+      : "'practica' AS vacante_tipo";
+
     const [rows] = await db.query(
       `SELECT p.id, p.titulo, p.contenido, p.publicado_en, p.vacante_id, p.url_multimedia,
               p.autor_id,
@@ -45,7 +65,7 @@ router.get("/", verificarToken, async (req, res) => {
                 WHEN 'estudiante' THEN est.nombre_completo
                 ELSE 'Centro Educacional'
               END AS autor_nombre,
-              v.tipo AS vacante_tipo, v.area, v.modalidad, v.duracion, v.remuneracion, v.direccion
+              ${vacanteTipoField}, v.area, v.modalidad, v.duracion, v.remuneracion, v.direccion
        FROM publicaciones p
        JOIN tipos_publicacion tp   ON tp.id  = p.tipo_id
        JOIN usuarios u             ON u.id   = p.autor_id

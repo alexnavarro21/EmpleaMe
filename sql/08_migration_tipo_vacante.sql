@@ -2,5 +2,5 @@
 -- Permite distinguir entre práctica profesional y puesto laboral
 
 ALTER TABLE vacantes
-  ADD COLUMN tipo ENUM('practica', 'puesto_laboral') NOT NULL DEFAULT 'practica'
+  ADD COLUMN IF NOT EXISTS tipo ENUM('practica', 'puesto_laboral') NOT NULL DEFAULT 'practica'
   AFTER empresa_id;

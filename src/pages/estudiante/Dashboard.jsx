@@ -9,6 +9,14 @@ import VerMasModal from "../../components/VerMasModal";
 
 const AVATAR_COLORS = ["bg-[#185FA5]", "bg-red-500", "bg-green-600", "bg-purple-600", "bg-amber-500"];
 
+const BASE_URL_GLOBAL = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
+function resolverMedia(url) {
+  if (!url) return null;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  if (url.startsWith("/")) return `${BASE_URL_GLOBAL}${url}`;
+  return `${BASE_URL_GLOBAL}/uploads/${url}`;
+}
+
 function Avatar({ initial, color, size = "md" }) {
   const s = size === "lg" ? "w-14 h-14 text-xl" : size === "sm" ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm";
   return (
@@ -170,7 +178,6 @@ function FeedCard({ pub, isDark }) {
   const badge = pub.tipo === "vacante"
     ? { label: pub.vacante_tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica", color: pub.vacante_tipo === "puesto_laboral" ? "green" : "orange" }
     : (TIPO_BADGE[pub.tipo] || { label: pub.tipo, color: "blue" });
-  const BASE_URL = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
   const handlePostular = async () => {
@@ -261,9 +268,10 @@ function FeedCard({ pub, isDark }) {
       {pub.url_multimedia && (
         <div className="px-4 pb-3">
           <img
-            src={`${BASE_URL}${pub.url_multimedia}`}
+            src={resolverMedia(pub.url_multimedia)}
             alt="Multimedia"
             className="rounded-lg max-h-72 w-full object-cover border"
+            onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
           />
         </div>
       )}
@@ -343,7 +351,7 @@ export default function EstudianteDashboard() {
   };
 
   useEffect(() => {
-    if (usuario.id) {
+    if (usuario.id && usuario.rol === "estudiante") {
       getEstudianteById(usuario.id).then(setPerfil).catch(console.error);
     }
     cargarPublicaciones();

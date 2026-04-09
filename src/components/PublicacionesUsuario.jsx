@@ -28,8 +28,16 @@ function MiniPostCard({ pub, isDark }) {
   const B  = isDark ? "border-[#3a3a38]" : "border-[#E8E6E1]";
   const BG = isDark ? "bg-[#262624]" : "bg-white";
   const HV = isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]";
-  const badge = TIPO_BADGE[pub.tipo] || { label: pub.tipo, color: "blue" };
+  const badge = pub.tipo === "vacante"
+    ? { label: pub.vacante_tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica", color: pub.vacante_tipo === "puesto_laboral" ? "green" : "orange" }
+    : (TIPO_BADGE[pub.tipo] || { label: pub.tipo, color: "blue" });
   const BASE_URL = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
+  function resolverMedia(url) {
+    if (!url) return null;
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
+    if (url.startsWith("/")) return `${BASE_URL}${url}`;
+    return `${BASE_URL}/uploads/${url}`;
+  }
 
   return (
     <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
@@ -53,9 +61,10 @@ function MiniPostCard({ pub, isDark }) {
       {pub.url_multimedia && (
         <div className="px-4 pb-3">
           <img
-            src={`${BASE_URL}${pub.url_multimedia}`}
+            src={resolverMedia(pub.url_multimedia)}
             alt="Multimedia"
             className="rounded-lg max-h-48 w-full object-cover border"
+            onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
           />
         </div>
       )}

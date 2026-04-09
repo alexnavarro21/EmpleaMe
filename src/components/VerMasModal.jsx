@@ -42,6 +42,12 @@ export default function VerMasModal({ pub, onClose }) {
   const S  = isDark ? "bg-[#262624]"    : "bg-[#F7F6F3]";
 
   const BASE_URL = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
+  function resolverMedia(url) {
+    if (!url) return null;
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
+    if (url.startsWith("/")) return `${BASE_URL}${url}`;
+    return `${BASE_URL}/uploads/${url}`;
+  }
   const badge = pub.tipo === "vacante"
     ? badgeVacante(pub.vacante_tipo)
     : (TIPO_BADGE[pub.tipo] || { label: pub.tipo, color: "bg-blue-100 text-blue-700" });
@@ -152,9 +158,10 @@ export default function VerMasModal({ pub, onClose }) {
           {/* Imagen */}
           {pub.url_multimedia && (
             <img
-              src={`${BASE_URL}${pub.url_multimedia}`}
+              src={resolverMedia(pub.url_multimedia)}
               alt="Multimedia"
               className="rounded-xl w-full object-cover max-h-64 mb-4 border"
+              onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
             />
           )}
 
