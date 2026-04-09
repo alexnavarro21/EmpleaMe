@@ -11,13 +11,13 @@ const profilePaths = {
 const navLinks = {
   estudiante: [
     { to: "/estudiante/dashboard", label: "Inicio" },
-    { to: "/estudiante/buscar", label: "Buscar Perfiles" },
+    { to: "/estudiante/buscar", label: "Búsqueda" },
   ],
   empresa: [
     { to: "/empresa/inicio", label: "Inicio" },
     { to: "/empresa/dashboard", label: "Panel" },
     { to: "/empresa/publicar", label: "Publicar Vacante" },
-    { to: "/empresa/buscador", label: "Buscar Estudiantes" },
+    { to: "/empresa/buscador", label: "Búsqueda" },
   ],
   admin: [
     { to: "/admin/inicio", label: "Inicio" },
@@ -27,7 +27,7 @@ const navLinks = {
     { to: "/admin/notas", label: "Importar Notas" },
     { to: "/admin/tests", label: "Tests" },
     { to: "/admin/monitoreo", label: "Monitoreo" },
-    { to: "/admin/buscar", label: "Buscar Perfiles" },
+    { to: "/admin/buscar", label: "Búsqueda" },
   ],
 };
 
