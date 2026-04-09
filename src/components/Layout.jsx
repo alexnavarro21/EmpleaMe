@@ -13,14 +13,12 @@ const navLinks = {
     { to: "/estudiante/dashboard", label: "Inicio" },
     { to: "/estudiante/evidencias", label: "Evidencias" },
     { to: "/estudiante/buscar", label: "Buscar Perfiles" },
-    { to: "/estudiante/mensajeria", label: "Mensajería" },
   ],
   empresa: [
     { to: "/empresa/inicio", label: "Inicio" },
     { to: "/empresa/dashboard", label: "Panel" },
     { to: "/empresa/publicar", label: "Publicar Vacante" },
     { to: "/empresa/buscador", label: "Buscar Estudiantes" },
-    { to: "/empresa/mensajeria", label: "Mensajería" },
   ],
   admin: [
     { to: "/admin/inicio", label: "Inicio" },
@@ -29,7 +27,6 @@ const navLinks = {
     { to: "/admin/evaluaciones", label: "Evaluaciones" },
     { to: "/admin/notas", label: "Importar Notas" },
     { to: "/admin/tests", label: "Tests" },
-    { to: "/admin/mensajeria", label: "Mensajería" },
     { to: "/admin/monitoreo", label: "Monitoreo" },
     { to: "/admin/buscar", label: "Buscar Perfiles" },
   ],
