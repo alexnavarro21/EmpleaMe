@@ -4,7 +4,7 @@ const { verificarToken } = require("../middleware/auth");
 
 // GET /api/mensajes-directos — conversaciones del usuario actual
 router.get("/", verificarToken, async (req, res) => {
-  const { id } = req.usuario;
+  const id = parseInt(req.usuario.id);
   try {
     const [rows] = await db.query(
       `SELECT cd.id, cd.creada_en,
@@ -33,8 +33,8 @@ router.get("/", verificarToken, async (req, res) => {
 
 // POST /api/mensajes-directos — iniciar o recuperar conversación con { destinatario_id }
 router.post("/", verificarToken, async (req, res) => {
-  const { id } = req.usuario;
-  const { destinatario_id } = req.body;
+  const id = parseInt(req.usuario.id);
+  const destinatario_id = parseInt(req.body.destinatario_id);
 
   if (!destinatario_id)
     return res.status(400).json({ error: "destinatario_id es requerido" });
@@ -72,15 +72,15 @@ router.post("/", verificarToken, async (req, res) => {
 
 // GET /api/mensajes-directos/:id/mensajes — mensajes de una conversación
 router.get("/:id/mensajes", verificarToken, async (req, res) => {
-  const { id } = req.usuario;
+  const userId = parseInt(req.usuario.id);
   try {
     const [conv] = await db.query(
       "SELECT * FROM conversaciones_directas WHERE id = ?",
-      [req.params.id]
+      [parseInt(req.params.id)]
     );
     if (conv.length === 0)
       return res.status(404).json({ error: "Conversación no encontrada" });
-    if (conv[0].usuario1_id !== id && conv[0].usuario2_id !== id)
+    if (parseInt(conv[0].usuario1_id) !== userId && parseInt(conv[0].usuario2_id) !== userId)
       return res.status(403).json({ error: "Sin permisos" });
 
     const [rows] = await db.query(
@@ -94,7 +94,7 @@ router.get("/:id/mensajes", verificarToken, async (req, res) => {
     // Marcar como leídos los mensajes del otro
     await db.query(
       "UPDATE mensajes_directos SET leido = TRUE WHERE conversacion_id = ? AND remitente_id != ?",
-      [req.params.id, id]
+      [parseInt(req.params.id), userId]
     );
 
     res.json(rows);
@@ -106,7 +106,8 @@ router.get("/:id/mensajes", verificarToken, async (req, res) => {
 // POST /api/mensajes-directos/:id/mensajes — enviar mensaje
 router.post("/:id/mensajes", verificarToken, async (req, res) => {
   const { contenido } = req.body;
-  const { id } = req.usuario;
+  const userId = parseInt(req.usuario.id);
+  const convId = parseInt(req.params.id);
 
   if (!contenido || !contenido.trim())
     return res.status(400).json({ error: "contenido es requerido" });
@@ -114,16 +115,16 @@ router.post("/:id/mensajes", verificarToken, async (req, res) => {
   try {
     const [conv] = await db.query(
       "SELECT * FROM conversaciones_directas WHERE id = ?",
-      [req.params.id]
+      [convId]
     );
     if (conv.length === 0)
       return res.status(404).json({ error: "Conversación no encontrada" });
-    if (conv[0].usuario1_id !== id && conv[0].usuario2_id !== id)
+    if (parseInt(conv[0].usuario1_id) !== userId && parseInt(conv[0].usuario2_id) !== userId)
       return res.status(403).json({ error: "Sin permisos" });
 
     const [result] = await db.query(
       "INSERT INTO mensajes_directos (conversacion_id, remitente_id, contenido) VALUES (?, ?, ?)",
-      [req.params.id, id, contenido.trim()]
+      [convId, userId, contenido.trim()]
     );
     res.status(201).json({ id: result.insertId, mensaje: "Mensaje enviado" });
   } catch (err) {
