@@ -7,6 +7,7 @@ import { crearPublicacion } from "../services/api";
 
 export default function CrearPublicacion({ onPublicado }) {
   const { isDark } = useDark();
+  const [titulo, setTitulo] = useState("");
   const [contenido, setContenido] = useState("");
   const [archivo, setArchivo] = useState(null);
   const [mostrarUploader, setMostrarUploader] = useState(false);
@@ -17,13 +18,14 @@ export default function CrearPublicacion({ onPublicado }) {
 
     setCargando(true);
     const formData = new FormData();
+    formData.append("titulo", titulo.trim() || "Actualización de estado");
     formData.append("contenido", contenido);
-    formData.append("titulo", "Actualización de estado");
     formData.append("tipo_nombre", "general");
     if (archivo) formData.append("archivo_multimedia", archivo);
 
     try {
       await crearPublicacion(formData);
+      setTitulo("");
       setContenido("");
       setArchivo(null);
       setMostrarUploader(false);
@@ -45,6 +47,12 @@ export default function CrearPublicacion({ onPublicado }) {
         </div>
 
         <div className="flex-1">
+          <input
+            value={titulo}
+            onChange={(e) => setTitulo(e.target.value)}
+            placeholder="Título (opcional)"
+            className={`w-full bg-transparent outline-none text-sm font-semibold mb-2 ${isDark ? "text-[#D3D1C7] placeholder-[#5F5E5A]" : "text-[#2C2C2A] placeholder-[#888780]"}`}
+          />
           <textarea
             value={contenido}
             onChange={(e) => setContenido(e.target.value)}

@@ -186,6 +186,12 @@ function FeedCard({ pub, isDark }) {
         <Badge color={badge.color}>{badge.label}</Badge>
       </div>
 
+      {pub.titulo && pub.titulo !== "Actualización de estado" && (
+        <div className="px-4 pb-1">
+          <p className={`text-sm font-semibold ${T}`}>{pub.titulo}</p>
+        </div>
+      )}
+
       {pub.contenido && (
         <div className="px-4 pb-3">
           <p className={`text-sm leading-relaxed ${T}`}>{pub.contenido}</p>
