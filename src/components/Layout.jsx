@@ -11,11 +11,10 @@ const navLinks = {
     { to: "/estudiante/mensajeria", label: "Mensajería" },
   ],
   empresa: [
-    { to: "/empresa/inicio", label: "Inicio" },
-    { to: "/empresa/dashboard", label: "Dashboard" },
+    { to: "/empresa/dashboard", label: "Inicio" },
+    { to: "/empresa/perfil", label: "Mi Perfil" },
     { to: "/empresa/publicar", label: "Publicar Vacante" },
     { to: "/empresa/buscador", label: "Buscar Estudiantes" },
-    { to: "/empresa/buscar", label: "Buscar Perfiles" },
     { to: "/empresa/mensajeria", label: "Mensajería" },
   ],
   admin: [
