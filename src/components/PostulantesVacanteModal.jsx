@@ -17,7 +17,7 @@ function tiempoRelativo(fecha) {
   return `Hace ${Math.floor(diff / 86400)} días`;
 }
 
-export default function PostulantesVacanteModal({ vacante, onClose }) {
+export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCambiado }) {
   const { isDark } = useDark();
   const navigate = useNavigate();
 
@@ -47,6 +47,7 @@ export default function PostulantesVacanteModal({ vacante, onClose }) {
       setPostulantes((prev) =>
         prev.map((p) => (p.id === postulacionId ? { ...p, estado: nuevoEstado } : p))
       );
+      onEstadoCambiado?.();
     } catch (err) {
       console.error(err);
     } finally {

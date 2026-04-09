@@ -78,9 +78,7 @@ export default function EmpresaDashboard() {
   const handleEstado = async (postulacionId, nuevoEstado) => {
     try {
       await actualizarEstadoPostulacion(postulacionId, nuevoEstado);
-      setPostulantes((prev) =>
-        prev.map((p) => (p.id === postulacionId ? { ...p, estado: nuevoEstado } : p))
-      );
+      setPostulantes((prev) => prev.filter((p) => p.id !== postulacionId));
     } catch (err) {
       console.error("Error actualizando estado:", err);
     }
@@ -119,7 +117,7 @@ export default function EmpresaDashboard() {
         <StatCard label="Vacantes activas" value={String(vacantesActivas)} sub={`${vacantes.length} en total`} />
         <StatCard label="Vacantes inactivas" value={String(vacantesInactivas)} sub="Cerradas o pausadas" subColor="text-[#888780]" />
         <StatCard label="Total postulantes" value={String(totalPostulantes)} sub="Acumulado" />
-        <StatCard label="Postulantes recientes" value={String(postulantes.length)} sub="Últimas 20" />
+        <StatCard label="Postulantes pendientes" value={String(postulantes.length)} sub="Sin revisar" subColor="text-amber-500" />
       </div>
 
       <div className="grid grid-cols-2 gap-6">
@@ -184,13 +182,12 @@ export default function EmpresaDashboard() {
           <div className="flex items-center justify-between mb-4">
             <h2 className={`text-sm font-semibold ${T} flex items-center gap-2`}>
               <Icon icon="mdi:account-group-outline" width={16} className="text-[#378ADD]" />
-              Postulantes recientes
+              Postulantes pendientes
             </h2>
-            <Link to="/empresa/buscador" className="text-xs text-[#378ADD] hover:underline">Ver todos</Link>
           </div>
 
           {postulantes.length === 0 ? (
-            <p className={`text-xs ${M} text-center py-8`}>Aún no hay postulaciones.</p>
+            <p className={`text-xs ${M} text-center py-8`}>No hay postulantes pendientes.</p>
           ) : (
             <div className="flex flex-col gap-3">
               {postulantes.slice(0, 6).map((p) => (
@@ -254,6 +251,7 @@ export default function EmpresaDashboard() {
         <PostulantesVacanteModal
           vacante={vacanteSeleccionada}
           onClose={() => setVacanteSeleccionada(null)}
+          onEstadoCambiado={() => getPostulantesEmpresa().then(setPostulantes).catch(console.error)}
         />
       )}
 

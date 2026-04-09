@@ -46,7 +46,7 @@ router.get("/estudiante", verificarToken, soloRol("estudiante"), async (req, res
   }
 });
 
-// GET /api/postulaciones/empresa  — empresa ve postulantes recientes de todas sus vacantes
+// GET /api/postulaciones/empresa  — empresa ve postulantes pendientes de todas sus vacantes
 router.get("/empresa", verificarToken, soloRol("empresa"), async (req, res) => {
   try {
     const [rows] = await db.query(
@@ -57,7 +57,7 @@ router.get("/empresa", verificarToken, soloRol("empresa"), async (req, res) => {
        FROM postulaciones p
        JOIN perfiles_estudiantes pe ON pe.usuario_id = p.estudiante_id
        JOIN vacantes v ON v.id = p.vacante_id
-       WHERE v.empresa_id = ?
+       WHERE v.empresa_id = ? AND p.estado = 'pendiente'
        ORDER BY p.fecha_creacion DESC
        LIMIT 20`,
       [req.usuario.id]
