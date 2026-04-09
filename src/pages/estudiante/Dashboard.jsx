@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge } from "../../components/ui";
-import { getEstudianteById, getPublicaciones, postularAVacante } from "../../services/api";
+import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones } from "../../services/api";
 import CrearPublicacion from "../../components/CrearPublicacion";
 import VerMasModal from "../../components/VerMasModal";
 
@@ -352,10 +352,17 @@ export default function EstudianteDashboard() {
 
   const location = useLocation();
   const isEstudiante = location.pathname.startsWith("/estudiante");
+  const isEmpresa = location.pathname.startsWith("/empresa");
 
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
   const [perfil, setPerfil] = useState(null);
   const [publicaciones, setPublicaciones] = useState([]);
+
+  // Estado empresa
+  const [empresaPerfil, setEmpresaPerfil] = useState(null);
+  const [empresaVacantes, setEmpresaVacantes] = useState([]);
+  const [empresaPostulantes, setEmpresaPostulantes] = useState([]);
+  const [empresaConversaciones, setEmpresaConversaciones] = useState([]);
 
   const cargarPublicaciones = () => {
     getPublicaciones().then(setPublicaciones).catch(console.error);
@@ -364,6 +371,12 @@ export default function EstudianteDashboard() {
   useEffect(() => {
     if (usuario.id && usuario.rol === "estudiante") {
       getEstudianteById(usuario.id).then(setPerfil).catch(console.error);
+    }
+    if (usuario.id && usuario.rol === "empresa") {
+      getEmpresaById(usuario.id).then(setEmpresaPerfil).catch(console.error);
+      getVacantesEmpresa(usuario.id).then(setEmpresaVacantes).catch(console.error);
+      getPostulantesEmpresa().then(setEmpresaPostulantes).catch(console.error);
+      getConversaciones().then(setEmpresaConversaciones).catch(console.error);
     }
     cargarPublicaciones();
   }, [usuario.id]);
@@ -394,8 +407,73 @@ export default function EstudianteDashboard() {
     { done: habilidades.length > 0, label: "Habilidades completas" },
   ];
 
+  const conSidebar = isEstudiante || isEmpresa;
+  const vacantesActivasEmpresa = empresaVacantes.filter((v) => v.esta_activa);
+  const mensajesNoLeidos = empresaConversaciones.filter((c) => c.no_leidos > 0);
+
   return (
-    <div className={isEstudiante ? "grid grid-cols-1 lg:grid-cols-[280px_1fr_260px] gap-5 items-start" : "max-w-2xl mx-auto w-full flex flex-col gap-4"}>
+    <div className={conSidebar ? "grid grid-cols-1 lg:grid-cols-[280px_1fr_260px] gap-5 items-start" : "max-w-2xl mx-auto w-full flex flex-col gap-4"}>
+
+      {/* ── LEFT SIDEBAR EMPRESA ── */}
+      {isEmpresa && (
+        <div className="flex flex-col gap-4 sticky top-20">
+          {/* Tarjeta empresa */}
+          <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
+            <div className="h-16 bg-gradient-to-r from-[#0C447C] to-[#378ADD]" />
+            <div className="px-4 pb-4">
+              <div className="-mt-7 mb-3">
+                <div className="w-14 h-14 rounded-full bg-[#185FA5] flex items-center justify-center text-white text-xl font-bold border-2 border-white">
+                  {(empresaPerfil?.nombre_empresa || usuario.nombre_empresa || "E")[0].toUpperCase()}
+                </div>
+              </div>
+              <p className={`text-sm font-semibold ${T}`}>{empresaPerfil?.nombre_empresa || usuario.nombre_empresa || "Mi empresa"}</p>
+              <p className={`text-xs ${M} mt-0.5`}>Empresa verificada · EmpleaMe</p>
+
+              <div className={`flex gap-4 mt-3 pt-3 border-t ${B}`}>
+                <div className="text-center">
+                  <p className={`text-base font-semibold ${T}`}>{vacantesActivasEmpresa.length}</p>
+                  <p className={`text-xs ${M}`}>Activas</p>
+                </div>
+                <div className="text-center">
+                  <p className={`text-base font-semibold ${T}`}>{empresaVacantes.reduce((a, v) => a + (v.total_postulantes || 0), 0)}</p>
+                  <p className={`text-xs ${M}`}>Postulantes</p>
+                </div>
+                <div className="text-center">
+                  <p className={`text-base font-semibold text-amber-500`}>{empresaPostulantes.length}</p>
+                  <p className={`text-xs ${M}`}>Pendientes</p>
+                </div>
+              </div>
+
+              <Link
+                to="/empresa/dashboard"
+                className="block text-center mt-3 text-xs font-medium text-[#185FA5] hover:text-[#0C447C] border border-[#185FA5] hover:bg-[#E6F1FB] py-1.5 rounded-lg transition-colors"
+              >
+                Ir al panel
+              </Link>
+            </div>
+          </div>
+
+          {/* Accesos rápidos */}
+          <div className={`rounded-xl border ${B} ${BG} p-4`}>
+            <p className={`text-xs font-semibold ${T} mb-2`}>Accesos rápidos</p>
+            {[
+              { icon: "mdi:plus-circle-outline",    label: "Publicar vacante",   to: "/empresa/publicar"   },
+              { icon: "mdi:view-dashboard-outline", label: "Panel de empresa",   to: "/empresa/dashboard"  },
+              { icon: "mdi:account-search-outline", label: "Buscar estudiantes", to: "/empresa/buscador"   },
+              { icon: "mdi:message-outline",        label: "Mensajería",         to: "/empresa/mensajeria" },
+            ].map((link) => (
+              <Link
+                key={link.label}
+                to={link.to}
+                className={`flex items-center gap-2.5 py-2 text-xs rounded-lg px-2 -mx-2 transition-colors ${isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"} ${M}`}
+              >
+                <Icon icon={link.icon} width={15} className="flex-shrink-0" />
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── LEFT SIDEBAR ── */}
       {isEstudiante && <div className="flex flex-col gap-4 sticky top-20">
@@ -499,6 +577,114 @@ export default function EstudianteDashboard() {
           ))
         )}
       </div>
+
+      {/* ── RIGHT SIDEBAR EMPRESA ── */}
+      {isEmpresa && (
+        <div className="flex flex-col gap-4 sticky top-20">
+
+          {/* Mensajes no leídos */}
+          <div className={`rounded-xl border ${B} ${BG} p-4`}>
+            <div className="flex items-center justify-between mb-3">
+              <p className={`text-xs font-semibold ${T}`}>Mensajes</p>
+              {mensajesNoLeidos.length > 0 && (
+                <span className="text-xs bg-red-100 text-red-600 font-semibold px-2 py-0.5 rounded-full">
+                  {mensajesNoLeidos.length} sin leer
+                </span>
+              )}
+            </div>
+            {empresaConversaciones.length === 0 ? (
+              <p className={`text-xs ${M}`}>Sin conversaciones aún.</p>
+            ) : (
+              <>
+                {empresaConversaciones.slice(0, 4).map((c, i) => {
+                  const nombre = c.nombre_estudiante || c.nombre_empresa || "Usuario";
+                  return (
+                    <Link
+                      key={c.id}
+                      to="/empresa/mensajeria"
+                      state={{ conversacionId: c.id }}
+                      className={`flex items-center gap-2.5 ${i < Math.min(empresaConversaciones.length, 4) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}
+                    >
+                      <div className="w-7 h-7 rounded-full bg-[#185FA5] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                        {nombre[0]?.toUpperCase() || "?"}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-xs font-medium ${T} truncate`}>{nombre}</p>
+                        <p className={`text-xs ${M} truncate`}>{c.ultimo_mensaje || "Sin mensajes"}</p>
+                      </div>
+                      {c.no_leidos > 0 && (
+                        <span className="text-xs bg-[#185FA5] text-white font-semibold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">
+                          {c.no_leidos}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+                <Link to="/empresa/mensajeria" className={`block text-center mt-2 text-xs text-[#378ADD] hover:underline`}>
+                  Ver todos →
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* Últimos postulantes pendientes */}
+          <div className={`rounded-xl border ${B} ${BG} p-4`}>
+            <div className="flex items-center justify-between mb-3">
+              <p className={`text-xs font-semibold ${T}`}>Postulantes pendientes</p>
+              {empresaPostulantes.length > 0 && (
+                <span className="text-xs text-amber-600 font-semibold">{empresaPostulantes.length}</span>
+              )}
+            </div>
+            {empresaPostulantes.length === 0 ? (
+              <p className={`text-xs ${M}`}>Sin postulantes pendientes.</p>
+            ) : (
+              <>
+                {empresaPostulantes.slice(0, 3).map((p, i) => (
+                  <Link
+                    key={p.id}
+                    to={`/empresa/candidato/${p.estudiante_id}`}
+                    className={`flex items-center gap-2.5 ${i < Math.min(empresaPostulantes.length, 3) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}
+                  >
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 bg-[#185FA5]`}>
+                      {p.nombre_completo?.[0]?.toUpperCase() || "?"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-xs font-medium ${T} truncate`}>{p.nombre_completo}</p>
+                      <p className={`text-xs ${M} truncate`}>{p.vacante_titulo || p.carrera}</p>
+                    </div>
+                    <Icon icon="mdi:chevron-right" width={14} className={M} />
+                  </Link>
+                ))}
+                <Link to="/empresa/dashboard" className={`block text-center mt-2 text-xs text-[#378ADD] hover:underline`}>
+                  Ver panel →
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* Vacantes activas resumen */}
+          <div className={`rounded-xl border ${B} ${BG} p-4`}>
+            <p className={`text-xs font-semibold ${T} mb-3`}>Mis vacantes activas</p>
+            {vacantesActivasEmpresa.length === 0 ? (
+              <p className={`text-xs ${M}`}>No tienes vacantes activas.</p>
+            ) : (
+              <>
+                {vacantesActivasEmpresa.slice(0, 3).map((v, i) => (
+                  <div key={v.id} className={`${i < Math.min(vacantesActivasEmpresa.length, 3) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}>
+                    <p className={`text-xs font-medium ${T} truncate`}>{v.titulo}</p>
+                    <p className={`text-xs ${M}`}>
+                      {v.tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica"} · {v.total_postulantes || 0} postulantes
+                    </p>
+                  </div>
+                ))}
+                <Link to="/empresa/dashboard" className={`block text-center mt-2 text-xs text-[#378ADD] hover:underline`}>
+                  Gestionar vacantes →
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── RIGHT SIDEBAR ── */}
       {isEstudiante && <div className="flex flex-col gap-4 sticky top-20">
