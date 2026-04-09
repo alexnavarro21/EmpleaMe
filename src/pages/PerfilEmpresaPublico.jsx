@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 import { Card, Badge, SecondaryButton, PrimaryButton, PageHeader } from "../components/ui";
@@ -8,7 +8,6 @@ import { getEmpresaById, getVacantesEmpresa, postularAVacante } from "../service
 export default function PerfilEmpresaPublico() {
   const { isDark } = useDark();
   const navigate = useNavigate();
-  const location = useLocation();
   const { id } = useParams();
 
   const [empresa, setEmpresa] = useState(null);
@@ -22,7 +21,8 @@ export default function PerfilEmpresaPublico() {
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
 
-  const esEstudiante = location.pathname.startsWith("/estudiante");
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+  const esEstudiante = usuario.rol === "estudiante";
 
   useEffect(() => {
     Promise.allSettled([getEmpresaById(id), getVacantesEmpresa(id)])
