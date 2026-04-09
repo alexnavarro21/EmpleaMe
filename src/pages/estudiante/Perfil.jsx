@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { jsPDF } from "jspdf";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, SecondaryButton, FormField, PageHeader, TextAreaField, SoftSkillBar } from "../../components/ui";
@@ -76,6 +77,104 @@ export default function EstudiantePerfil() {
       setSaving(false);
     }
   };
+const descargarCV = () => {
+    // 1. Crear un nuevo documento PDF (formato A4)
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4"
+    });
+
+    // 2. Configurar colores y fuentes
+    const textColor = "#2C2C2A";
+    const primaryColor = "#185FA5";
+
+    // --- ENCABEZADO ---
+    doc.setTextColor(primaryColor);
+    doc.setFontSize(24);
+    doc.setFont("helvetica", "bold");
+    doc.text(nombre || "Estudiante Sin Nombre", 20, 30);
+
+    doc.setTextColor(textColor);
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${nombreCarrera || "Carrera no especificada"} | Semestre: ${semestre || "N/A"} | Promedio: ${promedio || "N/A"}`, 20, 40);
+
+    // --- CONTACTO ---
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100); // Gris
+    doc.text(`Email: ${usuario.correo || "No especificado"}   |   Teléfono: ${telefono || "No especificado"}`, 20, 46);
+
+    doc.setDrawColor(211, 209, 199); // Línea divisoria
+    doc.line(20, 52, 190, 52);
+
+    // --- BIOGRAFÍA ---
+    doc.setTextColor(primaryColor);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Perfil Profesional", 20, 65);
+
+    doc.setTextColor(textColor);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    // Esto evita que el texto se salga de la página si es muy largo
+    const bioText = doc.splitTextToSize(biografia || "Sin información adicional proporcionada por el estudiante.", 170);
+    doc.text(bioText, 20, 73);
+
+    let currentY = 73 + (bioText.length * 6) + 10; // Calcular dónde quedó el texto para seguir bajando
+
+    // --- HABILIDADES TÉCNICAS ---
+    doc.setTextColor(primaryColor);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Habilidades Técnicas", 20, currentY);
+    
+    currentY += 8;
+    doc.setTextColor(textColor);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    
+    if (habilidadesTecnicas.length > 0) {
+      habilidadesTecnicas.forEach((hab) => {
+        doc.text(`• ${hab.nombre} (${hab.nivel_dominio})`, 25, currentY);
+        currentY += 6;
+      });
+    } else {
+      doc.text("No hay habilidades técnicas registradas.", 20, currentY);
+      currentY += 6;
+    }
+
+    currentY += 10;
+
+    // --- HABILIDADES BLANDAS ---
+    doc.setTextColor(primaryColor);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Habilidades Blandas", 20, currentY);
+    
+    currentY += 8;
+    doc.setTextColor(textColor);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+
+    if (habilidadesBlandas.length > 0) {
+      habilidadesBlandas.forEach((hab) => {
+        doc.text(`• ${hab.nombre}`, 25, currentY);
+        currentY += 6;
+      });
+    } else {
+      doc.text("No hay habilidades blandas registradas.", 20, currentY);
+    }
+
+    // --- PIE DE PÁGINA ---
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text("Documento generado automáticamente por EmpleaMe", 105, 285, { align: "center" });
+
+    // 3. Descargar el archivo
+    const nombreArchivo = nombre ? `CV_${nombre.replace(/\s+/g, '_')}.pdf` : "CV_Estudiante.pdf";
+    doc.save(nombreArchivo);
+  };
 
   const nombreCarrera = careerDisplay[carrera] || carrera;
   const habilidadesTecnicas = habilidades.filter((h) => h.categoria === "tecnica");
@@ -105,7 +204,7 @@ export default function EstudiantePerfil() {
             <SecondaryButton onClick={() => { setEditMode(!editMode); setSaveMsg(""); }}>
               {editMode ? "Cancelar" : "Editar perfil"}
             </SecondaryButton>
-            <PrimaryButton className="flex items-center gap-2">
+            <PrimaryButton className="flex items-center gap-2" onClick={descargarCV}>
               <Icon icon="material-symbols:download" width={16} />
               Descargar CV PDF
             </PrimaryButton>

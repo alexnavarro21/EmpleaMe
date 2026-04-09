@@ -1,5 +1,6 @@
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
+
 function getToken() {
   return localStorage.getItem("token");
 }
@@ -266,7 +267,7 @@ export async function enviarMensaje(conversacionId, contenido) {
   return data;
 }
 
-// ── Publicaciones ─────────────────────────────────────────────────────────────
+// ── Publicaciones (Soporta Archivos Multimedia) ───────────────────────────────
 
 export async function getPublicaciones() {
   const res = await fetch(`${BASE_URL}/publicaciones`, {
@@ -277,13 +278,18 @@ export async function getPublicaciones() {
   return data;
 }
 
-export async function crearPublicacion(datos) {
+export async function crearPublicacion(formData) {
   const res = await fetch(`${BASE_URL}/publicaciones`, {
     method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify(datos),
+    // ⚠️ IMPORTANTE: Solo enviamos el Token. 
+    // NO usamos authHeaders() porque no queremos el Content-Type: application/json.
+    // El navegador pondrá automáticamente 'multipart/form-data' al ver que es un FormData.
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: formData, // Se envía crudo, SIN JSON.stringify()
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al crear publicación");
-  return data; // { id, mensaje }
+  return data; 
 }

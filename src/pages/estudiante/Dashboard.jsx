@@ -4,6 +4,7 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge } from "../../components/ui";
 import { getEstudianteById } from "../../services/api";
+import CrearPublicacion from "../../components/CrearPublicacion";
 
 const posts = [
   {
@@ -104,7 +105,6 @@ const suggestions = [
   { company: "Entel", role: "Asistente Comercial", match: 80, initial: "E", color: "bg-[#185FA5]" },
   { company: "Sodexo Chile", role: "Gestión de Oficina", match: 74, initial: "S", color: "bg-green-600" },
 ];
-
 
 function Avatar({ initial, color, size = "md" }) {
   const s = size === "lg" ? "w-14 h-14 text-xl" : size === "sm" ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm";
@@ -378,36 +378,9 @@ export default function EstudianteDashboard() {
 
       {/* ── CENTER FEED ── */}
       <div className="flex flex-col gap-4">
-        {/* Create post box */}
-        <div className={`rounded-xl border ${B} ${BG} p-4`}>
-          <div className="flex items-center gap-3">
-            <Avatar initial={inicial} color="bg-[#185FA5]" size="sm" />
-            <button
-              className={`flex-1 text-left text-sm px-4 py-2.5 rounded-full border ${B} ${S} ${M} transition-colors ${
-                isDark ? "hover:bg-[#3a3a38]" : "hover:bg-[#EEECEA]"
-              }`}
-            >
-              Comparte una actualización...
-            </button>
-          </div>
-          <div className={`flex gap-1 mt-3 pt-3 border-t ${B}`}>
-            {[
-              { icon: "mdi:file-document-outline", label: "Subir CV" },
-              { icon: "mdi:video-outline", label: "Video" },
-              { icon: "mdi:image-outline", label: "Evidencia" },
-            ].map((btn) => (
-              <button
-                key={btn.label}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${M} ${
-                  isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"
-                }`}
-              >
-                <Icon icon={btn.icon} width={15} />
-                {btn.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        
+        {/* COMPONENTE DE PUBLICACIÓN REAL INSERTADO AQUÍ */}
+        <CrearPublicacion />
 
         {/* Feed posts */}
         {posts.map((post) => (
