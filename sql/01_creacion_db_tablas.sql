@@ -16,6 +16,7 @@ CREATE TABLE usuarios (
     correo VARCHAR(150) UNIQUE NOT NULL,
     contrasena_hash VARCHAR(255) NOT NULL,
     rol ENUM('estudiante', 'empresa', 'centro') NOT NULL,
+    foto_perfil VARCHAR(255) NULL,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

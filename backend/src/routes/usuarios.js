@@ -1,12 +1,49 @@
 const router = require("express").Router();
 const db = require("../db");
 const { verificarToken, soloRol } = require("../middleware/auth");
+const upload = require("../middleware/multerConfig"); // 👈 1. Importamos Multer
+
+// ==========================================
+// RUTAS PARA TODOS LOS USUARIOS AUTENTICADOS
+// ==========================================
+
+// PUT /api/usuarios/avatar — Subir o actualizar foto de perfil
+router.put("/avatar", verificarToken, upload.single("foto_perfil"), async (req, res) => {
+  try {
+    const archivo = req.file;
+    if (!archivo) {
+      return res.status(400).json({ error: "No se detectó ningún archivo." });
+    }
+
+    // Armamos la ruta física donde quedó la imagen
+    const url_foto = `/uploads/${archivo.filename}`;
+
+    // Actualizamos al usuario que hizo la petición
+    await db.query(
+      "UPDATE usuarios SET foto_perfil = ? WHERE id = ?",
+      [url_foto, req.usuario.id]
+    );
+
+    res.json({ 
+      mensaje: "Foto de perfil actualizada con éxito",
+      foto_perfil: url_foto 
+    });
+
+  } catch (err) {
+    console.error("Error al subir avatar:", err);
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// ==========================================
+// RUTAS EXCLUSIVAS PARA ADMINISTRADORES
+// ==========================================
 
 // GET /api/usuarios  — solo centro/admin
 router.get("/", verificarToken, soloRol("centro"), async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT id, correo, rol, fecha_creacion FROM usuarios ORDER BY fecha_creacion DESC"
+      "SELECT id, correo, rol, fecha_creacion, foto_perfil FROM usuarios ORDER BY fecha_creacion DESC"
     );
     res.json(rows);
   } catch (err) {
@@ -25,5 +62,7 @@ router.delete("/:id", verificarToken, soloRol("centro"), async (req, res) => {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }
 });
+
+module.exports = router;
 
 module.exports = router;

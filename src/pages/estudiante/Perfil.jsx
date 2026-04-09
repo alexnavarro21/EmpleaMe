@@ -4,6 +4,7 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, SecondaryButton, FormField, PageHeader, TextAreaField, SoftSkillBar } from "../../components/ui";
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
+import AvatarUsuario from "../../components/AvatarUsuario";
 import { getEstudianteById, actualizarPerfilEstudiante, getPostulacionesEstudiante } from "../../services/api";
 
 const tabs = ["Personal", "Académico", "Habilidades", "Video", "Postulaciones"];
@@ -30,6 +31,7 @@ export default function EstudiantePerfil() {
   const [promedio, setPromedio] = useState("");
   const [habilidades, setHabilidades] = useState([]);
   const [postulaciones, setPostulaciones] = useState([]);
+  const [fotoPerfil, setFotoPerfil] = useState(null);
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -52,6 +54,10 @@ export default function EstudiantePerfil() {
         setSemestre(data.semestre ? String(data.semestre) : "");
         setPromedio(data.promedio ? String(data.promedio) : "");
         setHabilidades(data.habilidades || []);
+        if (data.foto_perfil) {
+          const BASE_URL_BACKEND = import.meta.env.VITE_API_URL?.replace('/api', '') || "https://empleame.up.railway.app";
+          setFotoPerfil(`${BASE_URL_BACKEND}${data.foto_perfil}`);
+        }
       }
       if (posts.status === "fulfilled") setPostulaciones(posts.value);
     }).finally(() => setLoading(false));
@@ -217,8 +223,8 @@ const descargarCV = () => {
         {/* Left: profile card */}
         <div className="flex flex-col gap-4">
           <Card className="text-center">
-            <div className={`w-20 h-20 rounded-full mx-auto mb-3 flex items-center justify-center ${S}`}>
-              <Icon icon="mynaui:user-solid" width={40} className="text-[#378ADD]" />
+            <div className="flex justify-center -mt-4 mb-4">
+              <AvatarUsuario urlInicial={fotoPerfil} />
             </div>
             <p className={`text-base font-semibold ${T}`}>{nombre || "Sin nombre"}</p>
             <p className={`text-xs ${M} mb-2`}>{nombreCarrera || "Sin carrera"}</p>

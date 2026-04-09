@@ -139,6 +139,25 @@ export async function actualizarPerfilEstudiante(id, datos) {
   return data;
 }
 
+// ── Usuarios / Avatar ─────────────────────────────────────────────────────────
+
+export async function actualizarFotoPerfil(formData) {
+  const res = await fetch(`${BASE_URL}/usuarios/avatar`, {
+    method: "PUT",
+    // ⚠️ ATENCIÓN: Solo enviamos el Token. NO usamos authHeaders() 
+    // porque authHeaders() fuerza el "Content-Type": "application/json"
+    // y para enviar imágenes necesitamos que viaje en modo "multipart/form-data".
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: formData, 
+  });
+  
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al actualizar la foto de perfil");
+  return data;
+}
+
 // ── Postulaciones ─────────────────────────────────────────────────────────────
 
 export async function postularAVacante(vacanteId) {
