@@ -241,11 +241,14 @@ export default function EmpresaBuscadorEstudiantes() {
                     <p className={`text-xs ${M} mb-3 line-clamp-2`}>{c.descripcion}</p>
                   )}
                   {c.telefono_contacto && (
-                    <div className={`flex items-center gap-1.5 text-xs ${M}`}>
+                    <div className={`flex items-center gap-1.5 text-xs ${M} mb-3`}>
                       <Icon icon="mdi:phone-outline" width={13} />
                       {c.telefono_contacto}
                     </div>
                   )}
+                  <Link to={`/empresa-publica/${c.usuario_id}`}>
+                    <PrimaryButton className="w-full mt-2">Ver perfil</PrimaryButton>
+                  </Link>
                 </Card>
               ))}
               {filteredCompanies.length === 0 && <EmptyState T={T} M={M} />}

@@ -258,6 +258,9 @@ export default function BuscarPerfiles() {
                       {c.telefono_contacto}
                     </div>
                   )}
+                  <Link to={`/empresa-publica/${c.usuario_id}`}>
+                    <PrimaryButton className="w-full mt-2">Ver perfil</PrimaryButton>
+                  </Link>
                 </Card>
               ))}
               {filteredCompanies.length === 0 && <EmptyState T={T} M={M} />}
