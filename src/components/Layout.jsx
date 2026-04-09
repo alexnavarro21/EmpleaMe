@@ -11,7 +11,6 @@ const profilePaths = {
 const navLinks = {
   estudiante: [
     { to: "/estudiante/dashboard", label: "Inicio" },
-    { to: "/estudiante/evidencias", label: "Evidencias" },
     { to: "/estudiante/buscar", label: "Buscar Perfiles" },
   ],
   empresa: [
