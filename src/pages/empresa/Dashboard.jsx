@@ -207,6 +207,12 @@ export default function EmpresaDashboard() {
                     <p className={`text-xs ${M}`}>
                       {p.carrera} {p.promedio ? `· Nota: ${parseFloat(p.promedio).toFixed(1)}` : ""}
                     </p>
+                    {p.vacante_titulo && (
+                      <p className={`text-xs text-[#378ADD] truncate`}>
+                        <Icon icon="mdi:briefcase-outline" width={11} className="inline mr-0.5 mb-0.5" />
+                        {p.vacante_titulo}
+                      </p>
+                    )}
                   </div>
                   <div className="flex gap-1 flex-shrink-0">
                     {p.estado === "pendiente" && (
