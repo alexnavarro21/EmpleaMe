@@ -211,12 +211,22 @@ function FeedCard({ pub, isDark }) {
         </div>
       )}
 
-      {pub.tipo === "vacante" && (pub.area || pub.modalidad || pub.duracion || pub.remuneracion || pub.direccion) && (
+      {pub.tipo === "vacante" && (
         <div className={`mx-4 mb-3 p-3 rounded-lg border ${B} ${isDark ? "bg-[#1e1e1c]" : "bg-[#F7F6F3]"}`}>
           <div className="flex flex-wrap gap-3">
+            <div className="flex items-center gap-1.5">
+              <Icon
+                icon={pub.vacante_tipo === "puesto_laboral" ? "mdi:briefcase-outline" : "mdi:school-outline"}
+                width={14}
+                className={pub.vacante_tipo === "puesto_laboral" ? "text-green-600" : "text-orange-500"}
+              />
+              <span className={`text-xs font-medium ${pub.vacante_tipo === "puesto_laboral" ? "text-green-700" : "text-orange-600"}`}>
+                {pub.vacante_tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica profesional"}
+              </span>
+            </div>
             {pub.area && (
               <div className="flex items-center gap-1.5">
-                <Icon icon="mdi:briefcase-outline" width={14} className="text-[#378ADD]" />
+                <Icon icon="mdi:tag-outline" width={14} className="text-[#378ADD]" />
                 <span className={`text-xs ${T}`}>{pub.area}</span>
               </div>
             )}

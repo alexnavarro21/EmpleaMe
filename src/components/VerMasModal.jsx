@@ -130,7 +130,17 @@ export default function VerMasModal({ pub, onClose }) {
           {pub.tipo === "vacante" && (
             <div className={`p-3 rounded-lg border ${B} ${S} mb-4`}>
               <div className="flex flex-wrap gap-3">
-                {pub.area && <div className="flex items-center gap-1.5"><Icon icon="mdi:briefcase-outline" width={14} className="text-[#378ADD]" /><span className={`text-xs ${T}`}>{pub.area}</span></div>}
+                <div className="flex items-center gap-1.5">
+                  <Icon
+                    icon={pub.vacante_tipo === "puesto_laboral" ? "mdi:briefcase-outline" : "mdi:school-outline"}
+                    width={14}
+                    className={pub.vacante_tipo === "puesto_laboral" ? "text-green-600" : "text-orange-500"}
+                  />
+                  <span className={`text-xs font-medium ${pub.vacante_tipo === "puesto_laboral" ? "text-green-700" : "text-orange-600"}`}>
+                    {pub.vacante_tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica profesional"}
+                  </span>
+                </div>
+                {pub.area && <div className="flex items-center gap-1.5"><Icon icon="mdi:tag-outline" width={14} className="text-[#378ADD]" /><span className={`text-xs ${T}`}>{pub.area}</span></div>}
                 {pub.modalidad && <div className="flex items-center gap-1.5"><Icon icon="mdi:map-marker-outline" width={14} className={M} /><span className={`text-xs ${M} capitalize`}>{pub.modalidad}</span></div>}
                 {pub.duracion && <div className="flex items-center gap-1.5"><Icon icon="mdi:clock-outline" width={14} className={M} /><span className={`text-xs ${M}`}>{pub.duracion}</span></div>}
                 {pub.remuneracion && <div className="flex items-center gap-1.5"><Icon icon="mdi:currency-usd" width={14} className="text-green-500" /><span className={`text-xs ${M}`}>{pub.remuneracion}</span></div>}
