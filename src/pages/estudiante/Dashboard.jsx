@@ -564,7 +564,7 @@ export default function EstudianteDashboard() {
 
       {/* ── RIGHT SIDEBAR EMPRESA ── */}
       {isEmpresa && (
-        <div className="flex flex-col gap-4 sticky top-20">
+        <div className="flex flex-col gap-4 sticky top-20 max-h-[calc(100vh-5rem)] overflow-y-auto pr-0.5">
 
           {/* Mensajes no leídos */}
           <div className={`rounded-xl border ${B} ${BG} p-4`}>
@@ -671,7 +671,7 @@ export default function EstudianteDashboard() {
       )}
 
       {/* ── RIGHT SIDEBAR ESTUDIANTE ── */}
-      {isEstudiante && <div className="flex flex-col gap-4 sticky top-20">
+      {isEstudiante && <div className="flex flex-col gap-4 sticky top-20 max-h-[calc(100vh-5rem)] overflow-y-auto pr-0.5">
 
         {/* Mis postulaciones */}
         <div className={`rounded-xl border ${B} ${BG} p-4`}>
