@@ -24,6 +24,7 @@ async function uploadToS3(file) {
     Key: key,
     Body: file.buffer,
     ContentType: file.mimetype,
+    ACL: 'public-read',
   }));
 
   return `https://${process.env.S3_BUCKET_NAME}.t3.storageapi.dev/${key}`;
