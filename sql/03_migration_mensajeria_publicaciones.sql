@@ -5,13 +5,13 @@ USE railway;
 -- ============================================================
 
 -- 1. Catálogo de tipos de publicación
-CREATE TABLE IF NOT EXISTS tipos_publicacion (
+CREATE TABLE tipos_publicacion (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(80) NOT NULL UNIQUE,
     descripcion VARCHAR(200)
 );
 
-INSERT IGNORE INTO tipos_publicacion (nombre, descripcion) VALUES
+INSERT INTO tipos_publicacion (nombre, descripcion) VALUES
     ('vacante',    'Publicación de una vacante o práctica profesional'),
     ('logro',      'Logro o insignia desbloqueada por un estudiante'),
     ('evaluacion', 'Resultado de evaluación docente'),
@@ -19,23 +19,33 @@ INSERT IGNORE INTO tipos_publicacion (nombre, descripcion) VALUES
     ('general',    'Publicación general del centro o estudiante');
 
 -- 2. Publicaciones (feed tipo red social)
-CREATE TABLE IF NOT EXISTS publicaciones (
-    id             INT AUTO_INCREMENT PRIMARY KEY,
-    autor_id       INT NOT NULL,
-    tipo_id        INT NOT NULL,
-    vacante_id     INT NULL,
-    titulo         VARCHAR(200) NOT NULL,
-    contenido      TEXT,
-    url_multimedia VARCHAR(255) NULL,
-    publicado_en   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    esta_activa    BOOLEAN DEFAULT TRUE,
+CREATE TABLE publicaciones (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    autor_id    INT NOT NULL,
+    tipo_id     INT NOT NULL,
+    vacante_id  INT NULL,
+    titulo      VARCHAR(200) NOT NULL,
+    contenido   TEXT,
+    publicado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    esta_activa BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (autor_id)   REFERENCES usuarios(id)          ON DELETE CASCADE,
     FOREIGN KEY (tipo_id)    REFERENCES tipos_publicacion(id),
     FOREIGN KEY (vacante_id) REFERENCES vacantes(id)          ON DELETE SET NULL
 );
 
--- 3. Etiquetas de habilidades en publicaciones
-CREATE TABLE IF NOT EXISTS publicacion_etiquetas (
+-- 3. Archivos adjuntos a publicaciones (foto/video)
+CREATE TABLE archivos_publicacion (
+    id             INT AUTO_INCREMENT PRIMARY KEY,
+    publicacion_id INT NOT NULL,
+    tipo_archivo   ENUM('foto', 'video') NOT NULL,
+    datos_archivo  LONGBLOB NOT NULL,
+    mime_type      VARCHAR(100) NOT NULL,
+    subido_en      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (publicacion_id) REFERENCES publicaciones(id) ON DELETE CASCADE
+);
+
+-- 4. Etiquetas de habilidades en publicaciones
+CREATE TABLE publicacion_etiquetas (
     publicacion_id INT NOT NULL,
     habilidad_id   INT NOT NULL,
     relevancia     TINYINT NOT NULL DEFAULT 3,
@@ -44,19 +54,19 @@ CREATE TABLE IF NOT EXISTS publicacion_etiquetas (
     FOREIGN KEY (habilidad_id)   REFERENCES habilidades(id)    ON DELETE CASCADE
 );
 
--- 4. Conversaciones entre empresa y estudiante
-CREATE TABLE IF NOT EXISTS conversaciones (
-    id            INT AUTO_INCREMENT PRIMARY KEY,
-    empresa_id    INT NOT NULL,
+-- 5. Conversaciones entre empresa y estudiante
+CREATE TABLE conversaciones (
+    id           INT AUTO_INCREMENT PRIMARY KEY,
+    empresa_id   INT NOT NULL,
     estudiante_id INT NOT NULL,
-    creada_en     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    creada_en    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_conv (empresa_id, estudiante_id),
-    FOREIGN KEY (empresa_id)    REFERENCES perfiles_empresas(usuario_id)    ON DELETE CASCADE,
+    FOREIGN KEY (empresa_id)    REFERENCES perfiles_empresas(usuario_id)   ON DELETE CASCADE,
     FOREIGN KEY (estudiante_id) REFERENCES perfiles_estudiantes(usuario_id) ON DELETE CASCADE
 );
 
--- 5. Mensajes dentro de una conversación
-CREATE TABLE IF NOT EXISTS mensajes (
+-- 6. Mensajes dentro de una conversación
+CREATE TABLE mensajes (
     id              INT AUTO_INCREMENT PRIMARY KEY,
     conversacion_id INT NOT NULL,
     remitente_id    INT NOT NULL,
@@ -67,8 +77,8 @@ CREATE TABLE IF NOT EXISTS mensajes (
     FOREIGN KEY (remitente_id)    REFERENCES usuarios(id)       ON DELETE CASCADE
 );
 
--- 6. Supervisión de conversaciones por el admin/centro
-CREATE TABLE IF NOT EXISTS supervision_mensajes (
+-- 7. Supervisión de conversaciones por el admin/centro
+CREATE TABLE supervision_mensajes (
     id              INT AUTO_INCREMENT PRIMARY KEY,
     conversacion_id INT NOT NULL,
     admin_id        INT NOT NULL,
