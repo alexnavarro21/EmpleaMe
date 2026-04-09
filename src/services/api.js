@@ -131,6 +131,15 @@ export async function postularAVacante(vacanteId) {
   return data;
 }
 
+export async function getPostulacionesEstudiante() {
+  const res = await fetch(`${BASE_URL}/postulaciones/estudiante`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener postulaciones");
+  return data; // [{ id, estado, fecha_creacion, vacante_id, titulo, area, modalidad, nombre_empresa }]
+}
+
 export async function getPostulantesEmpresa() {
   const res = await fetch(`${BASE_URL}/postulaciones/empresa`, {
     headers: authHeaders(),

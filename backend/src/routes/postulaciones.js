@@ -19,6 +19,26 @@ router.post("/", verificarToken, soloRol("estudiante"), async (req, res) => {
   }
 });
 
+// GET /api/postulaciones/estudiante  — estudiante ve sus propias postulaciones con estado
+router.get("/estudiante", verificarToken, soloRol("estudiante"), async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT p.id, p.estado, p.fecha_creacion,
+              v.id AS vacante_id, v.titulo, v.area, v.modalidad,
+              pe.nombre_empresa
+       FROM postulaciones p
+       JOIN vacantes v ON v.id = p.vacante_id
+       JOIN perfiles_empresas pe ON pe.usuario_id = v.empresa_id
+       WHERE p.estudiante_id = ?
+       ORDER BY p.fecha_creacion DESC`,
+      [req.usuario.id]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
 // GET /api/postulaciones/empresa  — empresa ve postulantes recientes de todas sus vacantes
 router.get("/empresa", verificarToken, soloRol("empresa"), async (req, res) => {
   try {
