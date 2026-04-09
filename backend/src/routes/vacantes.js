@@ -54,6 +54,16 @@ router.post("/", verificarToken, soloRol("empresa"), async (req, res) => {
         beneficios || null, fecha_limite || null,
       ]
     );
+
+    // Crear publicación en el feed vinculada a la vacante
+    const [[tipoVacante]] = await db.query("SELECT id FROM tipos_publicacion WHERE nombre = 'vacante'");
+    if (tipoVacante) {
+      await db.query(
+        "INSERT INTO publicaciones (autor_id, tipo_id, vacante_id, titulo, contenido) VALUES (?, ?, ?, ?, ?)",
+        [req.usuario.id, tipoVacante.id, result.insertId, titulo, descripcion]
+      );
+    }
+
     res.status(201).json({ id: result.insertId, mensaje: "Vacante publicada" });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });

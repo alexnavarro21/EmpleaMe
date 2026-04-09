@@ -198,6 +198,43 @@ function FeedCard({ pub, isDark }) {
         </div>
       )}
 
+      {pub.tipo === "vacante" && (pub.area || pub.modalidad || pub.duracion || pub.remuneracion || pub.direccion) && (
+        <div className={`mx-4 mb-3 p-3 rounded-lg border ${B} ${isDark ? "bg-[#1e1e1c]" : "bg-[#F7F6F3]"}`}>
+          <div className="flex flex-wrap gap-3">
+            {pub.area && (
+              <div className="flex items-center gap-1.5">
+                <Icon icon="mdi:briefcase-outline" width={14} className="text-[#378ADD]" />
+                <span className={`text-xs ${T}`}>{pub.area}</span>
+              </div>
+            )}
+            {pub.modalidad && (
+              <div className="flex items-center gap-1.5">
+                <Icon icon="mdi:map-marker-outline" width={14} className={M} />
+                <span className={`text-xs ${M} capitalize`}>{pub.modalidad}</span>
+              </div>
+            )}
+            {pub.duracion && (
+              <div className="flex items-center gap-1.5">
+                <Icon icon="mdi:clock-outline" width={14} className={M} />
+                <span className={`text-xs ${M}`}>{pub.duracion}</span>
+              </div>
+            )}
+            {pub.remuneracion && (
+              <div className="flex items-center gap-1.5">
+                <Icon icon="mdi:currency-usd" width={14} className="text-green-500" />
+                <span className={`text-xs ${M}`}>{pub.remuneracion}</span>
+              </div>
+            )}
+            {pub.direccion && (
+              <div className="flex items-center gap-1.5">
+                <Icon icon="mdi:office-building-outline" width={14} className={M} />
+                <span className={`text-xs ${M}`}>{pub.direccion}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {pub.url_multimedia && (
         <div className="px-4 pb-3">
           <img

@@ -42,12 +42,14 @@ router.get("/", verificarToken, async (req, res) => {
                 WHEN 'empresa'    THEN pe.nombre_empresa
                 WHEN 'estudiante' THEN est.nombre_completo
                 ELSE 'Centro Educacional'
-              END AS autor_nombre
+              END AS autor_nombre,
+              v.area, v.modalidad, v.duracion, v.remuneracion, v.direccion
        FROM publicaciones p
-       JOIN tipos_publicacion tp  ON tp.id  = p.tipo_id
-       JOIN usuarios u            ON u.id   = p.autor_id
-       LEFT JOIN perfiles_empresas pe    ON pe.usuario_id  = u.id
+       JOIN tipos_publicacion tp   ON tp.id  = p.tipo_id
+       JOIN usuarios u             ON u.id   = p.autor_id
+       LEFT JOIN perfiles_empresas pe     ON pe.usuario_id  = u.id
        LEFT JOIN perfiles_estudiantes est ON est.usuario_id = u.id
+       LEFT JOIN vacantes v               ON v.id = p.vacante_id
        WHERE p.esta_activa = TRUE
        ORDER BY p.publicado_en DESC
        LIMIT 50`
