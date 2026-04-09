@@ -4,6 +4,7 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, StatCard, PageHeader, PrimaryButton } from "../../components/ui";
 import { getVacantesEmpresa, getPostulantesEmpresa, actualizarEstadoPostulacion, iniciarConversacion } from "../../services/api";
+import PostulantesVacanteModal from "../../components/PostulantesVacanteModal";
 
 const statusColor = { activa: "green", cerrada: "gray", pausada: "yellow" };
 const postColor = { pendiente: "blue", aceptado: "green", rechazado: "gray" };
@@ -21,6 +22,7 @@ export default function EmpresaDashboard() {
   const [postulantes, setPostulantes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [contactandoId, setContactandoId] = useState(null);
+  const [vacanteSeleccionada, setVacanteSeleccionada] = useState(null);
 
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
@@ -127,12 +129,12 @@ export default function EmpresaDashboard() {
                   </p>
                   <div className="flex items-center justify-between">
                     <span className={`text-xs ${M}`}>{v.total_postulantes || 0} postulantes</span>
-                    <Link
-                      to={`/empresa/buscador`}
+                    <button
+                      onClick={() => setVacanteSeleccionada(v)}
                       className="text-xs text-[#378ADD] hover:underline"
                     >
                       Ver postulantes →
-                    </Link>
+                    </button>
                   </div>
                 </div>
               ))}
@@ -209,6 +211,13 @@ export default function EmpresaDashboard() {
           )}
         </Card>
       </div>
+
+      {vacanteSeleccionada && (
+        <PostulantesVacanteModal
+          vacante={vacanteSeleccionada}
+          onClose={() => setVacanteSeleccionada(null)}
+        />
+      )}
 
       <div className={`mt-6 p-4 rounded-xl border ${B} ${isDark ? "bg-[#262624]" : "bg-white"}`}>
         <p className={`text-sm font-semibold ${T} mb-3`}>Acciones rápidas</p>
