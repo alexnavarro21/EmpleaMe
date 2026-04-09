@@ -15,7 +15,8 @@ const navLinks = {
     { to: "/estudiante/mensajeria", label: "Mensajería" },
   ],
   empresa: [
-    { to: "/empresa/dashboard", label: "Inicio" },
+    { to: "/empresa/inicio", label: "Inicio" },
+    { to: "/empresa/dashboard", label: "Panel" },
     { to: "/empresa/publicar", label: "Publicar Vacante" },
     { to: "/empresa/buscador", label: "Buscar Estudiantes" },
     { to: "/empresa/mensajeria", label: "Mensajería" },
@@ -49,7 +50,6 @@ export default function Layout() {
     ? "empresa"
     : "estudiante";
 
-  const roleNames = { estudiante: "Estudiante", empresa: "Empresa", admin: "Admin/Profesor" };
 
   return (
     <div className={isDark ? "dark" : ""}>
