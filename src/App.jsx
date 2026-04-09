@@ -9,6 +9,7 @@ import EstudianteEvidencias from "./pages/estudiante/Evidencias";
 import EstudianteMensajeria from "./pages/estudiante/EstudianteMensajeria";
 
 import EmpresaDashboard from "./pages/empresa/Dashboard";
+import EmpresaPerfil from "./pages/empresa/Perfil";
 import EmpresaPublicar from "./pages/empresa/PublicarVacante";
 import EmpresaBuscador from "./pages/empresa/BuscadorEstudiantes";
 import EmpresaCandidato from "./pages/empresa/PerfilCandidato";
@@ -44,6 +45,7 @@ export default function App() {
             {/* Empresa */}
             <Route path="/empresa/inicio" element={<EstudianteDashboard />} />
             <Route path="/empresa/dashboard" element={<EmpresaDashboard />} />
+            <Route path="/empresa/perfil" element={<EmpresaPerfil />} />
             <Route path="/empresa/publicar" element={<EmpresaPublicar />} />
             <Route path="/empresa/buscador" element={<EmpresaBuscador />} />
             <Route path="/empresa/buscar" element={<BuscarPerfiles />} />

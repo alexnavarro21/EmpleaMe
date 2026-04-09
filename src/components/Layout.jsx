@@ -2,20 +2,22 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 
+const profilePaths = {
+  estudiante: "/estudiante/perfil",
+  empresa: "/empresa/perfil",
+};
+
 const navLinks = {
   estudiante: [
     { to: "/estudiante/dashboard", label: "Inicio" },
-    { to: "/estudiante/perfil", label: "Mi Perfil" },
     { to: "/estudiante/evidencias", label: "Evidencias" },
     { to: "/estudiante/buscar", label: "Buscar Perfiles" },
     { to: "/estudiante/mensajeria", label: "Mensajería" },
   ],
   empresa: [
-    { to: "/empresa/inicio", label: "Inicio" },
-    { to: "/empresa/dashboard", label: "Dashboard" },
+    { to: "/empresa/dashboard", label: "Inicio" },
     { to: "/empresa/publicar", label: "Publicar Vacante" },
     { to: "/empresa/buscador", label: "Buscar Estudiantes" },
-    { to: "/empresa/buscar", label: "Buscar Perfiles" },
     { to: "/empresa/mensajeria", label: "Mensajería" },
   ],
   admin: [
@@ -77,6 +79,21 @@ export default function Layout() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Icono de perfil */}
+            {profilePaths[role] && (
+              <Link
+                to={profilePaths[role]}
+                title="Mi Perfil"
+                className={`p-1.5 rounded-lg transition-colors ${
+                  location.pathname === profilePaths[role]
+                    ? "bg-[#185FA5] text-[#E6F1FB]"
+                    : "text-[#B5D4F4] hover:text-[#E6F1FB] hover:bg-[#185FA5]/40"
+                }`}
+              >
+                <Icon icon="mynaui:user-solid" width={20} />
+              </Link>
+            )}
+
             {/* Dark mode toggle */}
             <div className="flex items-center gap-1.5">
               <Icon
