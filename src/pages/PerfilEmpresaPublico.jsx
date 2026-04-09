@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 import { Card, Badge, SecondaryButton, PrimaryButton, PageHeader } from "../components/ui";
-import { getEmpresaById, getVacantesEmpresa, postularAVacante } from "../services/api";
+import { getEmpresaById, getVacantesEmpresa, postularAVacante, iniciarConversacionConEmpresa } from "../services/api";
 
 export default function PerfilEmpresaPublico() {
   const { isDark } = useDark();
@@ -16,6 +16,7 @@ export default function PerfilEmpresaPublico() {
   const [error, setError] = useState("");
   // { [vacanteId]: "idle" | "loading" | "ok" | "error" | "duplicado" }
   const [postulando, setPostulando] = useState({});
+  const [contactando, setContactando] = useState(false);
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -86,6 +87,27 @@ export default function PerfilEmpresaPublico() {
             <p className={`text-lg font-semibold ${T}`}>{empresa.nombre_empresa}</p>
             <p className={`text-xs ${M} mb-3`}>Empresa registrada en EmpleaMe</p>
             <Badge color="blue">Empresa Verificada</Badge>
+
+            {esEstudiante && (
+              <button
+                onClick={async () => {
+                  setContactando(true);
+                  try {
+                    const conv = await iniciarConversacionConEmpresa(id);
+                    navigate("/estudiante/mensajeria", { state: { conversacionId: conv.id } });
+                  } catch (err) {
+                    console.error("Error al contactar:", err);
+                  } finally {
+                    setContactando(false);
+                  }
+                }}
+                disabled={contactando}
+                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#185FA5] hover:bg-[#0C447C] text-[#E6F1FB] text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                <Icon icon={contactando ? "mdi:loading" : "mdi:message-outline"} width={16} className={contactando ? "animate-spin" : ""} />
+                {contactando ? "Abriendo chat..." : "Contactar empresa"}
+              </button>
+            )}
 
             <div className={`mt-4 pt-4 border-t ${B} flex flex-col gap-2.5 text-left`}>
               {empresa.telefono_contacto && (

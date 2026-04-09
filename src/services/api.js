@@ -180,6 +180,7 @@ export async function getConversaciones() {
   return data;
 }
 
+// Empresa inicia conversación con estudiante
 export async function iniciarConversacion(estudianteId) {
   const res = await fetch(`${BASE_URL}/conversaciones`, {
     method: "POST",
@@ -189,6 +190,60 @@ export async function iniciarConversacion(estudianteId) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al iniciar conversación");
   return data; // { id }
+}
+
+// Estudiante inicia conversación con empresa
+export async function iniciarConversacionConEmpresa(empresaId) {
+  const res = await fetch(`${BASE_URL}/conversaciones`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ empresa_id: empresaId }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al iniciar conversación");
+  return data; // { id }
+}
+
+// ── Mensajes Directos (estudiante↔estudiante) ─────────────────────────────────
+
+export async function getMensajesDirectos() {
+  const res = await fetch(`${BASE_URL}/mensajes-directos`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener conversaciones");
+  return data;
+}
+
+export async function iniciarMensajeDirecto(destinatarioId) {
+  const res = await fetch(`${BASE_URL}/mensajes-directos`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ destinatario_id: destinatarioId }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al iniciar conversación");
+  return data; // { id }
+}
+
+export async function getMensajesDeDirecta(conversacionId) {
+  const res = await fetch(`${BASE_URL}/mensajes-directos/${conversacionId}/mensajes`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener mensajes");
+  return data;
+}
+
+export async function enviarMensajeDirecto(conversacionId, contenido) {
+  const res = await fetch(`${BASE_URL}/mensajes-directos/${conversacionId}/mensajes`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ contenido }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al enviar mensaje");
+  return data;
 }
 
 export async function getMensajes(conversacionId) {

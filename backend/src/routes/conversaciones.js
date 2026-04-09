@@ -56,30 +56,46 @@ router.get("/", verificarToken, async (req, res) => {
   }
 });
 
-// POST /api/conversaciones — iniciar conversación (solo empresa)
-router.post("/", verificarToken, soloRol("empresa"), async (req, res) => {
-  const { estudiante_id } = req.body;
-  if (!estudiante_id)
-    return res.status(400).json({ error: "estudiante_id es requerido" });
+// POST /api/conversaciones — iniciar conversación
+// Empresa: { estudiante_id }
+// Estudiante: { empresa_id }
+router.post("/", verificarToken, async (req, res) => {
+  const { rol, id } = req.usuario;
+
+  let empresa_id, estudiante_id;
+
+  if (rol === "empresa") {
+    empresa_id = id;
+    estudiante_id = req.body.estudiante_id;
+    if (!estudiante_id)
+      return res.status(400).json({ error: "estudiante_id es requerido" });
+  } else if (rol === "estudiante") {
+    empresa_id = req.body.empresa_id;
+    estudiante_id = id;
+    if (!empresa_id)
+      return res.status(400).json({ error: "empresa_id es requerido" });
+  } else {
+    return res.status(403).json({ error: "Solo empresas y estudiantes pueden iniciar conversaciones" });
+  }
 
   try {
     const [existing] = await db.query(
       "SELECT id FROM conversaciones WHERE empresa_id = ? AND estudiante_id = ?",
-      [req.usuario.id, estudiante_id]
+      [empresa_id, estudiante_id]
     );
     if (existing.length > 0)
       return res.json({ id: existing[0].id, mensaje: "Conversación existente" });
 
     const [result] = await db.query(
       "INSERT INTO conversaciones (empresa_id, estudiante_id) VALUES (?, ?)",
-      [req.usuario.id, estudiante_id]
+      [empresa_id, estudiante_id]
     );
     res.status(201).json({ id: result.insertId, mensaje: "Conversación creada" });
   } catch (err) {
     if (err.code === "ER_DUP_ENTRY") {
       const [existing] = await db.query(
         "SELECT id FROM conversaciones WHERE empresa_id = ? AND estudiante_id = ?",
-        [req.usuario.id, estudiante_id]
+        [empresa_id, estudiante_id]
       );
       return res.json({ id: existing[0].id });
     }

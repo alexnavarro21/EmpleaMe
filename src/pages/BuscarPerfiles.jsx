@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, PageHeader } from "../components/ui";
-import { getEstudiantes, getEmpresas } from "../services/api";
+import { getEstudiantes, getEmpresas, iniciarMensajeDirecto, iniciarConversacionConEmpresa } from "../services/api";
 
 const careerDisplay = {
   Administracion: "Administración",
@@ -13,6 +13,7 @@ const careerDisplay = {
 export default function BuscarPerfiles() {
   const { isDark } = useDark();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [tab, setTab] = useState("estudiantes");
   const [students, setStudents] = useState([]);
@@ -21,6 +22,7 @@ export default function BuscarPerfiles() {
   const [search, setSearch] = useState("");
   const [selectedCareer, setSelectedCareer] = useState("Todas");
   const [minGpa, setMinGpa] = useState(1);
+  const [contactandoId, setContactandoId] = useState(null);
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -69,6 +71,31 @@ export default function BuscarPerfiles() {
   );
 
   const count = tab === "estudiantes" ? filteredStudents.length : filteredCompanies.length;
+  const usuarioActual = JSON.parse(localStorage.getItem("usuario") || "{}");
+
+  const handleContactarEstudiante = async (estudianteId) => {
+    setContactandoId(estudianteId);
+    try {
+      const conv = await iniciarMensajeDirecto(estudianteId);
+      navigate("/estudiante/mensajeria", { state: { directaId: conv.id } });
+    } catch (err) {
+      console.error("Error al contactar:", err);
+    } finally {
+      setContactandoId(null);
+    }
+  };
+
+  const handleContactarEmpresa = async (empresaId) => {
+    setContactandoId(empresaId);
+    try {
+      const conv = await iniciarConversacionConEmpresa(empresaId);
+      navigate("/estudiante/mensajeria", { state: { conversacionId: conv.id } });
+    } catch (err) {
+      console.error("Error al contactar:", err);
+    } finally {
+      setContactandoId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -222,9 +249,25 @@ export default function BuscarPerfiles() {
                         {s.habilidades.length > 3 && <span className={`text-xs ${M}`}>+{s.habilidades.length - 3} más</span>}
                       </div>
                     )}
-                    <Link to={`${candidatoBase}/${s.usuario_id}`}>
-                      <PrimaryButton className="w-full">Ver perfil completo</PrimaryButton>
-                    </Link>
+                    <div className="flex gap-2">
+                      <Link to={`${candidatoBase}/${s.usuario_id}`} className="flex-1">
+                        <PrimaryButton className="w-full">Ver perfil</PrimaryButton>
+                      </Link>
+                      {role === "estudiante" && s.usuario_id !== usuarioActual.id && (
+                        <button
+                          onClick={() => handleContactarEstudiante(s.usuario_id)}
+                          disabled={contactandoId === s.usuario_id}
+                          title="Enviar mensaje"
+                          className="px-3 py-2 rounded-lg border border-[#378ADD] text-[#378ADD] hover:bg-[#378ADD] hover:text-white transition-colors disabled:opacity-50 flex items-center"
+                        >
+                          <Icon
+                            icon={contactandoId === s.usuario_id ? "mdi:loading" : "mdi:message-outline"}
+                            width={16}
+                            className={contactandoId === s.usuario_id ? "animate-spin" : ""}
+                          />
+                        </button>
+                      )}
+                    </div>
                   </Card>
                 );
               })}
@@ -258,9 +301,25 @@ export default function BuscarPerfiles() {
                       {c.telefono_contacto}
                     </div>
                   )}
-                  <Link to={`/empresa-publica/${c.usuario_id}`}>
-                    <PrimaryButton className="w-full mt-2">Ver perfil</PrimaryButton>
-                  </Link>
+                  <div className="flex gap-2 mt-2">
+                    <Link to={`/empresa-publica/${c.usuario_id}`} className="flex-1">
+                      <PrimaryButton className="w-full">Ver perfil</PrimaryButton>
+                    </Link>
+                    {role === "estudiante" && (
+                      <button
+                        onClick={() => handleContactarEmpresa(c.usuario_id)}
+                        disabled={contactandoId === c.usuario_id}
+                        title="Enviar mensaje"
+                        className="px-3 py-2 rounded-lg border border-[#378ADD] text-[#378ADD] hover:bg-[#378ADD] hover:text-white transition-colors disabled:opacity-50 flex items-center"
+                      >
+                        <Icon
+                          icon={contactandoId === c.usuario_id ? "mdi:loading" : "mdi:message-outline"}
+                          width={16}
+                          className={contactandoId === c.usuario_id ? "animate-spin" : ""}
+                        />
+                      </button>
+                    )}
+                  </div>
                 </Card>
               ))}
               {filteredCompanies.length === 0 && <EmptyState T={T} M={M} />}

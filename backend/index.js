@@ -9,6 +9,7 @@ const habilidadesRoutes     = require("./src/routes/habilidades");
 const vacantesRoutes        = require("./src/routes/vacantes");
 const postulacionesRoutes   = require("./src/routes/postulaciones");
 const conversacionesRoutes  = require("./src/routes/conversaciones");
+const mensajesDirectosRoutes = require("./src/routes/mensajes_directos");
 const publicacionesRoutes   = require("./src/routes/publicaciones");
 
 const app = express();
@@ -23,6 +24,7 @@ app.use("/api/habilidades",     habilidadesRoutes);
 app.use("/api/vacantes",        vacantesRoutes);
 app.use("/api/postulaciones",   postulacionesRoutes);
 app.use("/api/conversaciones",  conversacionesRoutes);
+app.use("/api/mensajes-directos", mensajesDirectosRoutes);
 app.use("/api/publicaciones",   publicacionesRoutes);
 
 app.get("/", (req, res) => res.json({ status: "EmpleaMe API corriendo" }));

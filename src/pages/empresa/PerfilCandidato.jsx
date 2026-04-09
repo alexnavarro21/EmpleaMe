@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, SecondaryButton, PageHeader, SoftSkillBar } from "../../components/ui";
-import { getEstudianteById, iniciarConversacion } from "../../services/api";
+import { getEstudianteById, iniciarConversacion, iniciarMensajeDirecto } from "../../services/api";
 
 const careerDisplay = {
   "Administracion": "Administración",
@@ -101,10 +101,16 @@ export default function EmpresaPerfilCandidato() {
                 className="w-full flex items-center justify-center gap-2"
                 disabled={contactando}
                 onClick={async () => {
+                  const viewer = JSON.parse(localStorage.getItem("usuario") || "{}");
                   setContactando(true);
                   try {
-                    const conv = await iniciarConversacion(id);
-                    navigate("/empresa/mensajeria", { state: { conversacionId: conv.id } });
+                    if (viewer.rol === "estudiante") {
+                      const conv = await iniciarMensajeDirecto(id);
+                      navigate("/estudiante/mensajeria", { state: { directaId: conv.id } });
+                    } else {
+                      const conv = await iniciarConversacion(id);
+                      navigate("/empresa/mensajeria", { state: { conversacionId: conv.id } });
+                    }
                   } catch (err) {
                     console.error("Error al contactar:", err);
                   } finally {

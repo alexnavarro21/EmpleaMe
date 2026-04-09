@@ -1,8 +1,12 @@
 import { useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge, PageHeader } from "../../components/ui";
-import { getConversaciones, getMensajes, enviarMensaje } from "../../services/api";
+import {
+  getConversaciones, getMensajes, enviarMensaje,
+  getMensajesDirectos, getMensajesDeDirecta, enviarMensajeDirecto,
+} from "../../services/api";
 
 function formatTime(ts) {
   if (!ts) return "";
@@ -19,9 +23,21 @@ const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
 export default function EstudianteMensajeria() {
   const { isDark } = useDark();
-  const [conversations, setConversations] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const location = useLocation();
+
+  // Tab: "empresas" | "estudiantes"
+  const [tab, setTab] = useState("empresas");
+
+  // Conversaciones con empresas
+  const [convEmpresas, setConvEmpresas] = useState([]);
+  const [selectedEmpresa, setSelectedEmpresa] = useState(null);
+  const [mensajesEmpresa, setMensajesEmpresa] = useState([]);
+
+  // Conversaciones directas (estudiante↔estudiante)
+  const [convDirectas, setConvDirectas] = useState([]);
+  const [selectedDirecta, setSelectedDirecta] = useState(null);
+  const [mensajesDirecta, setMensajesDirecta] = useState([]);
+
   const [newMessage, setNewMessage] = useState("");
   const [loadingConvs, setLoadingConvs] = useState(true);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
@@ -33,60 +49,114 @@ export default function EstudianteMensajeria() {
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
   const cardBg = isDark ? "bg-[#262624]" : "bg-white";
 
-  // Cargar conversaciones
+  // Cargar conversaciones iniciales
   useEffect(() => {
-    getConversaciones()
-      .then((data) => {
-        setConversations(data);
-        if (data.length > 0) setSelected(data[0].id);
+    const targetEmpresa = location.state?.conversacionId;
+    const targetDirecta = location.state?.directaId;
+
+    Promise.allSettled([getConversaciones(), getMensajesDirectos()])
+      .then(([empRes, dirRes]) => {
+        if (empRes.status === "fulfilled") {
+          setConvEmpresas(empRes.value);
+          if (targetEmpresa) {
+            setTab("empresas");
+            setSelectedEmpresa(targetEmpresa);
+          } else if (!targetDirecta && empRes.value.length > 0) {
+            setSelectedEmpresa(empRes.value[0].id);
+          }
+        }
+        if (dirRes.status === "fulfilled") {
+          setConvDirectas(dirRes.value);
+          if (targetDirecta) {
+            setTab("estudiantes");
+            setSelectedDirecta(targetDirecta);
+          }
+        }
       })
-      .catch(console.error)
       .finally(() => setLoadingConvs(false));
   }, []);
 
-  // Cargar mensajes al seleccionar conversación
+  // Cargar mensajes de empresa seleccionada
   useEffect(() => {
-    if (!selected) return;
+    if (!selectedEmpresa) return;
     setLoadingMsgs(true);
-    getMensajes(selected)
-      .then(setMessages)
+    getMensajes(selectedEmpresa)
+      .then(setMensajesEmpresa)
       .catch(console.error)
       .finally(() => setLoadingMsgs(false));
-  }, [selected]);
+  }, [selectedEmpresa]);
+
+  // Cargar mensajes de directa seleccionada
+  useEffect(() => {
+    if (!selectedDirecta) return;
+    setLoadingMsgs(true);
+    getMensajesDeDirecta(selectedDirecta)
+      .then(setMensajesDirecta)
+      .catch(console.error)
+      .finally(() => setLoadingMsgs(false));
+  }, [selectedDirecta]);
 
   // Scroll al último mensaje
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [mensajesEmpresa, mensajesDirecta]);
 
-  // Polling cada 5 segundos para mensajes nuevos
+  // Polling mensajes empresa
   useEffect(() => {
-    if (!selected) return;
+    if (!selectedEmpresa || tab !== "empresas") return;
     const interval = setInterval(() => {
-      getMensajes(selected).then(setMessages).catch(() => {});
+      getMensajes(selectedEmpresa).then(setMensajesEmpresa).catch(() => {});
     }, 5000);
     return () => clearInterval(interval);
-  }, [selected]);
+  }, [selectedEmpresa, tab]);
 
-  const conv = conversations.find((c) => c.id === selected);
+  // Polling mensajes directos
+  useEffect(() => {
+    if (!selectedDirecta || tab !== "estudiantes") return;
+    const interval = setInterval(() => {
+      getMensajesDeDirecta(selectedDirecta).then(setMensajesDirecta).catch(() => {});
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [selectedDirecta, tab]);
 
-  const handleSendMessage = async (e) => {
+  const convEmpresa = convEmpresas.find((c) => c.id === selectedEmpresa);
+  const convDirecta = convDirectas.find((c) => c.id === selectedDirecta);
+  const activeConv = tab === "empresas" ? convEmpresa : convDirecta;
+  const activeMessages = tab === "empresas" ? mensajesEmpresa : mensajesDirecta;
+  const totalNoLeidos = [...convEmpresas, ...convDirectas].reduce((n, c) => n + (c.no_leidos || 0), 0);
+
+  const handleSend = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selected || sending) return;
+    if (!newMessage.trim() || sending) return;
+    const selected = tab === "empresas" ? selectedEmpresa : selectedDirecta;
+    if (!selected) return;
+
     setSending(true);
     try {
-      await enviarMensaje(selected, newMessage.trim());
+      if (tab === "empresas") {
+        await enviarMensaje(selected, newMessage.trim());
+        const updated = await getMensajes(selected);
+        setMensajesEmpresa(updated);
+        setConvEmpresas((prev) =>
+          prev.map((c) =>
+            c.id === selected
+              ? { ...c, ultimo_mensaje: newMessage.trim(), ultimo_tiempo: new Date().toISOString(), no_leidos: 0 }
+              : c
+          )
+        );
+      } else {
+        await enviarMensajeDirecto(selected, newMessage.trim());
+        const updated = await getMensajesDeDirecta(selected);
+        setMensajesDirecta(updated);
+        setConvDirectas((prev) =>
+          prev.map((c) =>
+            c.id === selected
+              ? { ...c, ultimo_mensaje: newMessage.trim(), ultimo_tiempo: new Date().toISOString(), no_leidos: 0 }
+              : c
+          )
+        );
+      }
       setNewMessage("");
-      const updated = await getMensajes(selected);
-      setMessages(updated);
-      // Actualizar último mensaje en la lista
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.id === selected
-            ? { ...c, ultimo_mensaje: newMessage.trim(), ultimo_tiempo: new Date().toISOString(), no_leidos: 0 }
-            : c
-        )
-      );
     } catch (err) {
       console.error("Error enviando mensaje:", err);
     } finally {
@@ -103,20 +173,56 @@ export default function EstudianteMensajeria() {
     );
   }
 
+  const conversations = tab === "empresas" ? convEmpresas : convDirectas;
+  const selected = tab === "empresas" ? selectedEmpresa : selectedDirecta;
+  const setSelected = tab === "empresas" ? setSelectedEmpresa : setSelectedDirecta;
+
   return (
     <div>
       <PageHeader
         title="Mis Mensajes"
-        subtitle="Comunícate con las empresas interesadas en tu perfil"
+        subtitle="Comunícate con empresas y otros estudiantes"
       />
 
-      <div className={`rounded-xl border ${B} overflow-hidden flex`} style={{ height: "600px" }}>
+      {/* Tabs */}
+      <div className={`flex gap-1 mb-4 p-1 rounded-xl w-fit border ${B} ${cardBg}`}>
+        {[
+          { id: "empresas", icon: "mdi:office-building-outline", label: "Empresas",
+            badge: convEmpresas.reduce((n, c) => n + (c.no_leidos || 0), 0) },
+          { id: "estudiantes", icon: "mynaui:user-solid", label: "Estudiantes",
+            badge: convDirectas.reduce((n, c) => n + (c.no_leidos || 0), 0) },
+        ].map((t) => (
+          <button
+            key={t.id}
+            onClick={() => { setTab(t.id); setNewMessage(""); }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              tab === t.id
+                ? "bg-[#185FA5] text-[#E6F1FB]"
+                : `${M} hover:bg-[#185FA5]/10`
+            }`}
+          >
+            <Icon icon={t.icon} width={15} />
+            {t.label}
+            {t.badge > 0 && (
+              <span className={`w-4 h-4 rounded-full text-xs flex items-center justify-center ${
+                tab === t.id ? "bg-white text-[#185FA5]" : "bg-[#185FA5] text-white"
+              }`}>
+                {t.badge}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      <div className={`rounded-xl border ${B} overflow-hidden flex`} style={{ height: "560px" }}>
         {/* Lista de Conversaciones */}
         <div className={`w-72 flex-shrink-0 border-r ${B} flex flex-col ${cardBg}`}>
           <div className="flex-1 overflow-y-auto pt-2">
             {conversations.length === 0 ? (
               <p className={`text-xs ${M} text-center py-8 px-4`}>
-                Aún no tienes conversaciones con empresas.
+                {tab === "empresas"
+                  ? "Aún no tienes conversaciones con empresas."
+                  : "Aún no tienes conversaciones con otros estudiantes."}
               </p>
             ) : (
               conversations.map((c) => (
@@ -130,7 +236,9 @@ export default function EstudianteMensajeria() {
                   }`}
                 >
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-sm font-semibold text-[#378ADD] truncate flex-1">
+                    <span className={`text-sm font-semibold truncate flex-1 ${
+                      tab === "empresas" ? "text-[#378ADD]" : T
+                    }`}>
                       {c.contraparte}
                     </span>
                     <span className={`text-xs ${M} flex-shrink-0 ml-2`}>
@@ -155,22 +263,28 @@ export default function EstudianteMensajeria() {
 
         {/* Hilo del Chat */}
         <div className="flex-1 flex flex-col min-w-0">
-          {!conv ? (
+          {!activeConv ? (
             <div className={`flex-1 flex items-center justify-center ${M}`}>
               <p className="text-sm">Selecciona una conversación</p>
             </div>
           ) : (
             <>
               <div className={`px-5 py-3 border-b ${B} ${cardBg} flex items-center justify-between flex-shrink-0`}>
-                <p className={`text-sm font-semibold ${T}`}>{conv.contraparte}</p>
+                <div>
+                  <p className={`text-sm font-semibold ${T}`}>{activeConv.contraparte}</p>
+                  <p className={`text-xs ${M}`}>{tab === "empresas" ? "Empresa" : "Estudiante"}</p>
+                </div>
                 <Badge color="green">activa</Badge>
               </div>
 
-              {/* Aviso de Privacidad */}
-              <div className={`px-5 py-2 text-xs flex items-center gap-2 ${isDark ? "bg-[#2a2416] text-[#e5b34a]" : "bg-[#fff8e6] text-[#b38600]"} flex-shrink-0`}>
-                <Icon icon="mdi:shield-lock-outline" width={14} />
-                Tus datos de contacto están protegidos. Esta conversación está mediada por el Centro Educacional.
-              </div>
+              {tab === "empresas" && (
+                <div className={`px-5 py-2 text-xs flex items-center gap-2 flex-shrink-0 ${
+                  isDark ? "bg-[#2a2416] text-[#e5b34a]" : "bg-[#fff8e6] text-[#b38600]"
+                }`}>
+                  <Icon icon="mdi:shield-lock-outline" width={14} />
+                  Tus datos de contacto están protegidos. Esta conversación está mediada por el Centro Educacional.
+                </div>
+              )}
 
               <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
                 {loadingMsgs ? (
@@ -178,17 +292,17 @@ export default function EstudianteMensajeria() {
                     <Icon icon="mdi:loading" width={20} className="animate-spin mr-2" />
                     Cargando...
                   </div>
-                ) : messages.length === 0 ? (
+                ) : activeMessages.length === 0 ? (
                   <p className={`text-xs ${M} text-center py-8`}>
                     No hay mensajes aún. ¡Inicia la conversación!
                   </p>
                 ) : (
-                  messages.map((msg) => {
+                  activeMessages.map((msg) => {
                     const isMe = msg.remitente_id === usuario.id;
                     return (
                       <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
                         <div className={`max-w-xs flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-                          <span className={`text-xs ${M} mb-1`}>{isMe ? "Tú" : conv.contraparte}</span>
+                          <span className={`text-xs ${M} mb-1`}>{isMe ? "Tú" : activeConv.contraparte}</span>
                           <div className={`px-4 py-2.5 rounded-2xl text-sm ${
                             isMe
                               ? "bg-[#185FA5] text-[#E6F1FB]"
@@ -196,9 +310,7 @@ export default function EstudianteMensajeria() {
                           }`}>
                             {msg.contenido}
                           </div>
-                          <span className={`text-xs ${M} mt-1`}>
-                            {formatTime(msg.enviado_en)}
-                          </span>
+                          <span className={`text-xs ${M} mt-1`}>{formatTime(msg.enviado_en)}</span>
                         </div>
                       </div>
                     );
@@ -207,7 +319,7 @@ export default function EstudianteMensajeria() {
                 <div ref={bottomRef} />
               </div>
 
-              <form onSubmit={handleSendMessage} className={`px-5 py-3 border-t ${B} ${cardBg} flex gap-2 flex-shrink-0`}>
+              <form onSubmit={handleSend} className={`px-5 py-3 border-t ${B} ${cardBg} flex gap-2 flex-shrink-0`}>
                 <input
                   type="text"
                   placeholder="Escribe un mensaje..."
