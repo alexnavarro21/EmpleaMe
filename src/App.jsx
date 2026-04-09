@@ -24,6 +24,7 @@ import AdminMensajeria from "./pages/admin/Mensajeria";
 import AdminMonitoreo from "./pages/admin/Monitoreo";
 
 import BuscarPerfiles from "./pages/BuscarPerfiles";
+import PerfilEmpresaPublico from "./pages/PerfilEmpresaPublico";
 
 
 export default function App() {
@@ -33,6 +34,9 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Login />} />
           <Route element={<Layout />}>
+
+            {/* Perfil público de empresa — accesible desde cualquier rol */}
+            <Route path="/empresa-publica/:id" element={<PerfilEmpresaPublico />} />
 
             {/* Estudiante */}
             <Route path="/estudiante/dashboard" element={<EstudianteDashboard />} />

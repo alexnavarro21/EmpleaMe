@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, SecondaryButton, FormField, PageHeader, TextAreaField, SoftSkillBar } from "../../components/ui";
-import { getEstudianteById, actualizarPerfilEstudiante } from "../../services/api";
+import { getEstudianteById, actualizarPerfilEstudiante, getPostulacionesEstudiante } from "../../services/api";
 
-const tabs = ["Personal", "Académico", "Habilidades", "Video"];
+const tabs = ["Personal", "Académico", "Habilidades", "Video", "Postulaciones"];
 
 const careerDisplay = {
   "Administracion": "Administración",
@@ -27,6 +27,7 @@ export default function EstudiantePerfil() {
   const [semestre, setSemestre] = useState("");
   const [promedio, setPromedio] = useState("");
   const [habilidades, setHabilidades] = useState([]);
+  const [postulaciones, setPostulaciones] = useState([]);
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -36,8 +37,12 @@ export default function EstudiantePerfil() {
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
   useEffect(() => {
-    getEstudianteById(usuario.id)
-      .then((data) => {
+    Promise.allSettled([
+      getEstudianteById(usuario.id),
+      getPostulacionesEstudiante(),
+    ]).then(([perfil, posts]) => {
+      if (perfil.status === "fulfilled") {
+        const data = perfil.value;
         setNombre(data.nombre_completo || "");
         setCarrera(data.carrera || "");
         setTelefono(data.telefono || "");
@@ -45,9 +50,9 @@ export default function EstudiantePerfil() {
         setSemestre(data.semestre ? String(data.semestre) : "");
         setPromedio(data.promedio ? String(data.promedio) : "");
         setHabilidades(data.habilidades || []);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+      }
+      if (posts.status === "fulfilled") setPostulaciones(posts.value);
+    }).finally(() => setLoading(false));
   }, [usuario.id]);
 
   const handleGuardar = async () => {
@@ -290,6 +295,43 @@ export default function EstudiantePerfil() {
                         />
                       ))}
                     </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === "Postulaciones" && (
+                <div className="flex flex-col gap-3">
+                  {postulaciones.length === 0 ? (
+                    <div className={`text-center py-12 ${M}`}>
+                      <Icon icon="mdi:send-clock-outline" width={40} className="mx-auto mb-3" />
+                      <p className={`text-sm font-medium ${T}`}>Aún no has postulado a ninguna práctica</p>
+                      <p className="text-xs mt-1">Busca empresas y postula desde sus perfiles</p>
+                    </div>
+                  ) : (
+                    postulaciones.map((p) => {
+                      const estadoConfig = {
+                        pendiente: { color: "blue",  icon: "mdi:clock-outline",        label: "Pendiente" },
+                        aceptado:  { color: "green", icon: "mdi:check-circle-outline", label: "Aceptado"  },
+                        rechazado: { color: "red",   icon: "mdi:close-circle-outline", label: "Rechazado" },
+                      }[p.estado] || { color: "gray", icon: "mdi:help-circle-outline", label: p.estado };
+
+                      return (
+                        <div key={p.id} className={`flex items-start gap-4 p-4 rounded-lg border ${B}`}>
+                          <Icon icon={estadoConfig.icon} width={22} className={
+                            estadoConfig.color === "green" ? "text-green-500 flex-shrink-0 mt-0.5" :
+                            estadoConfig.color === "red"   ? "text-red-500 flex-shrink-0 mt-0.5"   :
+                            estadoConfig.color === "blue"  ? "text-[#378ADD] flex-shrink-0 mt-0.5" :
+                            `${M} flex-shrink-0 mt-0.5`
+                          } />
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-semibold ${T}`}>{p.titulo}</p>
+                            <p className={`text-xs ${M}`}>{p.nombre_empresa}{p.area ? ` · ${p.area}` : ""}{p.modalidad ? ` · ${p.modalidad}` : ""}</p>
+                            <p className={`text-xs ${M} mt-1`}>{new Date(p.fecha_creacion).toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" })}</p>
+                          </div>
+                          <Badge color={estadoConfig.color}>{estadoConfig.label}</Badge>
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               )}

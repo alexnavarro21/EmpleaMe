@@ -76,6 +76,22 @@ router.put("/empresa/:id", verificarToken, async (req, res) => {
   }
 });
 
+// GET /api/perfiles/empresas  — lista para buscador
+router.get("/empresas", verificarToken, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT pe.usuario_id, pe.nombre_empresa, pe.descripcion, pe.telefono_contacto,
+              COUNT(v.id) AS total_vacantes
+       FROM perfiles_empresas pe
+       LEFT JOIN vacantes v ON v.empresa_id = pe.usuario_id AND v.esta_activa = TRUE
+       GROUP BY pe.usuario_id`
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
 // GET /api/perfiles/estudiantes  — lista para buscador de empresas (incluye habilidades)
 router.get("/estudiantes", verificarToken, async (req, res) => {
   try {

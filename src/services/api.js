@@ -60,6 +60,15 @@ export async function crearVacante(datos) {
 
 // ── Perfiles ──────────────────────────────────────────────────────────────────
 
+export async function getEmpresas() {
+  const res = await fetch(`${BASE_URL}/perfiles/empresas`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener empresas");
+  return data; // [{ usuario_id, nombre_empresa, descripcion, telefono_contacto, total_vacantes }]
+}
+
 export async function getEstudiantes() {
   const res = await fetch(`${BASE_URL}/perfiles/estudiantes`, {
     headers: authHeaders(),
@@ -120,6 +129,15 @@ export async function postularAVacante(vacanteId) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al postular");
   return data;
+}
+
+export async function getPostulacionesEstudiante() {
+  const res = await fetch(`${BASE_URL}/postulaciones/estudiante`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener postulaciones");
+  return data; // [{ id, estado, fecha_creacion, vacante_id, titulo, area, modalidad, nombre_empresa }]
 }
 
 export async function getPostulantesEmpresa() {

@@ -15,7 +15,8 @@ const navLinks = {
     { to: "/estudiante/mensajeria", label: "Mensajería" },
   ],
   empresa: [
-    { to: "/empresa/dashboard", label: "Inicio" },
+    { to: "/empresa/inicio", label: "Inicio" },
+    { to: "/empresa/dashboard", label: "Panel" },
     { to: "/empresa/publicar", label: "Publicar Vacante" },
     { to: "/empresa/buscador", label: "Buscar Estudiantes" },
     { to: "/empresa/mensajeria", label: "Mensajería" },
@@ -43,13 +44,12 @@ export default function Layout() {
   const { isDark, setIsDark } = useDark();
   const location = useLocation();
 
-  const role = location.pathname.startsWith("/admin")
+  const role = location.pathname.startsWith("/admin/") || location.pathname === "/admin"
     ? "admin"
-    : location.pathname.startsWith("/empresa")
+    : location.pathname.startsWith("/empresa/") || location.pathname === "/empresa"
     ? "empresa"
     : "estudiante";
 
-  const roleNames = { estudiante: "Estudiante", empresa: "Empresa", admin: "Admin/Profesor" };
 
   return (
     <div className={isDark ? "dark" : ""}>
