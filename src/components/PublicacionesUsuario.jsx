@@ -107,7 +107,7 @@ export default function PublicacionesUsuario({ usuarioId }) {
           <p className="text-xs">Aún no hay publicaciones.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
           {publicaciones.map((pub) => (
             <MiniPostCard key={pub.id} pub={pub} isDark={isDark} />
           ))}
