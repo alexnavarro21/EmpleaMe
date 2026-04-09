@@ -231,6 +231,16 @@ function FeedCard({ pub, isDark }) {
                 {pub.vacante_tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica profesional"}
               </span>
             </div>
+            <div className="flex items-center gap-1.5">
+              <Icon
+                icon={pub.vacante_activa ? "mdi:check-circle-outline" : "mdi:close-circle-outline"}
+                width={14}
+                className={pub.vacante_activa ? "text-green-500" : "text-red-400"}
+              />
+              <span className={`text-xs font-medium ${pub.vacante_activa ? "text-green-600" : "text-red-500"}`}>
+                {pub.vacante_activa ? "Activa" : "Cerrada"}
+              </span>
+            </div>
             {pub.area && (
               <div className="flex items-center gap-1.5">
                 <Icon icon="mdi:tag-outline" width={14} className="text-[#378ADD]" />
@@ -295,7 +305,7 @@ function FeedCard({ pub, isDark }) {
         {pub.tipo === "vacante" && usuario.rol === "estudiante" && (
           <button
             onClick={handlePostular}
-            disabled={estadoPostula !== "idle"}
+            disabled={estadoPostula !== "idle" || !pub.vacante_activa}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${
               estadoPostula === "ok"        ? "text-green-600" :
               estadoPostula === "duplicado" ? "text-amber-500" :
@@ -316,7 +326,8 @@ function FeedCard({ pub, isDark }) {
             {estadoPostula === "ok"        ? "Postulado" :
              estadoPostula === "duplicado" ? "Ya postulaste" :
              estadoPostula === "error"     ? "Error, reintentar" :
-             estadoPostula === "loading"   ? "Enviando..." : "Postular"}
+             estadoPostula === "loading"   ? "Enviando..." :
+             !pub.vacante_activa           ? "Cerrada" : "Postular"}
           </button>
         )}
       </div>

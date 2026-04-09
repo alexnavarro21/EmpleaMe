@@ -146,6 +146,16 @@ export default function VerMasModal({ pub, onClose }) {
                     {pub.vacante_tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica profesional"}
                   </span>
                 </div>
+                <div className="flex items-center gap-1.5">
+                  <Icon
+                    icon={pub.vacante_activa ? "mdi:check-circle-outline" : "mdi:close-circle-outline"}
+                    width={14}
+                    className={pub.vacante_activa ? "text-green-500" : "text-red-400"}
+                  />
+                  <span className={`text-xs font-medium ${pub.vacante_activa ? "text-green-600" : "text-red-500"}`}>
+                    {pub.vacante_activa ? "Activa" : "Cerrada"}
+                  </span>
+                </div>
                 {pub.area && <div className="flex items-center gap-1.5"><Icon icon="mdi:tag-outline" width={14} className="text-[#378ADD]" /><span className={`text-xs ${T}`}>{pub.area}</span></div>}
                 {pub.modalidad && <div className="flex items-center gap-1.5"><Icon icon="mdi:map-marker-outline" width={14} className={M} /><span className={`text-xs ${M} capitalize`}>{pub.modalidad}</span></div>}
                 {pub.duracion && <div className="flex items-center gap-1.5"><Icon icon="mdi:clock-outline" width={14} className={M} /><span className={`text-xs ${M}`}>{pub.duracion}</span></div>}
@@ -170,7 +180,7 @@ export default function VerMasModal({ pub, onClose }) {
             <div className="flex gap-3 mb-5">
               <button
                 onClick={handlePostular}
-                disabled={estadoPostula !== "idle"}
+                disabled={estadoPostula !== "idle" || !pub.vacante_activa}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
                   estadoPostula === "ok"
                     ? "bg-green-100 text-green-700 cursor-default"
@@ -194,7 +204,8 @@ export default function VerMasModal({ pub, onClose }) {
                 {estadoPostula === "ok"        ? "Postulación enviada" :
                  estadoPostula === "duplicado" ? "Ya postulaste"       :
                  estadoPostula === "error"     ? "Error, reintentar"   :
-                 estadoPostula === "loading"   ? "Enviando..."         : "Postular"}
+                 estadoPostula === "loading"   ? "Enviando..."         :
+                 !pub.vacante_activa           ? "Vacante cerrada"     : "Postular"}
               </button>
               <button
                 onClick={handleContactarEmpresa}

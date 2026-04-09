@@ -137,26 +137,34 @@ export default function PerfilEmpresaPublico() {
           <Card>
             <h3 className={`text-sm font-semibold ${T} mb-4 flex items-center gap-2`}>
               <Icon icon="mdi:clipboard-list-outline" width={16} className="text-[#378ADD]" />
-              Vacantes activas
+              Vacantes
               {vacantesActivas.length > 0 && (
-                <span className="ml-1 text-xs font-normal text-[#378ADD]">({vacantesActivas.length})</span>
+                <span className="ml-1 text-xs font-normal text-[#378ADD]">{vacantesActivas.length} activa{vacantesActivas.length !== 1 ? "s" : ""}</span>
               )}
             </h3>
 
-            {vacantesActivas.length === 0 ? (
+            {vacantes.length === 0 ? (
               <div className={`text-center py-8 ${M}`}>
                 <Icon icon="mdi:clipboard-remove-outline" width={36} className="mx-auto mb-2" />
-                <p className="text-sm">No hay vacantes activas en este momento.</p>
+                <p className="text-sm">Esta empresa no tiene vacantes publicadas.</p>
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {vacantesActivas.map((v) => {
+                {vacantes.map((v) => {
                   const estado = postulando[v.id] || "idle";
+                  const activa = !!v.esta_activa;
                   return (
-                    <div key={v.id} className={`p-4 rounded-lg border ${B}`}>
+                    <div key={v.id} className={`p-4 rounded-lg border ${B} ${!activa ? "opacity-60" : ""}`}>
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <p className={`text-sm font-semibold ${T}`}>{v.titulo}</p>
-                        <Badge color="green">Activa</Badge>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <Badge color={v.tipo === "puesto_laboral" ? "green" : "orange"}>
+                            {v.tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica"}
+                          </Badge>
+                          <Badge color={activa ? "green" : "gray"}>
+                            {activa ? "Activa" : "Cerrada"}
+                          </Badge>
+                        </div>
                       </div>
                       <p className={`text-xs ${M} mb-2`}>{v.area || "—"} · {v.modalidad || "Presencial"}</p>
                       {v.descripcion && (
@@ -165,7 +173,12 @@ export default function PerfilEmpresaPublico() {
 
                       {esEstudiante && (
                         <div className="flex items-center gap-3 mt-3 pt-3 border-t border-dashed" style={{ borderColor: isDark ? "#3a3a38" : "#D3D1C7" }}>
-                          {estado === "ok" ? (
+                          {!activa ? (
+                            <p className={`flex items-center gap-1.5 text-xs ${M}`}>
+                              <Icon icon="mdi:close-circle-outline" width={15} />
+                              Esta vacante ya no está disponible
+                            </p>
+                          ) : estado === "ok" ? (
                             <p className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
                               <Icon icon="mdi:check-circle" width={15} />
                               Postulación enviada
@@ -191,7 +204,7 @@ export default function PerfilEmpresaPublico() {
                               ) : (
                                 <Icon icon="mdi:send-outline" width={15} />
                               )}
-                              {estado === "loading" ? "Enviando..." : "Postular a esta práctica"}
+                              {estado === "loading" ? "Enviando..." : `Postular a esta ${v.tipo === "puesto_laboral" ? "oferta" : "práctica"}`}
                             </PrimaryButton>
                           )}
                         </div>
