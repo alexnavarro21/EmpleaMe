@@ -7,6 +7,7 @@ import EstudianteDashboard from "./pages/estudiante/Dashboard";
 import EstudiantePerfil from "./pages/estudiante/Perfil";
 import EstudianteEvidencias from "./pages/estudiante/Evidencias";
 import EstudianteMensajeria from "./pages/estudiante/EstudianteMensajeria";
+import MisPostulaciones from "./pages/estudiante/MisPostulaciones";
 
 import EmpresaDashboard from "./pages/empresa/Dashboard";
 import EmpresaPerfil from "./pages/empresa/Perfil";
@@ -43,6 +44,7 @@ export default function App() {
             <Route path="/estudiante/perfil" element={<EstudiantePerfil />} />
             <Route path="/estudiante/evidencias" element={<EstudianteEvidencias />} />
             <Route path="/estudiante/mensajeria" element={<EstudianteMensajeria />} />
+            <Route path="/estudiante/postulaciones" element={<MisPostulaciones />} />
             <Route path="/estudiante/buscar" element={<BuscarPerfiles />} />
             <Route path="/estudiante/candidato/:id" element={<EmpresaCandidato />} />
 

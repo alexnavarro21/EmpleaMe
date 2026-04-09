@@ -523,32 +523,6 @@ export default function EstudianteDashboard() {
           </div>
         </div>
 
-        {/* Completitud */}
-        <div className={`rounded-xl border ${B} ${BG} p-4`}>
-          <div className="flex items-center justify-between mb-2">
-            <p className={`text-xs font-semibold ${T}`}>Completitud del perfil</p>
-            <span className="text-xs font-semibold text-[#378ADD]">{pctCompleto}%</span>
-          </div>
-          <div className={`w-full h-1.5 rounded-full ${S} mb-3`}>
-            <div className="h-1.5 bg-[#378ADD] rounded-full" style={{ width: `${pctCompleto}%` }} />
-          </div>
-          <ul className={`flex flex-col gap-2 text-xs ${M}`}>
-            {profileSteps.map((s) => (
-              <li key={s.label} className="flex items-center gap-2">
-                <Icon
-                  icon={s.done ? "mdi:check-circle" : "mdi:circle-outline"}
-                  width={13}
-                  className={s.done ? "text-green-500 flex-shrink-0" : `flex-shrink-0 ${isDark ? "text-[#3a3a38]" : "text-[#D3D1C7]"}`}
-                />
-                <span className={s.done ? "line-through opacity-60" : ""}>{s.label}</span>
-              </li>
-            ))}
-          </ul>
-          <Link to="/estudiante/perfil" className="block text-center mt-3 text-xs text-[#378ADD] hover:underline">
-            Completar perfil →
-          </Link>
-        </div>
-
         {/* Quick links */}
         <div className={`rounded-xl border ${B} ${BG} p-4`}>
           <p className={`text-xs font-semibold ${T} mb-2`}>Accesos rápidos</p>
@@ -711,14 +685,14 @@ export default function EstudianteDashboard() {
             <p className={`text-xs ${M}`}>Aún no has postulado a ninguna vacante.</p>
           ) : (
             <>
-              {estudiantePostulaciones.slice(0, 4).map((p, i) => {
+              {estudiantePostulaciones.slice(0, 3).map((p, i) => {
                 const cfg = {
                   pendiente:  { label: "Pendiente", color: "text-blue-500",  icon: "mdi:clock-outline"          },
                   aceptado:   { label: "Aceptado",  color: "text-green-600", icon: "mdi:check-circle-outline"   },
                   rechazado:  { label: "Rechazado", color: "text-red-500",   icon: "mdi:close-circle-outline"   },
                 }[p.estado] || { label: p.estado, color: M, icon: "mdi:help-circle-outline" };
                 return (
-                  <div key={p.id} className={`flex items-start gap-2 ${i < Math.min(estudiantePostulaciones.length, 4) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}>
+                  <div key={p.id} className={`flex items-start gap-2 ${i < Math.min(estudiantePostulaciones.length, 3) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}>
                     <Icon icon={cfg.icon} width={14} className={`${cfg.color} flex-shrink-0 mt-0.5`} />
                     <div className="flex-1 min-w-0">
                       <p className={`text-xs font-medium ${T} truncate`}>{p.titulo}</p>
@@ -728,9 +702,9 @@ export default function EstudianteDashboard() {
                   </div>
                 );
               })}
-              {estudiantePostulaciones.length > 4 && (
-                <p className={`text-xs ${M} text-center mt-2`}>+{estudiantePostulaciones.length - 4} más</p>
-              )}
+              <Link to="/estudiante/postulaciones" className="block text-center mt-2 text-xs text-[#378ADD] hover:underline">
+                Ver todas →
+              </Link>
             </>
           )}
         </div>

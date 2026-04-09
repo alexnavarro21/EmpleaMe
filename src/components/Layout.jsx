@@ -127,6 +127,22 @@ export default function Layout() {
                   </Link>
                 )}
 
+                {/* Mis postulaciones (solo estudiante) */}
+                {role === "estudiante" && (
+                  <Link
+                    to="/estudiante/postulaciones"
+                    onClick={() => setMenuOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                      isDark
+                        ? "text-[#D3D1C7] hover:bg-[#185FA5]/30"
+                        : "text-[#2C2C2A] hover:bg-[#F0F4F8]"
+                    }`}
+                  >
+                    <Icon icon="mdi:clipboard-list-outline" width={18} className="text-[#378ADD]" />
+                    Mis postulaciones
+                  </Link>
+                )}
+
                 {/* Mensajes */}
                 <Link
                   to={messagingPaths[role]}
