@@ -308,6 +308,15 @@ export async function crearPublicacion(datos) {
   return data;
 }
 
+export async function getPublicacionesByAutor(autorId) {
+  const res = await fetch(`${BASE_URL}/publicaciones?autor_id=${autorId}`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener publicaciones");
+  return data;
+}
+
 export async function getComentarios(publicacionId) {
   const res = await fetch(`${BASE_URL}/publicaciones/${publicacionId}/comentarios`, {
     headers: authHeaders(),

@@ -31,11 +31,13 @@ router.post("/", verificarToken, upload.single("archivo_multimedia"), async (req
   }
 });
 
-// GET /api/publicaciones — feed de publicaciones activas
+// GET /api/publicaciones — feed de publicaciones activas (opcionalmente filtrado por autor_id)
 router.get("/", verificarToken, async (req, res) => {
+  const { autor_id } = req.query;
   try {
     const [rows] = await db.query(
       `SELECT p.id, p.titulo, p.contenido, p.publicado_en, p.vacante_id, p.url_multimedia,
+              p.autor_id,
               tp.nombre AS tipo,
               u.rol AS autor_rol,
               CASE u.rol
@@ -51,8 +53,10 @@ router.get("/", verificarToken, async (req, res) => {
        LEFT JOIN perfiles_estudiantes est ON est.usuario_id = u.id
        LEFT JOIN vacantes v               ON v.id = p.vacante_id
        WHERE p.esta_activa = TRUE
+       ${autor_id ? "AND p.autor_id = ?" : ""}
        ORDER BY p.publicado_en DESC
-       LIMIT 50`
+       LIMIT 50`,
+      autor_id ? [autor_id] : []
     );
     res.json(rows);
   } catch (err) {

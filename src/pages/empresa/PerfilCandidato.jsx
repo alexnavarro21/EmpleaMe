@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, SecondaryButton, PageHeader, SoftSkillBar } from "../../components/ui";
+import PublicacionesUsuario from "../../components/PublicacionesUsuario";
 import { getEstudianteById, iniciarConversacion, iniciarMensajeDirecto } from "../../services/api";
 
 const careerDisplay = {
@@ -228,6 +229,8 @@ export default function EmpresaPerfilCandidato() {
           )}
         </div>
       </div>
+
+      <PublicacionesUsuario usuarioId={id} />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 import { Card, Badge, SecondaryButton, PrimaryButton, PageHeader } from "../components/ui";
+import PublicacionesUsuario from "../components/PublicacionesUsuario";
 import { getEmpresaById, getVacantesEmpresa, postularAVacante, iniciarConversacionConEmpresa } from "../services/api";
 
 export default function PerfilEmpresaPublico() {
@@ -203,6 +204,8 @@ export default function PerfilEmpresaPublico() {
           </Card>
         </div>
       </div>
+
+      <PublicacionesUsuario usuarioId={id} />
     </div>
   );
 }

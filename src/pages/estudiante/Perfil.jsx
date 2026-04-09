@@ -3,6 +3,7 @@ import { jsPDF } from "jspdf";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, SecondaryButton, FormField, PageHeader, TextAreaField, SoftSkillBar } from "../../components/ui";
+import PublicacionesUsuario from "../../components/PublicacionesUsuario";
 import { getEstudianteById, actualizarPerfilEstudiante, getPostulacionesEstudiante } from "../../services/api";
 
 const tabs = ["Personal", "Académico", "Habilidades", "Video", "Postulaciones"];
@@ -455,6 +456,8 @@ const descargarCV = () => {
           </Card>
         </div>
       </div>
+
+      <PublicacionesUsuario usuarioId={usuario.id} />
     </div>
   );
 }

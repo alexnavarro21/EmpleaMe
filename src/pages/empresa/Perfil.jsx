@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, SecondaryButton, FormField, PageHeader, TextAreaField } from "../../components/ui";
+import PublicacionesUsuario from "../../components/PublicacionesUsuario";
 import { getEmpresaById, actualizarPerfilEmpresa, getVacantesEmpresa } from "../../services/api";
 
 const tabs = ["Información", "Vacantes"];
@@ -286,6 +287,8 @@ export default function EmpresaPerfil() {
           </Card>
         </div>
       </div>
+
+      <PublicacionesUsuario usuarioId={usuario.id} />
     </div>
   );
 }
