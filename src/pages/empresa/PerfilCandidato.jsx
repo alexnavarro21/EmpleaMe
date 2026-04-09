@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, SecondaryButton, PageHeader, SoftSkillBar } from "../../components/ui";
-import { getEstudianteById } from "../../services/api";
+import { getEstudianteById, iniciarConversacion } from "../../services/api";
 
 const careerDisplay = {
   "Administracion": "Administración",
@@ -18,6 +18,7 @@ export default function EmpresaPerfilCandidato() {
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [contactando, setContactando] = useState(false);
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -96,7 +97,26 @@ export default function EmpresaPerfilCandidato() {
             </div>
 
             <div className="flex flex-col gap-2 mt-4">
-              <PrimaryButton className="w-full">Contactar estudiante</PrimaryButton>
+              <PrimaryButton
+                className="w-full flex items-center justify-center gap-2"
+                disabled={contactando}
+                onClick={async () => {
+                  setContactando(true);
+                  try {
+                    const conv = await iniciarConversacion(id);
+                    navigate("/empresa/mensajeria", { state: { conversacionId: conv.id } });
+                  } catch (err) {
+                    console.error("Error al contactar:", err);
+                  } finally {
+                    setContactando(false);
+                  }
+                }}
+              >
+                {contactando
+                  ? <Icon icon="mdi:loading" width={16} className="animate-spin" />
+                  : <Icon icon="mdi:message-outline" width={16} />}
+                {contactando ? "Abriendo chat..." : "Contactar estudiante"}
+              </PrimaryButton>
               <SecondaryButton className="w-full flex items-center justify-center gap-2">
                 <Icon icon="fluent:handshake-32-regular" width={16} />
                 Invitar a práctica

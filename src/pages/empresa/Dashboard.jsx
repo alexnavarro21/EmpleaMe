@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, StatCard, PageHeader, PrimaryButton } from "../../components/ui";
-import { getVacantesEmpresa, getPostulantesEmpresa, actualizarEstadoPostulacion } from "../../services/api";
+import { getVacantesEmpresa, getPostulantesEmpresa, actualizarEstadoPostulacion, iniciarConversacion } from "../../services/api";
 
 const statusColor = { activa: "green", cerrada: "gray", pausada: "yellow" };
 const postColor = { pendiente: "blue", aceptado: "green", rechazado: "gray" };
@@ -11,6 +11,7 @@ const postLabel = { pendiente: "nuevo", aceptado: "aceptado", rechazado: "rechaz
 
 export default function EmpresaDashboard() {
   const { isDark } = useDark();
+  const navigate = useNavigate();
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
@@ -19,6 +20,7 @@ export default function EmpresaDashboard() {
   const [vacantes, setVacantes] = useState([]);
   const [postulantes, setPostulantes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [contactandoId, setContactandoId] = useState(null);
 
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
@@ -39,6 +41,18 @@ export default function EmpresaDashboard() {
     }
     cargarDatos();
   }, [usuario.id]);
+
+  const handleContactar = async (estudianteId) => {
+    setContactandoId(estudianteId);
+    try {
+      const conv = await iniciarConversacion(estudianteId);
+      navigate("/empresa/mensajeria", { state: { conversacionId: conv.id } });
+    } catch (err) {
+      console.error("Error al contactar:", err);
+    } finally {
+      setContactandoId(null);
+    }
+  };
 
   const handleEstado = async (postulacionId, nuevoEstado) => {
     try {
@@ -170,6 +184,18 @@ export default function EmpresaDashboard() {
                         </button>
                       </>
                     )}
+                    <button
+                      onClick={() => handleContactar(p.estudiante_id)}
+                      disabled={contactandoId === p.estudiante_id}
+                      title="Enviar mensaje"
+                      className={`${M} hover:text-[#378ADD] transition-colors disabled:opacity-50`}
+                    >
+                      <Icon
+                        icon={contactandoId === p.estudiante_id ? "mdi:loading" : "mdi:message-outline"}
+                        width={18}
+                        className={contactandoId === p.estudiante_id ? "animate-spin" : ""}
+                      />
+                    </button>
                     <Link
                       to={`/empresa/candidato/${p.estudiante_id}`}
                       className={`${M} hover:text-[#378ADD] transition-colors`}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge, PageHeader } from "../../components/ui";
@@ -19,6 +20,7 @@ const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
 export default function EmpresaMensajeria() {
   const { isDark } = useDark();
+  const location = useLocation();
   const [conversations, setConversations] = useState([]);
   const [selected, setSelected] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -35,10 +37,15 @@ export default function EmpresaMensajeria() {
 
   // Cargar conversaciones
   useEffect(() => {
+    const targetId = location.state?.conversacionId;
     getConversaciones()
       .then((data) => {
         setConversations(data);
-        if (data.length > 0) setSelected(data[0].id);
+        if (targetId && data.some((c) => c.id === targetId)) {
+          setSelected(targetId);
+        } else if (data.length > 0) {
+          setSelected(data[0].id);
+        }
       })
       .catch(console.error)
       .finally(() => setLoadingConvs(false));
