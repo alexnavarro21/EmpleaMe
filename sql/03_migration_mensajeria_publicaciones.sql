@@ -20,28 +20,18 @@ INSERT INTO tipos_publicacion (nombre, descripcion) VALUES
 
 -- 2. Publicaciones (feed tipo red social)
 CREATE TABLE publicaciones (
-    id          INT AUTO_INCREMENT PRIMARY KEY,
-    autor_id    INT NOT NULL,
-    tipo_id     INT NOT NULL,
-    vacante_id  INT NULL,
-    titulo      VARCHAR(200) NOT NULL,
-    contenido   TEXT,
-    publicado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    esta_activa BOOLEAN DEFAULT TRUE,
+    id             INT AUTO_INCREMENT PRIMARY KEY,
+    autor_id       INT NOT NULL,
+    tipo_id        INT NOT NULL,
+    vacante_id     INT NULL,
+    titulo         VARCHAR(200) NOT NULL,
+    contenido      TEXT,
+    url_multimedia VARCHAR(255) NULL, -- <--- ¡NUEVO! Aquí se guardará "/uploads/foto.jpg"
+    publicado_en   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    esta_activa    BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (autor_id)   REFERENCES usuarios(id)          ON DELETE CASCADE,
     FOREIGN KEY (tipo_id)    REFERENCES tipos_publicacion(id),
     FOREIGN KEY (vacante_id) REFERENCES vacantes(id)          ON DELETE SET NULL
-);
-
--- 3. Archivos adjuntos a publicaciones (foto/video)
-CREATE TABLE archivos_publicacion (
-    id             INT AUTO_INCREMENT PRIMARY KEY,
-    publicacion_id INT NOT NULL,
-    tipo_archivo   ENUM('foto', 'video') NOT NULL,
-    datos_archivo  LONGBLOB NOT NULL,
-    mime_type      VARCHAR(100) NOT NULL,
-    subido_en      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (publicacion_id) REFERENCES publicaciones(id) ON DELETE CASCADE
 );
 
 -- 4. Etiquetas de habilidades en publicaciones
