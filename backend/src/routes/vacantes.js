@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const db = require("../db");
 const { verificarToken, soloRol } = require("../middleware/auth");
+const upload = require("../middleware/multerConfig");
 
 // GET /api/vacantes  — vacantes activas (para estudiantes)
 router.get("/", verificarToken, async (req, res) => {
@@ -36,7 +37,7 @@ router.get("/empresa/:id", verificarToken, async (req, res) => {
 });
 
 // POST /api/vacantes  — publicar vacante (solo empresa)
-router.post("/", verificarToken, soloRol("empresa"), async (req, res) => {
+router.post("/", verificarToken, soloRol("empresa"), upload.single("archivo_multimedia"), async (req, res) => {
   const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, remuneracion, direccion, beneficios, fecha_limite } = req.body;
   if (!titulo || !descripcion)
     return res.status(400).json({ error: "titulo y descripcion son requeridos" });
@@ -56,11 +57,12 @@ router.post("/", verificarToken, soloRol("empresa"), async (req, res) => {
     );
 
     // Crear publicación en el feed vinculada a la vacante
+    const url_multimedia = req.file ? `/uploads/${req.file.filename}` : null;
     const [[tipoVacante]] = await db.query("SELECT id FROM tipos_publicacion WHERE nombre = 'vacante'");
     if (tipoVacante) {
       await db.query(
-        "INSERT INTO publicaciones (autor_id, tipo_id, vacante_id, titulo, contenido) VALUES (?, ?, ?, ?, ?)",
-        [req.usuario.id, tipoVacante.id, result.insertId, titulo, descripcion]
+        "INSERT INTO publicaciones (autor_id, tipo_id, vacante_id, titulo, contenido, url_multimedia) VALUES (?, ?, ?, ?, ?, ?)",
+        [req.usuario.id, tipoVacante.id, result.insertId, titulo, descripcion, url_multimedia]
       );
     }
 

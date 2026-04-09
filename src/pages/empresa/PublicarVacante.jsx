@@ -4,6 +4,7 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, PrimaryButton, SecondaryButton, FormField, TextAreaField, SelectField, PageHeader } from "../../components/ui";
 import { crearVacante } from "../../services/api";
+import FileUploader from "../../components/FileUploader";
 
 const modalidades = [
   { id: "presencial", label: "Presencial", icon: "streamline:city-hall-remix" },
@@ -26,6 +27,7 @@ export default function EmpresaPublicarVacante() {
   const [requisitos, setRequisitos] = useState("");
   const [beneficios, setBeneficios] = useState("");
   const [fechaLimite, setFechaLimite] = useState("");
+  const [archivo, setArchivo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -45,7 +47,7 @@ export default function EmpresaPublicarVacante() {
         titulo, descripcion, requisitos, area, modalidad,
         duracion, horario, remuneracion, direccion, beneficios,
         fecha_limite: fechaLimite || undefined,
-      });
+      }, archivo);
       navigate("/empresa/dashboard");
     } catch (err) {
       setError(err.message);
@@ -158,6 +160,16 @@ export default function EmpresaPublicarVacante() {
               value={fechaLimite}
               onChange={(e) => setFechaLimite(e.target.value)}
             />
+
+            <div className="mb-4">
+              <label className={`block text-xs mb-2 ${M}`}>Imagen o archivo adjunto (opcional)</label>
+              <FileUploader
+                title="Imagen, video o documento"
+                accept="image/*,video/*,.pdf"
+                icon="mdi:image-outline"
+                onFileSelect={(file) => setArchivo(file)}
+              />
+            </div>
 
             {error && <p className="text-xs text-red-500 mb-3">{error}</p>}
 

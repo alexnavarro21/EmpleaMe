@@ -48,12 +48,19 @@ export async function getVacantesEmpresa(empresaId) {
   return data;
 }
 
-export async function crearVacante(datos) {
-  const res = await fetch(`${BASE_URL}/vacantes`, {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify(datos),
-  });
+export async function crearVacante(datos, archivo = null) {
+  let body, headers;
+  if (archivo) {
+    const formData = new FormData();
+    Object.entries(datos).forEach(([k, v]) => { if (v !== undefined) formData.append(k, v); });
+    formData.append("archivo_multimedia", archivo);
+    body = formData;
+    headers = { Authorization: `Bearer ${getToken()}` };
+  } else {
+    body = JSON.stringify(datos);
+    headers = authHeaders();
+  }
+  const res = await fetch(`${BASE_URL}/vacantes`, { method: "POST", headers, body });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al crear vacante");
   return data; // { id, mensaje }
