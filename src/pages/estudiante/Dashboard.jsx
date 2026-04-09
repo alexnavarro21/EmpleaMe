@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge } from "../../components/ui";
-import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones } from "../../services/api";
+import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante } from "../../services/api";
 import CrearPublicacion from "../../components/CrearPublicacion";
 import VerMasModal from "../../components/VerMasModal";
 
@@ -358,6 +358,10 @@ export default function EstudianteDashboard() {
   const [perfil, setPerfil] = useState(null);
   const [publicaciones, setPublicaciones] = useState([]);
 
+  // Estado estudiante extra
+  const [estudiantePostulaciones, setEstudiantePostulaciones] = useState([]);
+  const [estudianteConversaciones, setEstudianteConversaciones] = useState([]);
+
   // Estado empresa
   const [empresaPerfil, setEmpresaPerfil] = useState(null);
   const [empresaVacantes, setEmpresaVacantes] = useState([]);
@@ -371,6 +375,8 @@ export default function EstudianteDashboard() {
   useEffect(() => {
     if (usuario.id && usuario.rol === "estudiante") {
       getEstudianteById(usuario.id).then(setPerfil).catch(console.error);
+      getPostulacionesEstudiante().then(setEstudiantePostulaciones).catch(console.error);
+      getConversaciones().then(setEstudianteConversaciones).catch(console.error);
     }
     if (usuario.id && usuario.rol === "empresa") {
       getEmpresaById(usuario.id).then(setEmpresaPerfil).catch(console.error);
@@ -491,16 +497,20 @@ export default function EstudianteDashboard() {
 
             <div className={`flex gap-4 mt-3 pt-3 border-t ${B}`}>
               <div className="text-center">
-                <p className={`text-base font-semibold ${T}`}>3</p>
+                <p className={`text-base font-semibold ${T}`}>{estudiantePostulaciones.length}</p>
                 <p className={`text-xs ${M}`}>Postulaciones</p>
               </div>
               <div className="text-center">
-                <p className={`text-base font-semibold ${T}`}>7</p>
-                <p className={`text-xs ${M}`}>Matches</p>
+                <p className={`text-base font-semibold text-green-600`}>
+                  {estudiantePostulaciones.filter((p) => p.estado === "aceptado").length}
+                </p>
+                <p className={`text-xs ${M}`}>Aceptadas</p>
               </div>
               <div className="text-center">
-                <p className={`text-base font-semibold ${T}`}>24</p>
-                <p className={`text-xs ${M}`}>Visitas</p>
+                <p className={`text-base font-semibold ${estudianteConversaciones.some((c) => c.no_leidos > 0) ? "text-red-500" : T}`}>
+                  {estudianteConversaciones.reduce((a, c) => a + (c.no_leidos || 0), 0)}
+                </p>
+                <p className={`text-xs ${M}`}>Mensajes</p>
               </div>
             </div>
 
@@ -686,70 +696,114 @@ export default function EstudianteDashboard() {
         </div>
       )}
 
-      {/* ── RIGHT SIDEBAR ── */}
+      {/* ── RIGHT SIDEBAR ESTUDIANTE ── */}
       {isEstudiante && <div className="flex flex-col gap-4 sticky top-20">
-        {/* Suggested practices */}
-        {(() => {
-          const vacantes = publicaciones.filter((p) => p.tipo === "vacante").slice(0, 3);
-          return (
-            <div className={`rounded-xl border ${B} ${BG} p-4`}>
-              <p className={`text-xs font-semibold ${T} mb-3`}>Prácticas recomendadas</p>
-              {vacantes.length === 0 ? (
-                <p className={`text-xs ${M}`}>No hay prácticas publicadas aún.</p>
-              ) : (
-                vacantes.map((v, i) => {
-                  const inicial = v.autor_nombre ? v.autor_nombre.charAt(0).toUpperCase() : "?";
-                  const color = AVATAR_COLORS[i % AVATAR_COLORS.length];
-                  return (
-                    <div key={v.id} className={`flex items-center gap-3 ${i < vacantes.length - 1 ? `pb-3 mb-3 border-b ${B}` : ""}`}>
-                      <Avatar initial={inicial} color={color} size="sm" />
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-xs font-semibold ${T} truncate`}>{v.autor_nombre}</p>
-                        <p className={`text-xs ${M} truncate`}>{v.titulo || v.area || "Práctica"}</p>
-                      </div>
+
+        {/* Mis postulaciones */}
+        <div className={`rounded-xl border ${B} ${BG} p-4`}>
+          <div className="flex items-center justify-between mb-3">
+            <p className={`text-xs font-semibold ${T}`}>Mis postulaciones</p>
+            {estudiantePostulaciones.length > 0 && (
+              <span className={`text-xs font-semibold ${M}`}>{estudiantePostulaciones.length}</span>
+            )}
+          </div>
+          {estudiantePostulaciones.length === 0 ? (
+            <p className={`text-xs ${M}`}>Aún no has postulado a ninguna vacante.</p>
+          ) : (
+            <>
+              {estudiantePostulaciones.slice(0, 4).map((p, i) => {
+                const cfg = {
+                  pendiente:  { label: "Pendiente", color: "text-blue-500",  icon: "mdi:clock-outline"          },
+                  aceptado:   { label: "Aceptado",  color: "text-green-600", icon: "mdi:check-circle-outline"   },
+                  rechazado:  { label: "Rechazado", color: "text-red-500",   icon: "mdi:close-circle-outline"   },
+                }[p.estado] || { label: p.estado, color: M, icon: "mdi:help-circle-outline" };
+                return (
+                  <div key={p.id} className={`flex items-start gap-2 ${i < Math.min(estudiantePostulaciones.length, 4) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}>
+                    <Icon icon={cfg.icon} width={14} className={`${cfg.color} flex-shrink-0 mt-0.5`} />
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-xs font-medium ${T} truncate`}>{p.titulo}</p>
+                      <p className={`text-xs ${M} truncate`}>{p.nombre_empresa}</p>
+                      <p className={`text-xs font-medium ${cfg.color}`}>{cfg.label}</p>
                     </div>
-                  );
-                })
+                  </div>
+                );
+              })}
+              {estudiantePostulaciones.length > 4 && (
+                <p className={`text-xs ${M} text-center mt-2`}>+{estudiantePostulaciones.length - 4} más</p>
               )}
+            </>
+          )}
+        </div>
+
+        {/* Mensajes */}
+        <div className={`rounded-xl border ${B} ${BG} p-4`}>
+          <div className="flex items-center justify-between mb-3">
+            <p className={`text-xs font-semibold ${T}`}>Mensajes</p>
+            {estudianteConversaciones.some((c) => c.no_leidos > 0) && (
+              <span className="text-xs bg-red-100 text-red-600 font-semibold px-2 py-0.5 rounded-full">
+                {estudianteConversaciones.reduce((a, c) => a + (c.no_leidos || 0), 0)} sin leer
+              </span>
+            )}
+          </div>
+          {estudianteConversaciones.length === 0 ? (
+            <p className={`text-xs ${M}`}>Sin conversaciones aún.</p>
+          ) : (
+            <>
+              {estudianteConversaciones.slice(0, 3).map((c, i) => {
+                const nombre = c.nombre_empresa || c.nombre_estudiante || "Usuario";
+                return (
+                  <Link
+                    key={c.id}
+                    to="/estudiante/mensajeria"
+                    state={{ conversacionId: c.id }}
+                    className={`flex items-center gap-2.5 ${i < Math.min(estudianteConversaciones.length, 3) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}
+                  >
+                    <div className="w-7 h-7 rounded-full bg-[#185FA5] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                      {nombre[0]?.toUpperCase() || "?"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-xs font-medium ${T} truncate`}>{nombre}</p>
+                      <p className={`text-xs ${M} truncate`}>{c.ultimo_mensaje || "Sin mensajes"}</p>
+                    </div>
+                    {c.no_leidos > 0 && (
+                      <span className="text-xs bg-[#185FA5] text-white font-semibold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">
+                        {c.no_leidos}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+              <Link to="/estudiante/mensajeria" className="block text-center mt-2 text-xs text-[#378ADD] hover:underline">
+                Ver todos →
+              </Link>
+            </>
+          )}
+        </div>
+
+        {/* Vacantes recomendadas del feed */}
+        {(() => {
+          const vacantes = publicaciones.filter((p) => p.tipo === "vacante" && p.vacante_activa).slice(0, 3);
+          return vacantes.length === 0 ? null : (
+            <div className={`rounded-xl border ${B} ${BG} p-4`}>
+              <p className={`text-xs font-semibold ${T} mb-3`}>Vacantes en el muro</p>
+              {vacantes.map((v, i) => (
+                <div key={v.id} className={`flex items-center gap-2.5 ${i < vacantes.length - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}>
+                  <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-semibold ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}>
+                    {v.autor_nombre?.[0]?.toUpperCase() || "?"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-xs font-semibold ${T} truncate`}>{v.titulo || v.area || "Vacante"}</p>
+                    <p className={`text-xs ${M} truncate`}>{v.autor_nombre}</p>
+                    <span className={`text-xs font-medium ${v.vacante_tipo === "puesto_laboral" ? "text-green-600" : "text-orange-500"}`}>
+                      {v.vacante_tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica"}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           );
         })()}
 
-        {/* Badges */}
-        <div className={`rounded-xl border ${B} ${BG} p-4`}>
-          <p className={`text-xs font-semibold ${T} mb-3`}>Mis insignias</p>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { icon: "solar:medal-ribbons-star-bold-duotone", label: "Perfil Destacado", color: "text-amber-500" },
-              { icon: "mdi:check-decagram", label: "CV Verificado", color: "text-[#378ADD]" },
-              { icon: "mdi:school", label: "4to semestre", color: "text-purple-500" },
-            ].map((b) => (
-              <div
-                key={b.label}
-                title={b.label}
-                className={`flex flex-col items-center gap-1 p-2 rounded-lg border ${B} ${S} w-[72px]`}
-              >
-                <Icon icon={b.icon} width={22} className={b.color} />
-                <span className={`text-[10px] text-center leading-tight ${M}`}>{b.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Actividad reciente compacta */}
-        <div className={`rounded-xl border ${B} ${BG} p-4`}>
-          <p className={`text-xs font-semibold ${T} mb-3`}>Esta semana</p>
-          {[
-            { icon: "mdi:eye-outline", label: "24 vistas al perfil", color: "text-[#378ADD]" },
-            { icon: "fluent:handshake-32-regular", label: "7 matches activos", color: "text-green-500" },
-            { icon: "mdi:send-check-outline", label: "3 postulaciones", color: "text-purple-500" },
-          ].map((item) => (
-            <div key={item.label} className="flex items-center gap-2.5 mb-2 last:mb-0">
-              <Icon icon={item.icon} width={14} className={`${item.color} flex-shrink-0`} />
-              <span className={`text-xs ${M}`}>{item.label}</span>
-            </div>
-          ))}
-        </div>
       </div>}
     </div>
   );
