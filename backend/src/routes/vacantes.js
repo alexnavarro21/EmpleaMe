@@ -57,16 +57,17 @@ router.get("/empresa/:id", verificarToken, async (req, res) => {
 
 // POST /api/vacantes  — publicar vacante (solo empresa)
 router.post("/", verificarToken, soloRol("empresa"), upload.single("archivo_multimedia"), async (req, res) => {
-  const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, remuneracion, direccion, beneficios, fecha_limite, habilidades } = req.body;
+  const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, remuneracion, direccion, beneficios, fecha_limite, habilidades, tipo } = req.body;
   if (!titulo || !descripcion)
     return res.status(400).json({ error: "titulo y descripcion son requeridos" });
+  const tipoValido = tipo === "puesto_laboral" ? "puesto_laboral" : "practica";
   try {
     const [result] = await db.query(
       `INSERT INTO vacantes
-         (empresa_id, titulo, descripcion, requisitos, area, modalidad, duracion, horario, remuneracion, direccion, beneficios, fecha_limite)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (empresa_id, tipo, titulo, descripcion, requisitos, area, modalidad, duracion, horario, remuneracion, direccion, beneficios, fecha_limite)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        req.usuario.id, titulo, descripcion,
+        req.usuario.id, tipoValido, titulo, descripcion,
         requisitos || null, area || null,
         modalidad || "presencial",
         duracion || null, horario || null,

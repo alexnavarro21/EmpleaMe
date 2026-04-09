@@ -12,10 +12,16 @@ const modalidades = [
   { id: "hibrido", label: "Híbrido", icon: "mdi:home-work-outline" },
 ];
 
+const tiposVacante = [
+  { id: "practica", label: "Práctica profesional", icon: "mdi:school-outline" },
+  { id: "puesto_laboral", label: "Puesto laboral", icon: "mdi:briefcase-outline" },
+];
+
 export default function EmpresaPublicarVacante() {
   const { isDark } = useDark();
   const navigate = useNavigate();
 
+  const [tipo, setTipo] = useState("practica");
   const [titulo, setTitulo] = useState("");
   const [area, setArea] = useState("Mecánica Automotriz");
   const [duracion, setDuracion] = useState("");
@@ -56,7 +62,7 @@ export default function EmpresaPublicarVacante() {
     setLoading(true);
     try {
       await crearVacante({
-        titulo, descripcion, requisitos, area, modalidad,
+        tipo, titulo, descripcion, requisitos, area, modalidad,
         duracion, horario, remuneracion, direccion, beneficios,
         fecha_limite: fechaLimite || undefined,
         habilidades: habilidadesSeleccionadas,
@@ -81,6 +87,32 @@ export default function EmpresaPublicarVacante() {
         <div className="col-span-2">
           <Card>
             <h3 className={`text-sm font-semibold ${T} mb-4`}>Información general</h3>
+
+            <div className="mb-4">
+              <label className={`block text-xs mb-2 ${M}`}>Tipo de oferta</label>
+              <div className="grid grid-cols-2 gap-3">
+                {tiposVacante.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setTipo(t.id)}
+                    className={`p-3 rounded-lg border text-center transition-all ${
+                      tipo === t.id
+                        ? `border-2 border-[#378ADD] ${isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]"}`
+                        : `border ${B}`
+                    }`}
+                  >
+                    <Icon
+                      icon={t.icon}
+                      width={24}
+                      className={`mx-auto mb-1.5 ${tipo === t.id ? "text-[#378ADD]" : M}`}
+                    />
+                    <span className={`text-sm font-medium ${T}`}>{t.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <FormField
               label="Título del puesto"
               placeholder="ej. Practicante Mecánico Automotriz"
@@ -248,6 +280,9 @@ export default function EmpresaPublicarVacante() {
               </p>
               <p className={`text-xs ${M} mt-1`}>{duracion || "Duración"} · {horario || "Horario"}</p>
               <div className="flex gap-1.5 mt-2 flex-wrap">
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tipo === "practica" ? "bg-[#FEF3C7] text-[#92400E]" : "bg-[#D1FAE5] text-[#065F46]"}`}>
+                  {tipo === "practica" ? "Práctica" : "Puesto laboral"}
+                </span>
                 {area && <span className="text-xs bg-[#E6F1FB] text-[#185FA5] px-2 py-0.5 rounded-full">{area}</span>}
                 <span className="text-xs bg-[#E6F1FB] text-[#185FA5] px-2 py-0.5 rounded-full capitalize">{modalidad}</span>
               </div>
