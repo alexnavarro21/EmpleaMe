@@ -28,9 +28,8 @@ export default function AvatarUsuario({ urlInicial }) {
       // Llamamos al backend
       const respuesta = await actualizarFotoPerfil(formData);
       
-      // Actualizamos la foto en pantalla
-      const BASE_URL_BACKEND = import.meta.env.VITE_API_URL?.replace('/api', '') || "https://empleame.up.railway.app";
-      setFotoUrl(`${BASE_URL_BACKEND}${respuesta.foto_perfil}`);
+      // foto_perfil ya es una URL pública del bucket de Railway
+      setFotoUrl(respuesta.foto_perfil);
       
     } catch (error) {
       console.error(error);

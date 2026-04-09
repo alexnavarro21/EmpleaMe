@@ -15,18 +15,17 @@ router.put("/avatar", verificarToken, upload.single("foto_perfil"), async (req, 
       return res.status(400).json({ error: "No se detectó ningún archivo." });
     }
 
-    // Armamos la ruta física donde quedó la imagen
-    const url_foto = `/uploads/${archivo.filename}`;
+    // multer-s3 devuelve la URL pública del bucket directamente en req.file.location
+    const url_foto = archivo.location;
 
-    // Actualizamos al usuario que hizo la petición
     await db.query(
       "UPDATE usuarios SET foto_perfil = ? WHERE id = ?",
       [url_foto, req.usuario.id]
     );
 
-    res.json({ 
+    res.json({
       mensaje: "Foto de perfil actualizada con éxito",
-      foto_perfil: url_foto 
+      foto_perfil: url_foto
     });
 
   } catch (err) {
