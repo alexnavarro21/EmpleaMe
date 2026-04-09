@@ -56,6 +56,10 @@ export default function EmpresaDashboard() {
       setVacantes((prev) =>
         prev.map((v) => v.id === vacante.id ? { ...v, esta_activa: !v.esta_activa } : v)
       );
+      if (vacante.esta_activa) {
+        // Se desactivó — refrescar pendientes porque algunos pasaron a rechazados
+        getPostulantesEmpresa().then(setPostulantes).catch(console.error);
+      }
     } catch (err) {
       console.error("Error al cambiar estado de vacante:", err);
     } finally {
