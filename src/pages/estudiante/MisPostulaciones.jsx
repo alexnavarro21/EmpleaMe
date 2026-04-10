@@ -88,7 +88,7 @@ export default function MisPostulaciones() {
             onClick={() => setFiltro(key)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
               filtro === key
-                ? "bg-[#185FA5] text-white border-[#185FA5]"
+                ? "bg-[#0F4D8A] text-white border-[#0F4D8A]"
                 : `${B} ${M} hover:border-[#378ADD] hover:text-[#378ADD]`
             }`}
           >

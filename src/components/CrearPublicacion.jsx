@@ -42,7 +42,7 @@ export default function CrearPublicacion({ onPublicado }) {
   return (
     <div className={`p-4 rounded-xl border shadow-sm ${isDark ? "bg-[#262624] border-[#3a3a38]" : "bg-white border-[#D3D1C7]"}`}>
       <div className="flex gap-3">
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0 ${isDark ? "bg-[#313130] text-[#85B7EB]" : "bg-[#E6F1FB] text-[#185FA5]"}`}>
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0 ${isDark ? "bg-[#313130] text-[#85B7EB]" : "bg-[#E6F1FB] text-[#0F4D8A]"}`}>
           <Icon icon="mynaui:user-solid" width={20} />
         </div>
 

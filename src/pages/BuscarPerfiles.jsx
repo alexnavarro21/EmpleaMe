@@ -124,8 +124,8 @@ export default function BuscarPerfiles() {
             onClick={() => { setTab(t.id); setSearch(""); }}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               tab === t.id
-                ? "bg-[#185FA5] text-[#E6F1FB]"
-                : `${M} hover:bg-[#185FA5]/10`
+                ? "bg-[#0F4D8A] text-[#E6F1FB]"
+                : `${M} hover:bg-[#0F4D8A]/10`
             }`}
           >
             <Icon icon={t.icon} width={15} />
@@ -172,7 +172,7 @@ export default function BuscarPerfiles() {
                         key={c}
                         onClick={() => setSelectedCareer(c)}
                         className={`w-full text-left text-sm px-3 py-1.5 rounded-lg mb-1 transition-colors flex items-center gap-2 ${
-                          isActive ? "bg-[#185FA5] text-[#E6F1FB]" : `${T} hover:bg-[#185FA5]/10`
+                          isActive ? "bg-[#0F4D8A] text-[#E6F1FB]" : `${T} hover:bg-[#0F4D8A]/10`
                         }`}
                       >
                         <Icon
@@ -194,7 +194,7 @@ export default function BuscarPerfiles() {
                       type="range" min="1" max="7" step="0.1"
                       value={minGpa}
                       onChange={(e) => setMinGpa(parseFloat(e.target.value))}
-                      className="w-full accent-[#185FA5]"
+                      className="w-full accent-[#0F4D8A]"
                     />
                     <div className={`flex justify-between text-xs ${M} mt-1`}>
                       <span>1.0</span><span>4.0</span><span>7.0</span>
@@ -284,7 +284,7 @@ export default function BuscarPerfiles() {
               {filteredCompanies.map((c) => (
                 <Card key={c.usuario_id} className="hover:border-[#378ADD] transition-colors">
                   <div className="flex items-start gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full bg-[#185FA5] flex items-center justify-center flex-shrink-0 text-white font-bold text-sm">
+                    <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center flex-shrink-0 text-white font-bold text-sm">
                       {c.nombre_empresa?.[0]?.toUpperCase() ?? "E"}
                     </div>
                     <div className="flex-1 min-w-0">

@@ -7,7 +7,7 @@ import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, 
 import CrearPublicacion from "../../components/CrearPublicacion";
 import VerMasModal from "../../components/VerMasModal";
 
-const AVATAR_COLORS = ["bg-[#185FA5]", "bg-red-500", "bg-green-600", "bg-purple-600", "bg-amber-500"];
+const AVATAR_COLORS = ["bg-[#0F4D8A]", "bg-red-500", "bg-green-600", "bg-purple-600", "bg-amber-500"];
 
 const BASE_URL_GLOBAL = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
 function resolverMedia(url) {
@@ -195,7 +195,7 @@ function FeedCard({ pub, isDark }) {
     <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
       <div className="flex items-start justify-between px-4 pt-4 pb-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#185FA5] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+          <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
             {inicial}
           </div>
           <div>
@@ -425,10 +425,10 @@ export default function EstudianteDashboard() {
         <div className="flex flex-col gap-4 sticky top-20">
           {/* Tarjeta empresa */}
           <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
-            <div className="h-16 bg-gradient-to-r from-[#0C447C] to-[#378ADD]" />
+            <div className="h-16 bg-gradient-to-r from-[#0A3A6A] to-[#378ADD]" />
             <div className="px-4 pb-4">
               <div className="-mt-7 mb-3">
-                <div className="w-14 h-14 rounded-full bg-[#185FA5] flex items-center justify-center text-white text-xl font-bold border-2 border-white">
+                <div className="w-14 h-14 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xl font-bold border-2 border-white">
                   {(empresaPerfil?.nombre_empresa || usuario.nombre_empresa || "E")[0].toUpperCase()}
                 </div>
               </div>
@@ -452,7 +452,7 @@ export default function EstudianteDashboard() {
 
               <Link
                 to="/empresa/dashboard"
-                className="block text-center mt-3 text-xs font-medium text-[#185FA5] hover:text-[#0C447C] border border-[#185FA5] hover:bg-[#E6F1FB] py-1.5 rounded-lg transition-colors"
+                className="block text-center mt-3 text-xs font-medium text-[#0F4D8A] hover:text-[#0A3A6A] border border-[#0F4D8A] hover:bg-[#E6F1FB] py-1.5 rounded-lg transition-colors"
               >
                 Ir al panel
               </Link>
@@ -486,10 +486,10 @@ export default function EstudianteDashboard() {
         {/* Profile card */}
         <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
           {/* Banner */}
-          <div className="h-16 bg-gradient-to-r from-[#0C447C] to-[#378ADD]" />
+          <div className="h-16 bg-gradient-to-r from-[#0A3A6A] to-[#378ADD]" />
           <div className="px-4 pb-4">
             <div className="-mt-7 mb-3">
-              <Avatar initial={inicial} color="bg-[#185FA5]" size="lg" />
+              <Avatar initial={inicial} color="bg-[#0F4D8A]" size="lg" />
             </div>
             <p className={`text-sm font-semibold ${T}`}>{nombre || "Sin nombre"}</p>
             <p className={`text-xs ${M} mt-0.5`}>{subtitleParts.join(" · ") || "Sin carrera"}</p>
@@ -516,7 +516,7 @@ export default function EstudianteDashboard() {
 
             <Link
               to="/estudiante/perfil"
-              className="block text-center mt-3 text-xs font-medium text-[#185FA5] hover:text-[#0C447C] border border-[#185FA5] hover:bg-[#E6F1FB] py-1.5 rounded-lg transition-colors"
+              className="block text-center mt-3 text-xs font-medium text-[#0F4D8A] hover:text-[#0A3A6A] border border-[#0F4D8A] hover:bg-[#E6F1FB] py-1.5 rounded-lg transition-colors"
             >
               Ver mi perfil
             </Link>
@@ -589,7 +589,7 @@ export default function EstudianteDashboard() {
                       state={{ conversacionId: c.id }}
                       className={`flex items-center gap-2.5 ${i < Math.min(empresaConversaciones.length, 4) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}
                     >
-                      <div className="w-7 h-7 rounded-full bg-[#185FA5] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                      <div className="w-7 h-7 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
                         {nombre[0]?.toUpperCase() || "?"}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -597,7 +597,7 @@ export default function EstudianteDashboard() {
                         <p className={`text-xs ${M} truncate`}>{c.ultimo_mensaje || "Sin mensajes"}</p>
                       </div>
                       {c.no_leidos > 0 && (
-                        <span className="text-xs bg-[#185FA5] text-white font-semibold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs bg-[#0F4D8A] text-white font-semibold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">
                           {c.no_leidos}
                         </span>
                       )}
@@ -629,7 +629,7 @@ export default function EstudianteDashboard() {
                     to={`/empresa/candidato/${p.estudiante_id}`}
                     className={`flex items-center gap-2.5 ${i < Math.min(empresaPostulantes.length, 3) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}
                   >
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 bg-[#185FA5]`}>
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 bg-[#0F4D8A]`}>
                       {p.nombre_completo?.[0]?.toUpperCase() || "?"}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -732,7 +732,7 @@ export default function EstudianteDashboard() {
                     state={{ conversacionId: c.id }}
                     className={`flex items-center gap-2.5 ${i < Math.min(estudianteConversaciones.length, 3) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}
                   >
-                    <div className="w-7 h-7 rounded-full bg-[#185FA5] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                    <div className="w-7 h-7 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
                       {nombre[0]?.toUpperCase() || "?"}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -740,7 +740,7 @@ export default function EstudianteDashboard() {
                       <p className={`text-xs ${M} truncate`}>{c.ultimo_mensaje || "Sin mensajes"}</p>
                     </div>
                     {c.no_leidos > 0 && (
-                      <span className="text-xs bg-[#185FA5] text-white font-semibold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs bg-[#0F4D8A] text-white font-semibold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">
                         {c.no_leidos}
                       </span>
                     )}

@@ -110,7 +110,7 @@ export default function AdminMensajeria() {
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-[#378ADD] truncate flex-1">{c.company}</span>
                   {c.unread > 0 && (
-                    <span className="w-4 h-4 rounded-full bg-[#185FA5] text-white text-xs flex items-center justify-center flex-shrink-0 ml-2">
+                    <span className="w-4 h-4 rounded-full bg-[#0F4D8A] text-white text-xs flex items-center justify-center flex-shrink-0 ml-2">
                       {c.unread}
                     </span>
                   )}
@@ -138,7 +138,7 @@ export default function AdminMensajeria() {
           </div>
 
           {/* Admin notice */}
-          <div className={`px-5 py-2 text-xs flex items-center gap-2 ${isDark ? "bg-[#1a2e42] text-[#B5D4F4]" : "bg-[#E6F1FB] text-[#185FA5]"} flex-shrink-0`}>
+          <div className={`px-5 py-2 text-xs flex items-center gap-2 ${isDark ? "bg-[#1a2e42] text-[#B5D4F4]" : "bg-[#E6F1FB] text-[#0F4D8A]"} flex-shrink-0`}>
             <Icon icon="mdi:information-outline" width={14} />
             Como administrador puedes ver esta conversación, pero los participantes no ven tu presencia
           </div>
@@ -152,7 +152,7 @@ export default function AdminMensajeria() {
                   <div className={`px-4 py-2.5 rounded-2xl text-sm ${
                     msg.from === "empresa"
                       ? isDark ? "bg-[#313130] text-[#D3D1C7]" : "bg-[#F7F6F3] text-[#2C2C2A]"
-                      : "bg-[#185FA5] text-[#E6F1FB]"
+                      : "bg-[#0F4D8A] text-[#E6F1FB]"
                   }`}>
                     {msg.text}
                   </div>
@@ -179,7 +179,7 @@ export default function AdminMensajeria() {
               />
               <button
                 onClick={() => setAdminNote("")}
-                className="px-4 py-2 bg-[#185FA5] hover:bg-[#0C447C] text-[#E6F1FB] rounded-lg text-sm transition-colors flex-shrink-0"
+                className="px-4 py-2 bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB] rounded-lg text-sm transition-colors flex-shrink-0"
               >
                 Guardar
               </button>

@@ -68,7 +68,7 @@ export default function AdminTests() {
             key={t.key}
             onClick={() => setTab(t.key)}
             className={`px-5 py-3 text-sm border-b-2 -mb-px transition-colors ${
-              tab === t.key ? "border-[#185FA5] text-[#185FA5] font-medium" : `border-transparent ${M}`
+              tab === t.key ? "border-[#0F4D8A] text-[#0F4D8A] font-medium" : `border-transparent ${M}`
             }`}
           >
             {t.label}

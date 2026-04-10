@@ -82,7 +82,7 @@ export default function PerfilEmpresaPublico() {
         {/* Sidebar */}
         <div className="flex flex-col gap-4">
           <Card className="text-center">
-            <div className="w-20 h-20 rounded-full mx-auto mb-3 bg-[#185FA5] flex items-center justify-center text-white text-3xl font-bold">
+            <div className="w-20 h-20 rounded-full mx-auto mb-3 bg-[#0F4D8A] flex items-center justify-center text-white text-3xl font-bold">
               {empresa.nombre_empresa?.[0]?.toUpperCase() ?? "E"}
             </div>
             <p className={`text-lg font-semibold ${T}`}>{empresa.nombre_empresa}</p>
@@ -103,7 +103,7 @@ export default function PerfilEmpresaPublico() {
                   }
                 }}
                 disabled={contactando}
-                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#185FA5] hover:bg-[#0C447C] text-[#E6F1FB] text-sm font-medium transition-colors disabled:opacity-50"
+                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB] text-sm font-medium transition-colors disabled:opacity-50"
               >
                 <Icon icon={contactando ? "mdi:loading" : "mdi:message-outline"} width={16} className={contactando ? "animate-spin" : ""} />
                 {contactando ? "Abriendo chat..." : "Contactar empresa"}

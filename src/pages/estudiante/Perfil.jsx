@@ -88,7 +88,7 @@ const descargarCV = () => {
 
     // 2. Configurar colores y fuentes
     const textColor = "#2C2C2A";
-    const primaryColor = "#185FA5";
+    const primaryColor = "#0F4D8A";
 
     // --- ENCABEZADO ---
     doc.setTextColor(primaryColor);
@@ -253,7 +253,7 @@ const descargarCV = () => {
                   onClick={() => setActiveTab(tab)}
                   className={`px-5 py-3 text-sm transition-colors border-b-2 -mb-px ${
                     activeTab === tab
-                      ? "border-[#185FA5] text-[#185FA5] font-medium"
+                      ? "border-[#0F4D8A] text-[#0F4D8A] font-medium"
                       : `border-transparent ${M}`
                   }`}
                 >

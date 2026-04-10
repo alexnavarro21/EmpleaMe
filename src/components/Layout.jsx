@@ -70,10 +70,13 @@ export default function Layout() {
       <div className={`min-h-screen font-sans ${isDark ? "bg-[#1e1e1c]" : "bg-[#F0F4F8]"}`}>
 
         {/* Navbar */}
-        <nav className="bg-[#0C447C] h-14 flex items-center justify-between px-6 sticky top-0 z-50 shadow-sm">
+        <nav className="bg-[#0A3A6A] h-14 flex items-center justify-between px-6 sticky top-0 z-50 shadow-sm">
           <div className="flex items-center gap-6">
-            <Link to={homePaths[role]} className="text-lg font-medium text-[#E6F1FB] tracking-tight flex-shrink-0">
-              Emplea<span className="text-[#85B7EB]">Me</span>
+            <Link to={homePaths[role]} className="flex items-center gap-2 flex-shrink-0">
+              <img src="/empleame-icono.svg" alt="EmpleaMe" className="h-7 w-7" />
+              <span className="text-lg font-semibold text-[#E6F1FB] tracking-tight">
+                Emplea<span className="text-[#85B7EB]">Me</span>
+              </span>
             </Link>
             <div className="hidden md:flex items-center gap-0.5">
               {navLinks[role].map((link) => (
@@ -82,8 +85,8 @@ export default function Layout() {
                   to={link.to}
                   className={`text-sm px-3 py-1.5 rounded-lg transition-colors ${
                     location.pathname === link.to
-                      ? "bg-[#185FA5] text-[#E6F1FB] font-medium"
-                      : "text-[#B5D4F4] hover:text-[#E6F1FB] hover:bg-[#185FA5]/40"
+                      ? "bg-[#0F4D8A] text-[#E6F1FB] font-medium"
+                      : "text-[#B5D4F4] hover:text-[#E6F1FB] hover:bg-[#0F4D8A]/40"
                   }`}
                 >
                   {link.label}
@@ -98,8 +101,8 @@ export default function Layout() {
               onClick={() => setMenuOpen(!menuOpen)}
               className={`p-1.5 rounded-lg transition-colors ${
                 menuOpen
-                  ? "bg-[#185FA5] text-[#E6F1FB]"
-                  : "text-[#B5D4F4] hover:text-[#E6F1FB] hover:bg-[#185FA5]/40"
+                  ? "bg-[#0F4D8A] text-[#E6F1FB]"
+                  : "text-[#B5D4F4] hover:text-[#E6F1FB] hover:bg-[#0F4D8A]/40"
               }`}
             >
               <Icon icon="mynaui:user-solid" width={22} />
@@ -117,7 +120,7 @@ export default function Layout() {
                     onClick={() => setMenuOpen(false)}
                     className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
                       isDark
-                        ? "text-[#D3D1C7] hover:bg-[#185FA5]/30"
+                        ? "text-[#D3D1C7] hover:bg-[#0F4D8A]/30"
                         : "text-[#2C2C2A] hover:bg-[#F0F4F8]"
                     }`}
                   >
@@ -133,7 +136,7 @@ export default function Layout() {
                     onClick={() => setMenuOpen(false)}
                     className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
                       isDark
-                        ? "text-[#D3D1C7] hover:bg-[#185FA5]/30"
+                        ? "text-[#D3D1C7] hover:bg-[#0F4D8A]/30"
                         : "text-[#2C2C2A] hover:bg-[#F0F4F8]"
                     }`}
                   >
@@ -148,7 +151,7 @@ export default function Layout() {
                   onClick={() => setMenuOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
                     isDark
-                      ? "text-[#D3D1C7] hover:bg-[#185FA5]/30"
+                      ? "text-[#D3D1C7] hover:bg-[#0F4D8A]/30"
                       : "text-[#2C2C2A] hover:bg-[#F0F4F8]"
                   }`}
                 >

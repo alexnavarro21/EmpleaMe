@@ -107,7 +107,7 @@ export default function EmpresaPerfil() {
         {/* Left: card de empresa */}
         <div className="flex flex-col gap-4">
           <Card className="text-center">
-            <div className={`w-20 h-20 rounded-full mx-auto mb-3 flex items-center justify-center bg-[#185FA5]`}>
+            <div className={`w-20 h-20 rounded-full mx-auto mb-3 flex items-center justify-center bg-[#0F4D8A]`}>
               <span className="text-3xl font-bold text-white">
                 {nombreEmpresa ? nombreEmpresa[0].toUpperCase() : "E"}
               </span>

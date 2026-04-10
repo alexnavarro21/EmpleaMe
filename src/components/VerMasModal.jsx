@@ -106,7 +106,7 @@ export default function VerMasModal({ pub, onClose }) {
         {/* Header */}
         <div className={`flex items-center justify-between px-5 py-4 border-b ${B}`}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#185FA5] flex items-center justify-center text-white font-semibold text-sm">
+            <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white font-semibold text-sm">
               {pub.autor_nombre?.charAt(0).toUpperCase() || "?"}
             </div>
             <div>
@@ -188,7 +188,7 @@ export default function VerMasModal({ pub, onClose }) {
                     ? "bg-amber-100 text-amber-700 cursor-default"
                     : estadoPostula === "error"
                     ? "bg-red-100 text-red-700"
-                    : "bg-[#185FA5] hover:bg-[#0C447C] text-white"
+                    : "bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white"
                 }`}
               >
                 <Icon
@@ -230,7 +230,7 @@ export default function VerMasModal({ pub, onClose }) {
               <div className="flex flex-col gap-3 mb-4">
                 {comentarios.map((c) => (
                   <div key={c.id} className="flex gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-[#185FA5] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                    <div className="w-7 h-7 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
                       {c.autor_nombre?.charAt(0).toUpperCase() || "?"}
                     </div>
                     <div className={`flex-1 px-3 py-2 rounded-xl ${S}`}>
@@ -260,7 +260,7 @@ export default function VerMasModal({ pub, onClose }) {
           <button
             onClick={handleEnviarComentario}
             disabled={!texto.trim() || enviando}
-            className="px-4 py-2 rounded-xl bg-[#185FA5] hover:bg-[#0C447C] disabled:opacity-40 text-white text-sm font-medium transition-colors"
+            className="px-4 py-2 rounded-xl bg-[#0F4D8A] hover:bg-[#0A3A6A] disabled:opacity-40 text-white text-sm font-medium transition-colors"
           >
             <Icon icon="mdi:send" width={16} />
           </button>
