@@ -3,7 +3,7 @@
 -- Contraseña de todos los usuarios seed: Empleame2024
 -- 4 empresas + 10 estudiantes con perfiles completos
 -- =============================================================================
-
+USE railway;
 -- Hash bcrypt para "Empleame2024" (rounds=10)
 SET @pwd = '$2b$10$xCOV/ILX/MhBMbGTzOXUCeSfN79BUFeNyWzAlHopcx16/1w7fjBJ2';
 
