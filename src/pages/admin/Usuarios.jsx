@@ -130,9 +130,13 @@ export default function AdminUsuarios() {
                     <td className="px-5 py-3"><Badge color={statusColor[u.status]}>{u.status}</Badge></td>
                     <td className="px-5 py-3"><span className={`text-sm ${M}`}>{u.date}</span></td>
                     <td className="px-5 py-3">
-                      <div className="flex gap-3">
-                        <button className="text-xs text-[#378ADD] hover:underline">Ver perfil</button>
-                      </div>
+                      {u.role === "estudiante" ? (
+                        <a href={`/admin/candidato/${u.id}`} className="text-xs text-[#378ADD] hover:underline">
+                          Ver perfil
+                        </a>
+                      ) : (
+                        <span className="text-xs text-[#888780]">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}

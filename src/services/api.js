@@ -372,6 +372,46 @@ export async function crearComentario(publicacionId, contenido) {
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
 
+// Asignar habilidades técnicas  →  POST /api/admin/habilidades/asignar
+export async function asignarHabilidadesTecnicas(datos) {
+  const res = await fetch(`${BASE_URL}/admin/habilidades/asignar`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al asignar habilidades");
+  return data;
+}
+
+// Subir Excel de tests socioemocionales  →  POST /api/admin/tests/excel
+export async function subirExcelTests(archivo) {
+  const formData = new FormData();
+  formData.append("archivo", archivo);
+  const res = await fetch(`${BASE_URL}/admin/tests/excel`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${getToken()}` },
+    body: formData,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al procesar el archivo");
+  return data;
+}
+
+// Subir Excel de promedios  →  POST /api/admin/promedios/excel
+export async function subirExcelPromedios(archivo) {
+  const formData = new FormData();
+  formData.append("archivo", archivo);
+  const res = await fetch(`${BASE_URL}/admin/promedios/excel`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${getToken()}` },
+    body: formData,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al procesar el archivo");
+  return data;
+}
+
 // KPIs del panel  →  GET /api/admin/stats
 export async function getAdminStats() {
   const res = await fetch(`${BASE_URL}/admin/stats`, { headers: authHeaders() });
