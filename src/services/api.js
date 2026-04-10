@@ -369,3 +369,61 @@ export async function crearComentario(publicacionId, contenido) {
   if (!res.ok) throw new Error(data.error || "Error al comentar");
   return data;
 }
+
+// ── Admin ─────────────────────────────────────────────────────────────────────
+
+// KPIs del panel  →  GET /api/admin/stats
+export async function getAdminStats() {
+  const res = await fetch(`${BASE_URL}/admin/stats`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener estadísticas");
+  return data;
+}
+
+// Usuarios con nombres  →  GET /api/admin/usuarios
+export async function getUsuariosAdmin() {
+  const res = await fetch(`${BASE_URL}/admin/usuarios`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener usuarios");
+  return data;
+}
+
+// Evaluaciones docentes  →  GET|POST /api/admin/evaluaciones
+export async function getEvaluaciones() {
+  const res = await fetch(`${BASE_URL}/admin/evaluaciones`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener evaluaciones");
+  return data;
+}
+
+export async function guardarEvaluacion(datos) {
+  const res = await fetch(`${BASE_URL}/admin/evaluaciones`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al guardar evaluación");
+  return data;
+}
+
+// Tests socioemocionales  →  GET|POST /api/admin/tests/resultados
+export async function getResultadosTest(estudianteId) {
+  const res = await fetch(`${BASE_URL}/admin/tests/resultados/${estudianteId}`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener resultados");
+  return data;
+}
+
+export async function guardarResultadoTest(datos) {
+  const res = await fetch(`${BASE_URL}/admin/tests/resultados`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al guardar resultado");
+  return data;
+}
