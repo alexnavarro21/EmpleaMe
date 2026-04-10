@@ -143,7 +143,7 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
                     className={`flex items-center gap-3 p-3 rounded-xl border ${B} ${isDark ? "bg-[#262624]" : "bg-white"}`}
                   >
                     {/* Avatar */}
-                    <div className="w-10 h-10 rounded-full bg-[#185FA5] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
                       {p.nombre_completo?.charAt(0).toUpperCase() || "?"}
                     </div>
 

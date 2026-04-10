@@ -149,7 +149,7 @@ export default function EmpresaMensajeria() {
                       {c.ultimo_mensaje || "Sin mensajes aún"}
                     </p>
                     {c.no_leidos > 0 && (
-                      <span className="w-4 h-4 rounded-full bg-[#185FA5] text-white text-xs flex items-center justify-center flex-shrink-0 ml-2">
+                      <span className="w-4 h-4 rounded-full bg-[#0F4D8A] text-white text-xs flex items-center justify-center flex-shrink-0 ml-2">
                         {c.no_leidos}
                       </span>
                     )}
@@ -195,7 +195,7 @@ export default function EmpresaMensajeria() {
                           <span className={`text-xs ${M} mb-1`}>{isMe ? "Tú" : conv.contraparte}</span>
                           <div className={`px-4 py-2.5 rounded-2xl text-sm ${
                             isMe
-                              ? "bg-[#185FA5] text-[#E6F1FB]"
+                              ? "bg-[#0F4D8A] text-[#E6F1FB]"
                               : isDark ? "bg-[#313130] text-[#D3D1C7]" : "bg-[#F7F6F3] text-[#2C2C2A]"
                           }`}>
                             {msg.contenido}
@@ -226,7 +226,7 @@ export default function EmpresaMensajeria() {
                 <button
                   type="submit"
                   disabled={sending || !newMessage.trim()}
-                  className="w-10 h-10 rounded-full bg-[#185FA5] hover:bg-[#0C447C] text-white flex items-center justify-center transition-colors disabled:opacity-50 flex-shrink-0"
+                  className="w-10 h-10 rounded-full bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white flex items-center justify-center transition-colors disabled:opacity-50 flex-shrink-0"
                 >
                   <Icon icon={sending ? "mdi:loading" : "mdi:send"} width={18} className={sending ? "animate-spin" : ""} />
                 </button>

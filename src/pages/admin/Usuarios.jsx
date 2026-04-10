@@ -71,7 +71,7 @@ export default function AdminUsuarios() {
                 key={r}
                 onClick={() => setRoleFilter(r)}
                 className={`text-xs px-3 py-1.5 rounded-lg capitalize transition-colors ${
-                  roleFilter === r ? "bg-[#185FA5] text-[#E6F1FB]" : `${S} ${M} hover:bg-[#185FA5]/10`
+                  roleFilter === r ? "bg-[#0F4D8A] text-[#E6F1FB]" : `${S} ${M} hover:bg-[#0F4D8A]/10`
                 }`}
               >
                 {r}

@@ -100,17 +100,14 @@ export default function Login() {
 
           {/* Left panel */}
           <div className={`relative flex flex-col justify-center px-10 py-16 ${isDark ? "bg-[#02192e]" : "bg-[#042C53]"}`}>
-            {/* Logo top-left */}
-            <div className="absolute top-6 left-8 flex items-center gap-2">
-              <img src="/empleame-icono.svg" alt="EmpleaMe" className="h-8 w-8" />
-              <span className="text-lg font-semibold tracking-tight">
+            {/* Logo centrado arriba */}
+            <div className="flex items-center justify-center gap-4 mb-8 -translate-x-8"> 
+              <img src="/empleame-icono.svg" alt="EmpleaMe" className="h-20 w-20" />
+              <span className="text-4xl font-semibold tracking-tight">
                 <span className="text-white">Emplea</span>
                 <span className="text-[#85B7EB]">Me</span>
               </span>
             </div>
-            <span className="inline-block text-md px-3 py-1 rounded-lg bg-[#185FA5] text-[#B5D4F4] mb-4 w-fit">
-              Para estudiantes técnicos
-            </span>
             <h1 className="text-[26px] font-medium text-[#E6F1FB] leading-snug mb-3">
               Tu primera práctica laboral está a un paso
             </h1>
@@ -120,13 +117,13 @@ export default function Login() {
 
             <div className="flex flex-col gap-5">
               {[
-                { n: "1", title: "Crea tu perfil", desc: "Sube tu CV, habilidades y un video corto mostrando quién eres" },
-                { n: "2", title: "Explora prácticas", desc: "Filtra por área, modalidad y ubicación según tu carrera" },
-                { n: "3", title: "Postula y destaca", desc: "Aplica con un click y diferénciate con tu video de experiencia" },
+                { n: "1", title: "Crea tu cuenta", desc: "Regístrate con tu correo y completa tu perfil con tus datos y habilidades" },
+                { n: "2", title: "Explora prácticas", desc: "Filtra vacantes por área, modalidad y ubicación según tu carrera" },
+                { n: "3", title: "Postula con un click", desc: "Aplica directamente desde la plataforma y haz seguimiento a tus postulaciones" },
               ].map((step, i) => (
                 <div key={step.n}>
                   <div className="flex items-start gap-4">
-                    <div className="w-8 h-8 rounded-full bg-[#185FA5] flex items-center justify-center text-base font-medium text-[#E6F1FB] flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-[#0F4D8A] flex items-center justify-center text-base font-medium text-[#E6F1FB] flex-shrink-0">
                       {step.n}
                     </div>
                     <div className="pt-1">
@@ -134,7 +131,7 @@ export default function Login() {
                       <p className="text-sm text-[#85B7EB] leading-snug">{step.desc}</p>
                     </div>
                   </div>
-                  {i < 2 && <div className="w-px h-4 bg-[#185FA5] ml-4 mt-1" />}
+                  {i < 2 && <div className="w-px h-4 bg-[#0F4D8A] ml-4 mt-1" />}
                 </div>
               ))}
             </div>
@@ -150,7 +147,7 @@ export default function Login() {
                   onClick={() => setActiveTab(tab)}
                   className={`text-sm cursor-pointer px-4 py-2 border-b-2 -mb-px transition-colors ${
                     activeTab === tab
-                      ? "text-[#185FA5] border-[#185FA5] font-medium"
+                      ? "text-[#0F4D8A] border-[#0F4D8A] font-medium"
                       : `border-transparent ${isDark ? "text-[#B4B2A9]" : "text-[#888780]"}`
                   }`}
                 >
@@ -185,7 +182,7 @@ export default function Login() {
                 </div>
                 <button
                   type="submit"
-                  className="w-full py-2.5 bg-[#185FA5] hover:bg-[#0C447C] text-[#E6F1FB] rounded-lg text-sm font-medium transition-colors mt-1"
+                  className="w-full py-2.5 bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB] rounded-lg text-sm font-medium transition-colors mt-1"
                 >
                   Iniciar sesión
                 </button>
@@ -244,7 +241,7 @@ export default function Login() {
                 <button
                   type="submit"
                   disabled={regLoading}
-                  className="w-full py-2.5 bg-[#185FA5] hover:bg-[#0C447C] disabled:opacity-60 text-[#E6F1FB] rounded-lg text-sm font-medium transition-colors mt-1"
+                  className="w-full py-2.5 bg-[#0F4D8A] hover:bg-[#0A3A6A] disabled:opacity-60 text-[#E6F1FB] rounded-lg text-sm font-medium transition-colors mt-1"
                 >
                   {regLoading ? "Creando cuenta..." : "Crear cuenta gratis"}
                 </button>

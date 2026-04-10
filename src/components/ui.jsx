@@ -49,7 +49,7 @@ export function TextAreaField({ label, placeholder, rows = 4, value, onChange, .
 export function PrimaryButton({ children, className = "", ...props }) {
   return (
     <button
-      className={`py-2.5 px-4 bg-[#185FA5] hover:bg-[#0C447C] text-[#E6F1FB] rounded-lg text-sm font-medium transition-colors ${className}`}
+      className={`py-2.5 px-4 bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB] rounded-lg text-sm font-medium transition-colors ${className}`}
       {...props}
     >
       {children}
@@ -60,7 +60,7 @@ export function PrimaryButton({ children, className = "", ...props }) {
 export function SecondaryButton({ children, className = "", ...props }) {
   return (
     <button
-      className={`py-2.5 px-4 border border-[#185FA5] text-[#185FA5] hover:bg-[#E6F1FB] rounded-lg text-sm font-medium transition-colors ${className}`}
+      className={`py-2.5 px-4 border border-[#0F4D8A] text-[#0F4D8A] hover:bg-[#E6F1FB] rounded-lg text-sm font-medium transition-colors ${className}`}
       {...props}
     >
       {children}
@@ -79,7 +79,7 @@ export function Card({ children, className = "" }) {
 
 export function Badge({ children, color = "blue" }) {
   const variants = {
-    blue: "bg-[#E6F1FB] text-[#185FA5]",
+    blue: "bg-[#E6F1FB] text-[#0F4D8A]",
     green: "bg-green-50 text-green-700",
     yellow: "bg-yellow-50 text-yellow-700",
     red: "bg-red-50 text-red-700",

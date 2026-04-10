@@ -52,7 +52,7 @@ export default function FileUploader({ title, accept, icon, onFileSelect }) {
     <div
       className={`relative flex flex-col items-center justify-center w-full p-6 border-2 border-dashed rounded-xl transition-colors cursor-pointer ${
         dragActive 
-          ? "border-[#378ADD] bg-[#E6F1FB] dark:bg-[#185FA5]/20" 
+          ? "border-[#378ADD] bg-[#E6F1FB] dark:bg-[#0F4D8A]/20" 
           : "border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800/50"
       }`}
       onClick={() => inputRef.current?.click()}

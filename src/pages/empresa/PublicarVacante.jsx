@@ -220,7 +220,7 @@ export default function EmpresaPublicarVacante() {
                               onClick={() => toggleHabilidad(h.id)}
                               className={`text-xs px-3 py-1 rounded-full border transition-colors ${
                                 activo
-                                  ? "bg-[#185FA5] border-[#185FA5] text-white"
+                                  ? "bg-[#0F4D8A] border-[#0F4D8A] text-white"
                                   : `${B} ${M} hover:border-[#378ADD] hover:text-[#378ADD]`
                               }`}
                             >
@@ -283,15 +283,15 @@ export default function EmpresaPublicarVacante() {
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tipo === "practica" ? "bg-[#FEF3C7] text-[#92400E]" : "bg-[#D1FAE5] text-[#065F46]"}`}>
                   {tipo === "practica" ? "Práctica" : "Puesto laboral"}
                 </span>
-                {area && <span className="text-xs bg-[#E6F1FB] text-[#185FA5] px-2 py-0.5 rounded-full">{area}</span>}
-                <span className="text-xs bg-[#E6F1FB] text-[#185FA5] px-2 py-0.5 rounded-full capitalize">{modalidad}</span>
+                {area && <span className="text-xs bg-[#E6F1FB] text-[#0F4D8A] px-2 py-0.5 rounded-full">{area}</span>}
+                <span className="text-xs bg-[#E6F1FB] text-[#0F4D8A] px-2 py-0.5 rounded-full capitalize">{modalidad}</span>
               </div>
               {habilidadesSeleccionadas.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {habilidadesSeleccionadas.map((id) => {
                     const h = catalogoHabilidades.find((x) => x.id === id);
                     return h ? (
-                      <span key={id} className="text-xs bg-[#185FA5]/10 text-[#185FA5] border border-[#185FA5]/30 px-2 py-0.5 rounded-full">
+                      <span key={id} className="text-xs bg-[#0F4D8A]/10 text-[#0F4D8A] border border-[#0F4D8A]/30 px-2 py-0.5 rounded-full">
                         {h.nombre}
                       </span>
                     ) : null;

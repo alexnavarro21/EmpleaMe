@@ -38,7 +38,7 @@ export default function AdminImportarNotas() {
           <div key={s.key} className="flex items-center gap-2">
             <span
               className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 ${
-                step === s.key ? "bg-[#185FA5] text-white" :
+                step === s.key ? "bg-[#0F4D8A] text-white" :
                 (step === "preview" && i === 0) || step === "done" ? "bg-green-500 text-white" :
                 `${S} ${M}`
               }`}
