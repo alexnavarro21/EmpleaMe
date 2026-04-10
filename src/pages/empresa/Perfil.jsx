@@ -2,15 +2,13 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
-import { Card, Badge, PrimaryButton, SecondaryButton, FormField, PageHeader, TextAreaField } from "../../components/ui";
+import { Card, Badge, PrimaryButton, SecondaryButton, FormField, PageHeader } from "../../components/ui";
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
 import { getEmpresaById, actualizarPerfilEmpresa, getVacantesEmpresa } from "../../services/api";
 
-const tabs = ["Información", "Vacantes"];
 
 export default function EmpresaPerfil() {
   const { isDark } = useDark();
-  const [activeTab, setActiveTab] = useState("Información");
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -148,139 +146,55 @@ export default function EmpresaPerfil() {
               ))}
             </div>
           </Card>
-
-          {/* Accesos rápidos */}
-          <Card>
-            <p className={`text-xs font-semibold ${T} mb-2`}>Accesos rápidos</p>
-            {[
-              { icon: "mdi:magnify", label: "Buscar estudiantes", to: "/empresa/buscador" },
-              { icon: "mdi:plus-circle-outline", label: "Publicar vacante", to: "/empresa/publicar" },
-              { icon: "mdi:message-outline", label: "Mensajería", to: "/empresa/mensajeria" },
-            ].map((link) => (
-              <Link
-                key={link.label}
-                to={link.to}
-                className={`flex items-center gap-2.5 py-2 text-xs rounded-lg px-2 -mx-2 transition-colors ${
-                  isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"
-                } ${M}`}
-              >
-                <Icon icon={link.icon} width={15} />
-                {link.label}
-              </Link>
-            ))}
-          </Card>
         </div>
 
-        {/* Right: tabs */}
+        {/* Right: Información */}
         <div className="col-span-2">
-          <Card className="p-0 overflow-hidden">
-            <div className={`flex border-b ${B}`}>
-              {tabs.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-5 py-3 text-sm transition-colors border-b-2 -mb-px ${
-                    activeTab === tab
-                      ? "border-[#185FA5] text-[#185FA5] font-medium"
-                      : `border-transparent ${M}`
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-
-            <div className="p-5">
-              {activeTab === "Información" && (
-                <div className="grid grid-cols-2 gap-x-6">
-                  <FormField
-                    label="Nombre de la empresa"
-                    placeholder="Ej: Automotriz Salinas"
-                    value={nombreEmpresa}
-                    onChange={(e) => setNombreEmpresa(e.target.value)}
-                    disabled={!editMode}
-                    className="col-span-2"
-                  />
-                  <FormField
-                    label="Teléfono de contacto"
-                    type="tel"
-                    placeholder="+56 9 1234 5678"
-                    value={telefono}
-                    onChange={(e) => setTelefono(e.target.value)}
-                    disabled={!editMode}
-                  />
-                  <FormField
-                    label="Correo electrónico"
-                    type="email"
-                    value={usuario.correo || ""}
-                    disabled
-                  />
-                  <div className="col-span-2 mb-3">
-                    <label className={`block text-xs mb-1.5 ${M}`}>Descripción de la empresa</label>
-                    <textarea
-                      rows={4}
-                      placeholder="Cuéntales a los estudiantes qué hace tu empresa, su cultura y qué ofrece..."
-                      value={descripcion}
-                      onChange={(e) => setDescripcion(e.target.value)}
-                      disabled={!editMode}
-                      className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all resize-none
-                        focus:border-[#378ADD] focus:ring-2 focus:ring-[#B5D4F4] disabled:opacity-60
-                        ${isDark
-                          ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
-                          : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
-                        }`}
-                    />
-                  </div>
-                  {editMode && (
-                    <div className="col-span-2 mt-2">
-                      <PrimaryButton className="w-full" onClick={handleGuardar} disabled={saving}>
-                        {saving ? "Guardando..." : "Guardar cambios"}
-                      </PrimaryButton>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeTab === "Vacantes" && (
-                <div>
-                  {vacantes.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-16 gap-3">
-                      <Icon icon="mdi:clipboard-remove-outline" width={40} className={M} />
-                      <p className={`text-sm ${M}`}>No tienes vacantes publicadas aún.</p>
-                      <Link to="/empresa/publicar">
-                        <PrimaryButton className="flex items-center gap-2">
-                          <Icon icon="mdi:plus" width={16} />
-                          Publicar primera vacante
-                        </PrimaryButton>
-                      </Link>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-3">
-                      {vacantes.map((v) => (
-                        <div key={v.id} className={`p-4 rounded-lg border ${B}`}>
-                          <div className="flex items-start justify-between gap-2 mb-2">
-                            <div>
-                              <p className={`text-sm font-semibold ${T}`}>{v.titulo}</p>
-                              <p className={`text-xs ${M} mt-0.5`}>{v.area || "—"} · {v.modalidad || "Presencial"}</p>
-                            </div>
-                            <Badge color={v.esta_activa ? "green" : "gray"}>
-                              {v.esta_activa ? "Activa" : "Cerrada"}
-                            </Badge>
-                          </div>
-                          <p className={`text-xs ${M} line-clamp-2 mb-3`}>{v.descripcion}</p>
-                          <div className="flex items-center justify-between">
-                            <span className={`text-xs ${M} flex items-center gap-1`}>
-                              <Icon icon="mdi:account-group-outline" width={13} />
-                              {v.total_postulantes || 0} postulantes
-                            </span>
-                            <Link to="/empresa/buscador" className="text-xs text-[#378ADD] hover:underline">
-                              Ver postulantes →
-                            </Link>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+          <Card>
+            <div className="grid grid-cols-2 gap-x-6">
+              <FormField
+                label="Nombre de la empresa"
+                placeholder="Ej: Automotriz Salinas"
+                value={nombreEmpresa}
+                onChange={(e) => setNombreEmpresa(e.target.value)}
+                disabled={!editMode}
+                className="col-span-2"
+              />
+              <FormField
+                label="Teléfono de contacto"
+                type="tel"
+                placeholder="+56 9 1234 5678"
+                value={telefono}
+                onChange={(e) => setTelefono(e.target.value)}
+                disabled={!editMode}
+              />
+              <FormField
+                label="Correo electrónico"
+                type="email"
+                value={usuario.correo || ""}
+                disabled
+              />
+              <div className="col-span-2 mb-3">
+                <label className={`block text-xs mb-1.5 ${M}`}>Descripción de la empresa</label>
+                <textarea
+                  rows={4}
+                  placeholder="Cuéntales a los estudiantes qué hace tu empresa, su cultura y qué ofrece..."
+                  value={descripcion}
+                  onChange={(e) => setDescripcion(e.target.value)}
+                  disabled={!editMode}
+                  className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all resize-none
+                    focus:border-[#378ADD] focus:ring-2 focus:ring-[#B5D4F4] disabled:opacity-60
+                    ${isDark
+                      ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
+                      : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
+                    }`}
+                />
+              </div>
+              {editMode && (
+                <div className="col-span-2 mt-2">
+                  <PrimaryButton className="w-full" onClick={handleGuardar} disabled={saving}>
+                    {saving ? "Guardando..." : "Guardar cambios"}
+                  </PrimaryButton>
                 </div>
               )}
             </div>
