@@ -1,32 +1,53 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
-import { Card, Badge, PrimaryButton, PageHeader } from "../../components/ui";
-
-const users = [
-  { id: 1, name: "Catalina Muñoz", email: "c.munoz@colegio.cl", role: "estudiante", career: "Administración", status: "activo", date: "12 Mar 2025" },
-  { id: 2, name: "Felipe Rojas", email: "f.rojas@colegio.cl", role: "estudiante", career: "Mecánica Automotriz", status: "activo", date: "10 Mar 2025" },
-  { id: 3, name: "Valentina Soto", email: "v.soto@colegio.cl", role: "estudiante", career: "Administración", status: "activo", date: "08 Mar 2025" },
-  { id: 4, name: "Sebastián Contreras", email: "s.contreras@colegio.cl", role: "estudiante", career: "Mecánica Automotriz", status: "inactivo", date: "01 Feb 2025" },
-  { id: 5, name: "Automotriz Salinas", email: "rrhh@automotrizsalinas.cl", role: "empresa", career: "—", status: "activo", date: "20 Feb 2025" },
-  { id: 6, name: "ContaServ Chile", email: "practicas@contaserv.cl", role: "empresa", career: "—", status: "activo", date: "15 Feb 2025" },
-  { id: 7, name: "Prof. Morales", email: "j.morales@colegio.cl", role: "admin", career: "—", status: "activo", date: "01 Ene 2025" },
-  { id: 8, name: "Diego Castillo", email: "d.castillo@colegio.cl", role: "estudiante", career: "Mecánica Automotriz", status: "pendiente", date: "04 Abr 2025" },
-  { id: 9, name: "Camila Fuentes", email: "c.fuentes@colegio.cl", role: "estudiante", career: "Administración", status: "activo", date: "02 Abr 2025" },
-];
+import { Card, Badge, PageHeader } from "../../components/ui";
+import { getUsuariosAdmin } from "../../services/api";
 
 const roleColor = { estudiante: "blue", empresa: "orange", admin: "green" };
 const statusColor = { activo: "green", inactivo: "gray", pendiente: "yellow" };
 const roleIcon = { estudiante: "mynaui:user-solid", empresa: "cuida:building-outline", admin: "mingcute:settings-2-line" };
 
+function formatDate(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" });
+}
+
 export default function AdminUsuarios() {
   const { isDark } = useDark();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("todos");
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
   const S = isDark ? "bg-[#313130]" : "bg-[#F7F6F3]";
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const data = await getUsuariosAdmin();
+        const mapped = data.map((u) => ({
+          id: u.id,
+          name: u.nombre || u.correo,
+          email: u.correo,
+          role: u.rol,
+          career: u.carrera || "—",
+          status: "activo",
+          date: formatDate(u.fecha_creacion),
+        }));
+        setUsers(mapped);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
 
   const filtered = users.filter((u) => {
     const matchSearch =
@@ -40,13 +61,7 @@ export default function AdminUsuarios() {
     <div>
       <PageHeader
         title="Gestión de Usuarios"
-        subtitle={`${filtered.length} usuarios encontrados`}
-        action={
-          <PrimaryButton className="flex items-center gap-2">
-            <Icon icon="mdi:plus" width={16} />
-            Nuevo usuario
-          </PrimaryButton>
-        }
+        subtitle={loading ? "Cargando..." : `${filtered.length} usuarios registrados`}
       />
 
       <Card className="p-0 overflow-hidden">
@@ -66,7 +81,7 @@ export default function AdminUsuarios() {
             />
           </div>
           <div className="flex gap-1">
-            {["todos", "estudiante", "empresa", "admin"].map((r) => (
+            {["todos", "estudiante", "empresa"].map((r) => (
               <button
                 key={r}
                 onClick={() => setRoleFilter(r)}
@@ -81,43 +96,54 @@ export default function AdminUsuarios() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className={`border-b ${B} ${S}`}>
-                {["Usuario", "Email", "Carrera", "Rol", "Estado", "Registro", "Acciones"].map((h) => (
-                  <th key={h} className={`text-left text-xs font-medium ${M} px-5 py-3`}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((u) => (
-                <tr key={u.id} className={`border-b ${B} last:border-0 transition-colors ${isDark ? "hover:bg-[#313130]/50" : "hover:bg-[#F7F6F3]"}`}>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
-                        <Icon icon={roleIcon[u.role]} width={16} className="text-[#378ADD]" />
-                      </div>
-                      <span className={`text-sm font-medium ${T}`}>{u.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3"><span className={`text-sm ${M}`}>{u.email}</span></td>
-                  <td className="px-5 py-3"><span className={`text-sm ${M}`}>{u.career}</span></td>
-                  <td className="px-5 py-3"><Badge color={roleColor[u.role]}>{u.role}</Badge></td>
-                  <td className="px-5 py-3"><Badge color={statusColor[u.status]}>{u.status}</Badge></td>
-                  <td className="px-5 py-3"><span className={`text-sm ${M}`}>{u.date}</span></td>
-                  <td className="px-5 py-3">
-                    <div className="flex gap-3">
-                      <button className="text-xs text-[#378ADD] hover:underline">Editar</button>
-                      <button className={`text-xs ${M} hover:text-red-500 transition-colors`}>
-                        {u.status === "activo" ? "Desactivar" : "Activar"}
-                      </button>
-                    </div>
-                  </td>
+          {loading ? (
+            <div className={`text-center py-12 ${M}`}>
+              <Icon icon="mdi:loading" width={32} className={`mx-auto mb-3 animate-spin`} />
+              <p className="text-sm">Cargando usuarios...</p>
+            </div>
+          ) : (
+            <table className="w-full">
+              <thead>
+                <tr className={`border-b ${B} ${S}`}>
+                  {["Usuario", "Email", "Carrera", "Rol", "Estado", "Registro", "Acciones"].map((h) => (
+                    <th key={h} className={`text-left text-xs font-medium ${M} px-5 py-3`}>{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          {filtered.length === 0 && (
+              </thead>
+              <tbody>
+                {filtered.map((u) => (
+                  <tr
+                    key={`${u.role}-${u.id}`}
+                    className={`border-b ${B} last:border-0 transition-colors ${isDark ? "hover:bg-[#313130]/50" : "hover:bg-[#F7F6F3]"}`}
+                  >
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
+                          <Icon icon={roleIcon[u.role]} width={16} className="text-[#378ADD]" />
+                        </div>
+                        <span className={`text-sm font-medium ${T}`}>{u.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3"><span className={`text-sm ${M}`}>{u.email}</span></td>
+                    <td className="px-5 py-3"><span className={`text-sm ${M}`}>{u.career}</span></td>
+                    <td className="px-5 py-3"><Badge color={roleColor[u.role]}>{u.role}</Badge></td>
+                    <td className="px-5 py-3"><Badge color={statusColor[u.status]}>{u.status}</Badge></td>
+                    <td className="px-5 py-3"><span className={`text-sm ${M}`}>{u.date}</span></td>
+                    <td className="px-5 py-3">
+                      {u.role === "estudiante" ? (
+                        <a href={`/admin/candidato/${u.id}`} className="text-xs text-[#378ADD] hover:underline">
+                          Ver perfil
+                        </a>
+                      ) : (
+                        <span className="text-xs text-[#888780]">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          {!loading && filtered.length === 0 && (
             <div className={`text-center py-12 ${M}`}>
               <Icon icon="mdi:search" width={40} className={`mx-auto mb-3 ${M}`} />
               <p className={`text-sm ${T}`}>No se encontraron usuarios</p>

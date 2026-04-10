@@ -369,3 +369,101 @@ export async function crearComentario(publicacionId, contenido) {
   if (!res.ok) throw new Error(data.error || "Error al comentar");
   return data;
 }
+
+// ── Admin ─────────────────────────────────────────────────────────────────────
+
+// Asignar habilidades técnicas  →  POST /api/admin/habilidades/asignar
+export async function asignarHabilidadesTecnicas(datos) {
+  const res = await fetch(`${BASE_URL}/admin/habilidades/asignar`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al asignar habilidades");
+  return data;
+}
+
+// Subir Excel de tests socioemocionales  →  POST /api/admin/tests/excel
+export async function subirExcelTests(archivo) {
+  const formData = new FormData();
+  formData.append("archivo", archivo);
+  const res = await fetch(`${BASE_URL}/admin/tests/excel`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${getToken()}` },
+    body: formData,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al procesar el archivo");
+  return data;
+}
+
+// Subir Excel de promedios  →  POST /api/admin/promedios/excel
+export async function subirExcelPromedios(archivo) {
+  const formData = new FormData();
+  formData.append("archivo", archivo);
+  const res = await fetch(`${BASE_URL}/admin/promedios/excel`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${getToken()}` },
+    body: formData,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al procesar el archivo");
+  return data;
+}
+
+// KPIs del panel  →  GET /api/admin/stats
+export async function getAdminStats() {
+  const res = await fetch(`${BASE_URL}/admin/stats`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener estadísticas");
+  return data;
+}
+
+// Usuarios con nombres  →  GET /api/admin/usuarios
+export async function getUsuariosAdmin() {
+  const res = await fetch(`${BASE_URL}/admin/usuarios`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener usuarios");
+  return data;
+}
+
+// Evaluaciones docentes  →  GET|POST /api/admin/evaluaciones
+export async function getEvaluaciones() {
+  const res = await fetch(`${BASE_URL}/admin/evaluaciones`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener evaluaciones");
+  return data;
+}
+
+export async function guardarEvaluacion(datos) {
+  const res = await fetch(`${BASE_URL}/admin/evaluaciones`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al guardar evaluación");
+  return data;
+}
+
+// Tests socioemocionales  →  GET|POST /api/admin/tests/resultados
+export async function getResultadosTest(estudianteId) {
+  const res = await fetch(`${BASE_URL}/admin/tests/resultados/${estudianteId}`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener resultados");
+  return data;
+}
+
+export async function guardarResultadoTest(datos) {
+  const res = await fetch(`${BASE_URL}/admin/tests/resultados`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al guardar resultado");
+  return data;
+}
