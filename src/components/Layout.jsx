@@ -11,14 +11,13 @@ const profilePaths = {
 const navLinks = {
   estudiante: [
     { to: "/estudiante/dashboard", label: "Inicio" },
-    { to: "/estudiante/evidencias", label: "Evidencias" },
-    { to: "/estudiante/buscar", label: "Buscar Perfiles" },
+    { to: "/estudiante/buscar", label: "Búsqueda" },
   ],
   empresa: [
     { to: "/empresa/inicio", label: "Inicio" },
     { to: "/empresa/dashboard", label: "Panel" },
     { to: "/empresa/publicar", label: "Publicar Vacante" },
-    { to: "/empresa/buscador", label: "Buscar Estudiantes" },
+    { to: "/empresa/buscador", label: "Búsqueda" },
   ],
   admin: [
     { to: "/admin/inicio", label: "Inicio" },
@@ -28,7 +27,7 @@ const navLinks = {
     { to: "/admin/notas", label: "Importar Notas" },
     { to: "/admin/tests", label: "Tests" },
     { to: "/admin/monitoreo", label: "Monitoreo" },
-    { to: "/admin/buscar", label: "Buscar Perfiles" },
+    { to: "/admin/buscar", label: "Búsqueda" },
   ],
 };
 
@@ -124,6 +123,22 @@ export default function Layout() {
                   >
                     <Icon icon="mynaui:user-solid" width={18} className="text-[#378ADD]" />
                     Mi perfil
+                  </Link>
+                )}
+
+                {/* Mis postulaciones (solo estudiante) */}
+                {role === "estudiante" && (
+                  <Link
+                    to="/estudiante/postulaciones"
+                    onClick={() => setMenuOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                      isDark
+                        ? "text-[#D3D1C7] hover:bg-[#185FA5]/30"
+                        : "text-[#2C2C2A] hover:bg-[#F0F4F8]"
+                    }`}
+                  >
+                    <Icon icon="mdi:clipboard-list-outline" width={18} className="text-[#378ADD]" />
+                    Mis postulaciones
                   </Link>
                 )}
 

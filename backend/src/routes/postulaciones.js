@@ -7,6 +7,13 @@ router.post("/", verificarToken, soloRol("estudiante"), async (req, res) => {
   const { vacante_id } = req.body;
   if (!vacante_id) return res.status(400).json({ error: "vacante_id es requerido" });
   try {
+    const [[vacante]] = await db.query(
+      "SELECT esta_activa FROM vacantes WHERE id = ?",
+      [vacante_id]
+    );
+    if (!vacante) return res.status(404).json({ error: "Vacante no encontrada" });
+    if (!vacante.esta_activa) return res.status(403).json({ error: "Esta vacante ya no está activa" });
+
     const [result] = await db.query(
       "INSERT INTO postulaciones (vacante_id, estudiante_id) VALUES (?, ?)",
       [vacante_id, req.usuario.id]
@@ -39,7 +46,7 @@ router.get("/estudiante", verificarToken, soloRol("estudiante"), async (req, res
   }
 });
 
-// GET /api/postulaciones/empresa  — empresa ve postulantes recientes de todas sus vacantes
+// GET /api/postulaciones/empresa  — empresa ve postulantes pendientes de todas sus vacantes
 router.get("/empresa", verificarToken, soloRol("empresa"), async (req, res) => {
   try {
     const [rows] = await db.query(
@@ -50,7 +57,7 @@ router.get("/empresa", verificarToken, soloRol("empresa"), async (req, res) => {
        FROM postulaciones p
        JOIN perfiles_estudiantes pe ON pe.usuario_id = p.estudiante_id
        JOIN vacantes v ON v.id = p.vacante_id
-       WHERE v.empresa_id = ?
+       WHERE v.empresa_id = ? AND p.estado = 'pendiente'
        ORDER BY p.fecha_creacion DESC
        LIMIT 20`,
       [req.usuario.id]

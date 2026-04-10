@@ -57,16 +57,17 @@ router.get("/empresa/:id", verificarToken, async (req, res) => {
 
 // POST /api/vacantes  — publicar vacante (solo empresa)
 router.post("/", verificarToken, soloRol("empresa"), upload.single("archivo_multimedia"), async (req, res) => {
-  const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, remuneracion, direccion, beneficios, fecha_limite, habilidades } = req.body;
+  const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, remuneracion, direccion, beneficios, fecha_limite, habilidades, tipo } = req.body;
   if (!titulo || !descripcion)
     return res.status(400).json({ error: "titulo y descripcion son requeridos" });
+  const tipoValido = tipo === "puesto_laboral" ? "puesto_laboral" : "practica";
   try {
     const [result] = await db.query(
       `INSERT INTO vacantes
-         (empresa_id, titulo, descripcion, requisitos, area, modalidad, duracion, horario, remuneracion, direccion, beneficios, fecha_limite)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (empresa_id, tipo, titulo, descripcion, requisitos, area, modalidad, duracion, horario, remuneracion, direccion, beneficios, fecha_limite)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        req.usuario.id, titulo, descripcion,
+        req.usuario.id, tipoValido, titulo, descripcion,
         requisitos || null, area || null,
         modalidad || "presencial",
         duracion || null, horario || null,
@@ -102,7 +103,7 @@ router.post("/", verificarToken, soloRol("empresa"), upload.single("archivo_mult
   }
 });
 
-// PUT /api/vacantes/:id/desactivar  — desactivar vacante (solo empresa)
+// PUT /api/vacantes/:id/desactivar  — desactivar vacante y rechazar postulaciones pendientes
 router.put("/:id/desactivar", verificarToken, soloRol("empresa"), async (req, res) => {
   try {
     const [result] = await db.query(
@@ -111,7 +112,28 @@ router.put("/:id/desactivar", verificarToken, soloRol("empresa"), async (req, re
     );
     if (result.affectedRows === 0)
       return res.status(404).json({ error: "Vacante no encontrada o sin permisos" });
-    res.json({ mensaje: "Vacante desactivada" });
+
+    await db.query(
+      "UPDATE postulaciones SET estado = 'rechazado' WHERE vacante_id = ? AND estado = 'pendiente'",
+      [req.params.id]
+    );
+
+    res.json({ mensaje: "Vacante desactivada y postulaciones pendientes rechazadas" });
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// PUT /api/vacantes/:id/activar  — reactivar vacante (solo empresa)
+router.put("/:id/activar", verificarToken, soloRol("empresa"), async (req, res) => {
+  try {
+    const [result] = await db.query(
+      "UPDATE vacantes SET esta_activa = TRUE WHERE id = ? AND empresa_id = ?",
+      [req.params.id, req.usuario.id]
+    );
+    if (result.affectedRows === 0)
+      return res.status(404).json({ error: "Vacante no encontrada o sin permisos" });
+    res.json({ mensaje: "Vacante activada" });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }

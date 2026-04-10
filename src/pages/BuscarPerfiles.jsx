@@ -109,7 +109,7 @@ export default function BuscarPerfiles() {
   return (
     <div>
       <PageHeader
-        title="Buscar Perfiles"
+        title="Búsqueda"
         subtitle={`${count} ${tab === "estudiantes" ? "estudiante" : "empresa"}${count !== 1 ? "s" : ""} encontrado${count !== 1 ? "s" : ""}`}
       />
 
@@ -185,20 +185,22 @@ export default function BuscarPerfiles() {
                   })}
                 </div>
 
-                <div className="mb-4">
-                  <label className={`block text-xs mb-2 ${M}`}>
-                    Nota mínima: <strong className={T}>{minGpa > 1 ? minGpa.toFixed(1) : "Sin filtro"}</strong>
-                  </label>
-                  <input
-                    type="range" min="1" max="7" step="0.1"
-                    value={minGpa}
-                    onChange={(e) => setMinGpa(parseFloat(e.target.value))}
-                    className="w-full accent-[#185FA5]"
-                  />
-                  <div className={`flex justify-between text-xs ${M} mt-1`}>
-                    <span>1.0</span><span>4.0</span><span>7.0</span>
+                {role !== "estudiante" && (
+                  <div className="mb-4">
+                    <label className={`block text-xs mb-2 ${M}`}>
+                      Nota mínima: <strong className={T}>{minGpa > 1 ? minGpa.toFixed(1) : "Sin filtro"}</strong>
+                    </label>
+                    <input
+                      type="range" min="1" max="7" step="0.1"
+                      value={minGpa}
+                      onChange={(e) => setMinGpa(parseFloat(e.target.value))}
+                      className="w-full accent-[#185FA5]"
+                    />
+                    <div className={`flex justify-between text-xs ${M} mt-1`}>
+                      <span>1.0</span><span>4.0</span><span>7.0</span>
+                    </div>
                   </div>
-                </div>
+                )}
               </>
             )}
 
@@ -228,21 +230,23 @@ export default function BuscarPerfiles() {
                         <p className={`text-xs ${M}`}>{nombreCarrera}{s.semestre ? ` · Sem. ${s.semestre}` : ""}</p>
                       </div>
                     </div>
-                    <div className={`flex gap-4 mb-3 pb-3 border-b ${B}`}>
-                      <div>
-                        <p className={`text-xs ${M}`}>Promedio</p>
-                        <p className={`text-sm font-semibold ${T}`}>{s.promedio ? parseFloat(s.promedio).toFixed(1) : "—"}</p>
-                      </div>
-                      {s.calificacion_docente && (
+                    {role !== "estudiante" && (
+                      <div className={`flex gap-4 mb-3 pb-3 border-b ${B}`}>
                         <div>
-                          <p className={`text-xs ${M}`}>Eval. docente</p>
-                          <p className={`text-sm font-semibold ${T} flex items-center gap-1`}>
-                            <Icon icon="solar:star-bold-duotone" width={14} className="text-yellow-400" />
-                            {parseFloat(s.calificacion_docente).toFixed(1)}
-                          </p>
+                          <p className={`text-xs ${M}`}>Promedio</p>
+                          <p className={`text-sm font-semibold ${T}`}>{s.promedio ? parseFloat(s.promedio).toFixed(1) : "—"}</p>
                         </div>
-                      )}
-                    </div>
+                        {s.calificacion_docente && (
+                          <div>
+                            <p className={`text-xs ${M}`}>Eval. docente</p>
+                            <p className={`text-sm font-semibold ${T} flex items-center gap-1`}>
+                              <Icon icon="solar:star-bold-duotone" width={14} className="text-yellow-400" />
+                              {parseFloat(s.calificacion_docente).toFixed(1)}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     {s.habilidades && s.habilidades.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mb-4">
                         {s.habilidades.slice(0, 3).map((sk) => <Badge key={sk} color="blue">{sk}</Badge>)}

@@ -2,15 +2,20 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
-import { getComentarios, crearComentario, iniciarConversacionConEmpresa } from "../services/api";
+import { getComentarios, crearComentario, iniciarConversacionConEmpresa, postularAVacante } from "../services/api";
 
 const TIPO_BADGE = {
-  vacante:    { label: "Práctica",   color: "bg-orange-100 text-orange-700" },
   logro:      { label: "Logro",      color: "bg-yellow-100 text-yellow-700" },
   evaluacion: { label: "Evaluación", color: "bg-green-100 text-green-700"   },
   match:      { label: "Match",      color: "bg-blue-100 text-blue-700"     },
   general:    { label: "General",    color: "bg-blue-100 text-blue-700"     },
 };
+
+function badgeVacante(vacante_tipo) {
+  return vacante_tipo === "puesto_laboral"
+    ? { label: "Puesto laboral", color: "bg-green-100 text-green-700" }
+    : { label: "Práctica",       color: "bg-orange-100 text-orange-700" };
+}
 
 function tiempoRelativo(fecha) {
   const diff = Math.floor((Date.now() - new Date(fecha)) / 1000);
@@ -27,6 +32,7 @@ export default function VerMasModal({ pub, onClose }) {
   const [texto, setTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [contactando, setContactando] = useState(false);
+  const [estadoPostula, setEstadoPostula] = useState("idle"); // idle | loading | ok | duplicado | error
   const inputRef = useRef(null);
 
   const T  = isDark ? "text-[#D3D1C7]"  : "text-[#2C2C2A]";
@@ -36,7 +42,15 @@ export default function VerMasModal({ pub, onClose }) {
   const S  = isDark ? "bg-[#262624]"    : "bg-[#F7F6F3]";
 
   const BASE_URL = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
-  const badge = TIPO_BADGE[pub.tipo] || { label: pub.tipo, color: "bg-blue-100 text-blue-700" };
+  function resolverMedia(url) {
+    if (!url) return null;
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
+    if (url.startsWith("/")) return `${BASE_URL}${url}`;
+    return `${BASE_URL}/uploads/${url}`;
+  }
+  const badge = pub.tipo === "vacante"
+    ? badgeVacante(pub.vacante_tipo)
+    : (TIPO_BADGE[pub.tipo] || { label: pub.tipo, color: "bg-blue-100 text-blue-700" });
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
   useEffect(() => {
@@ -55,6 +69,17 @@ export default function VerMasModal({ pub, onClose }) {
       console.error(err);
     } finally {
       setEnviando(false);
+    }
+  };
+
+  const handlePostular = async () => {
+    if (!pub.vacante_id || estadoPostula !== "idle") return;
+    setEstadoPostula("loading");
+    try {
+      await postularAVacante(pub.vacante_id);
+      setEstadoPostula("ok");
+    } catch (err) {
+      setEstadoPostula(err.message?.toLowerCase().includes("ya") ? "duplicado" : "error");
     }
   };
 
@@ -111,7 +136,27 @@ export default function VerMasModal({ pub, onClose }) {
           {pub.tipo === "vacante" && (
             <div className={`p-3 rounded-lg border ${B} ${S} mb-4`}>
               <div className="flex flex-wrap gap-3">
-                {pub.area && <div className="flex items-center gap-1.5"><Icon icon="mdi:briefcase-outline" width={14} className="text-[#378ADD]" /><span className={`text-xs ${T}`}>{pub.area}</span></div>}
+                <div className="flex items-center gap-1.5">
+                  <Icon
+                    icon={pub.vacante_tipo === "puesto_laboral" ? "mdi:briefcase-outline" : "mdi:school-outline"}
+                    width={14}
+                    className={pub.vacante_tipo === "puesto_laboral" ? "text-green-600" : "text-orange-500"}
+                  />
+                  <span className={`text-xs font-medium ${pub.vacante_tipo === "puesto_laboral" ? "text-green-700" : "text-orange-600"}`}>
+                    {pub.vacante_tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica profesional"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Icon
+                    icon={pub.vacante_activa ? "mdi:check-circle-outline" : "mdi:close-circle-outline"}
+                    width={14}
+                    className={pub.vacante_activa ? "text-green-500" : "text-red-400"}
+                  />
+                  <span className={`text-xs font-medium ${pub.vacante_activa ? "text-green-600" : "text-red-500"}`}>
+                    {pub.vacante_activa ? "Activa" : "Cerrada"}
+                  </span>
+                </div>
+                {pub.area && <div className="flex items-center gap-1.5"><Icon icon="mdi:tag-outline" width={14} className="text-[#378ADD]" /><span className={`text-xs ${T}`}>{pub.area}</span></div>}
                 {pub.modalidad && <div className="flex items-center gap-1.5"><Icon icon="mdi:map-marker-outline" width={14} className={M} /><span className={`text-xs ${M} capitalize`}>{pub.modalidad}</span></div>}
                 {pub.duracion && <div className="flex items-center gap-1.5"><Icon icon="mdi:clock-outline" width={14} className={M} /><span className={`text-xs ${M}`}>{pub.duracion}</span></div>}
                 {pub.remuneracion && <div className="flex items-center gap-1.5"><Icon icon="mdi:currency-usd" width={14} className="text-green-500" /><span className={`text-xs ${M}`}>{pub.remuneracion}</span></div>}
@@ -123,22 +168,54 @@ export default function VerMasModal({ pub, onClose }) {
           {/* Imagen */}
           {pub.url_multimedia && (
             <img
-              src={`${BASE_URL}${pub.url_multimedia}`}
+              src={resolverMedia(pub.url_multimedia)}
               alt="Multimedia"
               className="rounded-xl w-full object-cover max-h-64 mb-4 border"
+              onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
             />
           )}
 
-          {/* Botón contactar empresa */}
+          {/* Acciones de vacante para estudiante */}
           {pub.tipo === "vacante" && usuario.rol === "estudiante" && (
-            <button
-              onClick={handleContactarEmpresa}
-              disabled={contactando}
-              className="w-full mb-5 py-2.5 rounded-xl bg-[#185FA5] hover:bg-[#0C447C] text-white text-sm font-medium transition-colors flex items-center justify-center gap-2"
-            >
-              <Icon icon="mdi:message-outline" width={18} />
-              {contactando ? "Abriendo chat..." : "Contactar empresa"}
-            </button>
+            <div className="flex gap-3 mb-5">
+              <button
+                onClick={handlePostular}
+                disabled={estadoPostula !== "idle" || !pub.vacante_activa}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                  estadoPostula === "ok"
+                    ? "bg-green-100 text-green-700 cursor-default"
+                    : estadoPostula === "duplicado"
+                    ? "bg-amber-100 text-amber-700 cursor-default"
+                    : estadoPostula === "error"
+                    ? "bg-red-100 text-red-700"
+                    : "bg-[#185FA5] hover:bg-[#0C447C] text-white"
+                }`}
+              >
+                <Icon
+                  icon={
+                    estadoPostula === "ok"        ? "mdi:check-circle-outline" :
+                    estadoPostula === "duplicado" ? "mdi:information-outline"  :
+                    estadoPostula === "error"     ? "mdi:alert-circle-outline" :
+                    estadoPostula === "loading"   ? "mdi:loading"              : "mdi:send-outline"
+                  }
+                  width={18}
+                  className={estadoPostula === "loading" ? "animate-spin" : ""}
+                />
+                {estadoPostula === "ok"        ? "Postulación enviada" :
+                 estadoPostula === "duplicado" ? "Ya postulaste"       :
+                 estadoPostula === "error"     ? "Error, reintentar"   :
+                 estadoPostula === "loading"   ? "Enviando..."         :
+                 !pub.vacante_activa           ? "Vacante cerrada"     : "Postular"}
+              </button>
+              <button
+                onClick={handleContactarEmpresa}
+                disabled={contactando}
+                className={`flex-1 py-2.5 rounded-xl border text-sm font-medium transition-colors flex items-center justify-center gap-2 ${B} ${M} hover:border-[#378ADD] hover:text-[#378ADD]`}
+              >
+                <Icon icon="mdi:message-outline" width={18} />
+                {contactando ? "Abriendo chat..." : "Contactar empresa"}
+              </button>
+            </div>
           )}
 
           {/* Comentarios */}

@@ -54,6 +54,7 @@ export default function EmpresaPerfilCandidato() {
     );
   }
 
+  const viewer = JSON.parse(localStorage.getItem("usuario") || "{}");
   const nombreCarrera = careerDisplay[student.carrera] || student.carrera;
   const habilidadesTecnicas = (student.habilidades || []).filter((h) => h.categoria === "tecnica");
   const habilidadesBlandas = (student.habilidades || []).filter((h) => h.categoria === "blanda");
@@ -131,32 +132,34 @@ export default function EmpresaPerfilCandidato() {
             </div>
           </Card>
 
-          <Card>
-            <p className={`text-sm font-medium ${T} mb-3`}>Métricas académicas</p>
-            <div className="flex flex-col gap-0">
-              <div className={`flex justify-between items-center py-2.5 border-b ${B}`}>
-                <span className={`text-xs ${M}`}>Promedio</span>
-                <span className={`text-sm font-semibold ${T}`}>
-                  {student.promedio ? `${parseFloat(student.promedio).toFixed(1)} / 7.0` : "—"}
-                </span>
-              </div>
-              {student.calificacion_docente && (
+          {viewer.rol !== "estudiante" && (
+            <Card>
+              <p className={`text-sm font-medium ${T} mb-3`}>Métricas académicas</p>
+              <div className="flex flex-col gap-0">
                 <div className={`flex justify-between items-center py-2.5 border-b ${B}`}>
-                  <span className={`text-xs ${M}`}>Eval. docente</span>
-                  <span className={`text-sm font-semibold ${T} flex items-center gap-1`}>
-                    <Icon icon="solar:star-bold-duotone" width={14} className="text-yellow-400" />
-                    {parseFloat(student.calificacion_docente).toFixed(1)}
+                  <span className={`text-xs ${M}`}>Promedio</span>
+                  <span className={`text-sm font-semibold ${T}`}>
+                    {student.promedio ? `${parseFloat(student.promedio).toFixed(1)} / 7.0` : "—"}
                   </span>
                 </div>
-              )}
-              {student.semestre && (
-                <div className="flex justify-between items-center py-2.5">
-                  <span className={`text-xs ${M}`}>Semestre</span>
-                  <span className={`text-sm font-semibold ${T}`}>{student.semestre}° sem.</span>
-                </div>
-              )}
-            </div>
-          </Card>
+                {student.calificacion_docente && (
+                  <div className={`flex justify-between items-center py-2.5 border-b ${B}`}>
+                    <span className={`text-xs ${M}`}>Eval. docente</span>
+                    <span className={`text-sm font-semibold ${T} flex items-center gap-1`}>
+                      <Icon icon="solar:star-bold-duotone" width={14} className="text-yellow-400" />
+                      {parseFloat(student.calificacion_docente).toFixed(1)}
+                    </span>
+                  </div>
+                )}
+                {student.semestre && (
+                  <div className="flex justify-between items-center py-2.5">
+                    <span className={`text-xs ${M}`}>Semestre</span>
+                    <span className={`text-sm font-semibold ${T}`}>{student.semestre}° sem.</span>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
 
           {evidences.length > 0 && (
             <Card>
