@@ -12,6 +12,30 @@ import {
   subirExcelTests, subirExcelPromedios,
 } from "../../services/api";
 
+// ── Download helper ───────────────────────────────────────────────────────────
+
+async function descargarPlantilla(endpoint, filename, setError) {
+  const BASE  = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+  const token = localStorage.getItem("token");
+  try {
+    const r = await fetch(`${BASE}${endpoint}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!r.ok) {
+      const json = await r.json().catch(() => ({}));
+      setError(json.error || `Error del servidor (${r.status})`);
+      return;
+    }
+    const blob = await r.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    setError("No se pudo conectar con el servidor");
+  }
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function StarRating({ value, onChange }) {
@@ -378,6 +402,7 @@ function TabTests({ isDark }) {
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState(null);
+  const [dlError, setDlError] = useState("");
   const fileRef = useRef();
 
   async function handleFile(file) {
@@ -395,7 +420,17 @@ function TabTests({ isDark }) {
     <div className="grid grid-cols-3 gap-6">
       <div className="col-span-2">
         <Card>
-          <h3 className={`text-sm font-semibold ${T} mb-2`}>Subir resultados de test socioemocional</h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className={`text-sm font-semibold ${T}`}>Subir resultados de test socioemocional</h3>
+            <button
+              onClick={() => descargarPlantilla("/admin/tests/template", "plantilla_tests.xlsx", setDlError)}
+              className="flex items-center gap-1.5 text-xs text-[#378ADD] hover:underline"
+            >
+              <Icon icon="mdi:download" width={14} />
+              Descargar plantilla
+            </button>
+          </div>
+          {dlError && <p className="text-xs text-red-400 mb-2">Error: {dlError}</p>}
           <p className={`text-xs ${M} mb-4`}>
             El Excel debe tener estas columnas: <strong>Correo</strong>, <strong>Habilidad Blanda</strong>, <strong>Porcentaje (0-100)</strong>.
             La primera fila es encabezado.
@@ -471,6 +506,7 @@ function TabPromedios({ isDark }) {
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState(null);
+  const [dlError, setDlError] = useState("");
   const fileRef = useRef();
 
   async function handleFile(file) {
@@ -484,20 +520,6 @@ function TabPromedios({ isDark }) {
     } finally { setUploading(false); }
   }
 
-  function downloadTemplate() {
-    const BASE = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
-    const token = localStorage.getItem("token");
-    // Descarga usando fetch para incluir el token de autenticación
-    fetch(`${BASE}/admin/promedios/template`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => r.blob())
-      .then((blob) => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url; a.download = "plantilla_promedios.xlsx"; a.click();
-        URL.revokeObjectURL(url);
-      });
-  }
-
   return (
     <div className="grid grid-cols-3 gap-6">
       <div className="col-span-2">
@@ -505,13 +527,14 @@ function TabPromedios({ isDark }) {
           <div className="flex items-center justify-between mb-4">
             <h3 className={`text-sm font-semibold ${T}`}>Subir promedios académicos</h3>
             <button
-              onClick={downloadTemplate}
+              onClick={() => descargarPlantilla("/admin/promedios/template", "plantilla_promedios.xlsx", setDlError)}
               className="flex items-center gap-1.5 text-xs text-[#378ADD] hover:underline"
             >
               <Icon icon="mdi:download" width={14} />
               Descargar plantilla
             </button>
           </div>
+          {dlError && <p className="text-xs text-red-400 mb-2">Error: {dlError}</p>}
 
           <p className={`text-xs ${M} mb-4`}>
             El Excel debe tener estas columnas: <strong>Estudiante</strong>, <strong>Correo</strong>, <strong>Periodo</strong>, <strong>Promedio (1.0-7.0)</strong>.

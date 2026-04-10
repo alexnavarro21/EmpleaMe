@@ -146,7 +146,42 @@ router.delete("/habilidades/quitar", ...auth, async (req, res) => {
   }
 });
 
-// ── Tests socioemocionales — subida de Excel ──────────────────────────────────
+// ── Tests socioemocionales — plantilla y subida de Excel ─────────────────────
+
+// GET /api/admin/tests/template  — descarga plantilla Excel de tests socioemocionales
+router.get("/tests/template", ...auth, async (req, res) => {
+  try {
+    const [estudiantes] = await db.query(`
+      SELECT pe.nombre_completo, u.correo
+      FROM perfiles_estudiantes pe
+      JOIN usuarios u ON u.id = pe.usuario_id
+      ORDER BY pe.nombre_completo
+    `);
+    const [habilidades] = await db.query(
+      "SELECT nombre FROM habilidades WHERE categoria = 'blanda' ORDER BY nombre"
+    );
+
+    const data = [["Correo", "Habilidad Blanda", "Porcentaje (0-100)"]];
+    for (const est of estudiantes) {
+      for (const hab of habilidades) {
+        data.push([est.correo, hab.nombre, ""]);
+      }
+    }
+
+    const wb  = XLSX.utils.book_new();
+    const ws  = XLSX.utils.aoa_to_sheet(data);
+    ws["!cols"] = [{ wch: 30 }, { wch: 36 }, { wch: 18 }];
+    XLSX.utils.book_append_sheet(wb, ws, "Tests");
+
+    const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+    res.setHeader("Content-Disposition", "attachment; filename=plantilla_tests.xlsx");
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ error: "Error generando plantilla", detalle: err.message });
+  }
+});
+
 //
 // Formato esperado del Excel (hoja 1):
 //   Columna A: Correo del estudiante
