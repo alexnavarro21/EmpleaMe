@@ -196,7 +196,13 @@ function FeedCard({ pub, isDark, perfilCompleto }) {
   return (
     <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
       <div className="flex items-start justify-between px-4 pt-4 pb-3">
-        <div className="flex items-center gap-3">
+        <Link
+          to={pub.autor_rol === "empresa"
+            ? `/empresa-publica/${pub.autor_id}`
+            : `/${usuario.rol}/candidato/${pub.autor_id}`}
+          className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
             {inicial}
           </div>
@@ -204,7 +210,7 @@ function FeedCard({ pub, isDark, perfilCompleto }) {
             <p className={`text-sm font-semibold leading-tight ${T}`}>{pub.autor_nombre}</p>
             <p className={`text-xs ${M}`}>{tiempoRelativo(pub.publicado_en)}</p>
           </div>
-        </div>
+        </Link>
         <Badge color={badge.color}>{badge.label}</Badge>
       </div>
 
@@ -369,12 +375,14 @@ function TallerCard({ taller, isDark }) {
   const M  = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B  = isDark ? "border-[#3a3a38]" : "border-[#E8E6E1]";
   const BG = isDark ? "bg-[#262624]" : "bg-white";
+  const HV = isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]";
 
   const gratuito = !taller.costo || Number(taller.costo) === 0;
   const costoStr = gratuito ? "Gratuito" : `$${Number(taller.costo).toLocaleString("es-CL")}`;
 
   return (
     <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
+      {/* Header igual que FeedCard */}
       <div className="flex items-start justify-between px-4 pt-4 pb-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
@@ -382,23 +390,38 @@ function TallerCard({ taller, isDark }) {
           </div>
           <div>
             <p className={`text-sm font-semibold leading-tight ${T}`}>C.E. Cardenal J.M. Caro</p>
-            <p className={`text-xs ${M}`}>Centro Educacional</p>
+            <p className={`text-xs ${M}`}>{tiempoRelativo(taller.creado_en)}</p>
           </div>
         </div>
-        <span className="text-xs px-2.5 py-0.5 rounded-full font-medium bg-purple-100 text-purple-700">Taller</span>
+        <Badge color="purple">Taller</Badge>
       </div>
 
+      {/* Título */}
       <div className="px-4 pb-1">
         <p className={`text-sm font-semibold ${T}`}>{taller.titulo}</p>
       </div>
+
+      {/* Descripción */}
       {taller.descripcion && (
         <div className="px-4 pb-3">
-          <p className={`text-sm leading-relaxed ${T} line-clamp-3`}>{taller.descripcion}</p>
+          <p className={`text-sm leading-relaxed ${T}`}>{taller.descripcion}</p>
         </div>
       )}
 
+      {/* Info box igual que vacante */}
       <div className={`mx-4 mb-3 p-3 rounded-lg border ${B} ${isDark ? "bg-[#1e1e1c]" : "bg-[#F7F6F3]"}`}>
         <div className="flex flex-wrap gap-3">
+          {taller.esta_activo === false || taller.esta_activo === 0 ? (
+            <div className="flex items-center gap-1.5">
+              <Icon icon="mdi:close-circle-outline" width={14} className="text-red-400" />
+              <span className="text-xs font-medium text-red-500">Cerrado</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <Icon icon="mdi:check-circle-outline" width={14} className="text-green-500" />
+              <span className="text-xs font-medium text-green-600">Activo</span>
+            </div>
+          )}
           {taller.area && (
             <div className="flex items-center gap-1.5">
               <Icon icon="mdi:tag-outline" width={14} className="text-purple-500" />
@@ -442,11 +465,18 @@ function TallerCard({ taller, isDark }) {
         </div>
       </div>
 
-      {!taller.esta_activo && (
-        <div className="px-4 pb-3">
-          <span className="text-xs text-red-500 font-medium">Taller cerrado</span>
-        </div>
-      )}
+      {/* Acciones */}
+      <div className={`border-t ${B}`} />
+      <div className="flex items-center px-2 py-1">
+        <button className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${HV} ${M}`}>
+          <Icon icon="mdi:thumb-up-outline" width={16} />
+          Me interesa
+        </button>
+        <button className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${HV} ${M}`}>
+          <Icon icon="mdi:information-outline" width={16} />
+          Ver más
+        </button>
+      </div>
     </div>
   );
 }
@@ -645,9 +675,10 @@ export default function EstudianteDashboard() {
         <div className={`rounded-xl border ${B} ${BG} p-4`}>
           <p className={`text-xs font-semibold ${T} mb-2`}>Accesos rápidos</p>
           {[
-            { icon: "mdi:file-account-outline", label: "Mi CV", to: "/estudiante/perfil" },
-            { icon: "mdi:folder-multiple-outline", label: "Mis Evidencias", to: "/estudiante/evidencias" },
-            { icon: "mdi:bookmark-multiple-outline", label: "Guardados", to: "/estudiante/dashboard" },
+            { icon: "mdi:send-check-outline",       label: "Mis postulaciones", to: "/estudiante/postulaciones" },
+            { icon: "mdi:message-outline",           label: "Mensajería",        to: "/estudiante/mensajeria"    },
+            { icon: "mdi:account-search-outline",    label: "Buscar perfiles",   to: "/estudiante/buscar"        },
+            { icon: "mdi:folder-multiple-outline",   label: "Mis evidencias",    to: "/estudiante/evidencias"    },
           ].map((link) => (
             <Link
               key={link.label}
@@ -710,7 +741,7 @@ export default function EstudianteDashboard() {
             ) : (
               <>
                 {empresaConversaciones.slice(0, 4).map((c, i) => {
-                  const nombre = c.nombre_estudiante || c.nombre_empresa || "Usuario";
+                  const nombre = c.contraparte || c.nombre_estudiante || c.nombre_empresa || "Usuario";
                   return (
                     <Link
                       key={c.id}
@@ -853,7 +884,7 @@ export default function EstudianteDashboard() {
           ) : (
             <>
               {estudianteConversaciones.slice(0, 3).map((c, i) => {
-                const nombre = c.nombre_empresa || c.nombre_estudiante || "Usuario";
+                const nombre = c.contraparte || c.nombre_empresa || c.nombre_estudiante || "Usuario";
                 return (
                   <Link
                     key={c.id}

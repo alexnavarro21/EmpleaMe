@@ -86,6 +86,7 @@ export function Badge({ children, color = "blue" }) {
     red: "bg-red-50 text-red-700",
     gray: "bg-[#F7F6F3] text-[#5F5E5A]",
     orange: "bg-orange-50 text-orange-700",
+    purple: "bg-purple-50 text-purple-700",
   };
   return (
     <span className={`inline-block text-xs px-2.5 py-0.5 rounded-full font-medium ${variants[color] ?? variants.blue}`}>
