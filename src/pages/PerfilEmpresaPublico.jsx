@@ -4,7 +4,8 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 import { Card, Badge, SecondaryButton, PrimaryButton, PageHeader } from "../components/ui";
 import PublicacionesUsuario from "../components/PublicacionesUsuario";
-import { getEmpresaById, getVacantesEmpresa, postularAVacante, iniciarConversacionConEmpresa } from "../services/api";
+import { getEmpresaById, getVacantesEmpresa, postularAVacante, iniciarConversacionConEmpresa, getEstudianteById } from "../services/api";
+import { calcularCompletitud } from "../utils/perfilCompletitud";
 
 export default function PerfilEmpresaPublico() {
   const { isDark } = useDark();
@@ -18,6 +19,7 @@ export default function PerfilEmpresaPublico() {
   // { [vacanteId]: "idle" | "loading" | "ok" | "error" | "duplicado" }
   const [postulando, setPostulando] = useState({});
   const [contactando, setContactando] = useState(false);
+  const [perfilCompleto, setPerfilCompleto] = useState(true);
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -27,16 +29,25 @@ export default function PerfilEmpresaPublico() {
   const esEstudiante = usuario.rol === "estudiante";
 
   useEffect(() => {
-    Promise.allSettled([getEmpresaById(id), getVacantesEmpresa(id)])
-      .then(([emp, vacs]) => {
-        if (emp.status === "fulfilled") setEmpresa(emp.value);
-        else setError("No se pudo cargar el perfil de la empresa.");
-        if (vacs.status === "fulfilled") setVacantes(vacs.value);
-      })
-      .finally(() => setLoading(false));
+    const promesas = [getEmpresaById(id), getVacantesEmpresa(id)];
+    if (usuario.rol === "estudiante" && usuario.id) {
+      promesas.push(getEstudianteById(usuario.id));
+    }
+    Promise.allSettled(promesas).then(([emp, vacs, propio]) => {
+      if (emp.status === "fulfilled") setEmpresa(emp.value);
+      else setError("No se pudo cargar el perfil de la empresa.");
+      if (vacs.status === "fulfilled") setVacantes(vacs.value);
+      if (propio?.status === "fulfilled") {
+        setPerfilCompleto(calcularCompletitud(propio.value) === 100);
+      }
+    }).finally(() => setLoading(false));
   }, [id]);
 
   const handlePostular = async (vacanteId) => {
+    if (!perfilCompleto) {
+      setPostulando((p) => ({ ...p, [vacanteId]: "incompleto" }));
+      return;
+    }
     setPostulando((p) => ({ ...p, [vacanteId]: "loading" }));
     try {
       await postularAVacante(vacanteId);
@@ -86,6 +97,12 @@ export default function PerfilEmpresaPublico() {
               {empresa.nombre_empresa?.[0]?.toUpperCase() ?? "E"}
             </div>
             <p className={`text-lg font-semibold ${T}`}>{empresa.nombre_empresa}</p>
+            {(empresa.comuna || empresa.region) && (
+              <p className={`text-xs ${M} flex items-center justify-center gap-1`}>
+                <Icon icon="mdi:map-marker-outline" width={12} />
+                {[empresa.comuna, empresa.region].filter(Boolean).join(", ")}
+              </p>
+            )}
             <p className={`text-xs ${M} mb-3`}>Empresa registrada en EmpleaMe</p>
             <Badge color="blue">Empresa Verificada</Badge>
 
@@ -193,6 +210,17 @@ export default function PerfilEmpresaPublico() {
                               <Icon icon="mdi:alert-circle-outline" width={15} />
                               Error al postular, intenta de nuevo
                             </p>
+                          ) : estado === "incompleto" ? (
+                            <div>
+                              <p className="flex items-center gap-1.5 text-xs text-orange-500 font-medium">
+                                <Icon icon="mdi:account-alert-outline" width={15} />
+                                Perfil incompleto
+                              </p>
+                              <p className={`text-xs ${M} mt-0.5`}>
+                                Completa tu perfil al 100% para poder postular.{" "}
+                                <a href="/estudiante/perfil" className="text-[#378ADD] hover:underline">Ir a mi perfil →</a>
+                              </p>
+                            </div>
                           ) : (
                             <PrimaryButton
                               onClick={() => handlePostular(v.id)}

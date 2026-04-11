@@ -7,6 +7,7 @@ import PublicacionesUsuario from "../../components/PublicacionesUsuario";
 import { getEstudianteById, actualizarPerfilEstudiante, getPostulacionesEstudiante } from "../../services/api";
 import { REGIONES_COMUNAS, REGIONES } from "../../data/regionesComunas";
 import { validarRut, formatearRut } from "../../utils/validarRut";
+import { calcularCompletitud } from "../../utils/perfilCompletitud";
 
 const tabs = ["Personal", "Habilidades", "Idiomas & Historial", "Postulaciones"];
 
@@ -206,9 +207,7 @@ const descargarCV = () => {
   const habilidadesBlandas = habilidades.filter((h) => h.categoria === "blanda");
 
   const rutValido = validarRut(rut);
-  const completado = [nombre, carrera, telefono, biografia, estadoCivil, rutValido ? rut : "", region, comuna]
-    .filter(Boolean).length;
-  const pctCompleto = Math.round((completado / 8) * 100);
+  const pctCompleto = calcularCompletitud({ nombre_completo: nombre, carrera, telefono, biografia, estado_civil: estadoCivil, rut, region, comuna });
 
   if (loading) {
     return (

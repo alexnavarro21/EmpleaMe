@@ -82,8 +82,17 @@ export default function EmpresaPerfilCandidato() {
               <Icon icon="mynaui:user-solid" width={44} className="text-[#378ADD]" />
             </div>
             <p className={`text-lg font-semibold ${T}`}>{student.nombre_completo}</p>
-            <p className={`text-sm ${M} mb-2`}>{nombreCarrera}</p>
-            {student.semestre && <Badge color="blue">Semestre {student.semestre}</Badge>}
+            <p className={`text-sm ${M}`}>{nombreCarrera}</p>
+            {(student.comuna || student.region) && (
+              <p className={`text-xs ${M} flex items-center justify-center gap-1 mb-1`}>
+                <Icon icon="mdi:map-marker-outline" width={12} />
+                {[student.comuna, student.region].filter(Boolean).join(", ")}
+              </p>
+            )}
+            <div className="flex flex-wrap gap-1.5 justify-center mb-2">
+              {student.semestre && <Badge color="blue">Semestre {student.semestre}</Badge>}
+              {student.estado_civil && <Badge color="gray">{student.estado_civil}</Badge>}
+            </div>
 
             <div className={`mt-4 pt-4 border-t ${B} flex flex-col gap-2.5 text-left`}>
               {student.telefono && (
@@ -215,9 +224,75 @@ export default function EmpresaPerfilCandidato() {
                 <SoftSkillBar
                   key={h.id || h.nombre}
                   label={h.nombre}
-                  percentage={h.nivel_dominio === "Avanzado" ? 90 : h.nivel_dominio === "Intermedio" ? 65 : 40}
+                  percentage={h.porcentaje ?? (h.nivel_dominio === "Avanzado" ? 90 : h.nivel_dominio === "Intermedio" ? 65 : 40)}
                 />
               ))}
+            </Card>
+          )}
+
+          {(student.idiomas || []).length > 0 && (
+            <Card>
+              <h3 className={`text-sm font-semibold ${T} mb-3 flex items-center gap-2`}>
+                <Icon icon="mdi:translate" width={16} className="text-[#378ADD]" />
+                Idiomas
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {student.idiomas.map((i) => (
+                  <span key={i.id} className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border ${B} ${T}`}>
+                    {i.idioma}
+                    <span className={`${M}`}>· {i.nivel}</span>
+                  </span>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {(student.historial_academico || []).length > 0 && (
+            <Card>
+              <h3 className={`text-sm font-semibold ${T} mb-3 flex items-center gap-2`}>
+                <Icon icon="mdi:school-outline" width={16} className="text-[#378ADD]" />
+                Historial académico
+              </h3>
+              <div className="flex flex-col gap-3">
+                {student.historial_academico.map((a) => (
+                  <div key={a.id} className={`pb-3 border-b ${B} last:border-0 last:pb-0`}>
+                    <p className={`text-sm font-medium ${T}`}>{a.titulo}</p>
+                    <p className={`text-xs ${M}`}>{a.institucion}{a.area ? ` · ${a.area}` : ""}</p>
+                    {(a.fecha_inicio || a.fecha_fin) && (
+                      <p className={`text-xs ${M}`}>{a.fecha_inicio || "?"} – {a.fecha_fin || "En curso"}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {(student.historial_laboral || []).length > 0 && (
+            <Card>
+              <h3 className={`text-sm font-semibold ${T} mb-3 flex items-center gap-2`}>
+                <Icon icon="mdi:briefcase-outline" width={16} className="text-[#378ADD]" />
+                Experiencia laboral
+              </h3>
+              <div className="flex flex-col gap-3">
+                {student.historial_laboral.map((l) => (
+                  <div key={l.id} className={`pb-3 border-b ${B} last:border-0 last:pb-0`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className={`text-sm font-medium ${T}`}>{l.cargo}</p>
+                      <Badge color={l.tipo === "practica_completada" ? "green" : "blue"}>
+                        {l.tipo === "practica_completada" ? "Práctica" : "Verificado"}
+                      </Badge>
+                    </div>
+                    <p className={`text-xs ${M}`}>{l.empresa_nombre}</p>
+                    {(l.fecha_inicio || l.fecha_fin) && (
+                      <p className={`text-xs ${M}`}>
+                        {l.fecha_inicio ? new Date(l.fecha_inicio).toLocaleDateString("es-CL", { month: "short", year: "numeric" }) : "?"}
+                        {" – "}
+                        {l.fecha_fin ? new Date(l.fecha_fin).toLocaleDateString("es-CL", { month: "short", year: "numeric" }) : "Presente"}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
             </Card>
           )}
 

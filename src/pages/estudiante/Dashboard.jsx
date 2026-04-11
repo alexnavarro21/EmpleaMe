@@ -4,7 +4,7 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge } from "../../components/ui";
 import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante } from "../../services/api";
-import { validarRut } from "../../utils/validarRut";
+import { calcularCompletitud } from "../../utils/perfilCompletitud";
 import CrearPublicacion from "../../components/CrearPublicacion";
 import VerMasModal from "../../components/VerMasModal";
 
@@ -417,20 +417,16 @@ export default function EstudianteDashboard() {
   const inicial = nombre ? nombre.charAt(0).toUpperCase() : "?";
   const subtitleParts = [nombreCarrera, semestre ? `${semestre}° semestre` : ""].filter(Boolean);
 
-  const rutValido = validarRut(rut);
-  const pctCompleto = Math.round(
-    [nombre, carrera, telefono, biografia, estadoCivil, rutValido ? rut : "", region, comuna]
-      .filter(Boolean).length / 8 * 100
-  );
+  const pctCompleto = calcularCompletitud({ nombre_completo: nombre, carrera, telefono, biografia, estado_civil: estadoCivil, rut, region, comuna });
   const perfilCompleto = pctCompleto === 100;
 
   const profileSteps = [
-    { done: !!(nombre && telefono), label: "Nombre y teléfono" },
-    { done: !!(rutValido),          label: "RUT válido" },
-    { done: !!(carrera),            label: "Carrera" },
-    { done: !!(estadoCivil),        label: "Estado civil" },
-    { done: !!(region && comuna),   label: "Región y comuna" },
-    { done: !!(biografia),          label: "Presentación personal" },
+    { done: !!(nombre && telefono),  label: "Nombre y teléfono" },
+    { done: !!(rut),                 label: "RUT válido" },
+    { done: !!(carrera),             label: "Carrera" },
+    { done: !!(estadoCivil),         label: "Estado civil" },
+    { done: !!(region && comuna),    label: "Región y comuna" },
+    { done: !!(biografia),           label: "Presentación personal" },
   ];
 
   const conSidebar = isEstudiante || isEmpresa;
