@@ -161,6 +161,23 @@ router.post("/:id/mensajes", verificarToken, async (req, res) => {
       "INSERT INTO mensajes (conversacion_id, remitente_id, contenido) VALUES (?, ?, ?)",
       [req.params.id, id, contenido.trim()]
     );
+
+    // Notificación al destinatario
+    try {
+      const recipientId = conv[0].empresa_id === id ? conv[0].estudiante_id : conv[0].empresa_id;
+      const [[sender]] = await db.query(
+        `SELECT COALESCE(pe.nombre_empresa, est.nombre_completo, 'Usuario') AS nombre
+         FROM usuarios u
+         LEFT JOIN perfiles_empresas pe     ON pe.usuario_id  = u.id
+         LEFT JOIN perfiles_estudiantes est ON est.usuario_id = u.id
+         WHERE u.id = ?`, [id]
+      );
+      await db.query(
+        "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido) VALUES (?, 'mensaje', ?, ?)",
+        [recipientId, `Nuevo mensaje de ${sender.nombre}`, contenido.trim().substring(0, 150)]
+      );
+    } catch (_) { /* no bloquear si falla la notificación */ }
+
     res.status(201).json({ id: result.insertId, mensaje: "Mensaje enviado" });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });

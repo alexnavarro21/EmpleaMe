@@ -34,7 +34,7 @@ export default function MisPostulaciones() {
   const [filtro, setFiltro] = useState("todas");
   const [busqueda, setBusqueda] = useState("");
   const [pagina, setPagina] = useState(1);
-  const [porPagina, setPorPagina] = useState(6);
+  const [porPagina, setPorPagina] = useState(3);
 
   useEffect(() => {
     getPostulacionesEstudiante()
@@ -187,7 +187,7 @@ export default function MisPostulaciones() {
           totalPaginas={totalPaginas}
           onCambiar={setPagina}
           porPagina={porPagina}
-          opciones={[3, 6, 9]}
+          opciones={[3, 6, 9, 15]}
           onCambiarPorPagina={(n) => { setPorPagina(n); setPagina(1); }}
         />
       )}

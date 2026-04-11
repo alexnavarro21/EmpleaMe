@@ -239,21 +239,19 @@ export function Paginacion({ paginaActual, totalPaginas, onCambiar, porPagina, o
       {showPerPage && (
         <div className={`flex items-center gap-2 text-xs ${M}`}>
           <span>Mostrar:</span>
-          <div className="flex gap-1">
+          <select
+            value={porPagina}
+            onChange={(e) => onCambiarPorPagina(Number(e.target.value))}
+            className={`px-2 py-1.5 rounded-lg border text-xs outline-none transition-colors focus:border-[#378ADD] cursor-pointer ${
+              isDark
+                ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
+                : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
+            }`}
+          >
             {opciones.map((o) => (
-              <button
-                key={o}
-                onClick={() => onCambiarPorPagina(o)}
-                className={`w-8 h-8 rounded-lg border text-xs font-medium transition-colors ${
-                  o === porPagina
-                    ? "bg-[#0F4D8A] border-[#0F4D8A] text-[#E6F1FB]"
-                    : `${S} ${B} ${T} hover:border-[#378ADD]`
-                }`}
-              >
-                {o}
-              </button>
+              <option key={o} value={o}>{o} por página</option>
             ))}
-          </div>
+          </select>
         </div>
       )}
     </div>

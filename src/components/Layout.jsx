@@ -2,6 +2,7 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 import { useState, useRef, useEffect } from "react";
+import NotificacionesBell from "./NotificacionesBell";
 
 const profilePaths = {
   estudiante: "/estudiante/perfil",
@@ -92,6 +93,9 @@ export default function Layout() {
               ))}
             </div>
           </div>
+
+          {/* Campana de notificaciones (solo estudiante y empresa) */}
+          {role !== "admin" && <NotificacionesBell role={role} />}
 
           {/* Botón de perfil con popup */}
           <div className="relative" ref={menuRef}>

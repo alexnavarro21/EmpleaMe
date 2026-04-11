@@ -18,6 +18,17 @@ router.post("/", verificarToken, soloRol("estudiante"), async (req, res) => {
       "INSERT INTO postulaciones (vacante_id, estudiante_id) VALUES (?, ?)",
       [vacante_id, req.usuario.id]
     );
+
+    // Notificación a la empresa
+    try {
+      const [[est]]  = await db.query("SELECT nombre_completo FROM perfiles_estudiantes WHERE usuario_id = ?", [req.usuario.id]);
+      const [[vac2]] = await db.query("SELECT empresa_id, titulo FROM vacantes WHERE id = ?", [vacante_id]);
+      await db.query(
+        "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido) VALUES (?, 'postulacion_nueva', ?, ?)",
+        [vac2.empresa_id, `Nueva postulación en "${vac2.titulo}"`, `${est.nombre_completo} ha postulado a tu vacante`]
+      );
+    } catch (_) {}
+
     res.status(201).json({ id: result.insertId, mensaje: "Postulación enviada" });
   } catch (err) {
     if (err.code === "ER_DUP_ENTRY")
@@ -122,6 +133,25 @@ router.put("/:id/estado", verificarToken, soloRol("empresa"), async (req, res) =
     );
     if (result.affectedRows === 0)
       return res.status(404).json({ error: "Postulación no encontrada o sin permisos" });
+
+    // Notificación al estudiante
+    try {
+      const [[post]] = await db.query(
+        "SELECT p.estudiante_id, v.titulo FROM postulaciones p JOIN vacantes v ON v.id = p.vacante_id WHERE p.id = ?",
+        [req.params.id]
+      );
+      if (post) {
+        const tipo   = estado === "aceptado" ? "postulacion_aceptada" : "postulacion_rechazada";
+        const titulo = estado === "aceptado"
+          ? `¡Tu postulación fue aceptada!`
+          : `Tu postulación no fue seleccionada`;
+        await db.query(
+          "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido) VALUES (?, ?, ?, ?)",
+          [post.estudiante_id, tipo, titulo, `Vacante: "${post.titulo}"`]
+        );
+      }
+    } catch (_) {}
+
     res.json({ mensaje: "Estado actualizado" });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
@@ -162,6 +192,14 @@ router.put("/:id/completar", verificarToken, soloRol("empresa"), async (req, res
        VALUES (?, ?, ?, CURDATE(), 'practica_completada', ?)`,
       [post.estudiante_id, post.nombre_empresa, post.titulo, post.id]
     );
+
+    // Notificación al estudiante
+    try {
+      await db.query(
+        "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido) VALUES (?, 'practica_completada', ?, ?)",
+        [post.estudiante_id, "¡Práctica completada!", `Tu práctica en "${post.titulo}" ha sido registrada en tu perfil de EmpleaMe`]
+      );
+    } catch (_) {}
 
     res.json({ mensaje: "Práctica marcada como completada" });
   } catch (err) {

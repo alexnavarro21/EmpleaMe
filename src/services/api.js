@@ -307,6 +307,36 @@ export async function enviarMensaje(conversacionId, contenido) {
   return data;
 }
 
+// ── Notificaciones ────────────────────────────────────────────────────────────
+
+export async function getNotificaciones(pagina = 1, porPagina = 10) {
+  const res = await fetch(`${BASE_URL}/notificaciones?pagina=${pagina}&porPagina=${porPagina}`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener notificaciones");
+  return data; // { notificaciones: [...], total, noLeidas }
+}
+
+export async function getNoLeidas() {
+  const res = await fetch(`${BASE_URL}/notificaciones/no-leidas`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error");
+  return data.count;
+}
+
+export async function marcarNotificacionesLeidas() {
+  const res = await fetch(`${BASE_URL}/notificaciones/leidas`, {
+    method: "PUT",
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error");
+  return data;
+}
+
 // ── Publicaciones (Soporta Archivos Multimedia) ───────────────────────────────
 
 export async function getPublicaciones() {

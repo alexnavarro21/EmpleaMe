@@ -21,7 +21,7 @@ export default function PerfilEmpresaPublico() {
   const [contactando, setContactando] = useState(false);
   const [perfilCompleto, setPerfilCompleto] = useState(true);
   const [paginaVacantes, setPaginaVacantes] = useState(1);
-  const [porPaginaVacantes, setPorPaginaVacantes] = useState(6);
+  const [porPaginaVacantes, setPorPaginaVacantes] = useState(3);
   const [busquedaVacante, setBusquedaVacante] = useState("");
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
@@ -281,7 +281,7 @@ export default function PerfilEmpresaPublico() {
               totalPaginas={totalPaginasVacantes}
               onCambiar={setPaginaVacantes}
               porPagina={porPaginaVacantes}
-              opciones={[3, 6, 9]}
+              opciones={[3, 6, 9, 15]}
               onCambiarPorPagina={(n) => { setPorPaginaVacantes(n); setPaginaVacantes(1); }}
             />
           </Card>

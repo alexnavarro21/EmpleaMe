@@ -106,17 +106,30 @@ router.post("/", verificarToken, soloRol("empresa"), upload.single("archivo_mult
 // PUT /api/vacantes/:id/desactivar  — desactivar vacante y rechazar postulaciones pendientes
 router.put("/:id/desactivar", verificarToken, soloRol("empresa"), async (req, res) => {
   try {
-    const [result] = await db.query(
-      "UPDATE vacantes SET esta_activa = FALSE WHERE id = ? AND empresa_id = ?",
-      [req.params.id, req.usuario.id]
-    );
-    if (result.affectedRows === 0)
-      return res.status(404).json({ error: "Vacante no encontrada o sin permisos" });
+    // Obtener afectados y título antes de actualizar
+    const [[vac]] = await db.query("SELECT titulo FROM vacantes WHERE id = ? AND empresa_id = ?", [req.params.id, req.usuario.id]);
+    if (!vac) return res.status(404).json({ error: "Vacante no encontrada o sin permisos" });
 
+    const [afectados] = await db.query(
+      "SELECT estudiante_id FROM postulaciones WHERE vacante_id = ? AND estado = 'pendiente'",
+      [req.params.id]
+    );
+
+    await db.query("UPDATE vacantes SET esta_activa = FALSE WHERE id = ?", [req.params.id]);
     await db.query(
       "UPDATE postulaciones SET estado = 'rechazado' WHERE vacante_id = ? AND estado = 'pendiente'",
       [req.params.id]
     );
+
+    // Notificaciones a afectados
+    try {
+      for (const af of afectados) {
+        await db.query(
+          "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido) VALUES (?, 'vacante_cerrada', ?, ?)",
+          [af.estudiante_id, `La vacante "${vac.titulo}" fue cerrada`, "Esta vacante ya no está disponible"]
+        );
+      }
+    } catch (_) {}
 
     res.json({ mensaje: "Vacante desactivada y postulaciones pendientes rechazadas" });
   } catch (err) {

@@ -13,6 +13,7 @@ const mensajesDirectosRoutes = require("./src/routes/mensajes_directos");
 const publicacionesRoutes   = require("./src/routes/publicaciones");
 const comentariosRoutes     = require("./src/routes/comentarios");
 const adminRoutes           = require("./src/routes/admin");
+const notificacionesRoutes  = require("./src/routes/notificaciones");
 
 const path = require("path");
 
@@ -32,6 +33,7 @@ app.use("/api/conversaciones",  conversacionesRoutes);
 app.use("/api/mensajes-directos", mensajesDirectosRoutes);
 app.use("/api/publicaciones",   publicacionesRoutes);
 app.use("/api/publicaciones/:id/comentarios", comentariosRoutes);
+app.use("/api/notificaciones",  notificacionesRoutes);
 app.use("/api/admin",           adminRoutes);
 
 app.get("/", (req, res) => res.json({ status: "EmpleaMe API corriendo" }));

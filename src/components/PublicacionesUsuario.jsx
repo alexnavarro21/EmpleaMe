@@ -41,29 +41,29 @@ function MiniPostCard({ pub, isDark }) {
 
   return (
     <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
-      <div className="flex items-center justify-between px-4 pt-3 pb-2">
+      <div className="flex items-center justify-between px-5 pt-4 pb-3">
         <p className={`text-xs ${M}`}>{tiempoRelativo(pub.publicado_en)}</p>
         <Badge color={badge.color}>{badge.label}</Badge>
       </div>
 
       {pub.titulo && pub.titulo !== "Actualización de estado" && (
-        <div className="px-4 pb-1">
+        <div className="px-5 pb-2">
           <p className={`text-sm font-semibold ${T}`}>{pub.titulo}</p>
         </div>
       )}
 
       {pub.contenido && (
-        <div className="px-4 pb-3">
-          <p className={`text-sm leading-relaxed ${T} line-clamp-3`}>{pub.contenido}</p>
+        <div className="px-5 pb-4">
+          <p className={`text-sm leading-relaxed ${T} line-clamp-4`}>{pub.contenido}</p>
         </div>
       )}
 
       {pub.url_multimedia && (
-        <div className="px-4 pb-3">
+        <div className="px-5 pb-4">
           <img
             src={resolverMedia(pub.url_multimedia)}
             alt="Multimedia"
-            className="rounded-lg max-h-48 w-full object-cover border"
+            className="rounded-lg max-h-56 w-full object-cover border"
             onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
           />
         </div>
@@ -72,7 +72,7 @@ function MiniPostCard({ pub, isDark }) {
       <div className={`border-t ${B}`} />
       <button
         onClick={() => setVerMas(true)}
-        className={`w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors ${HV} ${M}`}
+        className={`w-full flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-medium transition-colors ${HV} ${M}`}
       >
         <Icon icon="mdi:comment-outline" width={14} />
         Ver más · comentarios
@@ -116,7 +116,7 @@ export default function PublicacionesUsuario({ usuarioId }) {
           <p className="text-xs">Aún no hay publicaciones.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {publicaciones.map((pub) => (
             <MiniPostCard key={pub.id} pub={pub} isDark={isDark} />
           ))}
