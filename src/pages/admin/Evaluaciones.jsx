@@ -432,8 +432,7 @@ function TabTests({ isDark }) {
           </div>
           {dlError && <p className="text-xs text-red-400 mb-2">Error: {dlError}</p>}
           <p className={`text-xs ${M} mb-4`}>
-            El Excel debe tener estas columnas: <strong>Correo</strong>, <strong>Habilidad Blanda</strong>, <strong>Porcentaje (0-100)</strong>.
-            La primera fila es encabezado.
+            La plantilla tiene una fila por estudiante. Las columnas son <strong>Correo</strong>, <strong>Nombre</strong> y luego una columna por cada habilidad blanda. Rellena las celdas con un porcentaje de <strong>0 a 100</strong>; las celdas vacías se omiten.
           </p>
 
           <div
@@ -476,22 +475,34 @@ function TabTests({ isDark }) {
 
       <Card>
         <p className={`text-sm font-semibold ${T} mb-3`}>Formato esperado</p>
-        <div className={`rounded-lg border ${B} overflow-hidden text-xs`}>
-          <div className={`grid grid-cols-3 px-3 py-2 font-medium ${M} border-b ${B} ${isDark ? "bg-[#313130]" : "bg-[#F7F6F3]"}`}>
-            <span>Correo</span><span>Habilidad Blanda</span><span>Porcentaje</span>
+        <div className={`rounded-lg border ${B} overflow-x-auto text-xs`}>
+          {/* Encabezados */}
+          <div className={`flex px-3 py-2 font-medium ${M} border-b ${B} ${isDark ? "bg-[#313130]" : "bg-[#F7F6F3]"} gap-2 min-w-max`}>
+            <span className="w-24 flex-shrink-0">Correo</span>
+            <span className="w-20 flex-shrink-0">Nombre</span>
+            <span className="w-16 flex-shrink-0">Trabajo en equipo</span>
+            <span className="w-16 flex-shrink-0">Comunicación</span>
+            <span className="w-16 flex-shrink-0">Liderazgo...</span>
           </div>
-          {[
-            ["juan@test.cl", "Trabajo en equipo", "85"],
-            ["juan@test.cl", "Comunicación", "72"],
-            ["maria@test.cl", "Liderazgo básico", "90"],
-          ].map(([c, h, p], i) => (
-            <div key={i} className={`grid grid-cols-3 px-3 py-2 border-b ${B} last:border-0 ${T}`}>
-              <span className="truncate">{c}</span><span className="truncate">{h}</span><span>{p}</span>
-            </div>
-          ))}
+          {/* Fila 1 */}
+          <div className={`flex px-3 py-2 border-b ${B} gap-2 min-w-max ${T}`}>
+            <span className="w-24 flex-shrink-0 truncate">juan@test.cl</span>
+            <span className="w-20 flex-shrink-0 truncate">Juan P.</span>
+            <span className="w-16 flex-shrink-0 text-center">85</span>
+            <span className="w-16 flex-shrink-0 text-center">72</span>
+            <span className="w-16 flex-shrink-0 text-center"></span>
+          </div>
+          {/* Fila 2 */}
+          <div className={`flex px-3 py-2 gap-2 min-w-max ${T}`}>
+            <span className="w-24 flex-shrink-0 truncate">maria@test.cl</span>
+            <span className="w-20 flex-shrink-0 truncate">María G.</span>
+            <span className="w-16 flex-shrink-0 text-center"></span>
+            <span className="w-16 flex-shrink-0 text-center">90</span>
+            <span className="w-16 flex-shrink-0 text-center">78</span>
+          </div>
         </div>
         <p className={`text-xs ${M} mt-3`}>
-          Los nombres de habilidades deben coincidir exactamente con los del catálogo de la plataforma.
+          Las columnas de habilidades se generan automáticamente al descargar la plantilla. Las celdas vacías no modifican datos existentes.
         </p>
       </Card>
     </div>

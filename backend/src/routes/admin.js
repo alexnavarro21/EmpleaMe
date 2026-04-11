@@ -149,6 +149,8 @@ router.delete("/habilidades/quitar", ...auth, async (req, res) => {
 // ── Tests socioemocionales — plantilla y subida de Excel ─────────────────────
 
 // GET /api/admin/tests/template  — descarga plantilla Excel de tests socioemocionales
+// Formato: fila de encabezados (Correo, Nombre, [habilidad1], [habilidad2], ...)
+//          una fila por estudiante, celdas vacías para rellenar con porcentaje 0-100
 router.get("/tests/template", ...auth, async (req, res) => {
   try {
     const [estudiantes] = await db.query(`
@@ -161,16 +163,23 @@ router.get("/tests/template", ...auth, async (req, res) => {
       "SELECT nombre FROM habilidades WHERE categoria = 'blanda' ORDER BY nombre"
     );
 
-    const data = [["Correo", "Habilidad Blanda", "Porcentaje (0-100)"]];
+    const nombresCols = habilidades.map((h) => h.nombre);
+
+    // Fila de encabezados: Correo | Nombre | Habilidad1 | Habilidad2 | ...
+    const header = ["Correo", "Nombre", ...nombresCols];
+    const data   = [header];
+
+    // Una fila por estudiante con celdas vacías para los porcentajes
     for (const est of estudiantes) {
-      for (const hab of habilidades) {
-        data.push([est.correo, hab.nombre, ""]);
-      }
+      data.push([est.correo, est.nombre_completo, ...nombresCols.map(() => "")]);
     }
 
-    const wb  = XLSX.utils.book_new();
-    const ws  = XLSX.utils.aoa_to_sheet(data);
-    ws["!cols"] = [{ wch: 30 }, { wch: 36 }, { wch: 18 }];
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(data);
+
+    // Anchos de columna: correo(30), nombre(30), y 18 por cada habilidad
+    ws["!cols"] = [{ wch: 30 }, { wch: 30 }, ...nombresCols.map(() => ({ wch: 18 }))];
+
     XLSX.utils.book_append_sheet(wb, ws, "Tests");
 
     const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
@@ -183,10 +192,9 @@ router.get("/tests/template", ...auth, async (req, res) => {
 });
 
 //
-// Formato esperado del Excel (hoja 1):
-//   Columna A: Correo del estudiante
-//   Columna B: Nombre de la habilidad blanda
-//   Columna C: Porcentaje (0-100)
+// Formato esperado del Excel (hoja 1) — matriz:
+//   Fila 1 (encabezados): Correo | Nombre | [Habilidad1] | [Habilidad2] | ...
+//   Filas siguientes:      correo | nombre | pct(0-100)  | pct(0-100)   | ...
 //
 // POST /api/admin/tests/excel
 
@@ -198,37 +206,52 @@ router.post("/tests/excel", ...auth, upload.single("archivo"), async (req, res) 
     const ws   = wb.Sheets[wb.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
 
-    // Saltar fila de encabezados
-    const dataRows = rows.slice(1).filter((r) => r[0] && r[1] && r[2] !== "");
+    if (rows.length < 2) return res.status(400).json({ error: "El archivo no contiene datos" });
+
+    // Fila 0: encabezados. Columnas 0=Correo, 1=Nombre, 2..N=habilidades
+    const encabezados     = rows[0];
+    const nombresHabilidades = encabezados.slice(2).map((n) => String(n).trim());
 
     const resultados = [];
     const errores    = [];
 
-    for (const [correo, habilidadNombre, pct] of dataRows) {
-      const porcentaje = parseInt(pct, 10);
-      if (isNaN(porcentaje) || porcentaje < 0 || porcentaje > 100) {
-        errores.push(`Fila inválida: "${correo}" — porcentaje "${pct}" no es válido`);
-        continue;
-      }
+    for (let i = 1; i < rows.length; i++) {
+      const fila  = rows[i];
+      const correo = String(fila[0] ?? "").trim();
+      if (!correo) continue; // fila vacía
 
       const [[usuario]] = await db.query(
-        "SELECT id FROM usuarios WHERE correo = ? AND rol = 'estudiante'", [String(correo).trim()]
+        "SELECT id FROM usuarios WHERE correo = ? AND rol = 'estudiante'", [correo]
       );
       if (!usuario) { errores.push(`Estudiante no encontrado: ${correo}`); continue; }
 
-      const [[habilidad]] = await db.query(
-        "SELECT id FROM habilidades WHERE nombre = ? AND categoria = 'blanda'",
-        [String(habilidadNombre).trim()]
-      );
-      if (!habilidad) { errores.push(`Habilidad no encontrada: ${habilidadNombre}`); continue; }
+      for (let col = 0; col < nombresHabilidades.length; col++) {
+        const habilidadNombre = nombresHabilidades[col];
+        const rawPct          = fila[col + 2];
 
-      await db.query(
-        `INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, esta_validada, porcentaje)
-         VALUES (?, ?, 'Avanzado', TRUE, ?)
-         ON DUPLICATE KEY UPDATE porcentaje = VALUES(porcentaje), esta_validada = TRUE`,
-        [usuario.id, habilidad.id, porcentaje]
-      );
-      resultados.push({ correo, habilidad: habilidadNombre, porcentaje });
+        // Celda vacía → omitir (no sobreescribir con nulo)
+        if (rawPct === "" || rawPct === null || rawPct === undefined) continue;
+
+        const porcentaje = parseInt(rawPct, 10);
+        if (isNaN(porcentaje) || porcentaje < 0 || porcentaje > 100) {
+          errores.push(`Fila ${i + 1} — "${habilidadNombre}": porcentaje "${rawPct}" no es válido (debe ser 0-100)`);
+          continue;
+        }
+
+        const [[habilidad]] = await db.query(
+          "SELECT id FROM habilidades WHERE nombre = ? AND categoria = 'blanda'",
+          [habilidadNombre]
+        );
+        if (!habilidad) { errores.push(`Habilidad no encontrada: "${habilidadNombre}"`); continue; }
+
+        await db.query(
+          `INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, esta_validada, porcentaje)
+           VALUES (?, ?, 'Avanzado', TRUE, ?)
+           ON DUPLICATE KEY UPDATE porcentaje = VALUES(porcentaje), esta_validada = TRUE`,
+          [usuario.id, habilidad.id, porcentaje]
+        );
+        resultados.push({ correo, habilidad: habilidadNombre, porcentaje });
+      }
     }
 
     res.json({ actualizados: resultados.length, resultados, errores });
