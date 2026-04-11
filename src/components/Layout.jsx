@@ -94,7 +94,8 @@ export default function Layout() {
             </div>
           </div>
 
-          {/* Campana de notificaciones (solo estudiante y empresa) */}
+          {/* Campana + perfil (derecha) */}
+          <div className="flex items-center gap-1">
           {role !== "admin" && <NotificacionesBell role={role} />}
 
           {/* Botón de perfil con popup */}
@@ -204,6 +205,7 @@ export default function Layout() {
                 </Link>
               </div>
             )}
+          </div>
           </div>
         </nav>
 
