@@ -472,7 +472,6 @@ export default function EstudianteDashboard() {
   const [perfil, setPerfil] = useState(null);
   const [publicaciones, setPublicaciones] = useState([]);
   const [talleres, setTalleres] = useState([]);
-  const [tabActiva, setTabActiva] = useState("muro"); // "muro" | "talleres"
 
   // Estado estudiante extra
   const [estudiantePostulaciones, setEstudiantePostulaciones] = useState([]);
@@ -666,59 +665,30 @@ export default function EstudianteDashboard() {
 
       {/* ── CENTER FEED ── */}
       <div className="flex flex-col gap-4">
-        {/* Tab switcher */}
-        <div className={`flex gap-1 rounded-xl border ${B} ${BG} p-1`}>
-          {[
-            { key: "muro",     label: "Muro",     icon: "mdi:newspaper-variant-outline" },
-            { key: "talleres", label: "Talleres",  icon: "mdi:school-outline"            },
-          ].map(({ key, label, icon }) => (
-            <button
-              key={key}
-              onClick={() => setTabActiva(key)}
-              className={`flex items-center gap-2 flex-1 justify-center py-2 rounded-lg text-sm font-medium transition-colors ${
-                tabActiva === key
-                  ? "bg-[#0F4D8A] text-[#E6F1FB]"
-                  : `${M} hover:text-[#378ADD]`
-              }`}
-            >
-              <Icon icon={icon} width={16} />
-              {label}
-              {key === "talleres" && talleres.length > 0 && (
-                <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
-                  tabActiva === "talleres" ? "bg-white/20 text-white" : isDark ? "bg-[#3a3a38] text-[#888780]" : "bg-[#F0F4F8] text-[#5F5E5A]"
-                }`}>{talleres.length}</span>
-              )}
-            </button>
-          ))}
-        </div>
+        {(isEstudiante || isEmpresa) && <CrearPublicacion onPublicado={cargarPublicaciones} />}
 
-        {tabActiva === "muro" ? (
-          <>
-            <CrearPublicacion onPublicado={cargarPublicaciones} />
-            {publicaciones.length === 0 ? (
+        {(() => {
+          const feedUnificado = [
+            ...publicaciones.map((p) => ({ ...p, _tipo: "publicacion", _fecha: new Date(p.publicado_en) })),
+            ...talleres.map((t) => ({ ...t, _tipo: "taller", _fecha: new Date(t.creado_en) })),
+          ].sort((a, b) => b._fecha - a._fecha);
+
+          if (feedUnificado.length === 0) {
+            return (
               <div className={`rounded-xl border ${B} ${BG} p-10 text-center ${M}`}>
                 <Icon icon="mdi:newspaper-variant-outline" width={40} className="mx-auto mb-3 opacity-40" />
                 <p className={`text-sm font-medium ${T}`}>Aún no hay publicaciones</p>
                 <p className="text-xs mt-1">¡Sé el primero en compartir algo!</p>
               </div>
-            ) : (
-              publicaciones.map((pub) => (
-                <FeedCard key={pub.id} pub={pub} isDark={isDark} perfilCompleto={perfilCompleto} />
-              ))
-            )}
-          </>
-        ) : (
-          talleres.length === 0 ? (
-            <div className={`rounded-xl border ${B} ${BG} p-10 text-center ${M}`}>
-              <Icon icon="mdi:school-outline" width={40} className="mx-auto mb-3 opacity-40" />
-              <p className={`text-sm font-medium ${T}`}>No hay talleres disponibles aún</p>
-            </div>
-          ) : (
-            talleres.map((t) => (
-              <TallerCard key={t.id} taller={t} isDark={isDark} />
-            ))
-          )
-        )}
+            );
+          }
+
+          return feedUnificado.map((item) =>
+            item._tipo === "taller"
+              ? <TallerCard key={`taller-${item.id}`} taller={item} isDark={isDark} />
+              : <FeedCard key={`pub-${item.id}`} pub={item} isDark={isDark} perfilCompleto={perfilCompleto} />
+          );
+        })()}
       </div>
 
       {/* ── RIGHT SIDEBAR EMPRESA ── */}
