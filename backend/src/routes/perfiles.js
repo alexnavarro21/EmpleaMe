@@ -13,7 +13,7 @@ router.get("/estudiante/:id", verificarToken, async (req, res) => {
       return res.status(404).json({ error: "Perfil no encontrado" });
 
     const [habilidades] = await db.query(
-      `SELECT he.id, h.nombre, h.categoria, he.nivel_dominio, he.esta_validada
+      `SELECT he.id, h.nombre, h.categoria, he.nivel_dominio, he.porcentaje, he.esta_validada
        FROM habilidades_estudiantes he
        JOIN habilidades h ON h.id = he.habilidad_id
        WHERE he.estudiante_id = ?`,
@@ -25,7 +25,27 @@ router.get("/estudiante/:id", verificarToken, async (req, res) => {
       [req.params.id]
     );
 
-    res.json({ ...perfil[0], habilidades, portafolio });
+    const [idiomas] = await db.query(
+      "SELECT * FROM idiomas_estudiantes WHERE estudiante_id = ? ORDER BY idioma",
+      [req.params.id]
+    );
+
+    const [historial_academico] = await db.query(
+      "SELECT * FROM historial_academico WHERE estudiante_id = ? ORDER BY fecha_inicio DESC",
+      [req.params.id]
+    );
+
+    const [historial_laboral] = await db.query(
+      `SELECT hl.*, v.titulo AS vacante_titulo
+       FROM historial_laboral hl
+       LEFT JOIN postulaciones p ON p.id = hl.postulacion_id
+       LEFT JOIN vacantes v ON v.id = p.vacante_id
+       WHERE hl.estudiante_id = ?
+       ORDER BY hl.fecha_inicio DESC`,
+      [req.params.id]
+    );
+
+    res.json({ ...perfil[0], habilidades, portafolio, idiomas, historial_academico, historial_laboral });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }
@@ -33,13 +53,16 @@ router.get("/estudiante/:id", verificarToken, async (req, res) => {
 
 // PUT /api/perfiles/estudiante/:id
 router.put("/estudiante/:id", verificarToken, async (req, res) => {
-  const { nombre_completo, carrera, telefono, biografia, semestre, promedio } = req.body;
+  const { nombre_completo, carrera, telefono, biografia, semestre, promedio, estado_civil, rut, region, comuna } = req.body;
   try {
     await db.query(
       `UPDATE perfiles_estudiantes
-       SET nombre_completo=?, carrera=?, telefono=?, biografia=?, semestre=?, promedio=?
+       SET nombre_completo=?, carrera=?, telefono=?, biografia=?, semestre=?, promedio=?,
+           estado_civil=?, rut=?, region=?, comuna=?
        WHERE usuario_id=?`,
-      [nombre_completo, carrera, telefono || null, biografia || null, semestre || null, promedio || null, req.params.id]
+      [nombre_completo, carrera, telefono || null, biografia || null,
+       semestre || null, promedio || null, estado_civil || null,
+       rut || null, region || null, comuna || null, req.params.id]
     );
     res.json({ mensaje: "Perfil actualizado" });
   } catch (err) {
@@ -64,11 +87,11 @@ router.get("/empresa/:id", verificarToken, async (req, res) => {
 
 // PUT /api/perfiles/empresa/:id
 router.put("/empresa/:id", verificarToken, async (req, res) => {
-  const { nombre_empresa, telefono_contacto, descripcion } = req.body;
+  const { nombre_empresa, telefono_contacto, descripcion, region, comuna } = req.body;
   try {
     await db.query(
-      "UPDATE perfiles_empresas SET nombre_empresa=?, telefono_contacto=?, descripcion=? WHERE usuario_id=?",
-      [nombre_empresa, telefono_contacto, descripcion, req.params.id]
+      "UPDATE perfiles_empresas SET nombre_empresa=?, telefono_contacto=?, descripcion=?, region=?, comuna=? WHERE usuario_id=?",
+      [nombre_empresa, telefono_contacto, descripcion, region || null, comuna || null, req.params.id]
     );
     res.json({ mensaje: "Perfil actualizado" });
   } catch (err) {
@@ -81,6 +104,7 @@ router.get("/empresas", verificarToken, async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT pe.usuario_id, pe.nombre_empresa, pe.descripcion, pe.telefono_contacto,
+              pe.region, pe.comuna,
               COUNT(v.id) AS total_vacantes
        FROM perfiles_empresas pe
        LEFT JOIN vacantes v ON v.empresa_id = pe.usuario_id AND v.esta_activa = TRUE
@@ -98,6 +122,7 @@ router.get("/estudiantes", verificarToken, async (req, res) => {
     const [rows] = await db.query(
       `SELECT pe.usuario_id, pe.nombre_completo, pe.carrera, pe.semestre,
               pe.promedio, pe.calificacion_docente, pe.biografia,
+              pe.region, pe.comuna,
               GROUP_CONCAT(h.nombre SEPARATOR '||') AS habilidades_raw
        FROM perfiles_estudiantes pe
        LEFT JOIN habilidades_estudiantes he ON he.estudiante_id = pe.usuario_id

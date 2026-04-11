@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
-import { PageHeader } from "../../components/ui";
+import { PageHeader, Paginacion } from "../../components/ui";
 import { getPostulacionesEstudiante } from "../../services/api";
 
 const ESTADO_CFG = {
@@ -32,6 +32,9 @@ export default function MisPostulaciones() {
   const [postulaciones, setPostulaciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState("todas");
+  const [busqueda, setBusqueda] = useState("");
+  const [pagina, setPagina] = useState(1);
+  const [porPagina, setPorPagina] = useState(3);
 
   useEffect(() => {
     getPostulacionesEstudiante()
@@ -40,9 +43,16 @@ export default function MisPostulaciones() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filtradas = filtro === "todas"
-    ? postulaciones
-    : postulaciones.filter((p) => p.estado === filtro);
+  const filtradas = postulaciones
+    .filter((p) => filtro === "todas" || p.estado === filtro)
+    .filter((p) =>
+      !busqueda ||
+      p.titulo?.toLowerCase().includes(busqueda.toLowerCase()) ||
+      p.nombre_empresa?.toLowerCase().includes(busqueda.toLowerCase())
+    );
+
+  const totalPaginas = Math.ceil(filtradas.length / porPagina);
+  const paginadas = filtradas.slice((pagina - 1) * porPagina, pagina * porPagina);
 
   const conteos = {
     todas:    postulaciones.length,
@@ -75,6 +85,24 @@ export default function MisPostulaciones() {
         }
       />
 
+      {/* Búsqueda */}
+      {postulaciones.length > 0 && (
+        <div className="relative mb-4 max-w-xs">
+          <Icon icon="mdi:search" width={15} className={`absolute left-3 top-1/2 -translate-y-1/2 ${M}`} />
+          <input
+            type="text"
+            placeholder="Buscar por vacante o empresa..."
+            value={busqueda}
+            onChange={(e) => { setBusqueda(e.target.value); setPagina(1); }}
+            className={`w-full pl-9 pr-3 py-2 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
+              isDark
+                ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
+                : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
+            }`}
+          />
+        </div>
+      )}
+
       {/* Filtros */}
       <div className="flex gap-2 mb-5 flex-wrap">
         {[
@@ -85,7 +113,7 @@ export default function MisPostulaciones() {
         ].map(({ key, label }) => (
           <button
             key={key}
-            onClick={() => setFiltro(key)}
+            onClick={() => { setFiltro(key); setPagina(1); }}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
               filtro === key
                 ? "bg-[#0F4D8A] text-white border-[#0F4D8A]"
@@ -104,11 +132,15 @@ export default function MisPostulaciones() {
 
       {filtradas.length === 0 ? (
         <div className={`rounded-xl border ${B} ${BG} p-12 text-center`}>
-          <Icon icon="mdi:clipboard-remove-outline" width={44} className={`mx-auto mb-3 ${M}`} />
+          <Icon icon={busqueda ? "mdi:magnify-close" : "mdi:clipboard-remove-outline"} width={44} className={`mx-auto mb-3 ${M}`} />
           <p className={`text-sm font-medium ${T}`}>
-            {filtro === "todas" ? "Aún no has postulado a ninguna vacante." : `Sin postulaciones ${filtro === "aceptado" ? "aceptadas" : filtro === "rechazado" ? "rechazadas" : "pendientes"}.`}
+            {busqueda
+              ? `Sin resultados para "${busqueda}".`
+              : filtro === "todas"
+              ? "Aún no has postulado a ninguna vacante."
+              : `Sin postulaciones ${filtro === "aceptado" ? "aceptadas" : filtro === "rechazado" ? "rechazadas" : "pendientes"}.`}
           </p>
-          {filtro === "todas" && (
+          {filtro === "todas" && !busqueda && (
             <Link to="/estudiante/dashboard" className="inline-block mt-3 text-xs text-[#378ADD] hover:underline">
               Explorar vacantes en el muro →
             </Link>
@@ -116,12 +148,12 @@ export default function MisPostulaciones() {
         </div>
       ) : (
         <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
-          {filtradas.map((p, i) => {
+          {paginadas.map((p, i) => {
             const cfg = ESTADO_CFG[p.estado] || { label: p.estado, color: M, bg: "", icon: "mdi:help-circle-outline" };
             return (
               <div
                 key={p.id}
-                className={`flex items-start gap-4 px-5 py-4 ${i < filtradas.length - 1 ? `border-b ${B}` : ""}`}
+                className={`flex items-start gap-4 px-5 py-4 ${i < paginadas.length - 1 ? `border-b ${B}` : ""}`}
               >
                 {/* Icono estado */}
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${cfg.bg}`}>
@@ -147,6 +179,17 @@ export default function MisPostulaciones() {
             );
           })}
         </div>
+      )}
+
+      {filtradas.length > 0 && (
+        <Paginacion
+          paginaActual={pagina}
+          totalPaginas={totalPaginas}
+          onCambiar={setPagina}
+          porPagina={porPagina}
+          opciones={[3, 6, 9, 15]}
+          onCambiarPorPagina={(n) => { setPorPagina(n); setPagina(1); }}
+        />
       )}
     </div>
   );

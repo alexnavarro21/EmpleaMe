@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge, PageHeader } from "../../components/ui";
@@ -7,6 +7,26 @@ import {
   getConversaciones, getMensajes, enviarMensaje,
   getMensajesDirectos, getMensajesDeDirecta, enviarMensajeDirecto,
 } from "../../services/api";
+
+function MensajeBurbuja({ contenido }) {
+  const match = contenido.match(/\[VACANTE_INVITACION:(\d+):(\d+)\]/);
+  if (match) {
+    const [, vacanteId, empresaId] = match;
+    const texto = contenido.replace(/\n?\[VACANTE_INVITACION:\d+:\d+\]/, "").trim();
+    return (
+      <div>
+        <p className="mb-2">{texto}</p>
+        <Link
+          to={`/empresa-publica/${empresaId}`}
+          className="inline-flex items-center gap-1 text-xs font-semibold underline opacity-90 hover:opacity-100"
+        >
+          Ver vacante →
+        </Link>
+      </div>
+    );
+  }
+  return contenido;
+}
 
 function formatTime(ts) {
   if (!ts) return "";
@@ -308,7 +328,7 @@ export default function EstudianteMensajeria() {
                               ? "bg-[#0F4D8A] text-[#E6F1FB]"
                               : isDark ? "bg-[#313130] text-[#D3D1C7]" : "bg-[#F7F6F3] text-[#2C2C2A]"
                           }`}>
-                            {msg.contenido}
+                            <MensajeBurbuja contenido={msg.contenido} />
                           </div>
                           <span className={`text-xs ${M} mt-1`}>{formatTime(msg.enviado_en)}</span>
                         </div>

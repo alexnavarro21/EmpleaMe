@@ -4,6 +4,7 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge } from "../../components/ui";
 import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante } from "../../services/api";
+import { calcularCompletitud } from "../../utils/perfilCompletitud";
 import CrearPublicacion from "../../components/CrearPublicacion";
 import VerMasModal from "../../components/VerMasModal";
 
@@ -163,11 +164,11 @@ function tiempoRelativo(fecha) {
   return `Hace ${Math.floor(diff / 86400)} días`;
 }
 
-function FeedCard({ pub, isDark }) {
+function FeedCard({ pub, isDark, perfilCompleto }) {
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(0);
   const [verMas, setVerMas] = useState(false);
-  const [estadoPostula, setEstadoPostula] = useState("idle"); // idle | loading | ok | duplicado | error
+  const [estadoPostula, setEstadoPostula] = useState("idle"); // idle | loading | ok | duplicado | error | incompleto
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#E8E6E1]";
@@ -182,6 +183,7 @@ function FeedCard({ pub, isDark }) {
 
   const handlePostular = async () => {
     if (!pub.vacante_id || estadoPostula !== "idle") return;
+    if (!perfilCompleto) { setEstadoPostula("incompleto"); return; }
     setEstadoPostula("loading");
     try {
       await postularAVacante(pub.vacante_id);
@@ -303,32 +305,44 @@ function FeedCard({ pub, isDark }) {
           Ver más
         </button>
         {pub.tipo === "vacante" && usuario.rol === "estudiante" && (
-          <button
-            onClick={handlePostular}
-            disabled={estadoPostula !== "idle" || !pub.vacante_activa}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${
-              estadoPostula === "ok"        ? "text-green-600" :
-              estadoPostula === "duplicado" ? "text-amber-500" :
-              estadoPostula === "error"     ? "text-red-500"   :
-              estadoPostula === "loading"   ? M                : M
-            } ${estadoPostula === "idle" ? HV : ""}`}
-          >
-            <Icon
-              icon={
-                estadoPostula === "ok"        ? "mdi:check-circle-outline" :
-                estadoPostula === "duplicado" ? "mdi:information-outline"  :
-                estadoPostula === "error"     ? "mdi:alert-circle-outline" :
-                estadoPostula === "loading"   ? "mdi:loading"              : "mdi:send-outline"
-              }
-              width={16}
-              className={estadoPostula === "loading" ? "animate-spin" : ""}
-            />
-            {estadoPostula === "ok"        ? "Postulado" :
-             estadoPostula === "duplicado" ? "Ya postulaste" :
-             estadoPostula === "error"     ? "Error, reintentar" :
-             estadoPostula === "loading"   ? "Enviando..." :
-             !pub.vacante_activa           ? "Cerrada" : "Postular"}
-          </button>
+          <div className="flex-1 relative group">
+            <button
+              onClick={handlePostular}
+              disabled={estadoPostula !== "idle" || !pub.vacante_activa}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors w-full justify-center ${
+                estadoPostula === "ok"          ? "text-green-600" :
+                estadoPostula === "duplicado"   ? "text-amber-500" :
+                estadoPostula === "error"       ? "text-red-500"   :
+                estadoPostula === "incompleto"  ? "text-orange-500" :
+                estadoPostula === "loading"     ? M                 : M
+              } ${estadoPostula === "idle" ? HV : ""}`}
+            >
+              <Icon
+                icon={
+                  estadoPostula === "ok"         ? "mdi:check-circle-outline"  :
+                  estadoPostula === "duplicado"  ? "mdi:information-outline"   :
+                  estadoPostula === "error"      ? "mdi:alert-circle-outline"  :
+                  estadoPostula === "incompleto" ? "mdi:account-alert-outline" :
+                  estadoPostula === "loading"    ? "mdi:loading"               : "mdi:send-outline"
+                }
+                width={16}
+                className={estadoPostula === "loading" ? "animate-spin" : ""}
+              />
+              {estadoPostula === "ok"         ? "Postulado"          :
+               estadoPostula === "duplicado"  ? "Ya postulaste"      :
+               estadoPostula === "error"      ? "Error, reintentar"  :
+               estadoPostula === "incompleto" ? "Perfil incompleto"  :
+               estadoPostula === "loading"    ? "Enviando..."        :
+               !pub.vacante_activa            ? "Cerrada"            : "Postular"}
+            </button>
+            {estadoPostula === "incompleto" && (
+              <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 text-center text-xs rounded-lg px-3 py-2 shadow-lg z-10 pointer-events-none ${
+                isDark ? "bg-[#262624] border border-[#3a3a38] text-[#D3D1C7]" : "bg-white border border-[#D3D1C7] text-[#2C2C2A]"
+              }`}>
+                Completa tu perfil al 100% para poder postular
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -394,23 +408,25 @@ export default function EstudianteDashboard() {
   const biografia = perfil?.biografia || "";
   const promedio = perfil?.promedio || "";
   const habilidades = perfil?.habilidades || [];
+  const estadoCivil = perfil?.estado_civil || "";
+  const rut = perfil?.rut || "";
+  const region = perfil?.region || "";
+  const comuna = perfil?.comuna || "";
 
   const nombreCarrera = careerDisplay[carrera] || carrera;
   const inicial = nombre ? nombre.charAt(0).toUpperCase() : "?";
   const subtitleParts = [nombreCarrera, semestre ? `${semestre}° semestre` : ""].filter(Boolean);
 
-  const pctCompleto = Math.round(
-    [nombre, carrera, telefono, biografia, semestre ? String(semestre) : "", promedio ? String(promedio) : ""]
-      .filter(Boolean).length / 6 * 100
-  );
+  const pctCompleto = calcularCompletitud({ nombre_completo: nombre, carrera, telefono, biografia, estado_civil: estadoCivil, rut, region, comuna });
+  const perfilCompleto = pctCompleto === 100;
 
   const profileSteps = [
-    { done: !!(nombre && telefono), label: "Datos personales" },
-    { done: !!(carrera && semestre), label: "Info académica" },
-    { done: false, label: "CV subido" },
-    { done: false, label: "Video de presentación" },
-    { done: false, label: "Subir evidencias" },
-    { done: habilidades.length > 0, label: "Habilidades completas" },
+    { done: !!(nombre && telefono),  label: "Nombre y teléfono" },
+    { done: !!(rut),                 label: "RUT válido" },
+    { done: !!(carrera),             label: "Carrera" },
+    { done: !!(estadoCivil),         label: "Estado civil" },
+    { done: !!(region && comuna),    label: "Región y comuna" },
+    { done: !!(biografia),           label: "Presentación personal" },
   ];
 
   const conSidebar = isEstudiante || isEmpresa;
@@ -557,7 +573,7 @@ export default function EstudianteDashboard() {
           </div>
         ) : (
           publicaciones.map((pub) => (
-            <FeedCard key={pub.id} pub={pub} isDark={isDark} />
+            <FeedCard key={pub.id} pub={pub} isDark={isDark} perfilCompleto={perfilCompleto} />
           ))
         )}
       </div>

@@ -4,6 +4,7 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, PageHeader } from "../../components/ui";
 import { getEstudiantes, getEmpresas } from "../../services/api";
+import { REGIONES_COMUNAS, REGIONES } from "../../data/regionesComunas";
 
 const careerDisplay = {
   Administracion: "Administración",
@@ -20,6 +21,8 @@ export default function EmpresaBuscadorEstudiantes() {
   const [search, setSearch] = useState("");
   const [selectedCareer, setSelectedCareer] = useState("Todas");
   const [minGpa, setMinGpa] = useState(1);
+  const [selectedRegion, setSelectedRegion] = useState("");
+  const [selectedComuna, setSelectedComuna] = useState("");
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -48,13 +51,19 @@ export default function EmpresaBuscadorEstudiantes() {
       s.carrera === selectedCareer ||
       nombreCarrera === selectedCareer;
     const matchGpa = !s.promedio || s.promedio >= minGpa;
-    return matchSearch && matchCareer && matchGpa;
+    const matchRegion = !selectedRegion || s.region === selectedRegion;
+    const matchComuna = !selectedComuna || s.comuna === selectedComuna;
+    return matchSearch && matchCareer && matchGpa && matchRegion && matchComuna;
   });
 
-  const filteredCompanies = companies.filter((c) =>
-    c.nombre_empresa.toLowerCase().includes(search.toLowerCase()) ||
-    (c.descripcion || "").toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredCompanies = companies.filter((c) => {
+    const matchSearch =
+      c.nombre_empresa.toLowerCase().includes(search.toLowerCase()) ||
+      (c.descripcion || "").toLowerCase().includes(search.toLowerCase());
+    const matchRegion = !selectedRegion || c.region === selectedRegion;
+    const matchComuna = !selectedComuna || c.comuna === selectedComuna;
+    return matchSearch && matchRegion && matchComuna;
+  });
 
   const count = tab === "estudiantes" ? filteredStudents.length : filteredCompanies.length;
 
@@ -163,8 +172,38 @@ export default function EmpresaBuscadorEstudiantes() {
               </>
             )}
 
+            <div className="mb-4">
+              <label className={`block text-xs mb-1.5 ${M}`}>Región</label>
+              <select
+                value={selectedRegion}
+                onChange={(e) => { setSelectedRegion(e.target.value); setSelectedComuna(""); }}
+                className={`w-full px-2.5 py-2 rounded-lg text-xs outline-none border focus:border-[#378ADD] transition-colors ${
+                  isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
+                }`}
+              >
+                <option value="">Todas las regiones</option>
+                {REGIONES.map((r) => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </div>
+
+            {selectedRegion && (
+              <div className="mb-4">
+                <label className={`block text-xs mb-1.5 ${M}`}>Comuna</label>
+                <select
+                  value={selectedComuna}
+                  onChange={(e) => setSelectedComuna(e.target.value)}
+                  className={`w-full px-2.5 py-2 rounded-lg text-xs outline-none border focus:border-[#378ADD] transition-colors ${
+                    isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
+                  }`}
+                >
+                  <option value="">Todas las comunas</option>
+                  {(REGIONES_COMUNAS[selectedRegion] || []).map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            )}
+
             <button
-              onClick={() => { setSearch(""); setSelectedCareer("Todas"); setMinGpa(1); }}
+              onClick={() => { setSearch(""); setSelectedCareer("Todas"); setMinGpa(1); setSelectedRegion(""); setSelectedComuna(""); }}
               className="mt-2 w-full text-xs text-[#378ADD] hover:underline"
             >
               Limpiar filtros
@@ -187,6 +226,12 @@ export default function EmpresaBuscadorEstudiantes() {
                       <div className="flex-1 min-w-0">
                         <p className={`text-sm font-semibold ${T} truncate`}>{s.nombre_completo}</p>
                         <p className={`text-xs ${M}`}>{nombreCarrera}{s.semestre ? ` · Sem. ${s.semestre}` : ""}</p>
+                        {(s.comuna || s.region) && (
+                          <p className={`text-xs ${M} flex items-center gap-1`}>
+                            <Icon icon="mdi:map-marker-outline" width={11} />
+                            {[s.comuna, s.region].filter(Boolean).join(", ")}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className={`flex gap-4 mb-3 pb-3 border-b ${B}`}>
@@ -234,6 +279,12 @@ export default function EmpresaBuscadorEstudiantes() {
                         <Icon icon="mdi:briefcase-outline" width={12} />
                         {c.total_vacantes || 0} vacante{c.total_vacantes !== 1 ? "s" : ""} activa{c.total_vacantes !== 1 ? "s" : ""}
                       </p>
+                      {(c.comuna || c.region) && (
+                        <p className={`text-xs ${M} flex items-center gap-1`}>
+                          <Icon icon="mdi:map-marker-outline" width={11} />
+                          {[c.comuna, c.region].filter(Boolean).join(", ")}
+                        </p>
+                      )}
                     </div>
                     <Badge color="blue">Empresa</Badge>
                   </div>

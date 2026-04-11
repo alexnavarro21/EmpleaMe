@@ -25,6 +25,7 @@ import AdminMonitoreo from "./pages/admin/Monitoreo";
 
 import BuscarPerfiles from "./pages/BuscarPerfiles";
 import PerfilEmpresaPublico from "./pages/PerfilEmpresaPublico";
+import Notificaciones from "./pages/Notificaciones";
 
 
 export default function App() {
@@ -45,6 +46,7 @@ export default function App() {
             <Route path="/estudiante/mensajeria" element={<EstudianteMensajeria />} />
             <Route path="/estudiante/postulaciones" element={<MisPostulaciones />} />
             <Route path="/estudiante/buscar" element={<BuscarPerfiles />} />
+            <Route path="/estudiante/notificaciones" element={<Notificaciones />} />
             <Route path="/estudiante/candidato/:id" element={<EmpresaCandidato />} />
 
             {/* Empresa */}
@@ -56,6 +58,7 @@ export default function App() {
             <Route path="/empresa/buscar" element={<BuscarPerfiles />} />
             <Route path="/empresa/candidato/:id" element={<EmpresaCandidato />} />
             <Route path="/empresa/mensajeria" element={<EmpresaMensajeria />} />
+            <Route path="/empresa/notificaciones" element={<Notificaciones />} />
 
             {/* Admin / Profesor */}
             <Route path="/admin/inicio" element={<EstudianteDashboard />} />

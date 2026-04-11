@@ -108,7 +108,9 @@ router.post("/evaluaciones", ...auth, async (req, res) => {
 // ── Habilidades técnicas — asignación por admin ───────────────────────────────
 
 // POST /api/admin/habilidades/asignar
-// body: { estudiante_id, habilidades: [{ habilidad_id, nivel_dominio }] }
+// body: { estudiante_id, habilidades: [{ habilidad_id, nivel_dominio, porcentaje }] }
+// - Técnicas: nivel_dominio = 'Basico'|'Intermedio'|'Avanzado', porcentaje = null
+// - Blandas:  nivel_dominio = null, porcentaje = 0-100
 router.post("/habilidades/asignar", ...auth, async (req, res) => {
   const { estudiante_id, habilidades } = req.body;
   if (!estudiante_id || !Array.isArray(habilidades) || !habilidades.length)
@@ -117,10 +119,14 @@ router.post("/habilidades/asignar", ...auth, async (req, res) => {
   try {
     for (const h of habilidades) {
       await db.query(
-        `INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, esta_validada)
-         VALUES (?, ?, ?, TRUE)
-         ON DUPLICATE KEY UPDATE nivel_dominio = VALUES(nivel_dominio), esta_validada = TRUE`,
-        [estudiante_id, h.habilidad_id, h.nivel_dominio]
+        `INSERT INTO habilidades_estudiantes
+           (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+         VALUES (?, ?, ?, ?, TRUE)
+         ON DUPLICATE KEY UPDATE
+           nivel_dominio = VALUES(nivel_dominio),
+           porcentaje    = VALUES(porcentaje),
+           esta_validada = TRUE`,
+        [estudiante_id, h.habilidad_id, h.nivel_dominio ?? null, h.porcentaje ?? null]
       );
     }
     res.json({ mensaje: `${habilidades.length} habilidades asignadas` });
@@ -377,6 +383,149 @@ router.get("/tests/resultados/:estudianteId", ...auth, async (req, res) => {
       return { ...r, dimensiones: dims };
     }));
     res.json(results);
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// ── Idiomas ───────────────────────────────────────────────────────────────────
+
+// GET /api/admin/idiomas/:estudiante_id
+router.get("/idiomas/:estudiante_id", ...auth, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      "SELECT * FROM idiomas_estudiantes WHERE estudiante_id = ? ORDER BY idioma",
+      [req.params.estudiante_id]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// POST /api/admin/idiomas
+// body: { estudiante_id, idioma, nivel }
+router.post("/idiomas", ...auth, async (req, res) => {
+  const { estudiante_id, idioma, nivel } = req.body;
+  if (!estudiante_id || !idioma || !nivel)
+    return res.status(400).json({ error: "estudiante_id, idioma y nivel son requeridos" });
+  try {
+    await db.query(
+      `INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel)
+       VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE nivel = VALUES(nivel)`,
+      [estudiante_id, idioma.trim(), nivel]
+    );
+    const [[row]] = await db.query(
+      "SELECT * FROM idiomas_estudiantes WHERE estudiante_id = ? AND idioma = ?",
+      [estudiante_id, idioma.trim()]
+    );
+    res.json(row);
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// DELETE /api/admin/idiomas/:id
+router.delete("/idiomas/:id", ...auth, async (req, res) => {
+  try {
+    await db.query("DELETE FROM idiomas_estudiantes WHERE id = ?", [req.params.id]);
+    res.json({ mensaje: "Idioma eliminado" });
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// ── Historial académico ───────────────────────────────────────────────────────
+
+// GET /api/admin/historial-academico/:estudiante_id
+router.get("/historial-academico/:estudiante_id", ...auth, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      "SELECT * FROM historial_academico WHERE estudiante_id = ? ORDER BY fecha_inicio DESC",
+      [req.params.estudiante_id]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// POST /api/admin/historial-academico
+// body: { estudiante_id, institucion, titulo, area, fecha_inicio, fecha_fin }
+router.post("/historial-academico", ...auth, async (req, res) => {
+  const { estudiante_id, institucion, titulo, area, fecha_inicio, fecha_fin } = req.body;
+  if (!estudiante_id || !institucion || !titulo)
+    return res.status(400).json({ error: "estudiante_id, institucion y titulo son requeridos" });
+  try {
+    const [result] = await db.query(
+      `INSERT INTO historial_academico (estudiante_id, institucion, titulo, area, fecha_inicio, fecha_fin)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [estudiante_id, institucion.trim(), titulo.trim(), area?.trim() || null, fecha_inicio || null, fecha_fin || null]
+    );
+    const [[row]] = await db.query("SELECT * FROM historial_academico WHERE id = ?", [result.insertId]);
+    res.json(row);
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// DELETE /api/admin/historial-academico/:id
+router.delete("/historial-academico/:id", ...auth, async (req, res) => {
+  try {
+    await db.query("DELETE FROM historial_academico WHERE id = ?", [req.params.id]);
+    res.json({ mensaje: "Registro eliminado" });
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// ── Historial laboral ─────────────────────────────────────────────────────────
+
+// GET /api/admin/historial-laboral/:estudiante_id
+router.get("/historial-laboral/:estudiante_id", ...auth, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT hl.*, v.titulo AS vacante_titulo
+       FROM historial_laboral hl
+       LEFT JOIN postulaciones p ON p.id = hl.postulacion_id
+       LEFT JOIN vacantes v ON v.id = p.vacante_id
+       WHERE hl.estudiante_id = ?
+       ORDER BY hl.fecha_inicio DESC`,
+      [req.params.estudiante_id]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// POST /api/admin/historial-laboral
+// body: { estudiante_id, empresa_nombre, cargo, fecha_inicio, fecha_fin, descripcion }
+router.post("/historial-laboral", ...auth, async (req, res) => {
+  const { estudiante_id, empresa_nombre, cargo, fecha_inicio, fecha_fin, descripcion } = req.body;
+  if (!estudiante_id || !empresa_nombre || !cargo)
+    return res.status(400).json({ error: "estudiante_id, empresa_nombre y cargo son requeridos" });
+  try {
+    const [result] = await db.query(
+      `INSERT INTO historial_laboral
+         (estudiante_id, empresa_nombre, cargo, fecha_inicio, fecha_fin, descripcion, tipo)
+       VALUES (?, ?, ?, ?, ?, ?, 'verificado')`,
+      [estudiante_id, empresa_nombre.trim(), cargo.trim(),
+       fecha_inicio || null, fecha_fin || null, descripcion?.trim() || null]
+    );
+    const [[row]] = await db.query("SELECT * FROM historial_laboral WHERE id = ?", [result.insertId]);
+    res.json(row);
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// DELETE /api/admin/historial-laboral/:id
+router.delete("/historial-laboral/:id", ...auth, async (req, res) => {
+  try {
+    await db.query("DELETE FROM historial_laboral WHERE id = ?", [req.params.id]);
+    res.json({ mensaje: "Registro eliminado" });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }

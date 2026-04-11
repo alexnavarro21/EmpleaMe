@@ -5,6 +5,7 @@ import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, SecondaryButton, FormField, PageHeader } from "../../components/ui";
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
 import { getEmpresaById, actualizarPerfilEmpresa, getVacantesEmpresa } from "../../services/api";
+import { REGIONES_COMUNAS, REGIONES } from "../../data/regionesComunas";
 
 
 export default function EmpresaPerfil() {
@@ -17,6 +18,8 @@ export default function EmpresaPerfil() {
   const [nombreEmpresa, setNombreEmpresa] = useState("");
   const [telefono, setTelefono] = useState("");
   const [descripcion, setDescripcion] = useState("");
+  const [region, setRegion] = useState("");
+  const [comuna, setComuna] = useState("");
   const [vacantes, setVacantes] = useState([]);
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
@@ -36,6 +39,8 @@ export default function EmpresaPerfil() {
         setNombreEmpresa(perfil.nombre_empresa || "");
         setTelefono(perfil.telefono_contacto || "");
         setDescripcion(perfil.descripcion || "");
+        setRegion(perfil.region || "");
+        setComuna(perfil.comuna || "");
         setVacantes(vacs);
       } catch (err) {
         console.error(err);
@@ -54,6 +59,8 @@ export default function EmpresaPerfil() {
         nombre_empresa: nombreEmpresa,
         telefono_contacto: telefono,
         descripcion,
+        region: region || null,
+        comuna: comuna || null,
       });
       setSaveMsg("Cambios guardados");
       setEditMode(false);
@@ -65,8 +72,8 @@ export default function EmpresaPerfil() {
     }
   };
 
-  const completado = [nombreEmpresa, telefono, descripcion].filter(Boolean).length;
-  const pctCompleto = Math.round((completado / 3) * 100);
+  const completado = [nombreEmpresa, telefono, descripcion, region, comuna].filter(Boolean).length;
+  const pctCompleto = Math.round((completado / 5) * 100);
   const vacantesActivas = vacantes.filter((v) => v.esta_activa).length;
 
   if (loading) {
@@ -113,7 +120,13 @@ export default function EmpresaPerfil() {
               </span>
             </div>
             <p className={`text-base font-semibold ${T}`}>{nombreEmpresa || "Sin nombre"}</p>
-            <p className={`text-xs ${M} mb-2`}>{usuario.correo}</p>
+            <p className={`text-xs ${M}`}>{usuario.correo}</p>
+            {(comuna || region) && (
+              <p className={`text-xs ${M} mb-2 flex items-center justify-center gap-1`}>
+                <Icon icon="mdi:map-marker-outline" width={12} />
+                {[comuna, region].filter(Boolean).join(", ")}
+              </p>
+            )}
             <Badge color="blue">Empresa Verificada</Badge>
 
             <div className={`mt-4 pt-4 border-t ${B} text-left`}>
@@ -174,6 +187,40 @@ export default function EmpresaPerfil() {
                 value={usuario.correo || ""}
                 disabled
               />
+              <div className="mb-3">
+                <label className={`block text-xs mb-1.5 ${M}`}>Región</label>
+                <select
+                  value={region}
+                  onChange={(e) => { setRegion(e.target.value); setComuna(""); }}
+                  disabled={!editMode}
+                  className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
+                    isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
+                           : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
+                  } disabled:opacity-60`}
+                >
+                  <option value="">Selecciona la región</option>
+                  {REGIONES.map((r) => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="mb-3">
+                <label className={`block text-xs mb-1.5 ${M}`}>Comuna</label>
+                <select
+                  value={comuna}
+                  onChange={(e) => setComuna(e.target.value)}
+                  disabled={!editMode || !region}
+                  className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
+                    isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
+                           : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
+                  } disabled:opacity-60`}
+                >
+                  <option value="">{region ? "Selecciona la comuna" : "Primero selecciona región"}</option>
+                  {(REGIONES_COMUNAS[region] || []).map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
               <div className="col-span-2 mb-3">
                 <label className={`block text-xs mb-1.5 ${M}`}>Descripción de la empresa</label>
                 <textarea
