@@ -40,6 +40,13 @@ export default function EstudiantePerfil() {
   const [historialAcademico, setHistorialAcademico] = useState([]);
   const [historialLaboral, setHistorialLaboral] = useState([]);
   const [postulaciones, setPostulaciones] = useState([]);
+  const [favoritosLaboral, setFavoritosLaboral] = useState(() => {
+    try {
+      const u = JSON.parse(localStorage.getItem("usuario") || "{}");
+      const raw = localStorage.getItem(`favoritos_laborales_${u.id}`);
+      return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+  });
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -190,6 +197,42 @@ const descargarCV = () => {
       });
     } else {
       doc.text("No hay habilidades blandas registradas.", 20, currentY);
+      currentY += 6;
+    }
+
+    currentY += 10;
+
+    // --- EXPERIENCIA LABORAL (favoritas) ---
+    const expParaCV = laboralesFavoritos.length > 0 ? laboralesFavoritos : historialLaboral.slice(0, 3);
+    if (expParaCV.length > 0) {
+      doc.setTextColor(primaryColor);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("Experiencia Laboral", 20, currentY);
+      currentY += 8;
+
+      expParaCV.forEach((l) => {
+        if (currentY > 265) { doc.addPage(); currentY = 20; }
+        doc.setTextColor(textColor);
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${l.cargo} — ${l.empresa_nombre}`, 20, currentY);
+        currentY += 5;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        const fechaI = l.fecha_inicio ? new Date(l.fecha_inicio).toLocaleDateString("es-CL", { month: "short", year: "numeric" }) : "?";
+        const fechaF = l.fecha_fin ? new Date(l.fecha_fin).toLocaleDateString("es-CL", { month: "short", year: "numeric" }) : "Presente";
+        doc.text(`${fechaI} – ${fechaF}`, 20, currentY);
+        currentY += 5;
+        if (l.descripcion) {
+          doc.setTextColor(textColor);
+          const desc = doc.splitTextToSize(l.descripcion, 165);
+          doc.text(desc, 20, currentY);
+          currentY += desc.length * 5;
+        }
+        currentY += 4;
+      });
     }
 
     // --- PIE DE PÁGINA ---
@@ -202,9 +245,24 @@ const descargarCV = () => {
     doc.save(nombreArchivo);
   };
 
+  const toggleFavorito = (id) => {
+    setFavoritosLaboral((prev) => {
+      let next;
+      if (prev.includes(id)) {
+        next = prev.filter((x) => x !== id);
+      } else {
+        if (prev.length >= 3) return prev; // máximo 3
+        next = [...prev, id];
+      }
+      localStorage.setItem(`favoritos_laborales_${usuario.id}`, JSON.stringify(next));
+      return next;
+    });
+  };
+
   const nombreCarrera = careerDisplay[carrera] || carrera;
   const habilidadesTecnicas = habilidades.filter((h) => h.categoria === "tecnica");
   const habilidadesBlandas = habilidades.filter((h) => h.categoria === "blanda");
+  const laboralesFavoritos = historialLaboral.filter((l) => favoritosLaboral.includes(l.id));
 
   const rutValido = validarRut(rut);
   const pctCompleto = calcularCompletitud({ nombre_completo: nombre, carrera, telefono, biografia, estado_civil: estadoCivil, rut, region, comuna });
@@ -414,15 +472,25 @@ const descargarCV = () => {
                       ))}
                     </select>
                   </div>
-                  <TextAreaField
-                    label="Sobre mí / Presentación"
-                    placeholder="Cuéntale a las empresas quién eres y qué buscas..."
-                    rows={3}
-                    value={biografia}
-                    onChange={(e) => setBiografia(e.target.value)}
-                    disabled={!editMode}
-                    className="col-span-2"
-                  />
+                  <div className="col-span-2 mb-4">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className={`block text-xs ${M}`}>Sobre mí / Presentación</label>
+                      <span className={`text-xs ${biografia.length > 450 ? "text-red-400" : M}`}>{biografia.length}/500</span>
+                    </div>
+                    <textarea
+                      placeholder="Cuéntale a las empresas quién eres, qué buscas y cuáles son tus fortalezas..."
+                      rows={7}
+                      maxLength={500}
+                      value={biografia}
+                      onChange={(e) => setBiografia(e.target.value)}
+                      disabled={!editMode}
+                      className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] resize-none disabled:opacity-60 ${
+                        isDark
+                          ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
+                          : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#888780]"
+                      }`}
+                    />
+                  </div>
                   {editMode && (
                     <div className="col-span-2 mt-2">
                       <PrimaryButton className="w-full" onClick={handleGuardar} disabled={saving}>
@@ -518,35 +586,59 @@ const descargarCV = () => {
 
                   {/* Historial laboral */}
                   <div className={`pt-5 border-t ${B}`}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Icon icon="mdi:briefcase" width={16} className="text-[#378ADD]" />
-                      <p className={`text-xs font-semibold ${T}`}>Experiencia laboral</p>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Icon icon="mdi:briefcase" width={16} className="text-[#378ADD]" />
+                        <p className={`text-xs font-semibold ${T}`}>Experiencia laboral</p>
+                      </div>
+                      <span className={`text-xs ${M}`}>
+                        Marca hasta 3 ★ para incluir en tu CV
+                        {favoritosLaboral.length > 0 && <span className="ml-1 text-amber-500 font-medium">({favoritosLaboral.length}/3 seleccionadas)</span>}
+                      </span>
                     </div>
                     {historialLaboral.length === 0 ? (
                       <p className={`text-xs ${M}`}>Sin experiencia laboral registrada.</p>
                     ) : (
                       <div className="flex flex-col gap-3">
-                        {historialLaboral.map((l) => (
-                          <div key={l.id} className={`p-3 rounded-lg border ${B}`}>
-                            <div className="flex items-start justify-between gap-2">
-                              <div>
-                                <p className={`text-sm font-semibold ${T}`}>{l.cargo}</p>
-                                <p className={`text-xs ${M}`}>{l.empresa_nombre}</p>
-                                {(l.fecha_inicio || l.fecha_fin) && (
-                                  <p className={`text-xs ${M} mt-0.5`}>
-                                    {l.fecha_inicio ? new Date(l.fecha_inicio).toLocaleDateString("es-CL", { month: "short", year: "numeric" }) : "?"}
-                                    {" – "}
-                                    {l.fecha_fin ? new Date(l.fecha_fin).toLocaleDateString("es-CL", { month: "short", year: "numeric" }) : "Presente"}
-                                  </p>
-                                )}
-                                {l.descripcion && <p className={`text-xs ${M} mt-1`}>{l.descripcion}</p>}
+                        {historialLaboral.map((l) => {
+                          const esFavorita = favoritosLaboral.includes(l.id);
+                          const puedeAgregar = favoritosLaboral.length < 3 || esFavorita;
+                          return (
+                            <div key={l.id} className={`p-3 rounded-lg border transition-colors ${esFavorita ? (isDark ? "border-amber-500/60 bg-amber-500/5" : "border-amber-400 bg-amber-50") : B}`}>
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <p className={`text-sm font-semibold ${T}`}>{l.cargo}</p>
+                                  <p className={`text-xs ${M}`}>{l.empresa_nombre}</p>
+                                  {(l.fecha_inicio || l.fecha_fin) && (
+                                    <p className={`text-xs ${M} mt-0.5`}>
+                                      {l.fecha_inicio ? new Date(l.fecha_inicio).toLocaleDateString("es-CL", { month: "short", year: "numeric" }) : "?"}
+                                      {" – "}
+                                      {l.fecha_fin ? new Date(l.fecha_fin).toLocaleDateString("es-CL", { month: "short", year: "numeric" }) : "Presente"}
+                                    </p>
+                                  )}
+                                  {l.descripcion && <p className={`text-xs ${M} mt-1`}>{l.descripcion}</p>}
+                                </div>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  <button
+                                    onClick={() => toggleFavorito(l.id)}
+                                    disabled={!puedeAgregar}
+                                    title={esFavorita ? "Quitar de CV" : puedeAgregar ? "Incluir en CV" : "Máximo 3 seleccionadas"}
+                                    className={`p-1 rounded-lg transition-colors ${!puedeAgregar && !esFavorita ? "opacity-30 cursor-not-allowed" : "cursor-pointer"}`}
+                                  >
+                                    <Icon
+                                      icon={esFavorita ? "mdi:star" : "mdi:star-outline"}
+                                      width={18}
+                                      className={esFavorita ? "text-amber-400" : M}
+                                    />
+                                  </button>
+                                  <Badge color={l.tipo === "practica_completada" ? "green" : "blue"}>
+                                    {l.tipo === "practica_completada" ? "Práctica" : "Verificado"}
+                                  </Badge>
+                                </div>
                               </div>
-                              <Badge color={l.tipo === "practica_completada" ? "green" : "blue"}>
-                                {l.tipo === "practica_completada" ? "Práctica" : "Verificado"}
-                              </Badge>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -596,7 +688,7 @@ const descargarCV = () => {
         </div>
       </div>
 
-      <PublicacionesUsuario usuarioId={usuario.id} />
+      <PublicacionesUsuario usuarioId={usuario.id} autorNombre={nombre} />
     </div>
   );
 }

@@ -26,6 +26,8 @@ function TallerFormModal({ taller, onGuardar, onCancelar, isDark, T, M, B, BG })
     fecha_limite: taller.fecha_limite ? taller.fecha_limite.split("T")[0] : "",
     cupos:       taller.cupos != null ? String(taller.cupos) : "",
   } : FORM_VACÍO);
+  const [imagen, setImagen] = useState(null);
+  const [imagenPreview, setImagenPreview] = useState(taller?.imagen_url || null);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
 
@@ -34,6 +36,13 @@ function TallerFormModal({ taller, onGuardar, onCancelar, isDark, T, M, B, BG })
            : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
   }`;
   const labelCls = `block text-xs mb-1 ${isDark ? "text-[#B4B2A9]" : "text-[#5F5E5A]"}`;
+
+  const handleImagenChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImagen(file);
+    setImagenPreview(URL.createObjectURL(file));
+  };
 
   const handleSubmit = async () => {
     if (!form.titulo.trim()) { setError("El título es requerido"); return; }
@@ -46,7 +55,7 @@ function TallerFormModal({ taller, onGuardar, onCancelar, isDark, T, M, B, BG })
         fecha_inicio: form.fecha_inicio || null,
         fecha_limite: form.fecha_limite || null,
       };
-      await onGuardar(datos);
+      await onGuardar(datos, imagen);
     } catch (e) {
       setError(e.message || "Error al guardar");
     } finally {
@@ -112,6 +121,18 @@ function TallerFormModal({ taller, onGuardar, onCancelar, isDark, T, M, B, BG })
             <label className={labelCls}>Dirección</label>
             <input value={form.direccion} onChange={F("direccion")} placeholder="Ej: Av. Matta 123, Lo Espejo" className={inputCls} />
           </div>
+          <div className="col-span-2">
+            <label className={labelCls}>Imagen del taller</label>
+            {imagenPreview && (
+              <img src={imagenPreview} alt="Preview" className="w-full max-h-36 object-cover rounded-lg mb-2 border" />
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImagenChange}
+              className={`w-full text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 ${isDark ? "text-[#888780]" : "text-[#5F5E5A]"}`}
+            />
+          </div>
         </div>
 
         {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
@@ -165,14 +186,13 @@ export default function AdminTalleres() {
 
   useEffect(() => { cargar(); }, []);
 
-  const handleGuardar = async (datos) => {
+  const handleGuardar = async (datos, imagen) => {
     if (modalForm && modalForm !== "nuevo") {
-      await actualizarTaller(modalForm.id, datos);
-      setTalleres((prev) => prev.map((t) => t.id === modalForm.id ? { ...t, ...datos } : t));
+      await actualizarTaller(modalForm.id, datos, imagen);
     } else {
-      const res = await crearTaller(datos);
-      await cargar(); // recargar para tener el id y creado_en correcto
+      await crearTaller(datos, imagen);
     }
+    await cargar();
     setModalForm(null);
   };
 

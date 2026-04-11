@@ -195,98 +195,103 @@ function FeedCard({ pub, isDark, perfilCompleto }) {
 
   return (
     <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
-      <div className="flex items-start justify-between px-4 pt-4 pb-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-            {inicial}
-          </div>
-          <div>
-            <p className={`text-sm font-semibold leading-tight ${T}`}>{pub.autor_nombre}</p>
-            <p className={`text-xs ${M}`}>{tiempoRelativo(pub.publicado_en)}</p>
-          </div>
-        </div>
-        <Badge color={badge.color}>{badge.label}</Badge>
-      </div>
-
-      {pub.titulo && pub.titulo !== "Actualización de estado" && (
-        <div className="px-4 pb-1">
-          <p className={`text-sm font-semibold ${T}`}>{pub.titulo}</p>
-        </div>
-      )}
-
-      {pub.contenido && (
-        <div className="px-4 pb-3">
-          <p className={`text-sm leading-relaxed ${T}`}>{pub.contenido}</p>
-        </div>
-      )}
-
-      {pub.tipo === "vacante" && (
-        <div className={`mx-4 mb-3 p-3 rounded-lg border ${B} ${isDark ? "bg-[#1e1e1c]" : "bg-[#F7F6F3]"}`}>
-          <div className="flex flex-wrap gap-3">
-            <div className="flex items-center gap-1.5">
-              <Icon
-                icon={pub.vacante_tipo === "puesto_laboral" ? "mdi:briefcase-outline" : "mdi:school-outline"}
-                width={14}
-                className={pub.vacante_tipo === "puesto_laboral" ? "text-green-600" : "text-orange-500"}
-              />
-              <span className={`text-xs font-medium ${pub.vacante_tipo === "puesto_laboral" ? "text-green-700" : "text-orange-600"}`}>
-                {pub.vacante_tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica profesional"}
-              </span>
+      <button
+        onClick={() => setVerMas(true)}
+        className="w-full text-left"
+      >
+        <div className="flex items-start justify-between px-4 pt-4 pb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+              {inicial}
             </div>
-            <div className="flex items-center gap-1.5">
-              <Icon
-                icon={pub.vacante_activa ? "mdi:check-circle-outline" : "mdi:close-circle-outline"}
-                width={14}
-                className={pub.vacante_activa ? "text-green-500" : "text-red-400"}
-              />
-              <span className={`text-xs font-medium ${pub.vacante_activa ? "text-green-600" : "text-red-500"}`}>
-                {pub.vacante_activa ? "Activa" : "Cerrada"}
-              </span>
+            <div>
+              <p className={`text-sm font-semibold leading-tight ${T}`}>{pub.autor_nombre}</p>
+              <p className={`text-xs ${M}`}>{tiempoRelativo(pub.publicado_en)}</p>
             </div>
-            {pub.area && (
-              <div className="flex items-center gap-1.5">
-                <Icon icon="mdi:tag-outline" width={14} className="text-[#378ADD]" />
-                <span className={`text-xs ${T}`}>{pub.area}</span>
-              </div>
-            )}
-            {pub.modalidad && (
-              <div className="flex items-center gap-1.5">
-                <Icon icon="mdi:map-marker-outline" width={14} className={M} />
-                <span className={`text-xs ${M} capitalize`}>{pub.modalidad}</span>
-              </div>
-            )}
-            {pub.duracion && (
-              <div className="flex items-center gap-1.5">
-                <Icon icon="mdi:clock-outline" width={14} className={M} />
-                <span className={`text-xs ${M}`}>{pub.duracion}</span>
-              </div>
-            )}
-            {pub.remuneracion && (
-              <div className="flex items-center gap-1.5">
-                <Icon icon="mdi:currency-usd" width={14} className="text-green-500" />
-                <span className={`text-xs ${M}`}>{pub.remuneracion}</span>
-              </div>
-            )}
-            {pub.direccion && (
-              <div className="flex items-center gap-1.5">
-                <Icon icon="mdi:office-building-outline" width={14} className={M} />
-                <span className={`text-xs ${M}`}>{pub.direccion}</span>
-              </div>
-            )}
           </div>
+          <Badge color={badge.color}>{badge.label}</Badge>
         </div>
-      )}
 
-      {pub.url_multimedia && (
-        <div className="px-4 pb-3">
-          <img
-            src={resolverMedia(pub.url_multimedia)}
-            alt="Multimedia"
-            className="rounded-lg max-h-72 w-full object-cover border"
-            onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
-          />
-        </div>
-      )}
+        {pub.titulo && pub.titulo !== "Actualización de estado" && (
+          <div className="px-4 pb-1">
+            <p className={`text-sm font-semibold ${T}`}>{pub.titulo}</p>
+          </div>
+        )}
+
+        {pub.contenido && (
+          <div className="px-4 pb-3">
+            <p className={`text-sm leading-relaxed ${T}`}>{pub.contenido}</p>
+          </div>
+        )}
+
+        {pub.tipo === "vacante" && (
+          <div className={`mx-4 mb-3 p-3 rounded-lg border ${B} ${isDark ? "bg-[#1e1e1c]" : "bg-[#F7F6F3]"}`}>
+            <div className="flex flex-wrap gap-3">
+              <div className="flex items-center gap-1.5">
+                <Icon
+                  icon={pub.vacante_tipo === "puesto_laboral" ? "mdi:briefcase-outline" : "mdi:school-outline"}
+                  width={14}
+                  className={pub.vacante_tipo === "puesto_laboral" ? "text-green-600" : "text-orange-500"}
+                />
+                <span className={`text-xs font-medium ${pub.vacante_tipo === "puesto_laboral" ? "text-green-700" : "text-orange-600"}`}>
+                  {pub.vacante_tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica profesional"}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Icon
+                  icon={pub.vacante_activa ? "mdi:check-circle-outline" : "mdi:close-circle-outline"}
+                  width={14}
+                  className={pub.vacante_activa ? "text-green-500" : "text-red-400"}
+                />
+                <span className={`text-xs font-medium ${pub.vacante_activa ? "text-green-600" : "text-red-500"}`}>
+                  {pub.vacante_activa ? "Activa" : "Cerrada"}
+                </span>
+              </div>
+              {pub.area && (
+                <div className="flex items-center gap-1.5">
+                  <Icon icon="mdi:tag-outline" width={14} className="text-[#378ADD]" />
+                  <span className={`text-xs ${T}`}>{pub.area}</span>
+                </div>
+              )}
+              {pub.modalidad && (
+                <div className="flex items-center gap-1.5">
+                  <Icon icon="mdi:map-marker-outline" width={14} className={M} />
+                  <span className={`text-xs ${M} capitalize`}>{pub.modalidad}</span>
+                </div>
+              )}
+              {pub.duracion && (
+                <div className="flex items-center gap-1.5">
+                  <Icon icon="mdi:clock-outline" width={14} className={M} />
+                  <span className={`text-xs ${M}`}>{pub.duracion}</span>
+                </div>
+              )}
+              {pub.remuneracion && (
+                <div className="flex items-center gap-1.5">
+                  <Icon icon="mdi:currency-usd" width={14} className="text-green-500" />
+                  <span className={`text-xs ${M}`}>{pub.remuneracion}</span>
+                </div>
+              )}
+              {pub.direccion && (
+                <div className="flex items-center gap-1.5">
+                  <Icon icon="mdi:office-building-outline" width={14} className={M} />
+                  <span className={`text-xs ${M}`}>{pub.direccion}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {pub.url_multimedia && (
+          <div className="px-4 pb-3">
+            <img
+              src={resolverMedia(pub.url_multimedia)}
+              alt="Multimedia"
+              className="rounded-lg max-h-72 w-full object-cover border"
+              onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
+            />
+          </div>
+        )}
+      </button>
 
       <div className={`border-t ${B}`} />
       <div className="flex items-center px-2 py-1">
@@ -441,6 +446,17 @@ function TallerCard({ taller, isDark }) {
           )}
         </div>
       </div>
+
+      {taller.imagen_url && (
+        <div className="px-4 pb-4">
+          <img
+            src={resolverMedia(taller.imagen_url)}
+            alt={taller.titulo}
+            className="rounded-lg w-full max-h-48 object-cover border"
+            onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
+          />
+        </div>
+      )}
 
       {!taller.esta_activo && (
         <div className="px-4 pb-3">
@@ -606,15 +622,15 @@ export default function EstudianteDashboard() {
         <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
           {/* Banner */}
           <div className="h-16 bg-gradient-to-r from-[#0A3A6A] to-[#378ADD]" />
-          <div className="px-4 pb-4">
-            <div className="-mt-7 mb-3">
+          <div className="px-4 pb-4 text-center">
+            <div className="-mt-7 mb-3 flex justify-center">
               <Avatar initial={inicial} color="bg-[#0F4D8A]" size="lg" />
             </div>
             <p className={`text-sm font-semibold ${T}`}>{nombre || "Sin nombre"}</p>
             <p className={`text-xs ${M} mt-0.5`}>{subtitleParts.join(" · ") || "Sin carrera"}</p>
             <p className={`text-xs ${M}`}>C.E. Cardenal J.M. Caro</p>
 
-            <div className={`flex gap-4 mt-3 pt-3 border-t ${B}`}>
+            <div className={`flex gap-4 mt-3 pt-3 border-t ${B} justify-center`}>
               <div className="text-center">
                 <p className={`text-base font-semibold ${T}`}>{estudiantePostulaciones.length}</p>
                 <p className={`text-xs ${M}`}>Postulaciones</p>
@@ -694,7 +710,7 @@ export default function EstudianteDashboard() {
 
         {tabActiva === "muro" ? (
           <>
-            <CrearPublicacion onPublicado={cargarPublicaciones} />
+            {(isEstudiante || isEmpresa) && <CrearPublicacion onPublicado={cargarPublicaciones} />}
             {publicaciones.length === 0 ? (
               <div className={`rounded-xl border ${B} ${BG} p-10 text-center ${M}`}>
                 <Icon icon="mdi:newspaper-variant-outline" width={40} className="mx-auto mb-3 opacity-40" />

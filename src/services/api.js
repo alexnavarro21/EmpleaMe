@@ -46,6 +46,38 @@ export async function getHabilidades() {
   return data; // [{ id, nombre, categoria }]
 }
 
+export async function crearHabilidad(datos) {
+  const res = await fetch(`${BASE_URL}/habilidades`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al crear habilidad");
+  return data;
+}
+
+export async function actualizarHabilidad(id, datos) {
+  const res = await fetch(`${BASE_URL}/habilidades/${id}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al actualizar habilidad");
+  return data;
+}
+
+export async function eliminarHabilidad(id) {
+  const res = await fetch(`${BASE_URL}/habilidades/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al eliminar habilidad");
+  return data;
+}
+
 // ── Vacantes ──────────────────────────────────────────────────────────────────
 
 export async function getVacantesEmpresa(empresaId) {
@@ -608,23 +640,37 @@ export async function getTalleres(todos = false) {
   return data;
 }
 
-export async function crearTaller(datos) {
-  const res = await fetch(`${BASE_URL}/talleres`, {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify(datos),
-  });
+export async function crearTaller(datos, imagen = null) {
+  let body, headers;
+  if (imagen) {
+    const formData = new FormData();
+    Object.entries(datos).forEach(([k, v]) => { if (v !== null && v !== undefined) formData.append(k, v); });
+    formData.append("imagen", imagen);
+    body = formData;
+    headers = { Authorization: `Bearer ${getToken()}` };
+  } else {
+    body = JSON.stringify(datos);
+    headers = authHeaders();
+  }
+  const res = await fetch(`${BASE_URL}/talleres`, { method: "POST", headers, body });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al crear taller");
   return data;
 }
 
-export async function actualizarTaller(id, datos) {
-  const res = await fetch(`${BASE_URL}/talleres/${id}`, {
-    method: "PUT",
-    headers: authHeaders(),
-    body: JSON.stringify(datos),
-  });
+export async function actualizarTaller(id, datos, imagen = null) {
+  let body, headers;
+  if (imagen) {
+    const formData = new FormData();
+    Object.entries(datos).forEach(([k, v]) => { if (v !== null && v !== undefined) formData.append(k, v); });
+    formData.append("imagen", imagen);
+    body = formData;
+    headers = { Authorization: `Bearer ${getToken()}` };
+  } else {
+    body = JSON.stringify(datos);
+    headers = authHeaders();
+  }
+  const res = await fetch(`${BASE_URL}/talleres/${id}`, { method: "PUT", headers, body });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al actualizar taller");
   return data;
