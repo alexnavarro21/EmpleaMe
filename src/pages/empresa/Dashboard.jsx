@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, StatCard, PageHeader, PrimaryButton } from "../../components/ui";
-import { getVacantesEmpresa, getPostulantesEmpresa, actualizarEstadoPostulacion, iniciarConversacion, activarVacante, desactivarVacante } from "../../services/api";
+import { getVacantesEmpresa, getPostulantesEmpresa, getPostulantesAceptados, actualizarEstadoPostulacion, iniciarConversacion, activarVacante, desactivarVacante, completarPractica } from "../../services/api";
 import PostulantesVacanteModal from "../../components/PostulantesVacanteModal";
 
 const statusColor = { activa: "green", cerrada: "gray", pausada: "yellow" };
@@ -20,22 +20,26 @@ export default function EmpresaDashboard() {
 
   const [vacantes, setVacantes] = useState([]);
   const [postulantes, setPostulantes] = useState([]);
+  const [aceptados, setAceptados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [contactandoId, setContactandoId] = useState(null);
   const [vacanteSeleccionada, setVacanteSeleccionada] = useState(null);
   const [toggling, setToggling] = useState(null);
+  const [completando, setCompletando] = useState(null);
 
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
   useEffect(() => {
     async function cargarDatos() {
       try {
-        const [vacs, posts] = await Promise.all([
+        const [vacs, posts, acepts] = await Promise.all([
           getVacantesEmpresa(usuario.id),
           getPostulantesEmpresa(),
+          getPostulantesAceptados(),
         ]);
         setVacantes(vacs);
         setPostulantes(posts);
+        setAceptados(acepts);
       } catch (err) {
         console.error("Error cargando dashboard:", err);
       } finally {
@@ -82,9 +86,26 @@ export default function EmpresaDashboard() {
   const handleEstado = async (postulacionId, nuevoEstado) => {
     try {
       await actualizarEstadoPostulacion(postulacionId, nuevoEstado);
+      if (nuevoEstado === "aceptado") {
+        // Mover de pendientes a aceptados
+        const post = postulantes.find((p) => p.id === postulacionId);
+        if (post) setAceptados((prev) => [{ ...post, estado: "aceptado" }, ...prev]);
+      }
       setPostulantes((prev) => prev.filter((p) => p.id !== postulacionId));
     } catch (err) {
       console.error("Error actualizando estado:", err);
+    }
+  };
+
+  const handleCompletar = async (postulacionId) => {
+    setCompletando(postulacionId);
+    try {
+      await completarPractica(postulacionId);
+      setAceptados((prev) => prev.filter((p) => p.id !== postulacionId));
+    } catch (err) {
+      console.error("Error al completar práctica:", err);
+    } finally {
+      setCompletando(null);
     }
   };
 
@@ -256,6 +277,57 @@ export default function EmpresaDashboard() {
           )}
         </Card>
       </div>
+
+      {/* Sección: Prácticas en curso (aceptadas) */}
+      {aceptados.length > 0 && (
+        <Card className="mt-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Icon icon="mdi:briefcase-check-outline" width={16} className="text-[#378ADD]" />
+            <h2 className={`text-sm font-semibold ${T}`}>Prácticas en curso</h2>
+            <span className={`ml-auto text-xs ${M}`}>Marca como completada cuando el estudiante finalice</span>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {aceptados.map((p) => (
+              <div key={p.id} className={`flex items-center gap-3 p-3 rounded-lg border ${B}`}>
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
+                  <Icon icon="mynaui:user-solid" width={20} className="text-[#378ADD]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-medium ${T} truncate`}>{p.nombre_completo}</p>
+                  <p className={`text-xs ${M}`}>{p.carrera}</p>
+                  {p.vacante_titulo && (
+                    <p className={`text-xs text-[#378ADD] truncate`}>
+                      <Icon icon="mdi:briefcase-outline" width={11} className="inline mr-0.5 mb-0.5" />
+                      {p.vacante_titulo}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => handleCompletar(p.id)}
+                    disabled={completando === p.id}
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors disabled:opacity-50"
+                  >
+                    <Icon
+                      icon={completando === p.id ? "mdi:loading" : "mdi:check-circle-outline"}
+                      width={14}
+                      className={completando === p.id ? "animate-spin" : ""}
+                    />
+                    {completando === p.id ? "Procesando..." : "Marcar como completada"}
+                  </button>
+                  <Link
+                    to={`/empresa/candidato/${p.estudiante_id}`}
+                    className={`${M} hover:text-[#378ADD] transition-colors`}
+                  >
+                    <Icon icon="mdi:chevron-right" width={20} />
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {vacanteSeleccionada && (
         <PostulantesVacanteModal

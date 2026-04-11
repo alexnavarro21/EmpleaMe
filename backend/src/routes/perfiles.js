@@ -13,7 +13,7 @@ router.get("/estudiante/:id", verificarToken, async (req, res) => {
       return res.status(404).json({ error: "Perfil no encontrado" });
 
     const [habilidades] = await db.query(
-      `SELECT he.id, h.nombre, h.categoria, he.nivel_dominio, he.esta_validada
+      `SELECT he.id, h.nombre, h.categoria, he.nivel_dominio, he.porcentaje, he.esta_validada
        FROM habilidades_estudiantes he
        JOIN habilidades h ON h.id = he.habilidad_id
        WHERE he.estudiante_id = ?`,
@@ -25,7 +25,27 @@ router.get("/estudiante/:id", verificarToken, async (req, res) => {
       [req.params.id]
     );
 
-    res.json({ ...perfil[0], habilidades, portafolio });
+    const [idiomas] = await db.query(
+      "SELECT * FROM idiomas_estudiantes WHERE estudiante_id = ? ORDER BY idioma",
+      [req.params.id]
+    );
+
+    const [historial_academico] = await db.query(
+      "SELECT * FROM historial_academico WHERE estudiante_id = ? ORDER BY fecha_inicio DESC",
+      [req.params.id]
+    );
+
+    const [historial_laboral] = await db.query(
+      `SELECT hl.*, v.titulo AS vacante_titulo
+       FROM historial_laboral hl
+       LEFT JOIN postulaciones p ON p.id = hl.postulacion_id
+       LEFT JOIN vacantes v ON v.id = p.vacante_id
+       WHERE hl.estudiante_id = ?
+       ORDER BY hl.fecha_inicio DESC`,
+      [req.params.id]
+    );
+
+    res.json({ ...perfil[0], habilidades, portafolio, idiomas, historial_academico, historial_laboral });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }
@@ -33,13 +53,14 @@ router.get("/estudiante/:id", verificarToken, async (req, res) => {
 
 // PUT /api/perfiles/estudiante/:id
 router.put("/estudiante/:id", verificarToken, async (req, res) => {
-  const { nombre_completo, carrera, telefono, biografia, semestre, promedio } = req.body;
+  const { nombre_completo, carrera, telefono, biografia, semestre, promedio, estado_civil } = req.body;
   try {
     await db.query(
       `UPDATE perfiles_estudiantes
-       SET nombre_completo=?, carrera=?, telefono=?, biografia=?, semestre=?, promedio=?
+       SET nombre_completo=?, carrera=?, telefono=?, biografia=?, semestre=?, promedio=?, estado_civil=?
        WHERE usuario_id=?`,
-      [nombre_completo, carrera, telefono || null, biografia || null, semestre || null, promedio || null, req.params.id]
+      [nombre_completo, carrera, telefono || null, biografia || null,
+       semestre || null, promedio || null, estado_civil || null, req.params.id]
     );
     res.json({ mensaje: "Perfil actualizado" });
   } catch (err) {

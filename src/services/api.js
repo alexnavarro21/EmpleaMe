@@ -467,3 +467,103 @@ export async function guardarResultadoTest(datos) {
   if (!res.ok) throw new Error(data.error || "Error al guardar resultado");
   return data;
 }
+
+// ── Idiomas ───────────────────────────────────────────────────────────────────
+
+export async function getIdiomasEstudiante(estudianteId) {
+  const res = await fetch(`${BASE_URL}/admin/idiomas/${estudianteId}`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener idiomas");
+  return data;
+}
+
+export async function agregarIdioma(datos) {
+  const res = await fetch(`${BASE_URL}/admin/idiomas`, {
+    method: "POST", headers: authHeaders(), body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al agregar idioma");
+  return data;
+}
+
+export async function eliminarIdioma(id) {
+  const res = await fetch(`${BASE_URL}/admin/idiomas/${id}`, {
+    method: "DELETE", headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al eliminar idioma");
+  return data;
+}
+
+// ── Historial académico ───────────────────────────────────────────────────────
+
+export async function getHistorialAcademico(estudianteId) {
+  const res = await fetch(`${BASE_URL}/admin/historial-academico/${estudianteId}`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener historial académico");
+  return data;
+}
+
+export async function agregarHistorialAcademico(datos) {
+  const res = await fetch(`${BASE_URL}/admin/historial-academico`, {
+    method: "POST", headers: authHeaders(), body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al agregar historial académico");
+  return data;
+}
+
+export async function eliminarHistorialAcademico(id) {
+  const res = await fetch(`${BASE_URL}/admin/historial-academico/${id}`, {
+    method: "DELETE", headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al eliminar registro académico");
+  return data;
+}
+
+// ── Historial laboral ─────────────────────────────────────────────────────────
+
+export async function getHistorialLaboral(estudianteId) {
+  const res = await fetch(`${BASE_URL}/admin/historial-laboral/${estudianteId}`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener historial laboral");
+  return data;
+}
+
+export async function agregarHistorialLaboral(datos) {
+  const res = await fetch(`${BASE_URL}/admin/historial-laboral`, {
+    method: "POST", headers: authHeaders(), body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al agregar historial laboral");
+  return data;
+}
+
+export async function eliminarHistorialLaboral(id) {
+  const res = await fetch(`${BASE_URL}/admin/historial-laboral/${id}`, {
+    method: "DELETE", headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al eliminar registro laboral");
+  return data;
+}
+
+// Obtener postulaciones aceptadas de la empresa  →  GET /api/postulaciones/empresa/aceptados
+export async function getPostulantesAceptados() {
+  const res = await fetch(`${BASE_URL}/postulaciones/empresa/aceptados`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener aceptados");
+  return data;
+}
+
+// ── Completar práctica (empresa) ──────────────────────────────────────────────
+
+export async function completarPractica(postulacionId) {
+  const res = await fetch(`${BASE_URL}/postulaciones/${postulacionId}/completar`, {
+    method: "PUT", headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al completar práctica");
+  return data;
+}

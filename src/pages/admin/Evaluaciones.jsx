@@ -10,6 +10,9 @@ import {
   guardarEvaluacion, getEvaluaciones,
   asignarHabilidadesTecnicas,
   subirExcelTests, subirExcelPromedios,
+  getIdiomasEstudiante, agregarIdioma, eliminarIdioma,
+  getHistorialAcademico, agregarHistorialAcademico, eliminarHistorialAcademico,
+  getHistorialLaboral, agregarHistorialLaboral, eliminarHistorialLaboral,
 } from "../../services/api";
 
 // ── Download helper ───────────────────────────────────────────────────────────
@@ -184,19 +187,6 @@ function TabHabilidades({ estudiantes, habilidades, isDark }) {
   const tecnicas = habilidades.filter((h) => h.categoria === "tecnica" || h.categoria === "técnica");
   const blandas  = habilidades.filter((h) => h.categoria === "blanda");
 
-  useEffect(() => {
-    if (!selectedId) { setCurrentSkills([]); setSelected({}); return; }
-    import("../../services/api").then(({ getEstudianteById }) => {
-      getEstudianteById(selectedId).then((data) => {
-        const curr = data.habilidades || [];
-        setCurrentSkills(curr);
-        const pre = {};
-        curr.forEach((h) => { pre[h.id || h.habilidad_id] = h.nivel_dominio || "blanda"; });
-        setSelected(pre);
-      }).catch(() => {});
-    });
-  }, [selectedId]);
-
   function toggleTecnica(hId) {
     setSelected((prev) => {
       const copy = { ...prev };
@@ -206,28 +196,61 @@ function TabHabilidades({ estudiantes, habilidades, isDark }) {
     });
   }
 
+  // selected para blandas: habilidad_id → número 0-100 | 0 (no seleccionada)
+  const [selectedBlandas, setSelectedBlandas] = useState({}); // habilidad_id → porcentaje (1-100) | 0
+
+  useEffect(() => {
+    if (!selectedId) { setCurrentSkills([]); setSelected({}); setSelectedBlandas({}); return; }
+    import("../../services/api").then(({ getEstudianteById }) => {
+      getEstudianteById(selectedId).then((data) => {
+        const curr = data.habilidades || [];
+        setCurrentSkills(curr);
+        const preTec = {};
+        const preBlnd = {};
+        curr.forEach((h) => {
+          if (h.categoria === "tecnica" || h.categoria === "técnica") {
+            preTec[h.id || h.habilidad_id] = h.nivel_dominio || "";
+          } else if (h.categoria === "blanda") {
+            preBlnd[h.id || h.habilidad_id] = h.porcentaje ?? 50;
+          }
+        });
+        setSelected(preTec);
+        setSelectedBlandas(preBlnd);
+      }).catch(() => {});
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId]);
+
   function toggleBlanda(hId) {
-    setSelected((prev) => {
+    setSelectedBlandas((prev) => {
       const copy = { ...prev };
-      if (copy[hId]) delete copy[hId];
-      else copy[hId] = "blanda";
+      if (copy[hId] !== undefined) delete copy[hId];
+      else copy[hId] = 50;
       return copy;
     });
   }
 
   async function handleGuardar() {
-    if (!selectedId || !Object.keys(selected).length) return;
+    const tecnicasPayload = Object.entries(selected)
+      .filter(([, nivel]) => nivel)
+      .map(([habilidad_id, nivel_dominio]) => ({
+        habilidad_id: Number(habilidad_id),
+        nivel_dominio,
+        porcentaje: null,
+      }));
+
+    const blandasPayload = Object.entries(selectedBlandas)
+      .map(([habilidad_id, porcentaje]) => ({
+        habilidad_id: Number(habilidad_id),
+        nivel_dominio: null,
+        porcentaje: Number(porcentaje),
+      }));
+
+    const payload = [...tecnicasPayload, ...blandasPayload];
+    if (!selectedId || !payload.length) return;
     setSaving(true); setMsg("");
     try {
-      await asignarHabilidadesTecnicas({
-        estudiante_id: Number(selectedId),
-        habilidades: Object.entries(selected)
-          .filter(([, nivel]) => nivel)
-          .map(([habilidad_id, nivel_dominio]) => ({
-            habilidad_id: Number(habilidad_id),
-            nivel_dominio: nivel_dominio === "blanda" ? null : nivel_dominio,
-          })),
-      });
+      await asignarHabilidadesTecnicas({ estudiante_id: Number(selectedId), habilidades: payload });
       setMsg("Habilidades asignadas correctamente");
     } catch (e) {
       setMsg("Error: " + e.message);
@@ -273,7 +296,7 @@ function TabHabilidades({ estudiantes, habilidades, isDark }) {
     );
   }
 
-  const totalSeleccionadas = Object.keys(selected).length;
+  const totalSeleccionadas = Object.keys(selected).length + Object.keys(selectedBlandas).length;
 
   return (
     <div className="grid grid-cols-3 gap-6">
@@ -318,11 +341,44 @@ function TabHabilidades({ estudiantes, habilidades, isDark }) {
                   <div className={`px-4 py-2.5 text-xs font-semibold ${M} ${S} border-b ${B} flex items-center gap-2`}>
                     <Icon icon="mdi:account-heart" width={13} />
                     Habilidades blandas
+                    <span className={`ml-auto font-normal ${M}`}>escala 0 – 100</span>
                   </div>
-                  <div className="divide-y" style={{ maxHeight: 200, overflowY: "auto" }}>
-                    {blandas.map((h) => (
-                      <SkillRow key={h.id} h={h} activo={!!selected[h.id]} onToggle={toggleBlanda} showLevel={false} />
-                    ))}
+                  <div className="divide-y" style={{ maxHeight: 240, overflowY: "auto" }}>
+                    {blandas.map((h) => {
+                      const activo = selectedBlandas[h.id] !== undefined;
+                      return (
+                        <div
+                          key={h.id}
+                          className={`flex items-center gap-3 px-4 py-3 transition-colors ${
+                            activo
+                              ? isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]"
+                              : isDark ? "hover:bg-[#313130]/60" : "hover:bg-[#F7F6F3]"
+                          }`}
+                        >
+                          <button
+                            onClick={() => toggleBlanda(h.id)}
+                            className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                              activo ? "bg-[#0F4D8A] border-[#0F4D8A]" : "border-[#888780]"
+                            }`}
+                          >
+                            {activo && <Icon icon="mdi:check" width={10} className="text-white" />}
+                          </button>
+                          <span className={`text-sm flex-1 ${T}`}>{h.nombre}</span>
+                          {activo && (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="range"
+                                min={0} max={100} step={5}
+                                value={selectedBlandas[h.id] ?? 50}
+                                onChange={(e) => setSelectedBlandas((prev) => ({ ...prev, [h.id]: Number(e.target.value) }))}
+                                className="w-24 accent-[#0F4D8A]"
+                              />
+                              <span className={`text-xs w-8 text-right ${T}`}>{selectedBlandas[h.id] ?? 50}%</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -751,13 +807,345 @@ function TabPromedios({ isDark }) {
   );
 }
 
+// TAB 5: Idiomas del estudiante
+function TabIdiomas({ estudiantes, isDark }) {
+  const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
+  const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
+  const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
+  const S = isDark ? "bg-[#313130]" : "bg-[#F7F6F3]";
+
+  const [selectedId, setSelectedId] = useState("");
+  const [idiomas, setIdiomas]       = useState([]);
+  const [idioma, setIdioma]         = useState("");
+  const [nivel, setNivel]           = useState("Básico");
+  const [saving, setSaving]         = useState(false);
+  const [msg, setMsg]               = useState("");
+
+  useEffect(() => {
+    if (!selectedId) { setIdiomas([]); return; }
+    getIdiomasEstudiante(selectedId).then(setIdiomas).catch(() => {});
+  }, [selectedId]);
+
+  async function handleAgregar() {
+    if (!selectedId || !idioma.trim()) return;
+    setSaving(true); setMsg("");
+    try {
+      const nuevo = await agregarIdioma({ estudiante_id: Number(selectedId), idioma: idioma.trim(), nivel });
+      setIdiomas((prev) => [...prev.filter((i) => i.id !== nuevo.id), nuevo].sort((a, b) => a.idioma.localeCompare(b.idioma)));
+      setIdioma(""); setMsg("Idioma guardado");
+    } catch (e) { setMsg("Error: " + e.message); }
+    finally { setSaving(false); }
+  }
+
+  async function handleEliminar(id) {
+    try {
+      await eliminarIdioma(id);
+      setIdiomas((prev) => prev.filter((i) => i.id !== id));
+    } catch (e) { setMsg("Error: " + e.message); }
+  }
+
+  const nivelColor = { "Básico": "gray", "Intermedio": "blue", "Avanzado": "green", "Nativo": "green" };
+
+  return (
+    <div className="grid grid-cols-3 gap-6">
+      <div className="col-span-2">
+        <Card>
+          <h3 className={`text-sm font-semibold ${T} mb-4`}>Asignar idiomas</h3>
+          <div className="mb-4">
+            <StudentSearch estudiantes={estudiantes} selectedId={selectedId} onSelect={setSelectedId} isDark={isDark} />
+          </div>
+
+          {selectedId && (
+            <div className="flex gap-3 mt-2">
+              <input
+                type="text"
+                placeholder="Ej: Inglés, Francés, Portugués..."
+                value={idioma}
+                onChange={(e) => setIdioma(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAgregar()}
+                className={`flex-1 px-3 py-2 rounded-lg text-sm border outline-none focus:border-[#378ADD] ${
+                  isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder:text-[#888780]"
+                         : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder:text-[#888780]"
+                }`}
+              />
+              <select
+                value={nivel}
+                onChange={(e) => setNivel(e.target.value)}
+                className={`px-3 py-2 rounded-lg text-sm border outline-none focus:border-[#378ADD] ${
+                  isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
+                }`}
+              >
+                <option>Básico</option>
+                <option>Intermedio</option>
+                <option>Avanzado</option>
+                <option>Nativo</option>
+              </select>
+              <PrimaryButton onClick={handleAgregar} disabled={saving || !idioma.trim()}>
+                {saving ? "..." : "Agregar"}
+              </PrimaryButton>
+            </div>
+          )}
+
+          {!selectedId && (
+            <div className={`text-center py-10 border rounded-xl ${B} ${M} mt-4`}>
+              <Icon icon="mdi:translate" width={32} className="mx-auto mb-2 opacity-30" />
+              <p className="text-sm">Busca un estudiante para gestionar idiomas</p>
+            </div>
+          )}
+
+          {msg && <p className={`text-sm mt-3 ${msg.startsWith("Error") ? "text-red-400" : "text-green-400"}`}>{msg}</p>}
+        </Card>
+      </div>
+
+      <Card>
+        <h3 className={`text-sm font-semibold ${T} mb-3`}>Idiomas actuales</h3>
+        {idiomas.length === 0 ? (
+          <p className={`text-xs ${M}`}>{selectedId ? "Sin idiomas registrados" : "Busca un estudiante"}</p>
+        ) : (
+          <div className="flex flex-col gap-1">
+            {idiomas.map((i) => (
+              <div key={i.id} className={`flex items-center justify-between py-1.5 border-b ${B} last:border-0`}>
+                <span className={`text-xs ${T} flex-1`}>{i.idioma}</span>
+                <Badge color={nivelColor[i.nivel] || "gray"}>{i.nivel}</Badge>
+                <button onClick={() => handleEliminar(i.id)} className="ml-2 text-[#888780] hover:text-red-400 transition-colors">
+                  <Icon icon="mdi:close" width={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+// TAB 6: Historial académico y laboral
+function TabHistorial({ estudiantes, isDark }) {
+  const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
+  const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
+  const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
+
+  const [selectedId, setSelectedId]     = useState("");
+  const [academico, setAcademico]       = useState([]);
+  const [laboral, setLaboral]           = useState([]);
+  const [seccion, setSeccion]           = useState("academico"); // "academico" | "laboral"
+  const [saving, setSaving]             = useState(false);
+  const [msg, setMsg]                   = useState("");
+
+  // Formulario académico
+  const [aInstitucion, setAInstitucion] = useState("");
+  const [aTitulo, setATitulo]           = useState("");
+  const [aArea, setAArea]               = useState("");
+  const [aInicio, setAInicio]           = useState("");
+  const [aFin, setAFin]                 = useState("");
+
+  // Formulario laboral
+  const [lEmpresa, setLEmpresa]         = useState("");
+  const [lCargo, setLCargo]             = useState("");
+  const [lInicio, setLInicio]           = useState("");
+  const [lFin, setLFin]                 = useState("");
+  const [lDesc, setLDesc]               = useState("");
+
+  useEffect(() => {
+    if (!selectedId) { setAcademico([]); setLaboral([]); return; }
+    getHistorialAcademico(selectedId).then(setAcademico).catch(() => {});
+    getHistorialLaboral(selectedId).then(setLaboral).catch(() => {});
+  }, [selectedId]);
+
+  async function handleAgregarAcademico() {
+    if (!selectedId || !aInstitucion.trim() || !aTitulo.trim()) return;
+    setSaving(true); setMsg("");
+    try {
+      const nuevo = await agregarHistorialAcademico({
+        estudiante_id: Number(selectedId),
+        institucion: aInstitucion, titulo: aTitulo, area: aArea,
+        fecha_inicio: aInicio || null, fecha_fin: aFin || null,
+      });
+      setAcademico((prev) => [nuevo, ...prev]);
+      setAInstitucion(""); setATitulo(""); setAArea(""); setAInicio(""); setAFin("");
+      setMsg("Registro académico agregado");
+    } catch (e) { setMsg("Error: " + e.message); }
+    finally { setSaving(false); }
+  }
+
+  async function handleAgregarLaboral() {
+    if (!selectedId || !lEmpresa.trim() || !lCargo.trim()) return;
+    setSaving(true); setMsg("");
+    try {
+      const nuevo = await agregarHistorialLaboral({
+        estudiante_id: Number(selectedId),
+        empresa_nombre: lEmpresa, cargo: lCargo,
+        fecha_inicio: lInicio || null, fecha_fin: lFin || null, descripcion: lDesc,
+      });
+      setLaboral((prev) => [nuevo, ...prev]);
+      setLEmpresa(""); setLCargo(""); setLInicio(""); setLFin(""); setLDesc("");
+      setMsg("Experiencia laboral agregada");
+    } catch (e) { setMsg("Error: " + e.message); }
+    finally { setSaving(false); }
+  }
+
+  const inputCls = `w-full px-3 py-2 rounded-lg text-sm border outline-none focus:border-[#378ADD] ${
+    isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder:text-[#888780]"
+           : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder:text-[#888780]"
+  }`;
+
+  return (
+    <div className="grid grid-cols-3 gap-6">
+      <div className="col-span-2 flex flex-col gap-4">
+        <Card>
+          <h3 className={`text-sm font-semibold ${T} mb-4`}>Historial académico y laboral</h3>
+          <div className="mb-4">
+            <StudentSearch estudiantes={estudiantes} selectedId={selectedId} onSelect={setSelectedId} isDark={isDark} />
+          </div>
+
+          {/* Toggle sección */}
+          {selectedId && (
+            <div className={`flex rounded-lg border ${B} overflow-hidden mb-4`}>
+              {[["academico","Académico","mdi:school"],["laboral","Laboral","mdi:briefcase"]].map(([key, label, icon]) => (
+                <button
+                  key={key}
+                  onClick={() => setSeccion(key)}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm transition-colors ${
+                    seccion === key
+                      ? "bg-[#0F4D8A] text-white"
+                      : isDark ? `${T} hover:bg-[#313130]` : `${T} hover:bg-[#F7F6F3]`
+                  }`}
+                >
+                  <Icon icon={icon} width={14} />
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {selectedId && seccion === "academico" && (
+            <div className="grid grid-cols-2 gap-3">
+              <input className={`${inputCls} col-span-2`} placeholder="Institución *" value={aInstitucion} onChange={(e) => setAInstitucion(e.target.value)} />
+              <input className={inputCls} placeholder="Título / Certificación *" value={aTitulo} onChange={(e) => setATitulo(e.target.value)} />
+              <input className={inputCls} placeholder="Área (opcional)" value={aArea} onChange={(e) => setAArea(e.target.value)} />
+              <div>
+                <label className={`block text-xs mb-1 ${M}`}>Año inicio</label>
+                <input type="number" className={inputCls} placeholder="2022" value={aInicio} onChange={(e) => setAInicio(e.target.value)} />
+              </div>
+              <div>
+                <label className={`block text-xs mb-1 ${M}`}>Año fin</label>
+                <input type="number" className={inputCls} placeholder="2024 (vacío si en curso)" value={aFin} onChange={(e) => setAFin(e.target.value)} />
+              </div>
+              <div className="col-span-2">
+                <PrimaryButton onClick={handleAgregarAcademico} disabled={saving || !aInstitucion.trim() || !aTitulo.trim()} className="w-full">
+                  {saving ? "Guardando..." : "Agregar registro académico"}
+                </PrimaryButton>
+              </div>
+            </div>
+          )}
+
+          {selectedId && seccion === "laboral" && (
+            <div className="grid grid-cols-2 gap-3">
+              <input className={inputCls} placeholder="Empresa *" value={lEmpresa} onChange={(e) => setLEmpresa(e.target.value)} />
+              <input className={inputCls} placeholder="Cargo / Puesto *" value={lCargo} onChange={(e) => setLCargo(e.target.value)} />
+              <div>
+                <label className={`block text-xs mb-1 ${M}`}>Fecha inicio</label>
+                <input type="date" className={inputCls} value={lInicio} onChange={(e) => setLInicio(e.target.value)} />
+              </div>
+              <div>
+                <label className={`block text-xs mb-1 ${M}`}>Fecha fin</label>
+                <input type="date" className={inputCls} value={lFin} onChange={(e) => setLFin(e.target.value)} />
+              </div>
+              <textarea className={`${inputCls} col-span-2`} rows={2} placeholder="Descripción (opcional)" value={lDesc} onChange={(e) => setLDesc(e.target.value)} />
+              <div className="col-span-2">
+                <PrimaryButton onClick={handleAgregarLaboral} disabled={saving || !lEmpresa.trim() || !lCargo.trim()} className="w-full">
+                  {saving ? "Guardando..." : "Agregar experiencia laboral"}
+                </PrimaryButton>
+              </div>
+            </div>
+          )}
+
+          {!selectedId && (
+            <div className={`text-center py-10 border rounded-xl ${B} ${M}`}>
+              <Icon icon="mdi:briefcase-outline" width={32} className="mx-auto mb-2 opacity-30" />
+              <p className="text-sm">Busca un estudiante para gestionar su historial</p>
+            </div>
+          )}
+
+          {msg && <p className={`text-sm mt-3 ${msg.startsWith("Error") ? "text-red-400" : "text-green-400"}`}>{msg}</p>}
+        </Card>
+      </div>
+
+      {/* Panel derecho: registros actuales */}
+      <Card>
+        <h3 className={`text-sm font-semibold ${T} mb-3`}>
+          {seccion === "academico" ? "Estudios registrados" : "Experiencias laborales"}
+        </h3>
+        {seccion === "academico" ? (
+          academico.length === 0 ? (
+            <p className={`text-xs ${M}`}>{selectedId ? "Sin estudios registrados" : "Busca un estudiante"}</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {academico.map((a) => (
+                <div key={a.id} className={`pb-3 border-b ${B} last:border-0`}>
+                  <div className="flex justify-between items-start">
+                    <p className={`text-xs font-semibold ${T}`}>{a.titulo}</p>
+                    <button onClick={() => eliminarHistorialAcademico(a.id).then(() => setAcademico((p) => p.filter((x) => x.id !== a.id))).catch(() => {})}
+                      className="text-[#888780] hover:text-red-400 transition-colors">
+                      <Icon icon="mdi:close" width={13} />
+                    </button>
+                  </div>
+                  <p className={`text-xs ${M}`}>{a.institucion}</p>
+                  {(a.fecha_inicio || a.fecha_fin) && (
+                    <p className={`text-xs ${M}`}>{a.fecha_inicio || "?"} – {a.fecha_fin || "En curso"}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )
+        ) : (
+          laboral.length === 0 ? (
+            <p className={`text-xs ${M}`}>{selectedId ? "Sin experiencia laboral" : "Busca un estudiante"}</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {laboral.map((l) => (
+                <div key={l.id} className={`pb-3 border-b ${B} last:border-0`}>
+                  <div className="flex justify-between items-start">
+                    <p className={`text-xs font-semibold ${T}`}>{l.cargo}</p>
+                    {l.tipo === "verificado" && (
+                      <button onClick={() => eliminarHistorialLaboral(l.id).then(() => setLaboral((p) => p.filter((x) => x.id !== l.id))).catch(() => {})}
+                        className="text-[#888780] hover:text-red-400 transition-colors">
+                        <Icon icon="mdi:close" width={13} />
+                      </button>
+                    )}
+                  </div>
+                  <p className={`text-xs ${M}`}>{l.empresa_nombre}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {(l.fecha_inicio || l.fecha_fin) && (
+                      <p className={`text-xs ${M}`}>
+                        {l.fecha_inicio ? new Date(l.fecha_inicio).toLocaleDateString("es-CL", { month: "short", year: "numeric" }) : "?"}
+                        {" – "}
+                        {l.fecha_fin ? new Date(l.fecha_fin).toLocaleDateString("es-CL", { month: "short", year: "numeric" }) : "Presente"}
+                      </p>
+                    )}
+                    <Badge color={l.tipo === "practica_completada" ? "green" : "blue"}>
+                      {l.tipo === "practica_completada" ? "Práctica" : "Verificado"}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        )}
+      </Card>
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 const TABS = [
-  { key: "tecnicas",   label: "Habilidades técnicas",      icon: "mdi:wrench-outline" },
-  { key: "evaluacion", label: "Evaluación docente",         icon: "mdi:clipboard-list-outline" },
-  { key: "tests",      label: "Tests socioemocionales",     icon: "hugeicons:brain-02" },
-  { key: "promedios",  label: "Promedios académicos",       icon: "mdi:school-outline" },
+  { key: "tecnicas",   label: "Habilidades técnicas",  icon: "mdi:wrench-outline" },
+  { key: "evaluacion", label: "Evaluación docente",    icon: "mdi:clipboard-list-outline" },
+  { key: "tests",      label: "Tests socioemocionales",icon: "hugeicons:brain-02" },
+  { key: "promedios",  label: "Promedios académicos",  icon: "mdi:school-outline" },
+  { key: "idiomas",    label: "Idiomas",               icon: "mdi:translate" },
+  { key: "historial",  label: "Historial",             icon: "mdi:briefcase-outline" },
 ];
 
 export default function GestionEstudiantes() {
@@ -812,6 +1200,8 @@ export default function GestionEstudiantes() {
           {tab === "evaluacion" && <TabEvaluacion   estudiantes={estudiantes} habilidades={habilidades} isDark={isDark} />}
           {tab === "tests"      && <TabTests  isDark={isDark} />}
           {tab === "promedios"  && <TabPromedios isDark={isDark} />}
+          {tab === "idiomas"    && <TabIdiomas    estudiantes={estudiantes} isDark={isDark} />}
+          {tab === "historial"  && <TabHistorial  estudiantes={estudiantes} isDark={isDark} />}
         </>
       )}
     </div>

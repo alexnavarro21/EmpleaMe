@@ -46,6 +46,26 @@ router.get("/estudiante", verificarToken, soloRol("estudiante"), async (req, res
   }
 });
 
+// GET /api/postulaciones/empresa/aceptados  — empresa ve postulantes aceptados (para completar práctica)
+router.get("/empresa/aceptados", verificarToken, soloRol("empresa"), async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT p.id, p.estado, p.fecha_creacion,
+              pe.usuario_id AS estudiante_id, pe.nombre_completo, pe.carrera,
+              v.titulo AS vacante_titulo, v.id AS vacante_id, v.tipo AS vacante_tipo
+       FROM postulaciones p
+       JOIN perfiles_estudiantes pe ON pe.usuario_id = p.estudiante_id
+       JOIN vacantes v ON v.id = p.vacante_id
+       WHERE v.empresa_id = ? AND p.estado = 'aceptado'
+       ORDER BY p.fecha_creacion DESC`,
+      [req.usuario.id]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
 // GET /api/postulaciones/empresa  — empresa ve postulantes pendientes de todas sus vacantes
 router.get("/empresa", verificarToken, soloRol("empresa"), async (req, res) => {
   try {
@@ -103,6 +123,47 @@ router.put("/:id/estado", verificarToken, soloRol("empresa"), async (req, res) =
     if (result.affectedRows === 0)
       return res.status(404).json({ error: "Postulación no encontrada o sin permisos" });
     res.json({ mensaje: "Estado actualizado" });
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// PUT /api/postulaciones/:id/completar  — empresa marca práctica como completada
+// Solo aplica a postulaciones en estado 'aceptado'
+// Crea automáticamente un registro en historial_laboral del estudiante
+router.put("/:id/completar", verificarToken, soloRol("empresa"), async (req, res) => {
+  try {
+    // Verificar que la postulación pertenece a una vacante de esta empresa y está aceptada
+    const [[post]] = await db.query(
+      `SELECT p.id, p.estudiante_id, p.estado,
+              v.titulo, v.tipo,
+              pe.nombre_empresa
+       FROM postulaciones p
+       JOIN vacantes v ON v.id = p.vacante_id
+       JOIN perfiles_empresas pe ON pe.usuario_id = v.empresa_id
+       WHERE p.id = ? AND v.empresa_id = ?`,
+      [req.params.id, req.usuario.id]
+    );
+    if (!post)
+      return res.status(404).json({ error: "Postulación no encontrada o sin permisos" });
+    if (post.estado !== "aceptado")
+      return res.status(400).json({ error: "Solo se pueden completar postulaciones aceptadas" });
+
+    // Marcar como completada
+    await db.query(
+      "UPDATE postulaciones SET estado = 'completado', fecha_completada = NOW() WHERE id = ?",
+      [req.params.id]
+    );
+
+    // Crear entrada en historial laboral
+    await db.query(
+      `INSERT INTO historial_laboral
+         (estudiante_id, empresa_nombre, cargo, fecha_fin, tipo, postulacion_id)
+       VALUES (?, ?, ?, CURDATE(), 'practica_completada', ?)`,
+      [post.estudiante_id, post.nombre_empresa, post.titulo, post.id]
+    );
+
+    res.json({ mensaje: "Práctica marcada como completada" });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }

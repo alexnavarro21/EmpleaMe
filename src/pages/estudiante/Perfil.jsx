@@ -6,7 +6,7 @@ import { Card, Badge, PrimaryButton, SecondaryButton, FormField, PageHeader, Tex
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
 import { getEstudianteById, actualizarPerfilEstudiante, getPostulacionesEstudiante } from "../../services/api";
 
-const tabs = ["Personal", "Académico", "Habilidades", "Video", "Postulaciones"];
+const tabs = ["Personal", "Académico", "Habilidades", "Idiomas & Historial", "Video", "Postulaciones"];
 
 const careerDisplay = {
   "Administracion": "Administración",
@@ -28,7 +28,11 @@ export default function EstudiantePerfil() {
   const [biografia, setBiografia] = useState("");
   const [semestre, setSemestre] = useState("");
   const [promedio, setPromedio] = useState("");
+  const [estadoCivil, setEstadoCivil] = useState("");
   const [habilidades, setHabilidades] = useState([]);
+  const [idiomas, setIdiomas] = useState([]);
+  const [historialAcademico, setHistorialAcademico] = useState([]);
+  const [historialLaboral, setHistorialLaboral] = useState([]);
   const [postulaciones, setPostulaciones] = useState([]);
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
@@ -51,7 +55,11 @@ export default function EstudiantePerfil() {
         setBiografia(data.biografia || "");
         setSemestre(data.semestre ? String(data.semestre) : "");
         setPromedio(data.promedio ? String(data.promedio) : "");
+        setEstadoCivil(data.estado_civil || "");
         setHabilidades(data.habilidades || []);
+        setIdiomas(data.idiomas || []);
+        setHistorialAcademico(data.historial_academico || []);
+        setHistorialLaboral(data.historial_laboral || []);
       }
       if (posts.status === "fulfilled") setPostulaciones(posts.value);
     }).finally(() => setLoading(false));
@@ -68,6 +76,7 @@ export default function EstudiantePerfil() {
         biografia,
         semestre: semestre ? parseInt(semestre) : null,
         promedio: promedio ? parseFloat(promedio) : null,
+        estado_civil: estadoCivil || null,
       });
       setSaveMsg("Cambios guardados");
       setEditMode(false);
@@ -288,6 +297,25 @@ const descargarCV = () => {
                     value={usuario.correo || ""}
                     disabled
                   />
+                  <div className="mb-4">
+                    <label className={`block text-xs mb-1.5 ${M}`}>Estado civil</label>
+                    <select
+                      value={estadoCivil}
+                      onChange={(e) => setEstadoCivil(e.target.value)}
+                      disabled={!editMode}
+                      className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
+                        isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
+                               : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
+                      } disabled:opacity-60`}
+                    >
+                      <option value="">Sin especificar</option>
+                      <option value="soltero">Soltero/a</option>
+                      <option value="casado">Casado/a</option>
+                      <option value="divorciado">Divorciado/a</option>
+                      <option value="viudo">Viudo/a</option>
+                      <option value="conviviente civil">Conviviente civil</option>
+                    </select>
+                  </div>
                   {editMode && (
                     <div className="col-span-2 mt-2">
                       <PrimaryButton className="w-full" onClick={handleGuardar} disabled={saving}>
@@ -391,11 +419,93 @@ const descargarCV = () => {
                         <SoftSkillBar
                           key={h.id || h.nombre}
                           label={h.nombre}
-                          percentage={h.nivel_dominio === "Avanzado" ? 90 : h.nivel_dominio === "Intermedio" ? 65 : 40}
+                          percentage={h.porcentaje ?? (h.nivel_dominio === "Avanzado" ? 90 : h.nivel_dominio === "Intermedio" ? 65 : 40)}
                         />
                       ))}
                     </div>
                   )}
+                </div>
+              )}
+
+              {activeTab === "Idiomas & Historial" && (
+                <div className="flex flex-col gap-6">
+                  {/* Idiomas */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Icon icon="mdi:translate" width={16} className="text-[#378ADD]" />
+                      <p className={`text-xs font-semibold ${T}`}>Idiomas</p>
+                    </div>
+                    {idiomas.length === 0 ? (
+                      <p className={`text-xs ${M}`}>Sin idiomas registrados. El docente puede agregarlos desde el panel de gestión.</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {idiomas.map((i) => (
+                          <span key={i.id} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full border ${B} ${T}`}>
+                            {i.idioma}
+                            <span className={`text-xs ${M}`}>· {i.nivel}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Historial académico */}
+                  <div className={`pt-5 border-t ${B}`}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Icon icon="mdi:school" width={16} className="text-[#378ADD]" />
+                      <p className={`text-xs font-semibold ${T}`}>Historial académico</p>
+                    </div>
+                    {historialAcademico.length === 0 ? (
+                      <p className={`text-xs ${M}`}>Sin registros académicos. El docente puede agregarlos desde el panel de gestión.</p>
+                    ) : (
+                      <div className="flex flex-col gap-3">
+                        {historialAcademico.map((a) => (
+                          <div key={a.id} className={`p-3 rounded-lg border ${B}`}>
+                            <p className={`text-sm font-semibold ${T}`}>{a.titulo}</p>
+                            <p className={`text-xs ${M}`}>{a.institucion}{a.area ? ` · ${a.area}` : ""}</p>
+                            {(a.fecha_inicio || a.fecha_fin) && (
+                              <p className={`text-xs ${M} mt-0.5`}>{a.fecha_inicio || "?"} – {a.fecha_fin || "En curso"}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Historial laboral */}
+                  <div className={`pt-5 border-t ${B}`}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Icon icon="mdi:briefcase" width={16} className="text-[#378ADD]" />
+                      <p className={`text-xs font-semibold ${T}`}>Experiencia laboral</p>
+                    </div>
+                    {historialLaboral.length === 0 ? (
+                      <p className={`text-xs ${M}`}>Sin experiencia laboral registrada.</p>
+                    ) : (
+                      <div className="flex flex-col gap-3">
+                        {historialLaboral.map((l) => (
+                          <div key={l.id} className={`p-3 rounded-lg border ${B}`}>
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <p className={`text-sm font-semibold ${T}`}>{l.cargo}</p>
+                                <p className={`text-xs ${M}`}>{l.empresa_nombre}</p>
+                                {(l.fecha_inicio || l.fecha_fin) && (
+                                  <p className={`text-xs ${M} mt-0.5`}>
+                                    {l.fecha_inicio ? new Date(l.fecha_inicio).toLocaleDateString("es-CL", { month: "short", year: "numeric" }) : "?"}
+                                    {" – "}
+                                    {l.fecha_fin ? new Date(l.fecha_fin).toLocaleDateString("es-CL", { month: "short", year: "numeric" }) : "Presente"}
+                                  </p>
+                                )}
+                                {l.descripcion && <p className={`text-xs ${M} mt-1`}>{l.descripcion}</p>}
+                              </div>
+                              <Badge color={l.tipo === "practica_completada" ? "green" : "blue"}>
+                                {l.tipo === "practica_completada" ? "Práctica" : "Verificado"}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -410,9 +520,10 @@ const descargarCV = () => {
                   ) : (
                     postulaciones.map((p) => {
                       const estadoConfig = {
-                        pendiente: { color: "blue",  icon: "mdi:clock-outline",        label: "Pendiente" },
-                        aceptado:  { color: "green", icon: "mdi:check-circle-outline", label: "Aceptado"  },
-                        rechazado: { color: "red",   icon: "mdi:close-circle-outline", label: "Rechazado" },
+                        pendiente:  { color: "blue",  icon: "mdi:clock-outline",        label: "Pendiente"   },
+                        aceptado:   { color: "green", icon: "mdi:check-circle-outline", label: "Aceptado"    },
+                        rechazado:  { color: "red",   icon: "mdi:close-circle-outline", label: "Rechazado"   },
+                        completado: { color: "green", icon: "mdi:briefcase-check",      label: "Completado"  },
                       }[p.estado] || { color: "gray", icon: "mdi:help-circle-outline", label: p.estado };
 
                       return (
