@@ -5,6 +5,7 @@ import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, SecondaryButton, FormField, PageHeader, TextAreaField, SoftSkillBar } from "../../components/ui";
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
 import { getEstudianteById, actualizarPerfilEstudiante, getPostulacionesEstudiante } from "../../services/api";
+import { REGIONES_COMUNAS, REGIONES } from "../../data/regionesComunas";
 
 const tabs = ["Personal", "Habilidades", "Idiomas & Historial", "Postulaciones"];
 
@@ -29,6 +30,9 @@ export default function EstudiantePerfil() {
   const [semestre, setSemestre] = useState("");
   const [promedio, setPromedio] = useState("");
   const [estadoCivil, setEstadoCivil] = useState("");
+  const [rut, setRut] = useState("");
+  const [region, setRegion] = useState("");
+  const [comuna, setComuna] = useState("");
   const [habilidades, setHabilidades] = useState([]);
   const [idiomas, setIdiomas] = useState([]);
   const [historialAcademico, setHistorialAcademico] = useState([]);
@@ -56,6 +60,9 @@ export default function EstudiantePerfil() {
         setSemestre(data.semestre ? String(data.semestre) : "");
         setPromedio(data.promedio ? String(data.promedio) : "");
         setEstadoCivil(data.estado_civil || "");
+        setRut(data.rut || "");
+        setRegion(data.region || "");
+        setComuna(data.comuna || "");
         setHabilidades(data.habilidades || []);
         setIdiomas(data.idiomas || []);
         setHistorialAcademico(data.historial_academico || []);
@@ -77,6 +84,9 @@ export default function EstudiantePerfil() {
         semestre: semestre ? parseInt(semestre) : null,
         promedio: promedio ? parseFloat(promedio) : null,
         estado_civil: estadoCivil || null,
+        rut: rut || null,
+        region: region || null,
+        comuna: comuna || null,
       });
       setSaveMsg("Cambios guardados");
       setEditMode(false);
@@ -230,7 +240,14 @@ const descargarCV = () => {
               <Icon icon="mynaui:user-solid" width={40} className="text-[#378ADD]" />
             </div>
             <p className={`text-base font-semibold ${T}`}>{nombre || "Sin nombre"}</p>
-            <p className={`text-xs ${M} mb-2`}>{nombreCarrera || "Sin carrera"}</p>
+            <p className={`text-xs ${M}`}>{nombreCarrera || "Sin carrera"}</p>
+            {(comuna || region) && (
+              <p className={`text-xs ${M} mb-1 flex items-center justify-center gap-1`}>
+                <Icon icon="mdi:map-marker-outline" width={12} />
+                {[comuna, region].filter(Boolean).join(", ")}
+              </p>
+            )}
+            {rut && <p className={`text-xs ${M} mb-2`}>RUT: {rut}</p>}
             <Badge color="blue">Estudiante Activo</Badge>
             <div className={`mt-4 pt-4 border-t ${B} text-left`}>
               <div className="flex justify-between text-xs mb-1">
@@ -283,6 +300,13 @@ const descargarCV = () => {
                     className="col-span-2"
                   />
                   <FormField
+                    label="RUT"
+                    placeholder="12.345.678-9"
+                    value={rut}
+                    onChange={(e) => setRut(e.target.value)}
+                    disabled={!editMode}
+                  />
+                  <FormField
                     label="Teléfono"
                     type="tel"
                     placeholder="+56 9 1234 5678"
@@ -330,6 +354,40 @@ const descargarCV = () => {
                       <option value="">Selecciona tu carrera</option>
                       <option value="Administracion">Administración</option>
                       <option value="Mecanica Automotriz">Mecánica Automotriz</option>
+                    </select>
+                  </div>
+                  <div className="mb-4">
+                    <label className={`block text-xs mb-1.5 ${M}`}>Región</label>
+                    <select
+                      value={region}
+                      onChange={(e) => { setRegion(e.target.value); setComuna(""); }}
+                      disabled={!editMode}
+                      className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
+                        isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
+                               : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
+                      } disabled:opacity-60`}
+                    >
+                      <option value="">Selecciona tu región</option>
+                      {REGIONES.map((r) => (
+                        <option key={r} value={r}>{r}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-4">
+                    <label className={`block text-xs mb-1.5 ${M}`}>Comuna</label>
+                    <select
+                      value={comuna}
+                      onChange={(e) => setComuna(e.target.value)}
+                      disabled={!editMode || !region}
+                      className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
+                        isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
+                               : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
+                      } disabled:opacity-60`}
+                    >
+                      <option value="">{region ? "Selecciona tu comuna" : "Primero selecciona región"}</option>
+                      {(REGIONES_COMUNAS[region] || []).map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
                     </select>
                   </div>
                   <TextAreaField

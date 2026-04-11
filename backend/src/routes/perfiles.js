@@ -53,14 +53,16 @@ router.get("/estudiante/:id", verificarToken, async (req, res) => {
 
 // PUT /api/perfiles/estudiante/:id
 router.put("/estudiante/:id", verificarToken, async (req, res) => {
-  const { nombre_completo, carrera, telefono, biografia, semestre, promedio, estado_civil } = req.body;
+  const { nombre_completo, carrera, telefono, biografia, semestre, promedio, estado_civil, rut, region, comuna } = req.body;
   try {
     await db.query(
       `UPDATE perfiles_estudiantes
-       SET nombre_completo=?, carrera=?, telefono=?, biografia=?, semestre=?, promedio=?, estado_civil=?
+       SET nombre_completo=?, carrera=?, telefono=?, biografia=?, semestre=?, promedio=?,
+           estado_civil=?, rut=?, region=?, comuna=?
        WHERE usuario_id=?`,
       [nombre_completo, carrera, telefono || null, biografia || null,
-       semestre || null, promedio || null, estado_civil || null, req.params.id]
+       semestre || null, promedio || null, estado_civil || null,
+       rut || null, region || null, comuna || null, req.params.id]
     );
     res.json({ mensaje: "Perfil actualizado" });
   } catch (err) {
@@ -85,11 +87,11 @@ router.get("/empresa/:id", verificarToken, async (req, res) => {
 
 // PUT /api/perfiles/empresa/:id
 router.put("/empresa/:id", verificarToken, async (req, res) => {
-  const { nombre_empresa, telefono_contacto, descripcion } = req.body;
+  const { nombre_empresa, telefono_contacto, descripcion, region, comuna } = req.body;
   try {
     await db.query(
-      "UPDATE perfiles_empresas SET nombre_empresa=?, telefono_contacto=?, descripcion=? WHERE usuario_id=?",
-      [nombre_empresa, telefono_contacto, descripcion, req.params.id]
+      "UPDATE perfiles_empresas SET nombre_empresa=?, telefono_contacto=?, descripcion=?, region=?, comuna=? WHERE usuario_id=?",
+      [nombre_empresa, telefono_contacto, descripcion, region || null, comuna || null, req.params.id]
     );
     res.json({ mensaje: "Perfil actualizado" });
   } catch (err) {
@@ -102,6 +104,7 @@ router.get("/empresas", verificarToken, async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT pe.usuario_id, pe.nombre_empresa, pe.descripcion, pe.telefono_contacto,
+              pe.region, pe.comuna,
               COUNT(v.id) AS total_vacantes
        FROM perfiles_empresas pe
        LEFT JOIN vacantes v ON v.empresa_id = pe.usuario_id AND v.esta_activa = TRUE
@@ -119,6 +122,7 @@ router.get("/estudiantes", verificarToken, async (req, res) => {
     const [rows] = await db.query(
       `SELECT pe.usuario_id, pe.nombre_completo, pe.carrera, pe.semestre,
               pe.promedio, pe.calificacion_docente, pe.biografia,
+              pe.region, pe.comuna,
               GROUP_CONCAT(h.nombre SEPARATOR '||') AS habilidades_raw
        FROM perfiles_estudiantes pe
        LEFT JOIN habilidades_estudiantes he ON he.estudiante_id = pe.usuario_id
