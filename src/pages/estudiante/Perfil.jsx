@@ -330,7 +330,7 @@ const descargarCV = () => {
                     type="number"
                     value={semestre}
                     onChange={(e) => setSemestre(e.target.value)}
-                    disabled={!editMode}
+                    disabled
                   />
                   <FormField
                     label="Promedio general"
@@ -341,7 +341,7 @@ const descargarCV = () => {
                     max="7"
                     value={promedio}
                     onChange={(e) => setPromedio(e.target.value)}
-                    disabled={!editMode}
+                    disabled
                   />
                   <TextAreaField
                     label="Sobre mí / Presentación"

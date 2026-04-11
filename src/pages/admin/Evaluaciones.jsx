@@ -61,46 +61,156 @@ function avgOf(map) {
   return vals.length ? starToNota(vals.reduce((a, b) => a + b, 0) / vals.length) : "—";
 }
 
+// ── StudentSearch ─────────────────────────────────────────────────────────────
+
+function StudentSearch({ estudiantes, selectedId, onSelect, isDark }) {
+  const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
+  const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
+  const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
+
+  const [query, setQuery]   = useState("");
+  const [open, setOpen]     = useState(false);
+  const wrapRef             = useRef(null);
+
+  const selected = estudiantes.find((e) => String(e.usuario_id) === String(selectedId));
+
+  const filtered = query.trim()
+    ? estudiantes.filter((e) =>
+        e.nombre_completo?.toLowerCase().includes(query.toLowerCase()) ||
+        e.carrera?.toLowerCase().includes(query.toLowerCase())
+      )
+    : estudiantes;
+
+  // Cerrar al hacer clic fuera
+  useEffect(() => {
+    function handler(e) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  function handleSelect(e) {
+    onSelect(String(e.usuario_id));
+    setQuery("");
+    setOpen(false);
+  }
+
+  function handleClear() {
+    onSelect("");
+    setQuery("");
+    setOpen(false);
+  }
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <label className={`block text-xs mb-1.5 ${M}`}>Estudiante</label>
+
+      {selected && !open ? (
+        <div className={`w-full px-3 py-2.5 rounded-lg text-sm border flex items-center justify-between ${
+          isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
+        }`}>
+          <div className="flex items-center gap-2 min-w-0">
+            <Icon icon="mynaui:user-solid" width={14} className="text-[#378ADD] flex-shrink-0" />
+            <span className="truncate">{selected.nombre_completo}</span>
+            <span className={`text-xs flex-shrink-0 ${M}`}>· {selected.carrera || "Sin carrera"}</span>
+          </div>
+          <button onClick={handleClear} className={`ml-2 flex-shrink-0 hover:text-red-400 transition-colors ${M}`}>
+            <Icon icon="mdi:close" width={14} />
+          </button>
+        </div>
+      ) : (
+        <div className="relative">
+          <Icon icon="mdi:magnify" width={15} className={`absolute left-3 top-1/2 -translate-y-1/2 ${M}`} />
+          <input
+            type="text"
+            autoFocus={open}
+            placeholder="Buscar estudiante por nombre o carrera..."
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+            onFocus={() => setOpen(true)}
+            className={`w-full pl-8 pr-3 py-2.5 rounded-lg text-sm outline-none border focus:border-[#378ADD] transition-colors ${
+              isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder:text-[#888780]"
+                     : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder:text-[#888780]"
+            }`}
+          />
+        </div>
+      )}
+
+      {open && (
+        <div className={`absolute z-20 mt-1 w-full rounded-xl border shadow-lg overflow-hidden ${
+          isDark ? "bg-[#262624] border-[#3a3a38]" : "bg-white border-[#D3D1C7]"
+        }`}>
+          <div style={{ maxHeight: 220, overflowY: "auto" }}>
+            {filtered.length === 0 ? (
+              <div className={`px-4 py-3 text-xs ${M}`}>Sin resultados</div>
+            ) : (
+              filtered.map((e) => (
+                <button
+                  key={e.usuario_id}
+                  onMouseDown={() => handleSelect(e)}
+                  className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors text-sm ${
+                    isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"
+                  } ${String(e.usuario_id) === String(selectedId) ? isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]" : ""}`}
+                >
+                  <Icon icon="mynaui:user-solid" width={14} className="text-[#378ADD] flex-shrink-0" />
+                  <span className={T}>{e.nombre_completo}</span>
+                  <span className={`text-xs ml-auto flex-shrink-0 ${M}`}>{e.carrera || "Sin carrera"}</span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Tab components ────────────────────────────────────────────────────────────
 
-// TAB 1: Asignar habilidades técnicas
+// TAB 1: Asignar habilidades técnicas y blandas
 function TabHabilidades({ estudiantes, habilidades, isDark }) {
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
   const S = isDark ? "bg-[#313130]" : "bg-[#F7F6F3]";
 
-  const [selectedId, setSelectedId] = useState("");
-  const [selected, setSelected] = useState({});   // habilidad_id → nivel_dominio | ""
+  const [selectedId, setSelectedId]     = useState("");
+  const [selected, setSelected]         = useState({});  // habilidad_id → nivel_dominio | ""
   const [currentSkills, setCurrentSkills] = useState([]);
-  const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState("");
+  const [saving, setSaving]             = useState(false);
+  const [msg, setMsg]                   = useState("");
 
-  const tecnicas = habilidades.filter(
-    (h) => h.categoria === "tecnica" || h.categoria === "técnica"
-  );
-
-  const est = estudiantes.find((e) => String(e.usuario_id) === String(selectedId));
+  const tecnicas = habilidades.filter((h) => h.categoria === "tecnica" || h.categoria === "técnica");
+  const blandas  = habilidades.filter((h) => h.categoria === "blanda");
 
   useEffect(() => {
     if (!selectedId) { setCurrentSkills([]); setSelected({}); return; }
-    // Pre-cargar skills actuales del estudiante
     import("../../services/api").then(({ getEstudianteById }) => {
       getEstudianteById(selectedId).then((data) => {
-        const curr = data.habilidades?.filter((h) => h.categoria === "tecnica") || [];
+        const curr = data.habilidades || [];
         setCurrentSkills(curr);
         const pre = {};
-        curr.forEach((h) => { pre[h.id || h.habilidad_id] = h.nivel_dominio || ""; });
+        curr.forEach((h) => { pre[h.id || h.habilidad_id] = h.nivel_dominio || "blanda"; });
         setSelected(pre);
       }).catch(() => {});
     });
   }, [selectedId]);
 
-  function toggle(hId) {
+  function toggleTecnica(hId) {
     setSelected((prev) => {
       const copy = { ...prev };
       if (copy[hId]) delete copy[hId];
       else copy[hId] = "Intermedio";
+      return copy;
+    });
+  }
+
+  function toggleBlanda(hId) {
+    setSelected((prev) => {
+      const copy = { ...prev };
+      if (copy[hId]) delete copy[hId];
+      else copy[hId] = "blanda";
       return copy;
     });
   }
@@ -115,7 +225,7 @@ function TabHabilidades({ estudiantes, habilidades, isDark }) {
           .filter(([, nivel]) => nivel)
           .map(([habilidad_id, nivel_dominio]) => ({
             habilidad_id: Number(habilidad_id),
-            nivel_dominio,
+            nivel_dominio: nivel_dominio === "blanda" ? null : nivel_dominio,
           })),
       });
       setMsg("Habilidades asignadas correctamente");
@@ -126,90 +236,96 @@ function TabHabilidades({ estudiantes, habilidades, isDark }) {
     }
   }
 
+  function SkillRow({ h, activo, onToggle, showLevel }) {
+    return (
+      <div
+        className={`flex items-center gap-3 px-4 py-3 transition-colors ${
+          activo
+            ? isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]"
+            : isDark ? "hover:bg-[#313130]/60" : "hover:bg-[#F7F6F3]"
+        }`}
+      >
+        <button
+          onClick={() => onToggle(h.id)}
+          className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+            activo ? "bg-[#0F4D8A] border-[#0F4D8A]" : "border-[#888780]"
+          }`}
+        >
+          {activo && <Icon icon="mdi:check" width={10} className="text-white" />}
+        </button>
+        <span className={`text-sm flex-1 ${T}`}>{h.nombre}</span>
+        {activo && showLevel && (
+          <select
+            value={selected[h.id] || "Intermedio"}
+            onChange={(e) => setSelected((prev) => ({ ...prev, [h.id]: e.target.value }))}
+            onClick={(e) => e.stopPropagation()}
+            className={`text-xs px-2 py-1 rounded-lg border outline-none focus:border-[#378ADD] ${
+              isDark ? "bg-[#262624] border-[#3a3a38] text-[#D3D1C7]"
+                     : "bg-white border-[#D3D1C7] text-[#2C2C2A]"
+            }`}
+          >
+            <option value="Basico">Básico</option>
+            <option value="Intermedio">Intermedio</option>
+            <option value="Avanzado">Avanzado</option>
+          </select>
+        )}
+      </div>
+    );
+  }
+
+  const totalSeleccionadas = Object.keys(selected).length;
+
   return (
     <div className="grid grid-cols-3 gap-6">
-      <div className="col-span-2">
+      <div className="col-span-2 flex flex-col gap-4">
         <Card>
-          <h3 className={`text-sm font-semibold ${T} mb-4`}>Asignar habilidades técnicas</h3>
+          <h3 className={`text-sm font-semibold ${T} mb-4`}>Asignar habilidades</h3>
 
           <div className="mb-4">
-            <label className={`block text-xs mb-1.5 ${M}`}>Estudiante</label>
-            <select
-              value={selectedId}
-              onChange={(e) => setSelectedId(e.target.value)}
-              className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border focus:border-[#378ADD] ${
-                isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
-                       : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
-              }`}
-            >
-              <option value="">Seleccionar estudiante...</option>
-              {estudiantes.map((e) => (
-                <option key={e.usuario_id} value={e.usuario_id}>
-                  {e.nombre_completo} — {e.carrera || "Sin carrera"}
-                </option>
-              ))}
-            </select>
+            <StudentSearch
+              estudiantes={estudiantes}
+              selectedId={selectedId}
+              onSelect={(id) => setSelectedId(id)}
+              isDark={isDark}
+            />
           </div>
 
-          {est && (
-            <div className={`mb-4 px-4 py-2 rounded-lg flex items-center gap-2 ${isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]"}`}>
-              <Icon icon="mynaui:user-solid" width={14} className="text-[#378ADD]" />
-              <span className={`text-xs text-[#378ADD]`}>{est.carrera || "Sin carrera"} · Sem. {est.semestre || "—"}</span>
-            </div>
-          )}
-
-          {selectedId && tecnicas.length > 0 && (
-            <div className={`rounded-xl border ${B} overflow-hidden`}>
-              <div className={`px-4 py-2.5 text-xs font-medium ${M} ${S} border-b ${B}`}>
-                Selecciona las habilidades y el nivel de dominio
-              </div>
-              <div className="divide-y" style={{ maxHeight: 360, overflowY: "auto" }}>
-                {tecnicas.map((h) => {
-                  const activo = !!selected[h.id];
-                  return (
-                    <div
-                      key={h.id}
-                      className={`flex items-center gap-3 px-4 py-3 transition-colors ${
-                        activo
-                          ? isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]"
-                          : isDark ? "hover:bg-[#313130]/60" : "hover:bg-[#F7F6F3]"
-                      }`}
-                    >
-                      <button
-                        onClick={() => toggle(h.id)}
-                        className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                          activo ? "bg-[#0F4D8A] border-[#0F4D8A]" : `border-[#888780]`
-                        }`}
-                      >
-                        {activo && <Icon icon="mdi:check" width={10} className="text-white" />}
-                      </button>
-                      <span className={`text-sm flex-1 ${T}`}>{h.nombre}</span>
-                      {activo && (
-                        <select
-                          value={selected[h.id] || "Intermedio"}
-                          onChange={(e) => setSelected((prev) => ({ ...prev, [h.id]: e.target.value }))}
-                          onClick={(e) => e.stopPropagation()}
-                          className={`text-xs px-2 py-1 rounded-lg border outline-none focus:border-[#378ADD] ${
-                            isDark ? "bg-[#262624] border-[#3a3a38] text-[#D3D1C7]"
-                                   : "bg-white border-[#D3D1C7] text-[#2C2C2A]"
-                          }`}
-                        >
-                          <option value="Basico">Básico</option>
-                          <option value="Intermedio">Intermedio</option>
-                          <option value="Avanzado">Avanzado</option>
-                        </select>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {!selectedId && (
+          {!selectedId ? (
             <div className={`text-center py-10 border rounded-xl ${B} ${M}`}>
               <Icon icon="mynaui:user-solid" width={32} className="mx-auto mb-2 opacity-30" />
-              <p className="text-sm">Selecciona un estudiante para ver las habilidades</p>
+              <p className="text-sm">Busca un estudiante para asignar habilidades</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {/* Técnicas */}
+              {tecnicas.length > 0 && (
+                <div className={`rounded-xl border ${B} overflow-hidden`}>
+                  <div className={`px-4 py-2.5 text-xs font-semibold ${M} ${S} border-b ${B} flex items-center gap-2`}>
+                    <Icon icon="mdi:wrench" width={13} />
+                    Habilidades técnicas
+                  </div>
+                  <div className="divide-y" style={{ maxHeight: 260, overflowY: "auto" }}>
+                    {tecnicas.map((h) => (
+                      <SkillRow key={h.id} h={h} activo={!!selected[h.id]} onToggle={toggleTecnica} showLevel />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Blandas */}
+              {blandas.length > 0 && (
+                <div className={`rounded-xl border ${B} overflow-hidden`}>
+                  <div className={`px-4 py-2.5 text-xs font-semibold ${M} ${S} border-b ${B} flex items-center gap-2`}>
+                    <Icon icon="mdi:account-heart" width={13} />
+                    Habilidades blandas
+                  </div>
+                  <div className="divide-y" style={{ maxHeight: 200, overflowY: "auto" }}>
+                    {blandas.map((h) => (
+                      <SkillRow key={h.id} h={h} activo={!!selected[h.id]} onToggle={toggleBlanda} showLevel={false} />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -220,10 +336,10 @@ function TabHabilidades({ estudiantes, habilidades, isDark }) {
           <div className="mt-4">
             <PrimaryButton
               onClick={handleGuardar}
-              disabled={!selectedId || !Object.keys(selected).length || saving}
+              disabled={!selectedId || !totalSeleccionadas || saving}
               className="w-full"
             >
-              {saving ? "Guardando..." : `Guardar ${Object.keys(selected).length} habilidades`}
+              {saving ? "Guardando..." : `Guardar ${totalSeleccionadas} habilidades`}
             </PrimaryButton>
           </div>
         </Card>
@@ -232,17 +348,30 @@ function TabHabilidades({ estudiantes, habilidades, isDark }) {
       <Card>
         <h3 className={`text-sm font-semibold ${T} mb-3`}>Habilidades actuales</h3>
         {currentSkills.length === 0 ? (
-          <p className={`text-xs ${M}`}>{selectedId ? "Sin habilidades técnicas asignadas" : "Selecciona un estudiante"}</p>
+          <p className={`text-xs ${M}`}>{selectedId ? "Sin habilidades asignadas" : "Busca un estudiante"}</p>
         ) : (
-          <div className="flex flex-col gap-2">
-            {currentSkills.map((h, i) => (
-              <div key={i} className={`flex justify-between items-center py-1.5 border-b ${B} last:border-0`}>
-                <span className={`text-xs ${T} flex-1`}>{h.nombre}</span>
-                <Badge color={h.nivel_dominio === "Avanzado" ? "green" : h.nivel_dominio === "Intermedio" ? "blue" : "gray"}>
-                  {h.nivel_dominio || "—"}
-                </Badge>
-              </div>
-            ))}
+          <div className="flex flex-col gap-1">
+            {["tecnica", "blanda"].map((cat) => {
+              const grupo = currentSkills.filter((h) => h.categoria === cat || (cat === "tecnica" && h.categoria === "técnica"));
+              if (!grupo.length) return null;
+              return (
+                <div key={cat} className="mb-3">
+                  <p className={`text-xs font-semibold uppercase tracking-wide ${M} mb-1.5`}>
+                    {cat === "tecnica" ? "Técnicas" : "Blandas"}
+                  </p>
+                  {grupo.map((h, i) => (
+                    <div key={i} className={`flex justify-between items-center py-1.5 border-b ${B} last:border-0`}>
+                      <span className={`text-xs ${T} flex-1`}>{h.nombre}</span>
+                      {h.nivel_dominio && (
+                        <Badge color={h.nivel_dominio === "Avanzado" ? "green" : h.nivel_dominio === "Intermedio" ? "blue" : "gray"}>
+                          {h.nivel_dominio}
+                        </Badge>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
           </div>
         )}
       </Card>
@@ -301,17 +430,12 @@ function TabEvaluacion({ estudiantes, habilidades, isDark }) {
           <h3 className={`text-sm font-semibold ${T} mb-4`}>Nueva evaluación docente</h3>
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label className={`block text-xs mb-1.5 ${M}`}>Estudiante</label>
-              <select value={selectedId} onChange={(e) => { setSelectedId(e.target.value); setRatings({}); }}
-                className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border focus:border-[#378ADD] ${
-                  isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
-                }`}
-              >
-                <option value="">Seleccionar...</option>
-                {estudiantes.map((e) => (
-                  <option key={e.usuario_id} value={e.usuario_id}>{e.nombre_completo}</option>
-                ))}
-              </select>
+              <StudentSearch
+                estudiantes={estudiantes}
+                selectedId={selectedId}
+                onSelect={(id) => { setSelectedId(id); setRatings({}); }}
+                isDark={isDark}
+              />
             </div>
             <div>
               <label className={`block text-xs mb-1.5 ${M}`}>Período</label>
