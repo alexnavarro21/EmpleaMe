@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
-import { Card, Badge, SecondaryButton, PrimaryButton, PageHeader } from "../components/ui";
+import { Card, Badge, SecondaryButton, PrimaryButton, PageHeader, Paginacion } from "../components/ui";
 import PublicacionesUsuario from "../components/PublicacionesUsuario";
 import { getEmpresaById, getVacantesEmpresa, postularAVacante, iniciarConversacionConEmpresa, getEstudianteById } from "../services/api";
 import { calcularCompletitud } from "../utils/perfilCompletitud";
@@ -20,6 +20,9 @@ export default function PerfilEmpresaPublico() {
   const [postulando, setPostulando] = useState({});
   const [contactando, setContactando] = useState(false);
   const [perfilCompleto, setPerfilCompleto] = useState(true);
+  const [paginaVacantes, setPaginaVacantes] = useState(1);
+  const [porPaginaVacantes, setPorPaginaVacantes] = useState(6);
+  const [busquedaVacante, setBusquedaVacante] = useState("");
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -80,6 +83,14 @@ export default function PerfilEmpresaPublico() {
   }
 
   const vacantesActivas = vacantes.filter((v) => v.esta_activa);
+  const vacantesFiltradas = vacantes.filter((v) =>
+    !busquedaVacante || v.titulo?.toLowerCase().includes(busquedaVacante.toLowerCase())
+  );
+  const totalPaginasVacantes = Math.ceil(vacantesFiltradas.length / porPaginaVacantes);
+  const vacantesPagina = vacantesFiltradas.slice(
+    (paginaVacantes - 1) * porPaginaVacantes,
+    paginaVacantes * porPaginaVacantes
+  );
 
   return (
     <div>
@@ -152,22 +163,45 @@ export default function PerfilEmpresaPublico() {
           )}
 
           <Card>
-            <h3 className={`text-sm font-semibold ${T} mb-4 flex items-center gap-2`}>
-              <Icon icon="mdi:clipboard-list-outline" width={16} className="text-[#378ADD]" />
-              Vacantes
-              {vacantesActivas.length > 0 && (
-                <span className="ml-1 text-xs font-normal text-[#378ADD]">{vacantesActivas.length} activa{vacantesActivas.length !== 1 ? "s" : ""}</span>
+            <div className="flex items-center gap-3 mb-4 flex-wrap">
+              <h3 className={`text-sm font-semibold ${T} flex items-center gap-2 flex-1`}>
+                <Icon icon="mdi:clipboard-list-outline" width={16} className="text-[#378ADD]" />
+                Vacantes
+                {vacantesActivas.length > 0 && (
+                  <span className="ml-1 text-xs font-normal text-[#378ADD]">{vacantesActivas.length} activa{vacantesActivas.length !== 1 ? "s" : ""}</span>
+                )}
+              </h3>
+              {vacantes.length > 0 && (
+                <div className="relative">
+                  <Icon icon="mdi:search" width={14} className={`absolute left-2.5 top-1/2 -translate-y-1/2 ${M}`} />
+                  <input
+                    type="text"
+                    placeholder="Buscar vacante..."
+                    value={busquedaVacante}
+                    onChange={(e) => { setBusquedaVacante(e.target.value); setPaginaVacantes(1); }}
+                    className={`pl-8 pr-3 py-1.5 rounded-lg text-xs outline-none border transition-all focus:border-[#378ADD] w-44 ${
+                      isDark
+                        ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
+                        : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
+                    }`}
+                  />
+                </div>
               )}
-            </h3>
+            </div>
 
             {vacantes.length === 0 ? (
               <div className={`text-center py-8 ${M}`}>
                 <Icon icon="mdi:clipboard-remove-outline" width={36} className="mx-auto mb-2" />
                 <p className="text-sm">Esta empresa no tiene vacantes publicadas.</p>
               </div>
+            ) : vacantesFiltradas.length === 0 ? (
+              <div className={`text-center py-8 ${M}`}>
+                <Icon icon="mdi:magnify-close" width={36} className="mx-auto mb-2" />
+                <p className="text-sm">Sin resultados para "{busquedaVacante}".</p>
+              </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {vacantes.map((v) => {
+                {vacantesPagina.map((v) => {
                   const estado = postulando[v.id] || "idle";
                   const activa = !!v.esta_activa;
                   return (
@@ -242,6 +276,14 @@ export default function PerfilEmpresaPublico() {
                 })}
               </div>
             )}
+            <Paginacion
+              paginaActual={paginaVacantes}
+              totalPaginas={totalPaginasVacantes}
+              onCambiar={setPaginaVacantes}
+              porPagina={porPaginaVacantes}
+              opciones={[3, 6, 9]}
+              onCambiarPorPagina={(n) => { setPorPaginaVacantes(n); setPaginaVacantes(1); }}
+            />
           </Card>
         </div>
       </div>

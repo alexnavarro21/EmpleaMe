@@ -1,3 +1,4 @@
+import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 
 export function FormField({ label, type = "text", placeholder, value, onChange, className = "", ...props }) {
@@ -166,6 +167,95 @@ export function SoftSkillBar({ label, percentage }) {
           style={{ width: `${percentage}%`, backgroundColor: color }}
         />
       </div>
+    </div>
+  );
+}
+
+export function Paginacion({ paginaActual, totalPaginas, onCambiar, porPagina, opciones, onCambiarPorPagina }) {
+  const { isDark } = useDark();
+  const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
+  const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
+  const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
+  const S = isDark ? "bg-[#313130]" : "bg-[#F7F6F3]";
+
+  const showPerPage = opciones && onCambiarPorPagina;
+  if (totalPaginas <= 1 && !showPerPage) return null;
+
+  const pages = [];
+  if (totalPaginas <= 7) {
+    for (let i = 1; i <= totalPaginas; i++) pages.push(i);
+  } else {
+    pages.push(1);
+    if (paginaActual > 3) pages.push("...");
+    for (let i = Math.max(2, paginaActual - 1); i <= Math.min(totalPaginas - 1, paginaActual + 1); i++) {
+      pages.push(i);
+    }
+    if (paginaActual < totalPaginas - 2) pages.push("...");
+    pages.push(totalPaginas);
+  }
+
+  const btnBase = `w-8 h-8 rounded-lg text-sm flex items-center justify-center transition-colors border`;
+
+  return (
+    <div className="flex items-center justify-between mt-4 gap-3 flex-wrap">
+      {/* Pagination buttons */}
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => onCambiar(paginaActual - 1)}
+          disabled={paginaActual === 1 || totalPaginas <= 1}
+          className={`${btnBase} ${B} ${M} hover:border-[#378ADD] hover:text-[#378ADD] disabled:opacity-30 disabled:cursor-not-allowed`}
+        >
+          <Icon icon="mdi:chevron-left" width={16} />
+        </button>
+
+        {pages.map((p, i) =>
+          p === "..." ? (
+            <span key={`ellipsis-${i}`} className={`w-8 text-center text-sm ${M}`}>…</span>
+          ) : (
+            <button
+              key={p}
+              onClick={() => onCambiar(p)}
+              className={`${btnBase} font-medium ${
+                p === paginaActual
+                  ? "bg-[#0F4D8A] border-[#0F4D8A] text-[#E6F1FB]"
+                  : `${S} ${B} ${T} hover:border-[#378ADD]`
+              }`}
+            >
+              {p}
+            </button>
+          )
+        )}
+
+        <button
+          onClick={() => onCambiar(paginaActual + 1)}
+          disabled={paginaActual === totalPaginas || totalPaginas <= 1}
+          className={`${btnBase} ${B} ${M} hover:border-[#378ADD] hover:text-[#378ADD] disabled:opacity-30 disabled:cursor-not-allowed`}
+        >
+          <Icon icon="mdi:chevron-right" width={16} />
+        </button>
+      </div>
+
+      {/* Per-page selector */}
+      {showPerPage && (
+        <div className={`flex items-center gap-2 text-xs ${M}`}>
+          <span>Mostrar:</span>
+          <div className="flex gap-1">
+            {opciones.map((o) => (
+              <button
+                key={o}
+                onClick={() => onCambiarPorPagina(o)}
+                className={`w-8 h-8 rounded-lg border text-xs font-medium transition-colors ${
+                  o === porPagina
+                    ? "bg-[#0F4D8A] border-[#0F4D8A] text-[#E6F1FB]"
+                    : `${S} ${B} ${T} hover:border-[#378ADD]`
+                }`}
+              >
+                {o}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

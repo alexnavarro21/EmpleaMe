@@ -4,7 +4,7 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, SecondaryButton, PageHeader, SoftSkillBar } from "../../components/ui";
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
-import { getEstudianteById, iniciarConversacion, iniciarMensajeDirecto } from "../../services/api";
+import { getEstudianteById, iniciarConversacion, iniciarMensajeDirecto, getVacantesEmpresa, enviarMensaje } from "../../services/api";
 
 const careerDisplay = {
   "Administracion": "Administración",
@@ -16,15 +16,22 @@ export default function EmpresaPerfilCandidato() {
   const navigate = useNavigate();
   const { id } = useParams();
 
+  const viewer = JSON.parse(localStorage.getItem("usuario") || "{}");
+
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [contactando, setContactando] = useState(false);
+  const [showInvitarModal, setShowInvitarModal] = useState(false);
+  const [vacantesEmpresa, setVacantesEmpresa] = useState([]);
+  const [vacanteSel, setVacanteSel] = useState(null);
+  const [enviandoInvitacion, setEnviandoInvitacion] = useState(false);
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
   const S = isDark ? "bg-[#313130]" : "bg-[#F7F6F3]";
+  const BG = isDark ? "bg-[#262624]" : "bg-white";
 
   useEffect(() => {
     getEstudianteById(id)
@@ -32,6 +39,14 @@ export default function EmpresaPerfilCandidato() {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (viewer.rol === "empresa") {
+      getVacantesEmpresa(viewer.id)
+        .then((vs) => setVacantesEmpresa(vs.filter((v) => v.esta_activa)))
+        .catch(() => {});
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -54,7 +69,6 @@ export default function EmpresaPerfilCandidato() {
     );
   }
 
-  const viewer = JSON.parse(localStorage.getItem("usuario") || "{}");
   const nombreCarrera = careerDisplay[student.carrera] || student.carrera;
   const habilidadesTecnicas = (student.habilidades || []).filter((h) => h.categoria === "tecnica");
   const habilidadesBlandas = (student.habilidades || []).filter((h) => h.categoria === "blanda");
@@ -112,7 +126,6 @@ export default function EmpresaPerfilCandidato() {
                 className="w-full flex items-center justify-center gap-2"
                 disabled={contactando}
                 onClick={async () => {
-                  const viewer = JSON.parse(localStorage.getItem("usuario") || "{}");
                   setContactando(true);
                   try {
                     if (viewer.rol === "estudiante") {
@@ -134,10 +147,15 @@ export default function EmpresaPerfilCandidato() {
                   : <Icon icon="mdi:message-outline" width={16} />}
                 {contactando ? "Abriendo chat..." : "Contactar estudiante"}
               </PrimaryButton>
-              <SecondaryButton className="w-full flex items-center justify-center gap-2">
-                <Icon icon="fluent:handshake-32-regular" width={16} />
-                Invitar a práctica
-              </SecondaryButton>
+              {viewer.rol === "empresa" && (
+                <SecondaryButton
+                  className="w-full flex items-center justify-center gap-2"
+                  onClick={() => { setVacanteSel(null); setShowInvitarModal(true); }}
+                >
+                  <Icon icon="fluent:handshake-32-regular" width={16} />
+                  Invitar a vacante
+                </SecondaryButton>
+              )}
             </div>
           </Card>
 
@@ -309,6 +327,70 @@ export default function EmpresaPerfilCandidato() {
       </div>
 
       <PublicacionesUsuario usuarioId={id} />
+
+      {showInvitarModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setShowInvitarModal(false)}
+        >
+          <div
+            className={`w-full max-w-md rounded-2xl p-6 shadow-xl ${BG}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className={`text-base font-semibold ${T} mb-1`}>Invitar a vacante</h3>
+            <p className={`text-sm ${M} mb-4`}>
+              Selecciona una vacante para invitar a <strong>{student.nombre_completo}</strong>.
+            </p>
+
+            {vacantesEmpresa.length === 0 ? (
+              <p className={`text-sm ${M} text-center py-6`}>
+                No tienes vacantes activas publicadas.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2 mb-5 max-h-56 overflow-y-auto">
+                {vacantesEmpresa.map((v) => (
+                  <button
+                    key={v.id}
+                    onClick={() => setVacanteSel(v)}
+                    className={`text-left px-4 py-3 rounded-xl border transition-colors ${
+                      vacanteSel?.id === v.id
+                        ? "border-[#378ADD] bg-[#0F4D8A]/10"
+                        : `${B} hover:border-[#378ADD]`
+                    }`}
+                  >
+                    <p className={`text-sm font-medium ${T}`}>{v.titulo}</p>
+                    <p className={`text-xs ${M}`}>{[v.area, v.modalidad].filter(Boolean).join(" · ")}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2 justify-end">
+              <SecondaryButton onClick={() => setShowInvitarModal(false)}>Cancelar</SecondaryButton>
+              <PrimaryButton
+                disabled={!vacanteSel || enviandoInvitacion}
+                onClick={async () => {
+                  setEnviandoInvitacion(true);
+                  try {
+                    const conv = await iniciarConversacion(id);
+                    const texto = `Has sido invitado/a a postular a la vacante "${vacanteSel.titulo}". ¡Revisa la oportunidad y postula desde la plataforma!\n\n[VACANTE_INVITACION:${vacanteSel.id}:${viewer.id}]`;
+                    await enviarMensaje(conv.id, texto);
+                    setShowInvitarModal(false);
+                    navigate("/empresa/mensajeria", { state: { conversacionId: conv.id } });
+                  } catch (err) {
+                    console.error("Error al enviar invitación:", err);
+                  } finally {
+                    setEnviandoInvitacion(false);
+                  }
+                }}
+              >
+                {enviandoInvitacion && <Icon icon="mdi:loading" width={16} className="animate-spin mr-1" />}
+                Enviar invitación
+              </PrimaryButton>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

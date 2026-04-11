@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
-import { Card, Badge, StatCard, PageHeader, PrimaryButton } from "../../components/ui";
+import { Card, Badge, StatCard, PageHeader, PrimaryButton, Paginacion } from "../../components/ui";
 import { getVacantesEmpresa, getPostulantesEmpresa, getPostulantesAceptados, actualizarEstadoPostulacion, iniciarConversacion, activarVacante, desactivarVacante, completarPractica } from "../../services/api";
 import PostulantesVacanteModal from "../../components/PostulantesVacanteModal";
 
@@ -26,6 +26,9 @@ export default function EmpresaDashboard() {
   const [vacanteSeleccionada, setVacanteSeleccionada] = useState(null);
   const [toggling, setToggling] = useState(null);
   const [completando, setCompletando] = useState(null);
+  const [paginaVacantes, setPaginaVacantes] = useState(1);
+  const [porPaginaVacantes, setPorPaginaVacantes] = useState(6);
+  const [busquedaVacante, setBusquedaVacante] = useState("");
 
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
@@ -111,6 +114,14 @@ export default function EmpresaDashboard() {
 
   const vacantesActivas = vacantes.filter((v) => v.esta_activa).length;
   const vacantesInactivas = vacantes.length - vacantesActivas;
+  const vacantesFiltradas = vacantes.filter((v) =>
+    !busquedaVacante || v.titulo?.toLowerCase().includes(busquedaVacante.toLowerCase())
+  );
+  const totalPaginasVacantes = Math.ceil(vacantesFiltradas.length / porPaginaVacantes);
+  const vacantesPagina = vacantesFiltradas.slice(
+    (paginaVacantes - 1) * porPaginaVacantes,
+    paginaVacantes * porPaginaVacantes
+  );
   const totalPostulantes = vacantes.reduce((acc, v) => acc + (v.total_postulantes || 0), 0);
 
   if (loading) {
@@ -147,19 +158,37 @@ export default function EmpresaDashboard() {
 
       <div className="grid grid-cols-2 gap-6">
         <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className={`text-sm font-semibold ${T} flex items-center gap-2`}>
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <h2 className={`text-sm font-semibold ${T} flex items-center gap-2 flex-1`}>
               <Icon icon="mdi:clipboard-list-outline" width={16} className="text-[#378ADD]" />
               Mis vacantes
             </h2>
+            {vacantes.length > 0 && (
+              <div className="relative">
+                <Icon icon="mdi:search" width={13} className={`absolute left-2 top-1/2 -translate-y-1/2 ${M}`} />
+                <input
+                  type="text"
+                  placeholder="Buscar..."
+                  value={busquedaVacante}
+                  onChange={(e) => { setBusquedaVacante(e.target.value); setPaginaVacantes(1); }}
+                  className={`pl-7 pr-2 py-1.5 rounded-lg text-xs outline-none border transition-all focus:border-[#378ADD] w-32 ${
+                    isDark
+                      ? "bg-[#262624] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
+                      : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
+                  }`}
+                />
+              </div>
+            )}
             <Link to="/empresa/publicar" className="text-xs text-[#378ADD] hover:underline">+ Nueva</Link>
           </div>
 
           {vacantes.length === 0 ? (
             <p className={`text-xs ${M} text-center py-8`}>No tienes vacantes publicadas aún.</p>
+          ) : vacantesFiltradas.length === 0 ? (
+            <p className={`text-xs ${M} text-center py-6`}>Sin resultados para "{busquedaVacante}".</p>
           ) : (
             <div className="flex flex-col gap-3">
-              {vacantes.map((v) => (
+              {vacantesPagina.map((v) => (
                 <div key={v.id} className={`p-3 rounded-lg border ${B} ${!v.esta_activa ? (isDark ? "opacity-60" : "opacity-70") : ""}`}>
                   <div className="flex items-center justify-between mb-1">
                     <p className={`text-sm font-medium ${T} truncate pr-2`}>{v.titulo}</p>
@@ -201,6 +230,14 @@ export default function EmpresaDashboard() {
               ))}
             </div>
           )}
+          <Paginacion
+            paginaActual={paginaVacantes}
+            totalPaginas={totalPaginasVacantes}
+            onCambiar={setPaginaVacantes}
+            porPagina={porPaginaVacantes}
+            opciones={[3, 6, 9]}
+            onCambiarPorPagina={(n) => { setPorPaginaVacantes(n); setPaginaVacantes(1); }}
+          />
         </Card>
 
         <Card>
