@@ -6,6 +6,7 @@ import { Card, Badge, PrimaryButton, SecondaryButton, FormField, PageHeader, Tex
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
 import { getEstudianteById, actualizarPerfilEstudiante, getPostulacionesEstudiante } from "../../services/api";
 import { REGIONES_COMUNAS, REGIONES } from "../../data/regionesComunas";
+import { validarRut, formatearRut } from "../../utils/validarRut";
 
 const tabs = ["Personal", "Habilidades", "Idiomas & Historial", "Postulaciones"];
 
@@ -73,6 +74,10 @@ export default function EstudiantePerfil() {
   }, [usuario.id]);
 
   const handleGuardar = async () => {
+    if (rut && !rutValido) {
+      setSaveMsg("Error: El RUT ingresado no es válido");
+      return;
+    }
     setSaving(true);
     setSaveMsg("");
     try {
@@ -200,9 +205,10 @@ const descargarCV = () => {
   const habilidadesTecnicas = habilidades.filter((h) => h.categoria === "tecnica");
   const habilidadesBlandas = habilidades.filter((h) => h.categoria === "blanda");
 
-  const completado = [nombre, carrera, telefono, biografia, semestre, promedio]
+  const rutValido = validarRut(rut);
+  const completado = [nombre, carrera, telefono, biografia, estadoCivil, rutValido ? rut : "", region, comuna]
     .filter(Boolean).length;
-  const pctCompleto = Math.round((completado / 6) * 100);
+  const pctCompleto = Math.round((completado / 8) * 100);
 
   if (loading) {
     return (
@@ -299,13 +305,32 @@ const descargarCV = () => {
                     disabled={!editMode}
                     className="col-span-2"
                   />
-                  <FormField
-                    label="RUT"
-                    placeholder="12.345.678-9"
-                    value={rut}
-                    onChange={(e) => setRut(e.target.value)}
-                    disabled={!editMode}
-                  />
+                  <div className="mb-4">
+                    <label className={`block text-xs mb-1.5 ${M}`}>RUT</label>
+                    <input
+                      type="text"
+                      placeholder="12.345.678-9"
+                      value={rut}
+                      onChange={(e) => setRut(formatearRut(e.target.value))}
+                      maxLength={12}
+                      disabled={!editMode}
+                      className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] disabled:opacity-60 ${
+                        rut && !rutValido
+                          ? "border-red-400 focus:border-red-400"
+                          : rut && rutValido
+                          ? "border-green-500 focus:border-green-500"
+                          : isDark
+                          ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder:text-[#888780]"
+                          : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder:text-[#888780]"
+                      } ${isDark ? "bg-[#313130] text-[#D3D1C7] placeholder:text-[#888780]" : "bg-[#F7F6F3] text-[#2C2C2A] placeholder:text-[#888780]"}`}
+                    />
+                    {rut && !rutValido && (
+                      <p className="text-xs text-red-400 mt-1">RUT inválido</p>
+                    )}
+                    {rut && rutValido && (
+                      <p className="text-xs text-green-500 mt-1">RUT válido</p>
+                    )}
+                  </div>
                   <FormField
                     label="Teléfono"
                     type="tel"
