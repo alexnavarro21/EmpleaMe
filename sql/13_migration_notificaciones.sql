@@ -10,4 +10,4 @@ CREATE TABLE IF NOT EXISTS notificaciones (
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_notif_usuario ON notificaciones (usuario_id, leida, creada_en DESC);
+CREATE INDEX idx_notif_usuario ON notificaciones (usuario_id, leida, creada_en DESC);
