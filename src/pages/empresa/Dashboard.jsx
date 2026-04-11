@@ -104,14 +104,14 @@ export default function EmpresaDashboard() {
   return (
     <div>
       <PageHeader
-        title="Dashboard Empresa"
+        title="Panel Empresa"
         subtitle={usuario.nombre_empresa || "Mi empresa"}
         action={
           <Link
             to="/empresa/publicar"
-            className="flex items-center gap-2 text-sm bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB] px-4 py-2 rounded-lg transition-colors"
+            className="flex items-center gap-2 text-base font-semibold bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB] px-6 py-3 rounded-lg transition-colors"
           >
-            <Icon icon="mdi:plus" width={16} />
+            <Icon icon="mdi:plus" width={20} />
             Publicar vacante
           </Link>
         }
@@ -265,23 +265,6 @@ export default function EmpresaDashboard() {
         />
       )}
 
-      <div className={`mt-6 p-4 rounded-xl border ${B} ${isDark ? "bg-[#262624]" : "bg-white"}`}>
-        <p className={`text-sm font-semibold ${T} mb-3`}>Acciones rápidas</p>
-        <div className="flex gap-3 flex-wrap">
-          <Link to="/empresa/publicar">
-            <PrimaryButton className="flex items-center gap-2">
-              <Icon icon="mdi:plus" width={16} />
-              Nueva vacante
-            </PrimaryButton>
-          </Link>
-          <Link to="/empresa/buscador">
-            <PrimaryButton className="bg-[#378ADD] hover:bg-[#0F4D8A] flex items-center gap-2">
-              <Icon icon="mdi:search" width={16} />
-              Buscar estudiantes
-            </PrimaryButton>
-          </Link>
-        </div>
-      </div>
     </div>
   );
 }
