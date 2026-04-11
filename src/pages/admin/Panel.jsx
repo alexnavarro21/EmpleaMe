@@ -10,6 +10,7 @@ const quickLinks = [
   { to: "/admin/evaluaciones", icon: "mdi:clipboard-list-outline", label: "Registrar evaluaciones", desc: "Competencias técnicas y blandas" },
   { to: "/admin/notas", icon: "icon-park-outline:excel", label: "Importar notas", desc: "Excel / CSV con calificaciones" },
   { to: "/admin/tests", icon: "hugeicons:brain-02", label: "Tests socioemocionales", desc: "Cargar y asignar tests" },
+  { to: "/admin/talleres", icon: "mdi:school-outline", label: "Gestión de talleres", desc: "Crear y administrar talleres" },
   { to: "/admin/mensajeria", icon: "flowbite:messages-solid", label: "Bandeja de mensajería", desc: "Supervisión de comunicaciones" },
   { to: "/admin/monitoreo", icon: "material-symbols:signal-cellular-alt", label: "Monitoreo", desc: "Estado general de la plataforma" },
 ];

@@ -587,6 +587,67 @@ export async function getPostulantesAceptados() {
   return data;
 }
 
+// ── Likes publicaciones ───────────────────────────────────────────────────────
+
+export async function toggleLike(publicacionId) {
+  const res = await fetch(`${BASE_URL}/publicaciones/${publicacionId}/like`, {
+    method: "POST", headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al procesar me gusta");
+  return data; // { liked: bool, total: number }
+}
+
+// ── Talleres ──────────────────────────────────────────────────────────────────
+
+export async function getTalleres(todos = false) {
+  const url = todos ? `${BASE_URL}/talleres?todos=1` : `${BASE_URL}/talleres`;
+  const res = await fetch(url, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener talleres");
+  return data;
+}
+
+export async function crearTaller(datos) {
+  const res = await fetch(`${BASE_URL}/talleres`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al crear taller");
+  return data;
+}
+
+export async function actualizarTaller(id, datos) {
+  const res = await fetch(`${BASE_URL}/talleres/${id}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al actualizar taller");
+  return data;
+}
+
+export async function toggleTaller(id) {
+  const res = await fetch(`${BASE_URL}/talleres/${id}/toggle`, {
+    method: "PUT", headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al cambiar estado del taller");
+  return data;
+}
+
+export async function eliminarTaller(id) {
+  const res = await fetch(`${BASE_URL}/talleres/${id}`, {
+    method: "DELETE", headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al eliminar taller");
+  return data;
+}
+
 // ── Completar práctica (empresa) ──────────────────────────────────────────────
 
 export async function completarPractica(postulacionId) {

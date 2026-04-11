@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge } from "../../components/ui";
-import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante } from "../../services/api";
+import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante, toggleLike, getTalleres } from "../../services/api";
 import { calcularCompletitud } from "../../utils/perfilCompletitud";
 import CrearPublicacion from "../../components/CrearPublicacion";
 import VerMasModal from "../../components/VerMasModal";
@@ -165,8 +165,8 @@ function tiempoRelativo(fecha) {
 }
 
 function FeedCard({ pub, isDark, perfilCompleto }) {
-  const [liked, setLiked] = useState(false);
-  const [likes, setLikes] = useState(0);
+  const [liked, setLiked] = useState(!!pub.liked_by_me);
+  const [likes, setLikes] = useState(pub.likes_count || 0);
   const [verMas, setVerMas] = useState(false);
   const [estadoPostula, setEstadoPostula] = useState("idle"); // idle | loading | ok | duplicado | error | incompleto
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
@@ -291,7 +291,20 @@ function FeedCard({ pub, isDark, perfilCompleto }) {
       <div className={`border-t ${B}`} />
       <div className="flex items-center px-2 py-1">
         <button
-          onClick={() => { setLiked((l) => !l); setLikes((n) => liked ? n - 1 : n + 1); }}
+          onClick={async () => {
+            const prev = liked;
+            setLiked(!prev);
+            setLikes((n) => prev ? n - 1 : n + 1);
+            try {
+              const res = await toggleLike(pub.id);
+              setLiked(res.liked);
+              setLikes(res.total);
+            } catch {
+              // revertir si falla
+              setLiked(prev);
+              setLikes((n) => prev ? n + 1 : n - 1);
+            }
+          }}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${HV} ${liked ? "text-[#378ADD]" : M}`}
         >
           <Icon icon={liked ? "mdi:thumb-up" : "mdi:thumb-up-outline"} width={16} />
@@ -351,6 +364,93 @@ function FeedCard({ pub, isDark, perfilCompleto }) {
   );
 }
 
+function TallerCard({ taller, isDark }) {
+  const T  = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
+  const M  = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
+  const B  = isDark ? "border-[#3a3a38]" : "border-[#E8E6E1]";
+  const BG = isDark ? "bg-[#262624]" : "bg-white";
+
+  const gratuito = !taller.costo || Number(taller.costo) === 0;
+  const costoStr = gratuito ? "Gratuito" : `$${Number(taller.costo).toLocaleString("es-CL")}`;
+
+  return (
+    <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
+      <div className="flex items-start justify-between px-4 pt-4 pb-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
+            <Icon icon="mdi:school-outline" width={20} className="text-white" />
+          </div>
+          <div>
+            <p className={`text-sm font-semibold leading-tight ${T}`}>C.E. Cardenal J.M. Caro</p>
+            <p className={`text-xs ${M}`}>Centro Educacional</p>
+          </div>
+        </div>
+        <span className="text-xs px-2.5 py-0.5 rounded-full font-medium bg-purple-100 text-purple-700">Taller</span>
+      </div>
+
+      <div className="px-4 pb-1">
+        <p className={`text-sm font-semibold ${T}`}>{taller.titulo}</p>
+      </div>
+      {taller.descripcion && (
+        <div className="px-4 pb-3">
+          <p className={`text-sm leading-relaxed ${T} line-clamp-3`}>{taller.descripcion}</p>
+        </div>
+      )}
+
+      <div className={`mx-4 mb-3 p-3 rounded-lg border ${B} ${isDark ? "bg-[#1e1e1c]" : "bg-[#F7F6F3]"}`}>
+        <div className="flex flex-wrap gap-3">
+          {taller.area && (
+            <div className="flex items-center gap-1.5">
+              <Icon icon="mdi:tag-outline" width={14} className="text-purple-500" />
+              <span className={`text-xs ${T}`}>{taller.area}</span>
+            </div>
+          )}
+          {taller.modalidad && (
+            <div className="flex items-center gap-1.5">
+              <Icon icon="mdi:map-marker-outline" width={14} className={M} />
+              <span className={`text-xs ${M} capitalize`}>{taller.modalidad}</span>
+            </div>
+          )}
+          {taller.duracion && (
+            <div className="flex items-center gap-1.5">
+              <Icon icon="mdi:clock-outline" width={14} className={M} />
+              <span className={`text-xs ${M}`}>{taller.duracion}</span>
+            </div>
+          )}
+          {taller.horario && (
+            <div className="flex items-center gap-1.5">
+              <Icon icon="mdi:calendar-clock-outline" width={14} className={M} />
+              <span className={`text-xs ${M}`}>{taller.horario}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1.5">
+            <Icon icon={gratuito ? "mdi:gift-outline" : "mdi:currency-usd"} width={14} className={gratuito ? "text-green-500" : "text-amber-500"} />
+            <span className={`text-xs font-medium ${gratuito ? "text-green-600" : "text-amber-600"}`}>{costoStr}</span>
+          </div>
+          {taller.cupos != null && (
+            <div className="flex items-center gap-1.5">
+              <Icon icon="mdi:account-group-outline" width={14} className={M} />
+              <span className={`text-xs ${M}`}>{taller.cupos} cupos</span>
+            </div>
+          )}
+          {taller.fecha_inicio && (
+            <div className="flex items-center gap-1.5">
+              <Icon icon="mdi:calendar-start" width={14} className={M} />
+              <span className={`text-xs ${M}`}>{new Date(taller.fecha_inicio).toLocaleDateString("es-CL")}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {!taller.esta_activo && (
+        <div className="px-4 pb-3">
+          <span className="text-xs text-red-500 font-medium">Taller cerrado</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const careerDisplay = {
   "Administracion": "Administración",
   "Mecanica Automotriz": "Mecánica Automotriz",
@@ -371,6 +471,8 @@ export default function EstudianteDashboard() {
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
   const [perfil, setPerfil] = useState(null);
   const [publicaciones, setPublicaciones] = useState([]);
+  const [talleres, setTalleres] = useState([]);
+  const [tabActiva, setTabActiva] = useState("muro"); // "muro" | "talleres"
 
   // Estado estudiante extra
   const [estudiantePostulaciones, setEstudiantePostulaciones] = useState([]);
@@ -399,6 +501,7 @@ export default function EstudianteDashboard() {
       getConversaciones().then(setEmpresaConversaciones).catch(console.error);
     }
     cargarPublicaciones();
+    getTalleres().then(setTalleres).catch(console.error);
   }, [usuario.id]);
 
   const nombre = perfil?.nombre_completo || "";
@@ -563,18 +666,58 @@ export default function EstudianteDashboard() {
 
       {/* ── CENTER FEED ── */}
       <div className="flex flex-col gap-4">
-        <CrearPublicacion onPublicado={cargarPublicaciones} />
+        {/* Tab switcher */}
+        <div className={`flex gap-1 rounded-xl border ${B} ${BG} p-1`}>
+          {[
+            { key: "muro",     label: "Muro",     icon: "mdi:newspaper-variant-outline" },
+            { key: "talleres", label: "Talleres",  icon: "mdi:school-outline"            },
+          ].map(({ key, label, icon }) => (
+            <button
+              key={key}
+              onClick={() => setTabActiva(key)}
+              className={`flex items-center gap-2 flex-1 justify-center py-2 rounded-lg text-sm font-medium transition-colors ${
+                tabActiva === key
+                  ? "bg-[#0F4D8A] text-[#E6F1FB]"
+                  : `${M} hover:text-[#378ADD]`
+              }`}
+            >
+              <Icon icon={icon} width={16} />
+              {label}
+              {key === "talleres" && talleres.length > 0 && (
+                <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
+                  tabActiva === "talleres" ? "bg-white/20 text-white" : isDark ? "bg-[#3a3a38] text-[#888780]" : "bg-[#F0F4F8] text-[#5F5E5A]"
+                }`}>{talleres.length}</span>
+              )}
+            </button>
+          ))}
+        </div>
 
-        {publicaciones.length === 0 ? (
-          <div className={`rounded-xl border ${B} ${BG} p-10 text-center ${M}`}>
-            <Icon icon="mdi:newspaper-variant-outline" width={40} className="mx-auto mb-3 opacity-40" />
-            <p className={`text-sm font-medium ${T}`}>Aún no hay publicaciones</p>
-            <p className="text-xs mt-1">¡Sé el primero en compartir algo!</p>
-          </div>
+        {tabActiva === "muro" ? (
+          <>
+            <CrearPublicacion onPublicado={cargarPublicaciones} />
+            {publicaciones.length === 0 ? (
+              <div className={`rounded-xl border ${B} ${BG} p-10 text-center ${M}`}>
+                <Icon icon="mdi:newspaper-variant-outline" width={40} className="mx-auto mb-3 opacity-40" />
+                <p className={`text-sm font-medium ${T}`}>Aún no hay publicaciones</p>
+                <p className="text-xs mt-1">¡Sé el primero en compartir algo!</p>
+              </div>
+            ) : (
+              publicaciones.map((pub) => (
+                <FeedCard key={pub.id} pub={pub} isDark={isDark} perfilCompleto={perfilCompleto} />
+              ))
+            )}
+          </>
         ) : (
-          publicaciones.map((pub) => (
-            <FeedCard key={pub.id} pub={pub} isDark={isDark} perfilCompleto={perfilCompleto} />
-          ))
+          talleres.length === 0 ? (
+            <div className={`rounded-xl border ${B} ${BG} p-10 text-center ${M}`}>
+              <Icon icon="mdi:school-outline" width={40} className="mx-auto mb-3 opacity-40" />
+              <p className={`text-sm font-medium ${T}`}>No hay talleres disponibles aún</p>
+            </div>
+          ) : (
+            talleres.map((t) => (
+              <TallerCard key={t.id} taller={t} isDark={isDark} />
+            ))
+          )
         )}
       </div>
 
