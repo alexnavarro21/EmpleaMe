@@ -6,7 +6,7 @@ import { Card, Badge, PrimaryButton, SecondaryButton, FormField, PageHeader, Tex
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
 import { getEstudianteById, actualizarPerfilEstudiante, getPostulacionesEstudiante } from "../../services/api";
 
-const tabs = ["Personal", "Académico", "Habilidades", "Idiomas & Historial", "Video", "Postulaciones"];
+const tabs = ["Personal", "Habilidades", "Idiomas & Historial", "Postulaciones"];
 
 const careerDisplay = {
   "Administracion": "Administración",
@@ -316,25 +316,6 @@ const descargarCV = () => {
                       <option value="conviviente civil">Conviviente civil</option>
                     </select>
                   </div>
-                  {editMode && (
-                    <div className="col-span-2 mt-2">
-                      <PrimaryButton className="w-full" onClick={handleGuardar} disabled={saving}>
-                        {saving ? "Guardando..." : "Guardar cambios"}
-                      </PrimaryButton>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeTab === "Académico" && (
-                <div className="grid grid-cols-2 gap-x-6">
-                  <FormField
-                    label="Establecimiento"
-                    placeholder="C.E. Cardenal J.M. Caro"
-                    value="C.E. Cardenal J.M. Caro"
-                    disabled
-                    className="col-span-2"
-                  />
                   <div className="mb-4">
                     <label className={`block text-xs mb-1.5 ${M}`}>Carrera técnica</label>
                     <select
@@ -342,9 +323,8 @@ const descargarCV = () => {
                       onChange={(e) => setCarrera(e.target.value)}
                       disabled={!editMode}
                       className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
-                        isDark
-                          ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
-                          : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
+                        isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
+                               : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
                       } disabled:opacity-60`}
                     >
                       <option value="">Selecciona tu carrera</option>
@@ -352,25 +332,6 @@ const descargarCV = () => {
                       <option value="Mecanica Automotriz">Mecánica Automotriz</option>
                     </select>
                   </div>
-                  <FormField
-                    label="Semestre actual"
-                    placeholder="ej. 4"
-                    type="number"
-                    value={semestre}
-                    onChange={(e) => setSemestre(e.target.value)}
-                    disabled
-                  />
-                  <FormField
-                    label="Promedio general"
-                    placeholder="ej. 6.5"
-                    type="number"
-                    step="0.1"
-                    min="1"
-                    max="7"
-                    value={promedio}
-                    onChange={(e) => setPromedio(e.target.value)}
-                    disabled
-                  />
                   <TextAreaField
                     label="Sobre mí / Presentación"
                     placeholder="Cuéntale a las empresas quién eres y qué buscas..."
@@ -378,6 +339,7 @@ const descargarCV = () => {
                     value={biografia}
                     onChange={(e) => setBiografia(e.target.value)}
                     disabled={!editMode}
+                    className="col-span-2"
                   />
                   {editMode && (
                     <div className="col-span-2 mt-2">
@@ -547,22 +509,6 @@ const descargarCV = () => {
                 </div>
               )}
 
-              {activeTab === "Video" && (
-                <div>
-                  <div className={`rounded-xl border-2 border-dashed ${B} flex flex-col items-center justify-center py-16 mb-4`}>
-                    <Icon icon="mdi:play-circle-outline" width={52} className={`${M} mb-3`} />
-                    <p className={`text-sm font-medium ${T} mb-1`}>Video de presentación</p>
-                    <p className={`text-xs ${M} mb-4`}>Muéstrale a las empresas quién eres · Máx. 50 MB</p>
-                    <PrimaryButton className="flex items-center gap-2">
-                      <Icon icon="material-symbols:upload" width={16} />
-                      Subir video
-                    </PrimaryButton>
-                  </div>
-                  <p className={`text-xs ${M}`}>
-                    Graba un video de 1–2 minutos presentándote, mencionando tu carrera, habilidades y qué tipo de práctica buscas.
-                  </p>
-                </div>
-              )}
             </div>
           </Card>
         </div>
