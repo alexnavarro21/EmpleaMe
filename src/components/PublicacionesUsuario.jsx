@@ -83,7 +83,7 @@ function MiniPostCard({ pub, isDark }) {
   );
 }
 
-export default function PublicacionesUsuario({ usuarioId, autorNombre }) {
+export default function PublicacionesUsuario({ usuarioId }) {
   const { isDark } = useDark();
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -94,13 +94,10 @@ export default function PublicacionesUsuario({ usuarioId, autorNombre }) {
   useEffect(() => {
     if (!usuarioId) return;
     getPublicacionesByAutor(usuarioId)
-      .then((pubs) => setPublicaciones(pubs.map((p) => ({
-        ...p,
-        autor_nombre: p.autor_nombre || autorNombre || "Usuario",
-      }))))
+      .then(setPublicaciones)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [usuarioId, autorNombre]);
+  }, [usuarioId]);
 
   if (loading) return (
     <div className={`flex items-center gap-2 py-6 justify-center ${M} text-sm`}>

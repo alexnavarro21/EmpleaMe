@@ -640,37 +640,23 @@ export async function getTalleres(todos = false) {
   return data;
 }
 
-export async function crearTaller(datos, imagen = null) {
-  let body, headers;
-  if (imagen) {
-    const formData = new FormData();
-    Object.entries(datos).forEach(([k, v]) => { if (v !== null && v !== undefined) formData.append(k, v); });
-    formData.append("imagen", imagen);
-    body = formData;
-    headers = { Authorization: `Bearer ${getToken()}` };
-  } else {
-    body = JSON.stringify(datos);
-    headers = authHeaders();
-  }
-  const res = await fetch(`${BASE_URL}/talleres`, { method: "POST", headers, body });
+export async function crearTaller(datos) {
+  const res = await fetch(`${BASE_URL}/talleres`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al crear taller");
   return data;
 }
 
-export async function actualizarTaller(id, datos, imagen = null) {
-  let body, headers;
-  if (imagen) {
-    const formData = new FormData();
-    Object.entries(datos).forEach(([k, v]) => { if (v !== null && v !== undefined) formData.append(k, v); });
-    formData.append("imagen", imagen);
-    body = formData;
-    headers = { Authorization: `Bearer ${getToken()}` };
-  } else {
-    body = JSON.stringify(datos);
-    headers = authHeaders();
-  }
-  const res = await fetch(`${BASE_URL}/talleres/${id}`, { method: "PUT", headers, body });
+export async function actualizarTaller(id, datos) {
+  const res = await fetch(`${BASE_URL}/talleres/${id}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al actualizar taller");
   return data;

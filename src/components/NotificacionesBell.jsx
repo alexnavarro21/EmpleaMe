@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 import { getNotificaciones, marcarNotificacionesLeidas } from "../services/api";
@@ -25,7 +25,6 @@ function tiempoRelativo(fecha) {
 
 export default function NotificacionesBell({ role }) {
   const { isDark } = useDark();
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [notifs, setNotifs] = useState([]);
   const [noLeidas, setNoLeidas] = useState(0);
@@ -141,10 +140,9 @@ export default function NotificacionesBell({ role }) {
               notifs.map((n) => {
                 const cfg = TIPO_CFG[n.tipo] || { icon: "mdi:bell-outline", color: "text-blue-500", bg: "bg-blue-100" };
                 return (
-                  <button
+                  <div
                     key={n.id}
-                    onClick={() => { navigate(historialPath); setOpen(false); }}
-                    className={`w-full text-left flex items-start gap-3 px-4 py-3 border-b ${B} last:border-0 transition-colors ${HV} ${!n.leida ? (isDark ? "bg-[#0F4D8A]/10" : "bg-[#EFF6FF]") : ""}`}
+                    className={`flex items-start gap-3 px-4 py-3 border-b ${B} last:border-0 ${!n.leida ? (isDark ? "bg-[#0F4D8A]/10" : "bg-[#EFF6FF]") : ""}`}
                   >
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${cfg.bg}`}>
                       <Icon icon={cfg.icon} width={16} className={cfg.color} />
@@ -159,7 +157,7 @@ export default function NotificacionesBell({ role }) {
                     {!n.leida && (
                       <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1.5" />
                     )}
-                  </button>
+                  </div>
                 );
               })
             )}

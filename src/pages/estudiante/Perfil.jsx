@@ -688,7 +688,7 @@ const descargarCV = () => {
         </div>
       </div>
 
-      <PublicacionesUsuario usuarioId={usuario.id} autorNombre={nombre} />
+      <PublicacionesUsuario usuarioId={usuario.id} />
     </div>
   );
 }

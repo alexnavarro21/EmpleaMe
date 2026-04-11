@@ -3,7 +3,6 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 import { useState, useRef, useEffect } from "react";
 import NotificacionesBell from "./NotificacionesBell";
-import { getNotificaciones, marcarNotificacionesLeidas } from "../services/api";
 
 const profilePaths = {
   estudiante: "/estudiante/perfil",
@@ -49,8 +48,6 @@ export default function Layout() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
-  const [notifRecientes, setNotifRecientes] = useState([]);
-  const [noLeidas, setNoLeidas] = useState(0);
 
   const role = location.pathname.startsWith("/admin/") || location.pathname === "/admin"
     ? "admin"
@@ -68,20 +65,6 @@ export default function Layout() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Cargar notificaciones al abrir el menú del perfil
-  const handleMenuOpen = async () => {
-    const next = !menuOpen;
-    setMenuOpen(next);
-    if (next && role !== "admin") {
-      try {
-        const { notificaciones, noLeidas: n } = await getNotificaciones(1, 4);
-        setNotifRecientes(notificaciones);
-        setNoLeidas(n);
-      } catch (_) {}
-    }
-  };
-
-  const notifPath = role === "empresa" ? "/empresa/notificaciones" : "/estudiante/notificaciones";
 
   return (
     <div className={isDark ? "dark" : ""}>
@@ -120,7 +103,7 @@ export default function Layout() {
           {/* Botón de perfil con popup */}
           <div className="relative" ref={menuRef}>
             <button
-              onClick={handleMenuOpen}
+              onClick={() => setMenuOpen(!menuOpen)}
               className={`relative p-1.5 rounded-lg transition-colors ${
                 menuOpen
                   ? "bg-[#0F4D8A] text-[#E6F1FB]"
@@ -128,11 +111,6 @@ export default function Layout() {
               }`}
             >
               <Icon icon="mynaui:user-solid" width={22} />
-              {noLeidas > 0 && role !== "admin" && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 px-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center leading-none">
-                  {noLeidas > 9 ? "9+" : noLeidas}
-                </span>
-              )}
             </button>
 
             {menuOpen && (
@@ -185,28 +163,6 @@ export default function Layout() {
                   <Icon icon="ph:chat-circle-dots-fill" width={18} className="text-[#378ADD]" />
                   Mensajes
                 </Link>
-
-                {/* Notificaciones recientes (solo estudiante/empresa) */}
-                {role !== "admin" && notifRecientes.length > 0 && (
-                  <>
-                    <div className={`mx-3 border-t ${isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]"}`} />
-                    <div className="px-4 pt-2 pb-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className={`text-xs font-semibold ${isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]"}`}>
-                          Notificaciones
-                          {noLeidas > 0 && <span className="ml-1.5 px-1 py-0.5 rounded-full text-[10px] bg-red-500 text-white font-bold">{noLeidas}</span>}
-                        </span>
-                        <Link to={notifPath} onClick={() => setMenuOpen(false)} className="text-[10px] text-[#378ADD] hover:underline">Ver todas</Link>
-                      </div>
-                      {notifRecientes.slice(0, 3).map((n) => (
-                        <div key={n.id} className={`flex items-start gap-2 py-1.5 ${!n.leida ? (isDark ? "opacity-100" : "opacity-100") : "opacity-60"}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${!n.leida ? "bg-blue-500" : "bg-transparent"}`} />
-                          <p className={`text-xs leading-snug line-clamp-2 ${isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]"}`}>{n.titulo}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
 
                 {/* Separador */}
                 <div className={`mx-3 border-t ${isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]"}`} />
