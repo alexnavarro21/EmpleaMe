@@ -2,6 +2,25 @@ const router = require("express").Router();
 const db = require("../db");
 const { verificarToken, soloRol } = require("../middleware/auth");
 
+// GET /api/talleres/inscritos/pendientes — admin ve todos los inscritos pendientes
+router.get("/inscritos/pendientes", verificarToken, soloRol("centro"), async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT i.id, i.estado, i.fecha_creacion,
+              t.id AS taller_id, t.titulo AS taller_titulo,
+              pe.usuario_id AS estudiante_id, pe.nombre_completo, pe.carrera, pe.promedio
+       FROM inscripciones_talleres i
+       JOIN talleres t ON t.id = i.taller_id
+       JOIN perfiles_estudiantes pe ON pe.usuario_id = i.estudiante_id
+       WHERE i.estado = 'pendiente'
+       ORDER BY i.fecha_creacion ASC`
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
 // GET /api/talleres/mis-inscripciones — estudiante ve sus inscripciones
 router.get("/mis-inscripciones", verificarToken, soloRol("estudiante"), async (req, res) => {
   try {
@@ -27,7 +46,11 @@ router.get("/", verificarToken, async (req, res) => {
     const { todos } = req.query; // admin puede pedir todos incluyendo inactivos
     const soloActivos = todos !== "1" || req.usuario.rol !== "admin";
     const [rows] = await db.query(
-      `SELECT * FROM talleres ${soloActivos ? "WHERE esta_activo = TRUE" : ""} ORDER BY creado_en DESC`
+      `SELECT t.*,
+              (SELECT COUNT(*) FROM inscripciones_talleres i WHERE i.taller_id = t.id) AS total_inscritos
+       FROM talleres t
+       ${soloActivos ? "WHERE t.esta_activo = TRUE" : ""}
+       ORDER BY t.creado_en DESC`
     );
     res.json(rows);
   } catch (err) {
@@ -37,12 +60,12 @@ router.get("/", verificarToken, async (req, res) => {
 
 // POST /api/talleres — crear taller (solo admin)
 router.post("/", verificarToken, soloRol("centro"), async (req, res) => {
-  const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, costo, direccion, fecha_inicio, fecha_limite, cupos } = req.body;
+  const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, costo, direccion, fecha_inicio, fecha_limite, cupos, permite_inscripcion } = req.body;
   if (!titulo) return res.status(400).json({ error: "El título es requerido" });
   try {
     const [result] = await db.query(
-      `INSERT INTO talleres (titulo, descripcion, requisitos, area, modalidad, duracion, horario, costo, direccion, fecha_inicio, fecha_limite, cupos)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO talleres (titulo, descripcion, requisitos, area, modalidad, duracion, horario, costo, direccion, fecha_inicio, fecha_limite, cupos, permite_inscripcion)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         titulo,
         descripcion || null,
@@ -56,6 +79,7 @@ router.post("/", verificarToken, soloRol("centro"), async (req, res) => {
         fecha_inicio || null,
         fecha_limite || null,
         cupos != null ? cupos : null,
+        permite_inscripcion != null ? permite_inscripcion : true,
       ]
     );
     res.status(201).json({ id: result.insertId, mensaje: "Taller creado" });
@@ -66,10 +90,10 @@ router.post("/", verificarToken, soloRol("centro"), async (req, res) => {
 
 // PUT /api/talleres/:id — editar taller (solo admin)
 router.put("/:id", verificarToken, soloRol("centro"), async (req, res) => {
-  const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, costo, direccion, fecha_inicio, fecha_limite, cupos } = req.body;
+  const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, costo, direccion, fecha_inicio, fecha_limite, cupos, permite_inscripcion } = req.body;
   try {
     const [result] = await db.query(
-      `UPDATE talleres SET titulo=?, descripcion=?, requisitos=?, area=?, modalidad=?, duracion=?, horario=?, costo=?, direccion=?, fecha_inicio=?, fecha_limite=?, cupos=?
+      `UPDATE talleres SET titulo=?, descripcion=?, requisitos=?, area=?, modalidad=?, duracion=?, horario=?, costo=?, direccion=?, fecha_inicio=?, fecha_limite=?, cupos=?, permite_inscripcion=?
        WHERE id = ?`,
       [
         titulo,
@@ -84,6 +108,7 @@ router.put("/:id", verificarToken, soloRol("centro"), async (req, res) => {
         fecha_inicio || null,
         fecha_limite || null,
         cupos != null ? cupos : null,
+        permite_inscripcion != null ? permite_inscripcion : true,
         req.params.id,
       ]
     );

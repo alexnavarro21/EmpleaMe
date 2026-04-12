@@ -698,6 +698,13 @@ export async function getMisInscripcionesTalleres() {
   return data;
 }
 
+export async function getInscritosPendientesTalleres() {
+  const res = await fetch(`${BASE_URL}/talleres/inscritos/pendientes`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener inscritos pendientes");
+  return data;
+}
+
 export async function getInscritosTaller(tallerId) {
   const res = await fetch(`${BASE_URL}/talleres/${tallerId}/inscritos`, { headers: authHeaders() });
   const data = await res.json();

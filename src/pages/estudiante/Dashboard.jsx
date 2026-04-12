@@ -480,6 +480,12 @@ function TallerCard({ taller, isDark, perfilCompleto }) {
               <span className={`text-xs ${M}`}>{new Date(taller.fecha_inicio).toLocaleDateString("es-CL")}</span>
             </div>
           )}
+          {(taller.permite_inscripcion === false || taller.permite_inscripcion === 0) && (
+            <div className="flex items-center gap-1.5">
+              <Icon icon="mdi:open-in-new" width={14} className={M} />
+              <span className={`text-xs ${M}`}>Informativo</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -494,7 +500,7 @@ function TallerCard({ taller, isDark, perfilCompleto }) {
           <Icon icon="mdi:information-outline" width={16} />
           Ver más
         </button>
-        {usuario.rol === "estudiante" && (taller.esta_activo === true || taller.esta_activo === 1) && (
+        {usuario.rol === "estudiante" && (taller.esta_activo === true || taller.esta_activo === 1) && (taller.permite_inscripcion === true || taller.permite_inscripcion === 1) && (
           <div className="flex-1 relative group">
             <button
               onClick={handleInscribirse}
