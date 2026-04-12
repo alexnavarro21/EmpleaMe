@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import { generarCV } from "../../utils/generarCV";
 import { useDark } from "../../context/DarkModeContext";
-import { Card, Badge, PrimaryButton, SecondaryButton, FormField, PageHeader, TextAreaField, SoftSkillBar } from "../../components/ui";
+import { Card, Badge, PrimaryButton, SecondaryButton, FormField, PageHeader, TextAreaField, SoftSkillBar, Paginacion } from "../../components/ui";
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
 import { getEstudianteById, actualizarPerfilEstudiante, getPostulacionesEstudiante } from "../../services/api";
 import { REGIONES_COMUNAS, REGIONES } from "../../data/regionesComunas";
@@ -40,6 +40,9 @@ export default function EstudiantePerfil() {
   const [historialAcademico, setHistorialAcademico] = useState([]);
   const [historialLaboral, setHistorialLaboral] = useState([]);
   const [postulaciones, setPostulaciones] = useState([]);
+  const [paginaLaboral, setPaginaLaboral]     = useState(1);
+  const [porPaginaLaboral, setPorPaginaLaboral] = useState(5);
+
   const [favoritosLaboral, setFavoritosLaboral] = useState(() => {
     try {
       const u = JSON.parse(localStorage.getItem("usuario") || "{}");
@@ -482,49 +485,65 @@ export default function EstudiantePerfil() {
                     </div>
                     {historialLaboral.length === 0 ? (
                       <p className={`text-xs ${M}`}>Sin experiencia laboral registrada.</p>
-                    ) : (
-                      <div className="flex flex-col gap-3">
-                        {historialLaboral.map((l) => {
-                          const esFavorita = favoritosLaboral.includes(l.id);
-                          const puedeAgregar = favoritosLaboral.length < 3 || esFavorita;
-                          return (
-                            <div key={l.id} className={`p-3 rounded-lg border transition-colors ${esFavorita ? (isDark ? "border-amber-500/60 bg-amber-500/5" : "border-amber-400 bg-amber-50") : B}`}>
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex-1 min-w-0">
-                                  <p className={`text-sm font-semibold ${T}`}>{l.cargo}</p>
-                                  <p className={`text-xs ${M}`}>{l.empresa_nombre}</p>
-                                  {(l.fecha_inicio || l.fecha_fin) && (
-                                    <p className={`text-xs ${M} mt-0.5`}>
-                                      {l.fecha_inicio ? new Date(l.fecha_inicio).toLocaleDateString("es-CL", { month: "short", year: "numeric" }) : "?"}
-                                      {" – "}
-                                      {l.fecha_fin ? new Date(l.fecha_fin).toLocaleDateString("es-CL", { month: "short", year: "numeric" }) : "Presente"}
-                                    </p>
-                                  )}
-                                  {l.descripcion && <p className={`text-xs ${M} mt-1`}>{l.descripcion}</p>}
+                    ) : (() => {
+                      const totalPags = Math.ceil(historialLaboral.length / porPaginaLaboral);
+                      const pagina    = Math.min(paginaLaboral, totalPags);
+                      const inicio    = (pagina - 1) * porPaginaLaboral;
+                      const pagina_items = historialLaboral.slice(inicio, inicio + porPaginaLaboral);
+                      return (
+                        <>
+                          <div className="flex flex-col gap-3">
+                            {pagina_items.map((l) => {
+                              const esFavorita  = favoritosLaboral.includes(l.id);
+                              const puedeAgregar = favoritosLaboral.length < 3 || esFavorita;
+                              return (
+                                <div key={l.id} className={`p-3 rounded-lg border transition-colors ${esFavorita ? (isDark ? "border-amber-500/60 bg-amber-500/5" : "border-amber-400 bg-amber-50") : B}`}>
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                      <p className={`text-sm font-semibold ${T}`}>{l.cargo}</p>
+                                      <p className={`text-xs ${M}`}>{l.empresa_nombre}</p>
+                                      {(l.fecha_inicio || l.fecha_fin) && (
+                                        <p className={`text-xs ${M} mt-0.5`}>
+                                          {l.fecha_inicio ? new Date(l.fecha_inicio).toLocaleDateString("es-CL", { month: "short", year: "numeric" }) : "?"}
+                                          {" – "}
+                                          {l.fecha_fin ? new Date(l.fecha_fin).toLocaleDateString("es-CL", { month: "short", year: "numeric" }) : "Presente"}
+                                        </p>
+                                      )}
+                                      {l.descripcion && <p className={`text-xs ${M} mt-1`}>{l.descripcion}</p>}
+                                    </div>
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                      <button
+                                        onClick={() => toggleFavorito(l.id)}
+                                        disabled={!puedeAgregar}
+                                        title={esFavorita ? "Quitar de CV" : puedeAgregar ? "Incluir en CV" : "Máximo 3 seleccionadas"}
+                                        className={`p-1 rounded-lg transition-colors ${!puedeAgregar && !esFavorita ? "opacity-30 cursor-not-allowed" : "cursor-pointer"}`}
+                                      >
+                                        <Icon
+                                          icon={esFavorita ? "mdi:star" : "mdi:star-outline"}
+                                          width={18}
+                                          className={esFavorita ? "text-amber-400" : M}
+                                        />
+                                      </button>
+                                      <Badge color={l.tipo === "practica_completada" ? "green" : "blue"}>
+                                        {l.tipo === "practica_completada" ? "Práctica" : "Verificado"}
+                                      </Badge>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-2 flex-shrink-0">
-                                  <button
-                                    onClick={() => toggleFavorito(l.id)}
-                                    disabled={!puedeAgregar}
-                                    title={esFavorita ? "Quitar de CV" : puedeAgregar ? "Incluir en CV" : "Máximo 3 seleccionadas"}
-                                    className={`p-1 rounded-lg transition-colors ${!puedeAgregar && !esFavorita ? "opacity-30 cursor-not-allowed" : "cursor-pointer"}`}
-                                  >
-                                    <Icon
-                                      icon={esFavorita ? "mdi:star" : "mdi:star-outline"}
-                                      width={18}
-                                      className={esFavorita ? "text-amber-400" : M}
-                                    />
-                                  </button>
-                                  <Badge color={l.tipo === "practica_completada" ? "green" : "blue"}>
-                                    {l.tipo === "practica_completada" ? "Práctica" : "Verificado"}
-                                  </Badge>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                              );
+                            })}
+                          </div>
+                          <Paginacion
+                            paginaActual={pagina}
+                            totalPaginas={totalPags}
+                            onCambiar={(p) => setPaginaLaboral(p)}
+                            porPagina={porPaginaLaboral}
+                            opciones={[5, 10, 20]}
+                            onCambiarPorPagina={(n) => { setPorPaginaLaboral(n); setPaginaLaboral(1); }}
+                          />
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               )}
