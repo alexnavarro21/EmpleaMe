@@ -17,7 +17,7 @@ router.get("/", verificarToken, async (req, res) => {
 });
 
 // POST /api/talleres — crear taller (solo admin)
-router.post("/", verificarToken, soloRol("admin"), async (req, res) => {
+router.post("/", verificarToken, soloRol("centro"), async (req, res) => {
   const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, costo, direccion, fecha_inicio, fecha_limite, cupos } = req.body;
   if (!titulo) return res.status(400).json({ error: "El título es requerido" });
   try {
@@ -46,7 +46,7 @@ router.post("/", verificarToken, soloRol("admin"), async (req, res) => {
 });
 
 // PUT /api/talleres/:id — editar taller (solo admin)
-router.put("/:id", verificarToken, soloRol("admin"), async (req, res) => {
+router.put("/:id", verificarToken, soloRol("centro"), async (req, res) => {
   const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, costo, direccion, fecha_inicio, fecha_limite, cupos } = req.body;
   try {
     const [result] = await db.query(
@@ -76,7 +76,7 @@ router.put("/:id", verificarToken, soloRol("admin"), async (req, res) => {
 });
 
 // PUT /api/talleres/:id/toggle — activar/desactivar taller (solo admin)
-router.put("/:id/toggle", verificarToken, soloRol("admin"), async (req, res) => {
+router.put("/:id/toggle", verificarToken, soloRol("centro"), async (req, res) => {
   try {
     const [[taller]] = await db.query("SELECT esta_activo FROM talleres WHERE id = ?", [req.params.id]);
     if (!taller) return res.status(404).json({ error: "Taller no encontrado" });
@@ -88,7 +88,7 @@ router.put("/:id/toggle", verificarToken, soloRol("admin"), async (req, res) => 
 });
 
 // DELETE /api/talleres/:id — eliminar taller (solo admin)
-router.delete("/:id", verificarToken, soloRol("admin"), async (req, res) => {
+router.delete("/:id", verificarToken, soloRol("centro"), async (req, res) => {
   try {
     const [result] = await db.query("DELETE FROM talleres WHERE id = ?", [req.params.id]);
     if (result.affectedRows === 0) return res.status(404).json({ error: "Taller no encontrado" });
