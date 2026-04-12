@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 import { getNotificaciones, marcarNotificacionesLeidas } from "../services/api";
@@ -25,7 +25,6 @@ function tiempoRelativo(fecha) {
 
 export default function NotificacionesBell({ role }) {
   const { isDark } = useDark();
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [notifs, setNotifs] = useState([]);
   const [noLeidas, setNoLeidas] = useState(0);
@@ -143,7 +142,7 @@ export default function NotificacionesBell({ role }) {
                 return (
                   <div
                     key={n.id}
-                    className={`flex items-start gap-3 px-4 py-3 border-b ${B} last:border-0 transition-colors ${HV} ${!n.leida ? (isDark ? "bg-[#0F4D8A]/10" : "bg-[#EFF6FF]") : ""}`}
+                    className={`flex items-start gap-3 px-4 py-3 border-b ${B} last:border-0 ${!n.leida ? (isDark ? "bg-[#0F4D8A]/10" : "bg-[#EFF6FF]") : ""}`}
                   >
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${cfg.bg}`}>
                       <Icon icon={cfg.icon} width={16} className={cfg.color} />

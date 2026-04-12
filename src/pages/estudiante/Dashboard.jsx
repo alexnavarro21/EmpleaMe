@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge } from "../../components/ui";
-import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante, toggleLike, getTalleres } from "../../services/api";
+import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante, toggleLike, getTalleres, getAdminStats, inscribirseEnTaller } from "../../services/api";
 import { calcularCompletitud } from "../../utils/perfilCompletitud";
 import CrearPublicacion from "../../components/CrearPublicacion";
 import VerMasModal from "../../components/VerMasModal";
@@ -196,7 +196,13 @@ function FeedCard({ pub, isDark, perfilCompleto }) {
   return (
     <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
       <div className="flex items-start justify-between px-4 pt-4 pb-3">
-        <div className="flex items-center gap-3">
+        <Link
+          to={pub.autor_rol === "empresa"
+            ? `/empresa-publica/${pub.autor_id}`
+            : `/${usuario.rol}/candidato/${pub.autor_id}`}
+          className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
             {inicial}
           </div>
@@ -204,7 +210,7 @@ function FeedCard({ pub, isDark, perfilCompleto }) {
             <p className={`text-sm font-semibold leading-tight ${T}`}>{pub.autor_nombre}</p>
             <p className={`text-xs ${M}`}>{tiempoRelativo(pub.publicado_en)}</p>
           </div>
-        </div>
+        </Link>
         <Badge color={badge.color}>{badge.label}</Badge>
       </div>
 
@@ -364,17 +370,37 @@ function FeedCard({ pub, isDark, perfilCompleto }) {
   );
 }
 
-function TallerCard({ taller, isDark }) {
+function TallerCard({ taller, isDark, perfilCompleto }) {
+  const [estadoInscripcion, setEstadoInscripcion] = useState("idle"); // idle | loading | ok | duplicado | sin_cupos | error | incompleto
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+
   const T  = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M  = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B  = isDark ? "border-[#3a3a38]" : "border-[#E8E6E1]";
   const BG = isDark ? "bg-[#262624]" : "bg-white";
+  const HV = isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]";
 
   const gratuito = !taller.costo || Number(taller.costo) === 0;
   const costoStr = gratuito ? "Gratuito" : `$${Number(taller.costo).toLocaleString("es-CL")}`;
 
+  const handleInscribirse = async () => {
+    if (estadoInscripcion !== "idle") return;
+    if (!perfilCompleto) { setEstadoInscripcion("incompleto"); return; }
+    setEstadoInscripcion("loading");
+    try {
+      await inscribirseEnTaller(taller.id);
+      setEstadoInscripcion("ok");
+    } catch (err) {
+      const msg = err.message?.toLowerCase();
+      if (msg?.includes("ya estás")) setEstadoInscripcion("duplicado");
+      else if (msg?.includes("cupos"))  setEstadoInscripcion("sin_cupos");
+      else setEstadoInscripcion("error");
+    }
+  };
+
   return (
     <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
+      {/* Header igual que FeedCard */}
       <div className="flex items-start justify-between px-4 pt-4 pb-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
@@ -382,23 +408,38 @@ function TallerCard({ taller, isDark }) {
           </div>
           <div>
             <p className={`text-sm font-semibold leading-tight ${T}`}>C.E. Cardenal J.M. Caro</p>
-            <p className={`text-xs ${M}`}>Centro Educacional</p>
+            <p className={`text-xs ${M}`}>{tiempoRelativo(taller.creado_en)}</p>
           </div>
         </div>
-        <span className="text-xs px-2.5 py-0.5 rounded-full font-medium bg-purple-100 text-purple-700">Taller</span>
+        <Badge color="purple">Taller</Badge>
       </div>
 
+      {/* Título */}
       <div className="px-4 pb-1">
         <p className={`text-sm font-semibold ${T}`}>{taller.titulo}</p>
       </div>
+
+      {/* Descripción */}
       {taller.descripcion && (
         <div className="px-4 pb-3">
-          <p className={`text-sm leading-relaxed ${T} line-clamp-3`}>{taller.descripcion}</p>
+          <p className={`text-sm leading-relaxed ${T}`}>{taller.descripcion}</p>
         </div>
       )}
 
+      {/* Info box igual que vacante */}
       <div className={`mx-4 mb-3 p-3 rounded-lg border ${B} ${isDark ? "bg-[#1e1e1c]" : "bg-[#F7F6F3]"}`}>
         <div className="flex flex-wrap gap-3">
+          {taller.esta_activo === false || taller.esta_activo === 0 ? (
+            <div className="flex items-center gap-1.5">
+              <Icon icon="mdi:close-circle-outline" width={14} className="text-red-400" />
+              <span className="text-xs font-medium text-red-500">Cerrado</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <Icon icon="mdi:check-circle-outline" width={14} className="text-green-500" />
+              <span className="text-xs font-medium text-green-600">Activo</span>
+            </div>
+          )}
           {taller.area && (
             <div className="flex items-center gap-1.5">
               <Icon icon="mdi:tag-outline" width={14} className="text-purple-500" />
@@ -439,14 +480,68 @@ function TallerCard({ taller, isDark }) {
               <span className={`text-xs ${M}`}>{new Date(taller.fecha_inicio).toLocaleDateString("es-CL")}</span>
             </div>
           )}
+          {(taller.permite_inscripcion === false || taller.permite_inscripcion === 0) && (
+            <div className="flex items-center gap-1.5">
+              <Icon icon="mdi:open-in-new" width={14} className={M} />
+              <span className={`text-xs ${M}`}>Informativo</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {!taller.esta_activo && (
-        <div className="px-4 pb-3">
-          <span className="text-xs text-red-500 font-medium">Taller cerrado</span>
-        </div>
-      )}
+      {/* Acciones */}
+      <div className={`border-t ${B}`} />
+      <div className="flex items-center px-2 py-1">
+        <button className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${HV} ${M}`}>
+          <Icon icon="mdi:thumb-up-outline" width={16} />
+          Me interesa
+        </button>
+        <button className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${HV} ${M}`}>
+          <Icon icon="mdi:information-outline" width={16} />
+          Ver más
+        </button>
+        {usuario.rol === "estudiante" && (taller.esta_activo === true || taller.esta_activo === 1) && (taller.permite_inscripcion === true || taller.permite_inscripcion === 1) && (
+          <div className="flex-1 relative group">
+            <button
+              onClick={handleInscribirse}
+              disabled={estadoInscripcion !== "idle"}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors w-full justify-center ${
+                estadoInscripcion === "ok"         ? "text-green-600"  :
+                estadoInscripcion === "duplicado"  ? "text-amber-500"  :
+                estadoInscripcion === "sin_cupos"  ? "text-red-500"    :
+                estadoInscripcion === "error"      ? "text-red-500"    :
+                estadoInscripcion === "incompleto" ? "text-orange-500" : M
+              } ${estadoInscripcion === "idle" ? HV : ""}`}
+            >
+              <Icon
+                icon={
+                  estadoInscripcion === "ok"         ? "mdi:check-circle-outline"  :
+                  estadoInscripcion === "duplicado"  ? "mdi:information-outline"   :
+                  estadoInscripcion === "sin_cupos"  ? "mdi:account-cancel-outline":
+                  estadoInscripcion === "error"      ? "mdi:alert-circle-outline"  :
+                  estadoInscripcion === "incompleto" ? "mdi:account-alert-outline" :
+                  estadoInscripcion === "loading"    ? "mdi:loading"               : "mdi:clipboard-plus-outline"
+                }
+                width={16}
+                className={estadoInscripcion === "loading" ? "animate-spin" : ""}
+              />
+              {estadoInscripcion === "ok"         ? "Inscrito"           :
+               estadoInscripcion === "duplicado"  ? "Ya inscrito"        :
+               estadoInscripcion === "sin_cupos"  ? "Sin cupos"          :
+               estadoInscripcion === "error"      ? "Error, reintentar"  :
+               estadoInscripcion === "incompleto" ? "Perfil incompleto"  :
+               estadoInscripcion === "loading"    ? "Enviando..."        : "Inscribirse"}
+            </button>
+            {estadoInscripcion === "incompleto" && (
+              <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 text-center text-xs rounded-lg px-3 py-2 shadow-lg z-10 pointer-events-none ${
+                isDark ? "bg-[#262624] border border-[#3a3a38] text-[#D3D1C7]" : "bg-white border border-[#D3D1C7] text-[#2C2C2A]"
+              }`}>
+                Completa tu perfil al 100% para inscribirte
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -467,12 +562,12 @@ export default function EstudianteDashboard() {
   const location = useLocation();
   const isEstudiante = location.pathname.startsWith("/estudiante");
   const isEmpresa = location.pathname.startsWith("/empresa");
+  const isAdmin = location.pathname.startsWith("/admin");
 
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
   const [perfil, setPerfil] = useState(null);
   const [publicaciones, setPublicaciones] = useState([]);
   const [talleres, setTalleres] = useState([]);
-  const [tabActiva, setTabActiva] = useState("muro"); // "muro" | "talleres"
 
   // Estado estudiante extra
   const [estudiantePostulaciones, setEstudiantePostulaciones] = useState([]);
@@ -483,6 +578,9 @@ export default function EstudianteDashboard() {
   const [empresaVacantes, setEmpresaVacantes] = useState([]);
   const [empresaPostulantes, setEmpresaPostulantes] = useState([]);
   const [empresaConversaciones, setEmpresaConversaciones] = useState([]);
+
+  // Estado admin
+  const [adminStats, setAdminStats] = useState(null);
 
   const cargarPublicaciones = () => {
     getPublicaciones().then(setPublicaciones).catch(console.error);
@@ -499,6 +597,9 @@ export default function EstudianteDashboard() {
       getVacantesEmpresa(usuario.id).then(setEmpresaVacantes).catch(console.error);
       getPostulantesEmpresa().then(setEmpresaPostulantes).catch(console.error);
       getConversaciones().then(setEmpresaConversaciones).catch(console.error);
+    }
+    if (usuario.id && usuario.rol === "centro") {
+      getAdminStats().then(setAdminStats).catch(console.error);
     }
     cargarPublicaciones();
     getTalleres().then(setTalleres).catch(console.error);
@@ -532,7 +633,7 @@ export default function EstudianteDashboard() {
     { done: !!(biografia),           label: "Presentación personal" },
   ];
 
-  const conSidebar = isEstudiante || isEmpresa;
+  const conSidebar = isEstudiante || isEmpresa || isAdmin;
   const vacantesActivasEmpresa = empresaVacantes.filter((v) => v.esta_activa);
   const mensajesNoLeidos = empresaConversaciones.filter((c) => c.no_leidos > 0);
 
@@ -600,21 +701,88 @@ export default function EstudianteDashboard() {
         </div>
       )}
 
+      {/* ── LEFT SIDEBAR ADMIN ── */}
+      {isAdmin && (
+        <div className="flex flex-col gap-4 sticky top-20">
+          {/* Tarjeta perfil admin */}
+          <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
+            <div className="h-16 bg-gradient-to-r from-purple-900 to-purple-600" />
+            <div className="px-4 pb-4">
+              <div className="-mt-7 mb-3">
+                <div className="w-14 h-14 rounded-full bg-purple-600 flex items-center justify-center text-white text-xl font-bold border-2 border-white">
+                  <Icon icon="mdi:shield-account-outline" width={28} />
+                </div>
+              </div>
+              <p className={`text-sm font-semibold ${T}`}>C.E. Cardenal J.M. Caro</p>
+              <p className={`text-xs ${M} mt-0.5`}>Administrador del sistema</p>
+
+              <div className={`grid grid-cols-2 gap-2 mt-3 pt-3 border-t ${B}`}>
+                <div className="text-center">
+                  <p className={`text-base font-semibold ${T}`}>{adminStats?.total_estudiantes ?? "—"}</p>
+                  <p className={`text-xs ${M}`}>Estudiantes</p>
+                </div>
+                <div className="text-center">
+                  <p className={`text-base font-semibold ${T}`}>{adminStats?.total_empresas ?? "—"}</p>
+                  <p className={`text-xs ${M}`}>Empresas</p>
+                </div>
+                <div className="text-center">
+                  <p className={`text-base font-semibold text-green-600`}>{adminStats?.total_vacantes_activas ?? "—"}</p>
+                  <p className={`text-xs ${M}`}>Vacantes</p>
+                </div>
+                <div className="text-center">
+                  <p className={`text-base font-semibold text-amber-500`}>{adminStats?.total_postulaciones ?? "—"}</p>
+                  <p className={`text-xs ${M}`}>Pendientes</p>
+                </div>
+              </div>
+
+              <Link
+                to="/admin/panel"
+                className="block text-center mt-3 text-xs font-medium text-purple-600 hover:text-purple-700 border border-purple-500 hover:bg-purple-50 py-1.5 rounded-lg transition-colors"
+              >
+                Ir al panel
+              </Link>
+            </div>
+          </div>
+
+          {/* Accesos rápidos */}
+          <div className={`rounded-xl border ${B} ${BG} p-4`}>
+            <p className={`text-xs font-semibold ${T} mb-2`}>Accesos rápidos</p>
+            {[
+              { icon: "mdi:account-group-outline",   label: "Gestión de usuarios",  to: "/admin/usuarios"     },
+              { icon: "mdi:school-outline",           label: "Talleres",             to: "/admin/talleres"     },
+              { icon: "mdi:clipboard-check-outline",  label: "Evaluaciones",         to: "/admin/evaluaciones" },
+              { icon: "mdi:message-outline",          label: "Mensajería",           to: "/admin/mensajeria"   },
+              { icon: "mdi:monitor-dashboard",        label: "Monitoreo",            to: "/admin/monitoreo"    },
+              { icon: "mdi:account-search-outline",   label: "Buscar perfiles",      to: "/admin/buscar"       },
+            ].map((link) => (
+              <Link
+                key={link.label}
+                to={link.to}
+                className={`flex items-center gap-2.5 py-2 text-xs rounded-lg px-2 -mx-2 transition-colors ${isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"} ${M}`}
+              >
+                <Icon icon={link.icon} width={15} className="flex-shrink-0" />
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ── LEFT SIDEBAR ── */}
       {isEstudiante && <div className="flex flex-col gap-4 sticky top-20">
         {/* Profile card */}
         <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
           {/* Banner */}
           <div className="h-16 bg-gradient-to-r from-[#0A3A6A] to-[#378ADD]" />
-          <div className="px-4 pb-4">
-            <div className="-mt-7 mb-3">
+          <div className="px-4 pb-4 text-center">
+            <div className="-mt-7 mb-3 flex justify-center">
               <Avatar initial={inicial} color="bg-[#0F4D8A]" size="lg" />
             </div>
             <p className={`text-sm font-semibold ${T}`}>{nombre || "Sin nombre"}</p>
             <p className={`text-xs ${M} mt-0.5`}>{subtitleParts.join(" · ") || "Sin carrera"}</p>
             <p className={`text-xs ${M}`}>C.E. Cardenal J.M. Caro</p>
 
-            <div className={`flex gap-4 mt-3 pt-3 border-t ${B}`}>
+            <div className={`flex gap-4 mt-3 pt-3 border-t ${B} justify-center`}>
               <div className="text-center">
                 <p className={`text-base font-semibold ${T}`}>{estudiantePostulaciones.length}</p>
                 <p className={`text-xs ${M}`}>Postulaciones</p>
@@ -646,9 +814,10 @@ export default function EstudianteDashboard() {
         <div className={`rounded-xl border ${B} ${BG} p-4`}>
           <p className={`text-xs font-semibold ${T} mb-2`}>Accesos rápidos</p>
           {[
-            { icon: "mdi:file-account-outline", label: "Mi CV", to: "/estudiante/perfil" },
-            { icon: "mdi:folder-multiple-outline", label: "Mis Evidencias", to: "/estudiante/evidencias" },
-            { icon: "mdi:bookmark-multiple-outline", label: "Guardados", to: "/estudiante/dashboard" },
+            { icon: "mdi:send-check-outline",       label: "Mis postulaciones", to: "/estudiante/postulaciones" },
+            { icon: "mdi:message-outline",           label: "Mensajería",        to: "/estudiante/mensajeria"    },
+            { icon: "mdi:account-search-outline",    label: "Buscar perfiles",   to: "/estudiante/buscar"        },
+            { icon: "mdi:folder-multiple-outline",   label: "Mis evidencias",    to: "/estudiante/evidencias"    },
           ].map((link) => (
             <Link
               key={link.label}
@@ -666,59 +835,30 @@ export default function EstudianteDashboard() {
 
       {/* ── CENTER FEED ── */}
       <div className="flex flex-col gap-4">
-        {/* Tab switcher */}
-        <div className={`flex gap-1 rounded-xl border ${B} ${BG} p-1`}>
-          {[
-            { key: "muro",     label: "Muro",     icon: "mdi:newspaper-variant-outline" },
-            { key: "talleres", label: "Talleres",  icon: "mdi:school-outline"            },
-          ].map(({ key, label, icon }) => (
-            <button
-              key={key}
-              onClick={() => setTabActiva(key)}
-              className={`flex items-center gap-2 flex-1 justify-center py-2 rounded-lg text-sm font-medium transition-colors ${
-                tabActiva === key
-                  ? "bg-[#0F4D8A] text-[#E6F1FB]"
-                  : `${M} hover:text-[#378ADD]`
-              }`}
-            >
-              <Icon icon={icon} width={16} />
-              {label}
-              {key === "talleres" && talleres.length > 0 && (
-                <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
-                  tabActiva === "talleres" ? "bg-white/20 text-white" : isDark ? "bg-[#3a3a38] text-[#888780]" : "bg-[#F0F4F8] text-[#5F5E5A]"
-                }`}>{talleres.length}</span>
-              )}
-            </button>
-          ))}
-        </div>
+        {(isEstudiante || isEmpresa || isAdmin) && <CrearPublicacion onPublicado={cargarPublicaciones} />}
 
-        {tabActiva === "muro" ? (
-          <>
-            <CrearPublicacion onPublicado={cargarPublicaciones} />
-            {publicaciones.length === 0 ? (
+        {(() => {
+          const feedUnificado = [
+            ...publicaciones.map((p) => ({ ...p, _tipo: "publicacion", _fecha: new Date(p.publicado_en) })),
+            ...talleres.map((t) => ({ ...t, _tipo: "taller", _fecha: new Date(t.creado_en) })),
+          ].sort((a, b) => b._fecha - a._fecha);
+
+          if (feedUnificado.length === 0) {
+            return (
               <div className={`rounded-xl border ${B} ${BG} p-10 text-center ${M}`}>
                 <Icon icon="mdi:newspaper-variant-outline" width={40} className="mx-auto mb-3 opacity-40" />
                 <p className={`text-sm font-medium ${T}`}>Aún no hay publicaciones</p>
                 <p className="text-xs mt-1">¡Sé el primero en compartir algo!</p>
               </div>
-            ) : (
-              publicaciones.map((pub) => (
-                <FeedCard key={pub.id} pub={pub} isDark={isDark} perfilCompleto={perfilCompleto} />
-              ))
-            )}
-          </>
-        ) : (
-          talleres.length === 0 ? (
-            <div className={`rounded-xl border ${B} ${BG} p-10 text-center ${M}`}>
-              <Icon icon="mdi:school-outline" width={40} className="mx-auto mb-3 opacity-40" />
-              <p className={`text-sm font-medium ${T}`}>No hay talleres disponibles aún</p>
-            </div>
-          ) : (
-            talleres.map((t) => (
-              <TallerCard key={t.id} taller={t} isDark={isDark} />
-            ))
-          )
-        )}
+            );
+          }
+
+          return feedUnificado.map((item) =>
+            item._tipo === "taller"
+              ? <TallerCard key={`taller-${item.id}`} taller={item} isDark={isDark} perfilCompleto={perfilCompleto} />
+              : <FeedCard key={`pub-${item.id}`} pub={item} isDark={isDark} perfilCompleto={perfilCompleto} />
+          );
+        })()}
       </div>
 
       {/* ── RIGHT SIDEBAR EMPRESA ── */}
@@ -740,7 +880,7 @@ export default function EstudianteDashboard() {
             ) : (
               <>
                 {empresaConversaciones.slice(0, 4).map((c, i) => {
-                  const nombre = c.nombre_estudiante || c.nombre_empresa || "Usuario";
+                  const nombre = c.contraparte || c.nombre_estudiante || c.nombre_empresa || "Usuario";
                   return (
                     <Link
                       key={c.id}
@@ -829,6 +969,81 @@ export default function EstudianteDashboard() {
         </div>
       )}
 
+      {/* ── RIGHT SIDEBAR ADMIN ── */}
+      {isAdmin && (
+        <div className="flex flex-col gap-4 sticky top-20 max-h-[calc(100vh-5rem)] overflow-y-auto pr-0.5">
+
+          {/* Estadísticas del sistema */}
+          <div className={`rounded-xl border ${B} ${BG} p-4`}>
+            <p className={`text-xs font-semibold ${T} mb-3`}>Estado del sistema</p>
+            {[
+              { label: "Estudiantes registrados", value: adminStats?.total_estudiantes, icon: "mdi:account-school-outline",  color: "text-[#378ADD]"  },
+              { label: "Empresas registradas",    value: adminStats?.total_empresas,    icon: "mdi:domain",                  color: "text-purple-600" },
+              { label: "Vacantes activas",        value: adminStats?.total_vacantes_activas, icon: "mdi:briefcase-check-outline", color: "text-green-600"  },
+              { label: "Postulaciones pendientes",value: adminStats?.total_postulaciones,icon: "mdi:clock-outline",           color: "text-amber-500"  },
+              { label: "Conversaciones totales",  value: adminStats?.total_conversaciones,icon: "mdi:message-outline",        color: "text-[#378ADD]"  },
+              { label: "Evaluaciones realizadas", value: adminStats?.total_evaluaciones, icon: "mdi:clipboard-check-outline", color: "text-green-600"  },
+            ].map((s, i, arr) => (
+              <div key={s.label} className={`flex items-center gap-2.5 ${i < arr.length - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}>
+                <Icon icon={s.icon} width={16} className={`flex-shrink-0 ${s.color}`} />
+                <div className="flex-1 min-w-0">
+                  <p className={`text-xs ${M} truncate`}>{s.label}</p>
+                </div>
+                <p className={`text-sm font-semibold ${T} flex-shrink-0`}>{s.value ?? "—"}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Talleres recientes */}
+          {talleres.length > 0 && (
+            <div className={`rounded-xl border ${B} ${BG} p-4`}>
+              <div className="flex items-center justify-between mb-3">
+                <p className={`text-xs font-semibold ${T}`}>Talleres activos</p>
+                <span className={`text-xs font-semibold text-purple-600`}>{talleres.filter(t => t.esta_activo).length}</span>
+              </div>
+              {talleres.filter(t => t.esta_activo).slice(0, 3).map((t, i, arr) => (
+                <div key={t.id} className={`flex items-center gap-2.5 ${i < arr.length - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}>
+                  <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                    <Icon icon="mdi:school-outline" width={14} className="text-purple-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-xs font-medium ${T} truncate`}>{t.titulo}</p>
+                    <p className={`text-xs ${M} truncate capitalize`}>{t.modalidad} {t.area ? `· ${t.area}` : ""}</p>
+                  </div>
+                </div>
+              ))}
+              <Link to="/admin/talleres" className="block text-center mt-2 text-xs text-purple-600 hover:underline">
+                Gestionar talleres →
+              </Link>
+            </div>
+          )}
+
+          {/* Estudiantes evaluados */}
+          {adminStats && (
+            <div className={`rounded-xl border ${B} ${BG} p-4`}>
+              <p className={`text-xs font-semibold ${T} mb-3`}>Cobertura de evaluaciones</p>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden">
+                  <div
+                    className="h-2 rounded-full bg-purple-500 transition-all"
+                    style={{ width: `${adminStats.total_estudiantes > 0 ? Math.round((adminStats.estudiantes_evaluados / adminStats.total_estudiantes) * 100) : 0}%` }}
+                  />
+                </div>
+                <span className={`text-xs font-semibold ${T} flex-shrink-0`}>
+                  {adminStats.total_estudiantes > 0
+                    ? Math.round((adminStats.estudiantes_evaluados / adminStats.total_estudiantes) * 100)
+                    : 0}%
+                </span>
+              </div>
+              <p className={`text-xs ${M}`}>{adminStats.estudiantes_evaluados} de {adminStats.total_estudiantes} estudiantes evaluados</p>
+              <Link to="/admin/evaluaciones" className="block text-center mt-2 text-xs text-purple-600 hover:underline">
+                Ver evaluaciones →
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ── RIGHT SIDEBAR ESTUDIANTE ── */}
       {isEstudiante && <div className="flex flex-col gap-4 sticky top-20 max-h-[calc(100vh-5rem)] overflow-y-auto pr-0.5">
 
@@ -883,7 +1098,7 @@ export default function EstudianteDashboard() {
           ) : (
             <>
               {estudianteConversaciones.slice(0, 3).map((c, i) => {
-                const nombre = c.nombre_empresa || c.nombre_estudiante || "Usuario";
+                const nombre = c.contraparte || c.nombre_empresa || c.nombre_estudiante || "Usuario";
                 return (
                   <Link
                     key={c.id}

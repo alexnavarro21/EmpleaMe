@@ -318,7 +318,7 @@ export default function EstudianteMensajeria() {
                   </p>
                 ) : (
                   activeMessages.map((msg) => {
-                    const isMe = msg.remitente_id === usuario.id;
+                    const isMe = Number(msg.remitente_id) === Number(usuario.id);
                     return (
                       <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
                         <div className={`max-w-xs flex flex-col ${isMe ? "items-end" : "items-start"}`}>

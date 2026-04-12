@@ -13,6 +13,7 @@ import {
   getIdiomasEstudiante, agregarIdioma, eliminarIdioma,
   getHistorialAcademico, agregarHistorialAcademico, eliminarHistorialAcademico,
   getHistorialLaboral, agregarHistorialLaboral, eliminarHistorialLaboral,
+  crearHabilidad, actualizarHabilidad, eliminarHabilidad,
 } from "../../services/api";
 
 // ── Download helper ───────────────────────────────────────────────────────────
@@ -691,7 +692,7 @@ function TabEditarEstudiante({ estudiantes, habilidades, isDark }) {
   );
 }
 
-// TAB 2: Evaluación docente (star ratings)
+// TAB 2: Evaluación estudiante (star ratings)
 function TabEvaluacion({ estudiantes, habilidades, isDark }) {
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -739,7 +740,7 @@ function TabEvaluacion({ estudiantes, habilidades, isDark }) {
     <div className="grid grid-cols-3 gap-6">
       <div className="col-span-2 flex flex-col gap-4">
         <Card>
-          <h3 className={`text-sm font-semibold ${T} mb-4`}>Nueva evaluación docente</h3>
+          <h3 className={`text-sm font-semibold ${T} mb-4`}>Nueva evaluación estudiante</h3>
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
               <StudentSearch
@@ -1063,13 +1064,162 @@ function TabPromedios({ isDark }) {
   );
 }
 
+// ── TabHabilidades ────────────────────────────────────────────────────────────
+
+function TabHabilidades({ habilidades, onRefresh, isDark }) {
+  const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
+  const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
+  const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
+  const BG = isDark ? "bg-[#262624]" : "bg-white";
+  const inputCls = `w-full px-3 py-2 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
+    isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
+           : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
+  }`;
+
+  const [nombre, setNombre] = useState("");
+  const [categoria, setCategoria] = useState("tecnica");
+  const [guardando, setGuardando] = useState(false);
+  const [editando, setEditando] = useState(null); // { id, nombre, categoria }
+  const [eliminando, setEliminando] = useState(null);
+  const [error, setError] = useState("");
+
+  const handleCrear = async () => {
+    if (!nombre.trim()) { setError("El nombre es requerido"); return; }
+    setGuardando(true); setError("");
+    try {
+      await crearHabilidad({ nombre: nombre.trim(), categoria });
+      setNombre(""); await onRefresh();
+    } catch (e) { setError(e.message); }
+    finally { setGuardando(false); }
+  };
+
+  const handleEditar = async () => {
+    if (!editando?.nombre.trim()) { setError("El nombre es requerido"); return; }
+    setGuardando(true); setError("");
+    try {
+      await actualizarHabilidad(editando.id, { nombre: editando.nombre.trim(), categoria: editando.categoria });
+      setEditando(null); await onRefresh();
+    } catch (e) { setError(e.message); }
+    finally { setGuardando(false); }
+  };
+
+  const handleEliminar = async (id) => {
+    if (!confirm("¿Eliminar esta habilidad? Los estudiantes que la tengan asignada podrían verse afectados.")) return;
+    setEliminando(id);
+    try { await eliminarHabilidad(id); await onRefresh(); }
+    catch (e) { setError(e.message); }
+    finally { setEliminando(null); }
+  };
+
+  const tecnicas = habilidades.filter((h) => h.categoria === "tecnica" || h.categoria === "técnica");
+  const blandas  = habilidades.filter((h) => h.categoria === "blanda");
+
+  const HabilidadLista = ({ lista, titulo, colorBadge }) => (
+    <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
+      <div className={`px-4 py-3 border-b ${B} flex items-center justify-between`}>
+        <p className={`text-sm font-semibold ${T}`}>{titulo}</p>
+        <span className={`text-xs ${M}`}>{lista.length} habilidades</span>
+      </div>
+      {lista.length === 0 ? (
+        <p className={`text-xs ${M} px-4 py-6 text-center`}>Sin habilidades en esta categoría.</p>
+      ) : (
+        <div>
+          {lista.map((h, i) => (
+            editando?.id === h.id ? (
+              <div key={h.id} className={`flex items-center gap-2 px-4 py-3 ${i < lista.length - 1 ? `border-b ${B}` : ""}`}>
+                <input
+                  value={editando.nombre}
+                  onChange={(e) => setEditando((p) => ({ ...p, nombre: e.target.value }))}
+                  className={`${inputCls} flex-1`}
+                  autoFocus
+                />
+                <select
+                  value={editando.categoria}
+                  onChange={(e) => setEditando((p) => ({ ...p, categoria: e.target.value }))}
+                  className={`${inputCls} w-32`}
+                >
+                  <option value="tecnica">Técnica</option>
+                  <option value="blanda">Blanda</option>
+                </select>
+                <button onClick={handleEditar} disabled={guardando} className="px-3 py-1.5 text-xs rounded-lg bg-[#0F4D8A] text-white hover:bg-[#0A3A6A] transition-colors disabled:opacity-50">
+                  {guardando ? "..." : "Guardar"}
+                </button>
+                <button onClick={() => setEditando(null)} className={`px-3 py-1.5 text-xs rounded-lg border ${B} ${M} hover:border-[#378ADD] transition-colors`}>
+                  Cancelar
+                </button>
+              </div>
+            ) : (
+              <div key={h.id} className={`flex items-center gap-3 px-4 py-3 ${i < lista.length - 1 ? `border-b ${B}` : ""}`}>
+                <span className={`flex-1 text-sm ${T}`}>{h.nombre}</span>
+                <button
+                  onClick={() => setEditando({ id: h.id, nombre: h.nombre, categoria: h.categoria })}
+                  className={`p-1.5 rounded-lg transition-colors ${isDark ? "hover:bg-[#3a3a38]" : "hover:bg-[#F0F4F8]"} ${M}`}
+                  title="Editar"
+                >
+                  <Icon icon="mdi:pencil-outline" width={15} />
+                </button>
+                <button
+                  onClick={() => handleEliminar(h.id)}
+                  disabled={eliminando === h.id}
+                  className={`p-1.5 rounded-lg transition-colors ${isDark ? "hover:bg-red-900/30" : "hover:bg-red-50"} text-red-500 disabled:opacity-40`}
+                  title="Eliminar"
+                >
+                  <Icon icon={eliminando === h.id ? "mdi:loading" : "mdi:trash-can-outline"} width={15} className={eliminando === h.id ? "animate-spin" : ""} />
+                </button>
+              </div>
+            )
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Form nueva habilidad */}
+      <Card>
+        <p className={`text-sm font-semibold ${T} mb-4`}>Agregar habilidad</p>
+        <div className="flex gap-3 items-end flex-wrap">
+          <div className="flex-1 min-w-48">
+            <label className={`block text-xs mb-1 ${M}`}>Nombre</label>
+            <input
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleCrear()}
+              placeholder="Ej: Diagnóstico automotriz"
+              className={inputCls}
+            />
+          </div>
+          <div>
+            <label className={`block text-xs mb-1 ${M}`}>Categoría</label>
+            <select value={categoria} onChange={(e) => setCategoria(e.target.value)} className={inputCls}>
+              <option value="tecnica">Técnica</option>
+              <option value="blanda">Blanda</option>
+            </select>
+          </div>
+          <PrimaryButton onClick={handleCrear} disabled={guardando}>
+            {guardando ? "Guardando..." : "Agregar"}
+          </PrimaryButton>
+        </div>
+        {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <HabilidadLista lista={tecnicas} titulo="Habilidades técnicas" colorBadge="blue" />
+        <HabilidadLista lista={blandas}  titulo="Habilidades blandas"  colorBadge="green" />
+      </div>
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 const TABS = [
   { key: "editar_estudiante", label: "Editar estudiante",     icon: "mdi:account-edit-outline" },
-  { key: "evaluacion",        label: "Evaluación docente",    icon: "mdi:clipboard-list-outline" },
+  { key: "evaluacion",        label: "Evaluación estudiante", icon: "mdi:clipboard-list-outline" },
   { key: "tests",             label: "Tests socioemocionales",icon: "hugeicons:brain-02" },
   { key: "promedios",         label: "Promedios académicos",  icon: "mdi:school-outline" },
+  { key: "habilidades",       label: "Habilidades",           icon: "mdi:tag-multiple-outline" },
 ];
 
 export default function GestionEstudiantes() {
@@ -1081,6 +1231,8 @@ export default function GestionEstudiantes() {
 
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
+
+  const cargarHabilidades = () => getHabilidades().then(setHabilidades).catch(() => {});
 
   useEffect(() => {
     Promise.all([getEstudiantes(), getHabilidades()])
@@ -1124,6 +1276,7 @@ export default function GestionEstudiantes() {
           {tab === "evaluacion"        && <TabEvaluacion      estudiantes={estudiantes} habilidades={habilidades} isDark={isDark} />}
           {tab === "tests"             && <TabTests  isDark={isDark} />}
           {tab === "promedios"         && <TabPromedios isDark={isDark} />}
+          {tab === "habilidades"       && <TabHabilidades habilidades={habilidades} onRefresh={cargarHabilidades} isDark={isDark} />}
         </>
       )}
     </div>

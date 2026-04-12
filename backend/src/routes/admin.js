@@ -486,7 +486,9 @@ router.delete("/historial-academico/:id", ...auth, async (req, res) => {
 router.get("/historial-laboral/:estudiante_id", ...auth, async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT hl.*, v.titulo AS vacante_titulo
+      `SELECT hl.*,
+              v.titulo AS vacante_titulo,
+              COALESCE(hl.descripcion, v.descripcion) AS descripcion
        FROM historial_laboral hl
        LEFT JOIN postulaciones p ON p.id = hl.postulacion_id
        LEFT JOIN vacantes v ON v.id = p.vacante_id

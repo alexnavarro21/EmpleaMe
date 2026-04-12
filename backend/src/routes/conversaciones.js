@@ -13,28 +13,28 @@ router.get("/", verificarToken, async (req, res) => {
         `SELECT c.id, c.creada_en,
                 pe.usuario_id AS contraparte_id,
                 pe.nombre_completo AS contraparte,
-                (SELECT m.contenido FROM mensajes m WHERE m.conversacion_id = c.id ORDER BY m.enviado_en DESC LIMIT 1) AS ultimo_mensaje,
+                (SELECT m.contenido FROM mensajes m WHERE m.conversacion_id = c.id AND m.remitente_id != ? ORDER BY m.enviado_en DESC LIMIT 1) AS ultimo_mensaje,
                 (SELECT m.enviado_en FROM mensajes m WHERE m.conversacion_id = c.id ORDER BY m.enviado_en DESC LIMIT 1) AS ultimo_tiempo,
                 (SELECT COUNT(*) FROM mensajes m WHERE m.conversacion_id = c.id AND m.leido = FALSE AND m.remitente_id != ?) AS no_leidos
          FROM conversaciones c
          JOIN perfiles_estudiantes pe ON pe.usuario_id = c.estudiante_id
          WHERE c.empresa_id = ?
          ORDER BY ultimo_tiempo DESC`,
-        [id, id]
+        [id, id, id]
       );
     } else if (rol === "estudiante") {
       [rows] = await db.query(
         `SELECT c.id, c.creada_en,
                 emp.usuario_id AS contraparte_id,
                 emp.nombre_empresa AS contraparte,
-                (SELECT m.contenido FROM mensajes m WHERE m.conversacion_id = c.id ORDER BY m.enviado_en DESC LIMIT 1) AS ultimo_mensaje,
+                (SELECT m.contenido FROM mensajes m WHERE m.conversacion_id = c.id AND m.remitente_id != ? ORDER BY m.enviado_en DESC LIMIT 1) AS ultimo_mensaje,
                 (SELECT m.enviado_en FROM mensajes m WHERE m.conversacion_id = c.id ORDER BY m.enviado_en DESC LIMIT 1) AS ultimo_tiempo,
                 (SELECT COUNT(*) FROM mensajes m WHERE m.conversacion_id = c.id AND m.leido = FALSE AND m.remitente_id != ?) AS no_leidos
          FROM conversaciones c
          JOIN perfiles_empresas emp ON emp.usuario_id = c.empresa_id
          WHERE c.estudiante_id = ?
          ORDER BY ultimo_tiempo DESC`,
-        [id, id]
+        [id, id, id]
       );
     } else {
       // Centro/admin ve todas

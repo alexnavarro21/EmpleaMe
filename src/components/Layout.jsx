@@ -65,6 +65,7 @@ export default function Layout() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+
   return (
     <div className={isDark ? "dark" : ""}>
       <div className={`min-h-screen font-sans ${isDark ? "bg-[#1e1e1c]" : "bg-[#F0F4F8]"}`}>
@@ -103,7 +104,7 @@ export default function Layout() {
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className={`p-1.5 rounded-lg transition-colors ${
+              className={`relative p-1.5 rounded-lg transition-colors ${
                 menuOpen
                   ? "bg-[#0F4D8A] text-[#E6F1FB]"
                   : "text-[#B5D4F4] hover:text-[#E6F1FB] hover:bg-[#0F4D8A]/40"

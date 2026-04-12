@@ -36,6 +36,7 @@ export default function EmpresaPublicarVacante() {
   const [archivo, setArchivo] = useState(null);
   const [habilidadesSeleccionadas, setHabilidadesSeleccionadas] = useState([]);
   const [catalogoHabilidades, setCatalogoHabilidades] = useState([]);
+  const [busquedaHab, setBusquedaHab] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -202,36 +203,84 @@ export default function EmpresaPublicarVacante() {
             {catalogoHabilidades.length > 0 && (
               <div className="mb-4">
                 <label className={`block text-xs mb-2 ${M}`}>Habilidades que buscas</label>
+
+                {/* Chips seleccionados */}
+                {habilidadesSeleccionadas.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {habilidadesSeleccionadas.map((id) => {
+                      const h = catalogoHabilidades.find((x) => x.id === id);
+                      if (!h) return null;
+                      return (
+                        <span key={id} className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-full bg-[#0F4D8A] text-white">
+                          {h.nombre}
+                          <button
+                            type="button"
+                            onClick={() => toggleHabilidad(id)}
+                            className="hover:opacity-70 transition-opacity leading-none"
+                          >
+                            <Icon icon="mdi:close" width={12} />
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Buscador */}
+                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${B} ${isDark ? "bg-[#313130]" : "bg-[#F7F6F3]"} mb-3`}>
+                  <Icon icon="mdi:magnify" width={16} className={M} />
+                  <input
+                    type="text"
+                    value={busquedaHab}
+                    onChange={(e) => setBusquedaHab(e.target.value)}
+                    placeholder="Buscar habilidad..."
+                    className={`flex-1 bg-transparent text-sm outline-none ${T} placeholder-[#B4B2A9]`}
+                  />
+                  {busquedaHab && (
+                    <button type="button" onClick={() => setBusquedaHab("")}>
+                      <Icon icon="mdi:close-circle" width={15} className={M} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Resultados filtrados por categoría */}
                 {["tecnica", "blanda"].map((cat) => {
-                  const grupo = catalogoHabilidades.filter((h) => h.categoria === cat);
+                  const termino = busquedaHab.toLowerCase().trim();
+                  const grupo = catalogoHabilidades.filter(
+                    (h) => h.categoria === cat &&
+                    !habilidadesSeleccionadas.includes(h.id) &&
+                    (!termino || h.nombre.toLowerCase().includes(termino))
+                  );
                   if (grupo.length === 0) return null;
                   return (
                     <div key={cat} className="mb-3">
-                      <p className={`text-xs font-medium ${T} mb-1.5 capitalize`}>
+                      <p className={`text-xs font-medium ${M} mb-1.5`}>
                         {cat === "tecnica" ? "Técnicas" : "Blandas"}
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {grupo.map((h) => {
-                          const activo = habilidadesSeleccionadas.includes(h.id);
-                          return (
-                            <button
-                              key={h.id}
-                              type="button"
-                              onClick={() => toggleHabilidad(h.id)}
-                              className={`text-xs px-3 py-1 rounded-full border transition-colors ${
-                                activo
-                                  ? "bg-[#0F4D8A] border-[#0F4D8A] text-white"
-                                  : `${B} ${M} hover:border-[#378ADD] hover:text-[#378ADD]`
-                              }`}
-                            >
-                              {h.nombre}
-                            </button>
-                          );
-                        })}
+                        {grupo.map((h) => (
+                          <button
+                            key={h.id}
+                            type="button"
+                            onClick={() => toggleHabilidad(h.id)}
+                            className={`text-xs px-3 py-1 rounded-full border transition-colors ${B} ${M} hover:border-[#378ADD] hover:text-[#378ADD]`}
+                          >
+                            {h.nombre}
+                          </button>
+                        ))}
                       </div>
                     </div>
                   );
                 })}
+
+                {/* Sin resultados */}
+                {busquedaHab.trim() &&
+                  catalogoHabilidades.filter(
+                    (h) => !habilidadesSeleccionadas.includes(h.id) &&
+                    h.nombre.toLowerCase().includes(busquedaHab.toLowerCase().trim())
+                  ).length === 0 && (
+                  <p className={`text-xs ${M}`}>Sin resultados para "{busquedaHab}"</p>
+                )}
               </div>
             )}
 
