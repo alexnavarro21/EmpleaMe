@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge } from "../../components/ui";
-import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante, toggleLike, getTalleres, getAdminStats } from "../../services/api";
+import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante, toggleLike, getTalleres, getAdminStats, inscribirseEnTaller } from "../../services/api";
 import { calcularCompletitud } from "../../utils/perfilCompletitud";
 import CrearPublicacion from "../../components/CrearPublicacion";
 import VerMasModal from "../../components/VerMasModal";
@@ -370,7 +370,10 @@ function FeedCard({ pub, isDark, perfilCompleto }) {
   );
 }
 
-function TallerCard({ taller, isDark }) {
+function TallerCard({ taller, isDark, perfilCompleto }) {
+  const [estadoInscripcion, setEstadoInscripcion] = useState("idle"); // idle | loading | ok | duplicado | sin_cupos | error | incompleto
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+
   const T  = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M  = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B  = isDark ? "border-[#3a3a38]" : "border-[#E8E6E1]";
@@ -379,6 +382,21 @@ function TallerCard({ taller, isDark }) {
 
   const gratuito = !taller.costo || Number(taller.costo) === 0;
   const costoStr = gratuito ? "Gratuito" : `$${Number(taller.costo).toLocaleString("es-CL")}`;
+
+  const handleInscribirse = async () => {
+    if (estadoInscripcion !== "idle") return;
+    if (!perfilCompleto) { setEstadoInscripcion("incompleto"); return; }
+    setEstadoInscripcion("loading");
+    try {
+      await inscribirseEnTaller(taller.id);
+      setEstadoInscripcion("ok");
+    } catch (err) {
+      const msg = err.message?.toLowerCase();
+      if (msg?.includes("ya estás")) setEstadoInscripcion("duplicado");
+      else if (msg?.includes("cupos"))  setEstadoInscripcion("sin_cupos");
+      else setEstadoInscripcion("error");
+    }
+  };
 
   return (
     <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
@@ -476,6 +494,47 @@ function TallerCard({ taller, isDark }) {
           <Icon icon="mdi:information-outline" width={16} />
           Ver más
         </button>
+        {usuario.rol === "estudiante" && (taller.esta_activo === true || taller.esta_activo === 1) && (
+          <div className="flex-1 relative group">
+            <button
+              onClick={handleInscribirse}
+              disabled={estadoInscripcion !== "idle"}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors w-full justify-center ${
+                estadoInscripcion === "ok"         ? "text-green-600"  :
+                estadoInscripcion === "duplicado"  ? "text-amber-500"  :
+                estadoInscripcion === "sin_cupos"  ? "text-red-500"    :
+                estadoInscripcion === "error"      ? "text-red-500"    :
+                estadoInscripcion === "incompleto" ? "text-orange-500" : M
+              } ${estadoInscripcion === "idle" ? HV : ""}`}
+            >
+              <Icon
+                icon={
+                  estadoInscripcion === "ok"         ? "mdi:check-circle-outline"  :
+                  estadoInscripcion === "duplicado"  ? "mdi:information-outline"   :
+                  estadoInscripcion === "sin_cupos"  ? "mdi:account-cancel-outline":
+                  estadoInscripcion === "error"      ? "mdi:alert-circle-outline"  :
+                  estadoInscripcion === "incompleto" ? "mdi:account-alert-outline" :
+                  estadoInscripcion === "loading"    ? "mdi:loading"               : "mdi:clipboard-plus-outline"
+                }
+                width={16}
+                className={estadoInscripcion === "loading" ? "animate-spin" : ""}
+              />
+              {estadoInscripcion === "ok"         ? "Inscrito"           :
+               estadoInscripcion === "duplicado"  ? "Ya inscrito"        :
+               estadoInscripcion === "sin_cupos"  ? "Sin cupos"          :
+               estadoInscripcion === "error"      ? "Error, reintentar"  :
+               estadoInscripcion === "incompleto" ? "Perfil incompleto"  :
+               estadoInscripcion === "loading"    ? "Enviando..."        : "Inscribirse"}
+            </button>
+            {estadoInscripcion === "incompleto" && (
+              <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 text-center text-xs rounded-lg px-3 py-2 shadow-lg z-10 pointer-events-none ${
+                isDark ? "bg-[#262624] border border-[#3a3a38] text-[#D3D1C7]" : "bg-white border border-[#D3D1C7] text-[#2C2C2A]"
+              }`}>
+                Completa tu perfil al 100% para inscribirte
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -790,7 +849,7 @@ export default function EstudianteDashboard() {
 
           return feedUnificado.map((item) =>
             item._tipo === "taller"
-              ? <TallerCard key={`taller-${item.id}`} taller={item} isDark={isDark} />
+              ? <TallerCard key={`taller-${item.id}`} taller={item} isDark={isDark} perfilCompleto={perfilCompleto} />
               : <FeedCard key={`pub-${item.id}`} pub={item} isDark={isDark} perfilCompleto={perfilCompleto} />
           );
         })()}

@@ -680,6 +680,42 @@ export async function eliminarTaller(id) {
   return data;
 }
 
+// ── Inscripciones a talleres ──────────────────────────────────────────────────
+
+export async function inscribirseEnTaller(tallerId) {
+  const res = await fetch(`${BASE_URL}/talleres/${tallerId}/inscribir`, {
+    method: "POST", headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al inscribirse");
+  return data;
+}
+
+export async function getMisInscripcionesTalleres() {
+  const res = await fetch(`${BASE_URL}/talleres/mis-inscripciones`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener inscripciones");
+  return data;
+}
+
+export async function getInscritosTaller(tallerId) {
+  const res = await fetch(`${BASE_URL}/talleres/${tallerId}/inscritos`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener inscritos");
+  return data;
+}
+
+export async function actualizarEstadoInscripcion(inscripcionId, estado) {
+  const res = await fetch(`${BASE_URL}/talleres/inscripciones/${inscripcionId}/estado`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify({ estado }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al actualizar inscripción");
+  return data;
+}
+
 // ── Completar práctica (empresa) ──────────────────────────────────────────────
 
 export async function completarPractica(postulacionId) {

@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge, Card, PageHeader, Paginacion } from "../../components/ui";
-import { getTalleres, crearTaller, actualizarTaller, toggleTaller, eliminarTaller } from "../../services/api";
+import { Link } from "react-router-dom";
+import { getTalleres, crearTaller, actualizarTaller, toggleTaller, eliminarTaller, getInscritosTaller, actualizarEstadoInscripcion } from "../../services/api";
 
 const MODALIDADES = ["presencial", "remoto", "hibrido"];
 
@@ -327,13 +328,43 @@ export default function AdminTalleres() {
 
   const [talleres, setTalleres] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [vista, setVista] = useState("lista"); // "lista" | "nuevo" | taller object (editar)
+  const [vista, setVista] = useState("lista"); // "lista" | "nuevo" | taller object (editar) | { tipo:"inscritos", taller }
   const [toggling, setToggling]   = useState(null);
   const [eliminando, setEliminando] = useState(null);
   const [busqueda, setBusqueda]   = useState("");
   const [filtro, setFiltro]       = useState("todos");
   const [pagina, setPagina]       = useState(1);
   const [porPagina, setPorPagina] = useState(6);
+
+  // Vista inscritos
+  const [inscritos, setInscritos]           = useState([]);
+  const [loadingInscritos, setLoadingInscritos] = useState(false);
+  const [actualizando, setActualizando]     = useState(null);
+  const [filtroInscripcion, setFiltroInscripcion] = useState("todos");
+
+  const cargarInscritos = async (tallerId) => {
+    setLoadingInscritos(true);
+    try {
+      const data = await getInscritosTaller(tallerId);
+      setInscritos(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingInscritos(false);
+    }
+  };
+
+  const handleEstadoInscripcion = async (inscripcionId, estado) => {
+    setActualizando(inscripcionId);
+    try {
+      await actualizarEstadoInscripcion(inscripcionId, estado);
+      setInscritos((prev) => prev.map((i) => i.id === inscripcionId ? { ...i, estado } : i));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActualizando(null);
+    }
+  };
 
   const cargar = async () => {
     setLoading(true);
@@ -383,6 +414,159 @@ export default function AdminTalleres() {
       setEliminando(null);
     }
   };
+
+  // Vista inscritos
+  if (vista?.tipo === "inscritos") {
+    const t = vista.taller;
+    const inscritosFiltrados = inscritos.filter((i) =>
+      filtroInscripcion === "todos" ? true : i.estado === filtroInscripcion
+    );
+    const conteoInsc = {
+      todos:     inscritos.length,
+      pendiente: inscritos.filter(i => i.estado === "pendiente").length,
+      aceptado:  inscritos.filter(i => i.estado === "aceptado").length,
+      rechazado: inscritos.filter(i => i.estado === "rechazado").length,
+    };
+
+    return (
+      <div>
+        <PageHeader
+          title={`Inscritos — ${t.titulo}`}
+          subtitle={`${inscritos.length} inscripción${inscritos.length !== 1 ? "es" : ""} · ${t.area || ""} · ${t.modalidad || ""}`}
+          action={
+            <button
+              onClick={() => setVista("lista")}
+              className={`flex items-center gap-2 text-sm px-4 py-2 rounded-lg border ${B} ${M} hover:border-purple-500 transition-colors`}
+            >
+              <Icon icon="mdi:arrow-left" width={16} />
+              Volver a talleres
+            </button>
+          }
+        />
+
+        {/* Filtros */}
+        <div className="flex gap-2 flex-wrap mb-5">
+          {[
+            { key: "todos",     label: "Todos",     color: "" },
+            { key: "pendiente", label: "Pendientes", color: "text-amber-600" },
+            { key: "aceptado",  label: "Aceptados",  color: "text-green-600" },
+            { key: "rechazado", label: "Rechazados", color: "text-red-500"   },
+          ].map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setFiltroInscripcion(key)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                filtroInscripcion === key
+                  ? "bg-purple-600 text-white border-purple-600"
+                  : `${B} ${M} hover:border-purple-500 hover:text-purple-500`
+              }`}
+            >
+              {label}
+              <span className={`px-1.5 py-0.5 rounded-full text-xs font-semibold ${
+                filtroInscripcion === key ? "bg-white/20 text-white" : isDark ? "bg-[#3a3a38] text-[#888780]" : "bg-[#F0F4F8] text-[#5F5E5A]"
+              }`}>{conteoInsc[key]}</span>
+            </button>
+          ))}
+        </div>
+
+        {loadingInscritos ? (
+          <div className={`flex items-center justify-center py-20 gap-2 ${M}`}>
+            <Icon icon="mdi:loading" width={24} className="animate-spin" />
+            Cargando inscritos...
+          </div>
+        ) : inscritosFiltrados.length === 0 ? (
+          <div className={`rounded-xl border ${B} ${BG} p-16 text-center`}>
+            <Icon icon="mdi:account-group-outline" width={44} className={`mx-auto mb-3 ${M}`} />
+            <p className={`text-sm font-medium ${T}`}>
+              {inscritos.length === 0 ? "Aún no hay inscripciones en este taller" : `Sin inscripciones con estado "${filtroInscripcion}"`}
+            </p>
+          </div>
+        ) : (
+          <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
+            {inscritosFiltrados.map((ins, i) => {
+              const estadoCfg = {
+                pendiente: { label: "Pendiente", color: "bg-amber-100 text-amber-700",  icon: "mdi:clock-outline"         },
+                aceptado:  { label: "Aceptado",  color: "bg-green-100 text-green-700",  icon: "mdi:check-circle-outline"  },
+                rechazado: { label: "Rechazado", color: "bg-red-100 text-red-600",      icon: "mdi:close-circle-outline"  },
+              }[ins.estado] || { label: ins.estado, color: "bg-gray-100 text-gray-600", icon: "mdi:help-circle-outline" };
+
+              return (
+                <div
+                  key={ins.id}
+                  className={`flex items-center gap-4 px-5 py-4 ${i < inscritosFiltrados.length - 1 ? `border-b ${B}` : ""}`}
+                >
+                  {/* Avatar */}
+                  <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                    {ins.nombre_completo?.[0]?.toUpperCase() || "?"}
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <Link
+                        to={`/admin/candidato/${ins.estudiante_id}`}
+                        className={`text-sm font-semibold ${T} hover:text-purple-600 transition-colors`}
+                      >
+                        {ins.nombre_completo}
+                      </Link>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${estadoCfg.color}`}>
+                        <Icon icon={estadoCfg.icon} width={11} className="inline mr-1" />
+                        {estadoCfg.label}
+                      </span>
+                    </div>
+                    <div className={`flex gap-3 text-xs ${M}`}>
+                      <span>{ins.carrera || "Sin carrera"}</span>
+                      {ins.promedio && <span>Promedio: {ins.promedio}</span>}
+                      {ins.calificacion_docente && <span>Eval. docente: {ins.calificacion_docente}</span>}
+                      <span>{new Date(ins.fecha_creacion).toLocaleDateString("es-CL")}</span>
+                    </div>
+                  </div>
+
+                  {/* Acciones */}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {ins.estado !== "aceptado" && (
+                      <button
+                        onClick={() => handleEstadoInscripcion(ins.id, "aceptado")}
+                        disabled={actualizando === ins.id}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                          isDark ? "bg-green-900/40 hover:bg-green-900/60 text-green-400" : "bg-green-50 hover:bg-green-100 text-green-700"
+                        } disabled:opacity-40`}
+                      >
+                        <Icon icon={actualizando === ins.id ? "mdi:loading" : "mdi:check"} width={14} className={actualizando === ins.id ? "animate-spin" : ""} />
+                        Aceptar
+                      </button>
+                    )}
+                    {ins.estado !== "rechazado" && (
+                      <button
+                        onClick={() => handleEstadoInscripcion(ins.id, "rechazado")}
+                        disabled={actualizando === ins.id}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                          isDark ? "bg-red-900/40 hover:bg-red-900/60 text-red-400" : "bg-red-50 hover:bg-red-100 text-red-600"
+                        } disabled:opacity-40`}
+                      >
+                        <Icon icon="mdi:close" width={14} />
+                        Rechazar
+                      </button>
+                    )}
+                    {ins.estado !== "pendiente" && (
+                      <button
+                        onClick={() => handleEstadoInscripcion(ins.id, "pendiente")}
+                        disabled={actualizando === ins.id}
+                        className={`p-1.5 rounded-lg transition-colors ${isDark ? "hover:bg-[#3a3a38]" : "hover:bg-[#F0F4F8]"} ${M}`}
+                        title="Volver a pendiente"
+                      >
+                        <Icon icon="mdi:refresh" width={14} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   // Vista crear/editar
   if (vista !== "lista") {
@@ -548,6 +732,20 @@ export default function AdminTalleres() {
                 </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => {
+                      setVista({ tipo: "inscritos", taller: t });
+                      setFiltroInscripcion("todos");
+                      cargarInscritos(t.id);
+                    }}
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      isDark ? "bg-purple-900/40 hover:bg-purple-900/60 text-purple-400" : "bg-purple-50 hover:bg-purple-100 text-purple-700"
+                    }`}
+                    title="Ver inscritos"
+                  >
+                    <Icon icon="mdi:account-group-outline" width={14} />
+                    Inscritos
+                  </button>
                   <button
                     onClick={() => setVista(t)}
                     className={`p-2 rounded-lg transition-colors ${isDark ? "hover:bg-[#3a3a38]" : "hover:bg-[#F0F4F8]"} ${M}`}
