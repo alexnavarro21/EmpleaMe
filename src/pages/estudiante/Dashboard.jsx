@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge } from "../../components/ui";
-import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante, toggleLike, getTalleres } from "../../services/api";
+import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante, toggleLike, getTalleres, getAdminStats } from "../../services/api";
 import { calcularCompletitud } from "../../utils/perfilCompletitud";
 import CrearPublicacion from "../../components/CrearPublicacion";
 import VerMasModal from "../../components/VerMasModal";
@@ -497,6 +497,7 @@ export default function EstudianteDashboard() {
   const location = useLocation();
   const isEstudiante = location.pathname.startsWith("/estudiante");
   const isEmpresa = location.pathname.startsWith("/empresa");
+  const isAdmin = location.pathname.startsWith("/admin");
 
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
   const [perfil, setPerfil] = useState(null);
@@ -513,6 +514,9 @@ export default function EstudianteDashboard() {
   const [empresaPostulantes, setEmpresaPostulantes] = useState([]);
   const [empresaConversaciones, setEmpresaConversaciones] = useState([]);
 
+  // Estado admin
+  const [adminStats, setAdminStats] = useState(null);
+
   const cargarPublicaciones = () => {
     getPublicaciones().then(setPublicaciones).catch(console.error);
   };
@@ -528,6 +532,9 @@ export default function EstudianteDashboard() {
       getVacantesEmpresa(usuario.id).then(setEmpresaVacantes).catch(console.error);
       getPostulantesEmpresa().then(setEmpresaPostulantes).catch(console.error);
       getConversaciones().then(setEmpresaConversaciones).catch(console.error);
+    }
+    if (usuario.id && usuario.rol === "centro") {
+      getAdminStats().then(setAdminStats).catch(console.error);
     }
     cargarPublicaciones();
     getTalleres().then(setTalleres).catch(console.error);
@@ -561,7 +568,7 @@ export default function EstudianteDashboard() {
     { done: !!(biografia),           label: "Presentación personal" },
   ];
 
-  const conSidebar = isEstudiante || isEmpresa;
+  const conSidebar = isEstudiante || isEmpresa || isAdmin;
   const vacantesActivasEmpresa = empresaVacantes.filter((v) => v.esta_activa);
   const mensajesNoLeidos = empresaConversaciones.filter((c) => c.no_leidos > 0);
 
@@ -615,6 +622,73 @@ export default function EstudianteDashboard() {
               { icon: "mdi:view-dashboard-outline", label: "Panel de empresa",   to: "/empresa/dashboard"  },
               { icon: "mdi:account-search-outline", label: "Buscar estudiantes", to: "/empresa/buscador"   },
               { icon: "mdi:message-outline",        label: "Mensajería",         to: "/empresa/mensajeria" },
+            ].map((link) => (
+              <Link
+                key={link.label}
+                to={link.to}
+                className={`flex items-center gap-2.5 py-2 text-xs rounded-lg px-2 -mx-2 transition-colors ${isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"} ${M}`}
+              >
+                <Icon icon={link.icon} width={15} className="flex-shrink-0" />
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── LEFT SIDEBAR ADMIN ── */}
+      {isAdmin && (
+        <div className="flex flex-col gap-4 sticky top-20">
+          {/* Tarjeta perfil admin */}
+          <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
+            <div className="h-16 bg-gradient-to-r from-purple-900 to-purple-600" />
+            <div className="px-4 pb-4">
+              <div className="-mt-7 mb-3">
+                <div className="w-14 h-14 rounded-full bg-purple-600 flex items-center justify-center text-white text-xl font-bold border-2 border-white">
+                  <Icon icon="mdi:shield-account-outline" width={28} />
+                </div>
+              </div>
+              <p className={`text-sm font-semibold ${T}`}>C.E. Cardenal J.M. Caro</p>
+              <p className={`text-xs ${M} mt-0.5`}>Administrador del sistema</p>
+
+              <div className={`grid grid-cols-2 gap-2 mt-3 pt-3 border-t ${B}`}>
+                <div className="text-center">
+                  <p className={`text-base font-semibold ${T}`}>{adminStats?.total_estudiantes ?? "—"}</p>
+                  <p className={`text-xs ${M}`}>Estudiantes</p>
+                </div>
+                <div className="text-center">
+                  <p className={`text-base font-semibold ${T}`}>{adminStats?.total_empresas ?? "—"}</p>
+                  <p className={`text-xs ${M}`}>Empresas</p>
+                </div>
+                <div className="text-center">
+                  <p className={`text-base font-semibold text-green-600`}>{adminStats?.total_vacantes_activas ?? "—"}</p>
+                  <p className={`text-xs ${M}`}>Vacantes</p>
+                </div>
+                <div className="text-center">
+                  <p className={`text-base font-semibold text-amber-500`}>{adminStats?.total_postulaciones ?? "—"}</p>
+                  <p className={`text-xs ${M}`}>Pendientes</p>
+                </div>
+              </div>
+
+              <Link
+                to="/admin/panel"
+                className="block text-center mt-3 text-xs font-medium text-purple-600 hover:text-purple-700 border border-purple-500 hover:bg-purple-50 py-1.5 rounded-lg transition-colors"
+              >
+                Ir al panel
+              </Link>
+            </div>
+          </div>
+
+          {/* Accesos rápidos */}
+          <div className={`rounded-xl border ${B} ${BG} p-4`}>
+            <p className={`text-xs font-semibold ${T} mb-2`}>Accesos rápidos</p>
+            {[
+              { icon: "mdi:account-group-outline",   label: "Gestión de usuarios",  to: "/admin/usuarios"     },
+              { icon: "mdi:school-outline",           label: "Talleres",             to: "/admin/talleres"     },
+              { icon: "mdi:clipboard-check-outline",  label: "Evaluaciones",         to: "/admin/evaluaciones" },
+              { icon: "mdi:message-outline",          label: "Mensajería",           to: "/admin/mensajeria"   },
+              { icon: "mdi:monitor-dashboard",        label: "Monitoreo",            to: "/admin/monitoreo"    },
+              { icon: "mdi:account-search-outline",   label: "Buscar perfiles",      to: "/admin/buscar"       },
             ].map((link) => (
               <Link
                 key={link.label}
@@ -696,7 +770,7 @@ export default function EstudianteDashboard() {
 
       {/* ── CENTER FEED ── */}
       <div className="flex flex-col gap-4">
-        {(isEstudiante || isEmpresa) && <CrearPublicacion onPublicado={cargarPublicaciones} />}
+        {(isEstudiante || isEmpresa || isAdmin) && <CrearPublicacion onPublicado={cargarPublicaciones} />}
 
         {(() => {
           const feedUnificado = [
@@ -827,6 +901,81 @@ export default function EstudianteDashboard() {
               </>
             )}
           </div>
+        </div>
+      )}
+
+      {/* ── RIGHT SIDEBAR ADMIN ── */}
+      {isAdmin && (
+        <div className="flex flex-col gap-4 sticky top-20 max-h-[calc(100vh-5rem)] overflow-y-auto pr-0.5">
+
+          {/* Estadísticas del sistema */}
+          <div className={`rounded-xl border ${B} ${BG} p-4`}>
+            <p className={`text-xs font-semibold ${T} mb-3`}>Estado del sistema</p>
+            {[
+              { label: "Estudiantes registrados", value: adminStats?.total_estudiantes, icon: "mdi:account-school-outline",  color: "text-[#378ADD]"  },
+              { label: "Empresas registradas",    value: adminStats?.total_empresas,    icon: "mdi:domain",                  color: "text-purple-600" },
+              { label: "Vacantes activas",        value: adminStats?.total_vacantes_activas, icon: "mdi:briefcase-check-outline", color: "text-green-600"  },
+              { label: "Postulaciones pendientes",value: adminStats?.total_postulaciones,icon: "mdi:clock-outline",           color: "text-amber-500"  },
+              { label: "Conversaciones totales",  value: adminStats?.total_conversaciones,icon: "mdi:message-outline",        color: "text-[#378ADD]"  },
+              { label: "Evaluaciones realizadas", value: adminStats?.total_evaluaciones, icon: "mdi:clipboard-check-outline", color: "text-green-600"  },
+            ].map((s, i, arr) => (
+              <div key={s.label} className={`flex items-center gap-2.5 ${i < arr.length - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}>
+                <Icon icon={s.icon} width={16} className={`flex-shrink-0 ${s.color}`} />
+                <div className="flex-1 min-w-0">
+                  <p className={`text-xs ${M} truncate`}>{s.label}</p>
+                </div>
+                <p className={`text-sm font-semibold ${T} flex-shrink-0`}>{s.value ?? "—"}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Talleres recientes */}
+          {talleres.length > 0 && (
+            <div className={`rounded-xl border ${B} ${BG} p-4`}>
+              <div className="flex items-center justify-between mb-3">
+                <p className={`text-xs font-semibold ${T}`}>Talleres activos</p>
+                <span className={`text-xs font-semibold text-purple-600`}>{talleres.filter(t => t.esta_activo).length}</span>
+              </div>
+              {talleres.filter(t => t.esta_activo).slice(0, 3).map((t, i, arr) => (
+                <div key={t.id} className={`flex items-center gap-2.5 ${i < arr.length - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}>
+                  <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                    <Icon icon="mdi:school-outline" width={14} className="text-purple-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-xs font-medium ${T} truncate`}>{t.titulo}</p>
+                    <p className={`text-xs ${M} truncate capitalize`}>{t.modalidad} {t.area ? `· ${t.area}` : ""}</p>
+                  </div>
+                </div>
+              ))}
+              <Link to="/admin/talleres" className="block text-center mt-2 text-xs text-purple-600 hover:underline">
+                Gestionar talleres →
+              </Link>
+            </div>
+          )}
+
+          {/* Estudiantes evaluados */}
+          {adminStats && (
+            <div className={`rounded-xl border ${B} ${BG} p-4`}>
+              <p className={`text-xs font-semibold ${T} mb-3`}>Cobertura de evaluaciones</p>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden">
+                  <div
+                    className="h-2 rounded-full bg-purple-500 transition-all"
+                    style={{ width: `${adminStats.total_estudiantes > 0 ? Math.round((adminStats.estudiantes_evaluados / adminStats.total_estudiantes) * 100) : 0}%` }}
+                  />
+                </div>
+                <span className={`text-xs font-semibold ${T} flex-shrink-0`}>
+                  {adminStats.total_estudiantes > 0
+                    ? Math.round((adminStats.estudiantes_evaluados / adminStats.total_estudiantes) * 100)
+                    : 0}%
+                </span>
+              </div>
+              <p className={`text-xs ${M}`}>{adminStats.estudiantes_evaluados} de {adminStats.total_estudiantes} estudiantes evaluados</p>
+              <Link to="/admin/evaluaciones" className="block text-center mt-2 text-xs text-purple-600 hover:underline">
+                Ver evaluaciones →
+              </Link>
+            </div>
+          )}
         </div>
       )}
 
