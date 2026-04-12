@@ -113,23 +113,31 @@ export default function EstudiantePerfil() {
       setSaving(false);
     }
   };
-  const descargarCV = () => {
-    generarCV({
-      nombre,
-      carrera,
-      telefono,
-      correo:  usuario.correo || "",
-      region,
-      comuna,
-      rut,
-      biografia,
-      promedio,
-      idiomas,
-      habilidadesBlandas:  habilidades.filter(h => h.categoria === "blanda"),
-      habilidadesTecnicas: habilidades.filter(h => h.categoria === "tecnica"),
-      experiencia: laboralesFavoritos,
-      formacion:   historialAcademico,
-    });
+  const [generandoCV, setGenerandoCV] = useState(false);
+
+  const descargarCV = async () => {
+    if (generandoCV) return;
+    setGenerandoCV(true);
+    try {
+      await generarCV({
+        nombre,
+        carrera,
+        telefono,
+        correo:  usuario.correo || "",
+        region,
+        comuna,
+        rut,
+        biografia,
+        promedio,
+        idiomas,
+        habilidadesBlandas:  habilidades.filter(h => h.categoria === "blanda"),
+        habilidadesTecnicas: habilidades.filter(h => h.categoria === "tecnica"),
+        experiencia: laboralesFavoritos,
+        formacion:   historialAcademico,
+      });
+    } finally {
+      setGenerandoCV(false);
+    }
   };
 
   const toggleFavorito = (id) => {
@@ -174,9 +182,9 @@ export default function EstudiantePerfil() {
             <SecondaryButton onClick={() => { setEditMode(!editMode); setSaveMsg(""); }}>
               {editMode ? "Cancelar" : "Editar perfil"}
             </SecondaryButton>
-            <PrimaryButton className="flex items-center gap-2" onClick={descargarCV}>
-              <Icon icon="material-symbols:download" width={16} />
-              Descargar CV PDF
+            <PrimaryButton className="flex items-center gap-2" onClick={descargarCV} disabled={generandoCV}>
+              <Icon icon={generandoCV ? "mdi:loading" : "material-symbols:download"} width={16} className={generandoCV ? "animate-spin" : ""} />
+              {generandoCV ? "Generando PDF…" : "Descargar CV PDF"}
             </PrimaryButton>
           </div>
         }

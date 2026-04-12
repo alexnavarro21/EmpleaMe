@@ -36,7 +36,9 @@ router.get("/estudiante/:id", verificarToken, async (req, res) => {
     );
 
     const [historial_laboral] = await db.query(
-      `SELECT hl.*, v.titulo AS vacante_titulo
+      `SELECT hl.*,
+              v.titulo AS vacante_titulo,
+              COALESCE(hl.descripcion, v.descripcion) AS descripcion
        FROM historial_laboral hl
        LEFT JOIN postulaciones p ON p.id = hl.postulacion_id
        LEFT JOIN vacantes v ON v.id = p.vacante_id
