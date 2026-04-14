@@ -40,7 +40,7 @@ export default function EmpresaPerfil() {
         ]);
         setNombreEmpresa(perfil.nombre_empresa || "");
         setFotoPerfil(perfil.foto_perfil || null);
-        localStorage.setItem("foto_perfil", perfil.foto_perfil || "");
+        localStorage.setItem(`foto_perfil_${usuario.id}`,perfil.foto_perfil || "");
         setTelefono(perfil.telefono_contacto || "");
         setDescripcion(perfil.descripcion || "");
         setRegion(perfil.region || "");
@@ -141,7 +141,7 @@ export default function EmpresaPerfil() {
                       try {
                         const { foto_perfil } = await subirFotoPerfil(file);
                         setFotoPerfil(foto_perfil);
-                        localStorage.setItem("foto_perfil", foto_perfil || "");
+                        localStorage.setItem(`foto_perfil_${usuario.id}`,foto_perfil || "");
                       } catch (err) {
                         setSaveMsg("Error al subir foto: " + err.message);
                       } finally {

@@ -8,7 +8,8 @@ import { crearPublicacion } from "../services/api";
 export default function CrearPublicacion({ onPublicado }) {
   const { isDark } = useDark();
   const BASE_ORIGIN = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
-  const fotoRaw = localStorage.getItem("foto_perfil") || "";
+  const usuarioId = JSON.parse(localStorage.getItem("usuario") || "{}").id;
+  const fotoRaw = localStorage.getItem(`foto_perfil_${usuarioId}`) || "";
   const fotoPerfil = fotoRaw
     ? (fotoRaw.startsWith("http") ? fotoRaw : `${BASE_ORIGIN}${fotoRaw}`)
     : null;

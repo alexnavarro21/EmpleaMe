@@ -78,7 +78,7 @@ export default function EstudiantePerfil() {
         setRegion(data.region || "");
         setComuna(data.comuna || "");
         setFotoPerfil(data.foto_perfil || null);
-        localStorage.setItem("foto_perfil", data.foto_perfil || "");
+        localStorage.setItem(`foto_perfil_${usuario.id}`, data.foto_perfil || "");
         setHabilidades(data.habilidades || []);
         setIdiomas(data.idiomas || []);
         setHistorialAcademico(data.historial_academico || []);
