@@ -165,15 +165,27 @@ export default function VerMasModal({ pub, onClose }) {
             </div>
           )}
 
-          {/* Imagen */}
-          {pub.url_multimedia && (
-            <img
-              src={resolverMedia(pub.url_multimedia)}
-              alt="Multimedia"
-              className="rounded-xl w-full object-cover max-h-64 mb-4 border"
-              onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
-            />
-          )}
+          {/* Imagen / Video */}
+          {pub.url_multimedia && (() => {
+            const src = resolverMedia(pub.url_multimedia);
+            const esVideo = /\.(mp4|webm|ogg|mov|avi)(\?|$)/i.test(pub.url_multimedia);
+            return esVideo ? (
+              <video
+                src={src}
+                controls
+                className="rounded-xl w-full border mb-4"
+                style={{ maxHeight: "70vh" }}
+                onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
+              />
+            ) : (
+              <img
+                src={src}
+                alt="Multimedia"
+                className="rounded-xl w-full object-contain max-h-[70vh] mb-4 border"
+                onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
+              />
+            );
+          })()}
 
           {/* Acciones de vacante para estudiante */}
           {pub.tipo === "vacante" && usuario.rol === "estudiante" && (
