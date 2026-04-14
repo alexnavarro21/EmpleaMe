@@ -897,7 +897,6 @@ export default function EstudianteDashboard() {
             { icon: "mdi:send-check-outline",       label: "Mis postulaciones", to: "/estudiante/postulaciones" },
             { icon: "mdi:message-outline",           label: "Mensajería",        to: "/estudiante/mensajeria"    },
             { icon: "mdi:account-search-outline",    label: "Buscar perfiles",   to: "/estudiante/buscar"        },
-            { icon: "mdi:folder-multiple-outline",   label: "Mis evidencias",    to: "/estudiante/evidencias"    },
           ].map((link) => (
             <Link
               key={link.label}
