@@ -4,7 +4,7 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 import { Card, Badge, SecondaryButton, PrimaryButton, PageHeader, Paginacion } from "../components/ui";
 import PublicacionesUsuario from "../components/PublicacionesUsuario";
-import { getEmpresaById, getVacantesEmpresa, postularAVacante, iniciarConversacionConEmpresa, getEstudianteById } from "../services/api";
+import { getEmpresaById, getVacantesEmpresa, postularAVacante, iniciarConversacionConEmpresa, getEstudianteById, getMediaUrl } from "../services/api";
 import { calcularCompletitud } from "../utils/perfilCompletitud";
 
 export default function PerfilEmpresaPublico() {
@@ -104,9 +104,13 @@ export default function PerfilEmpresaPublico() {
         {/* Sidebar */}
         <div className="flex flex-col gap-4">
           <Card className="text-center">
-            <div className="w-20 h-20 rounded-full mx-auto mb-3 bg-[#0F4D8A] flex items-center justify-center text-white text-3xl font-bold">
-              {empresa.nombre_empresa?.[0]?.toUpperCase() ?? "E"}
-            </div>
+            {empresa.foto_perfil ? (
+              <img src={getMediaUrl(empresa.foto_perfil)} className="w-20 h-20 rounded-full object-cover mx-auto mb-3" alt="" />
+            ) : (
+              <div className="w-20 h-20 rounded-full mx-auto mb-3 bg-[#0F4D8A] flex items-center justify-center text-white text-3xl font-bold">
+                {empresa.nombre_empresa?.[0]?.toUpperCase() ?? "E"}
+              </div>
+            )}
             <p className={`text-lg font-semibold ${T}`}>{empresa.nombre_empresa}</p>
             {(empresa.comuna || empresa.region) && (
               <p className={`text-xs ${M} flex items-center justify-center gap-1`}>
