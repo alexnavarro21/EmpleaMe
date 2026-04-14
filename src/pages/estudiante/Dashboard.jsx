@@ -285,16 +285,29 @@ function FeedCard({ pub, isDark, perfilCompleto }) {
         </div>
       )}
 
-      {pub.url_multimedia && (
-        <div className="px-4 pb-3">
-          <img
-            src={resolverMedia(pub.url_multimedia)}
-            alt="Multimedia"
-            className="rounded-lg max-h-72 w-full object-cover border"
-            onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
-          />
-        </div>
-      )}
+      {pub.url_multimedia && (() => {
+        const src = resolverMedia(pub.url_multimedia);
+        const esVideo = /\.(mp4|webm|ogg|mov|avi)(\?|$)/i.test(pub.url_multimedia);
+        return (
+          <div className="px-4 pb-3">
+            {esVideo ? (
+              <video
+                src={src}
+                controls
+                className="rounded-lg max-h-72 w-full border"
+                onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
+              />
+            ) : (
+              <img
+                src={src}
+                alt="Multimedia"
+                className="rounded-lg max-h-72 w-full object-cover border"
+                onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
+              />
+            )}
+          </div>
+        );
+      })()}
 
       <div className={`border-t ${B}`} />
       <div className="flex items-center px-2 py-1">
