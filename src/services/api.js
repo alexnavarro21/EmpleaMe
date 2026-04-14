@@ -756,12 +756,12 @@ export async function completarPractica(postulacionId) {
 
 // ── Notas admin por conversación ──────────────────────────────────────────────
 
-export async function getNotaAdmin(conversacionId) {
+export async function getNotasAdmin(conversacionId) {
   const res = await fetch(`${BASE_URL}/notas-admin/${conversacionId}`, {
     headers: authHeaders(),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Error al obtener nota");
+  if (!res.ok) throw new Error(data.error || "Error al obtener notas");
   return data;
 }
 

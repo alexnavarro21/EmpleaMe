@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge, PageHeader } from "../../components/ui";
-import { getConversaciones, getMensajes, getNotaAdmin, guardarNotaAdmin } from "../../services/api";
+import { getConversaciones, getMensajes, getNotasAdmin, guardarNotaAdmin } from "../../services/api";
 
 function timeLabel(iso) {
   if (!iso) return "";
@@ -33,9 +33,9 @@ export default function AdminMensajeria() {
   const [search, setSearch] = useState("");
 
   // Notas
+  const [todasNotas, setTodasNotas] = useState([]);
   const [notaTexto, setNotaTexto] = useState("");
   const [notaGuardada, setNotaGuardada] = useState("");
-  const [notaFecha, setNotaFecha] = useState(null);
   const [guardando, setGuardando] = useState(false);
   const [guardadoOk, setGuardadoOk] = useState(false);
 
@@ -53,7 +53,7 @@ export default function AdminMensajeria() {
   useEffect(() => {
     if (selected) {
       loadMessages(selected);
-      loadNota(selected);
+      loadNotas(selected);
       clearInterval(pollRef.current);
       pollRef.current = setInterval(() => loadMessages(selected), 10000);
     }
@@ -88,16 +88,17 @@ export default function AdminMensajeria() {
     }
   }
 
-  async function loadNota(convId) {
+  async function loadNotas(convId) {
     try {
-      const data = await getNotaAdmin(convId);
-      setNotaTexto(data.contenido || "");
-      setNotaGuardada(data.contenido || "");
-      setNotaFecha(data.actualizado_en || null);
+      const data = await getNotasAdmin(convId);
+      setTodasNotas(data);
+      const propia = data.find((n) => n.es_propia);
+      setNotaTexto(propia?.contenido || "");
+      setNotaGuardada(propia?.contenido || "");
     } catch {
+      setTodasNotas([]);
       setNotaTexto("");
       setNotaGuardada("");
-      setNotaFecha(null);
     }
   }
 
@@ -107,9 +108,10 @@ export default function AdminMensajeria() {
     try {
       await guardarNotaAdmin(selected, notaTexto);
       setNotaGuardada(notaTexto);
-      setNotaFecha(new Date().toISOString());
       setGuardadoOk(true);
       setTimeout(() => setGuardadoOk(false), 2000);
+      // Refrescar lista completa para que se refleje la fecha actualizada
+      await loadNotas(selected);
     } catch {
       // silently fail
     } finally {
@@ -278,52 +280,88 @@ export default function AdminMensajeria() {
               <p className="text-xs">Selecciona una conversación para ver sus notas</p>
             </div>
           ) : (
-            <div className="flex-1 flex flex-col p-4 gap-3 overflow-hidden">
-              <p className={`text-xs ${M}`}>
-                Solo visible para administradores. Se guarda por conversación.
-              </p>
+            <div className="flex-1 flex flex-col overflow-hidden">
 
-              <textarea
-                value={notaTexto}
-                onChange={(e) => setNotaTexto(e.target.value)}
-                placeholder="Escribe una nota sobre esta conversación..."
-                rows={8}
-                className={`w-full flex-1 px-3 py-2 rounded-lg text-xs outline-none border resize-none transition-all focus:border-[#378ADD] ${
-                  isDark
-                    ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
-                    : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
-                } ${notaModificada ? (isDark ? "border-yellow-600" : "border-yellow-400") : ""}`}
-              />
+              {/* Editor: mi nota */}
+              <div className="p-4 flex flex-col gap-2 flex-shrink-0">
+                <p className={`text-xs font-medium ${T}`}>Mi nota</p>
+                <textarea
+                  value={notaTexto}
+                  onChange={(e) => setNotaTexto(e.target.value)}
+                  placeholder="Escribe una nota sobre esta conversación..."
+                  rows={5}
+                  className={`w-full px-3 py-2 rounded-lg text-xs outline-none border resize-none transition-all focus:border-[#378ADD] ${
+                    isDark
+                      ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
+                      : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
+                  } ${notaModificada ? (isDark ? "border-yellow-600" : "border-yellow-400") : ""}`}
+                />
+                <button
+                  onClick={handleGuardarNota}
+                  disabled={guardando || !notaModificada}
+                  className={`w-full py-1.5 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
+                    guardadoOk
+                      ? "bg-green-600 text-white"
+                      : notaModificada
+                      ? "bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB]"
+                      : isDark
+                      ? "bg-[#313130] text-[#5F5E5A] cursor-not-allowed"
+                      : "bg-[#F7F6F3] text-[#B4B2A9] cursor-not-allowed"
+                  }`}
+                >
+                  {guardando ? (
+                    <><Icon icon="mdi:loading" width={13} className="animate-spin" />Guardando...</>
+                  ) : guardadoOk ? (
+                    <><Icon icon="mdi:check" width={13} />Guardado</>
+                  ) : (
+                    <><Icon icon="mdi:content-save-outline" width={13} />Guardar nota</>
+                  )}
+                </button>
+              </div>
 
-              <button
-                onClick={handleGuardarNota}
-                disabled={guardando || !notaModificada}
-                className={`w-full py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2 ${
-                  guardadoOk
-                    ? "bg-green-600 text-white"
-                    : notaModificada
-                    ? "bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB]"
-                    : isDark
-                    ? "bg-[#313130] text-[#5F5E5A] cursor-not-allowed"
-                    : "bg-[#F7F6F3] text-[#B4B2A9] cursor-not-allowed"
-                }`}
-              >
-                {guardando ? (
-                  <><Icon icon="mdi:loading" width={14} className="animate-spin" />Guardando...</>
-                ) : guardadoOk ? (
-                  <><Icon icon="mdi:check" width={14} />Guardado</>
+              {/* Lista de todas las notas */}
+              <div className={`border-t ${B} flex-1 overflow-y-auto`}>
+                <p className={`text-xs font-medium ${T} px-4 pt-3 pb-2`}>
+                  Todas las notas
+                  {todasNotas.length > 0 && (
+                    <span className={`ml-1.5 text-xs font-normal ${M}`}>({todasNotas.length})</span>
+                  )}
+                </p>
+
+                {todasNotas.length === 0 ? (
+                  <div className={`px-4 py-6 text-center ${M}`}>
+                    <Icon icon="mdi:note-off-outline" width={24} className="mx-auto mb-2 opacity-30" />
+                    <p className="text-xs">Aún no hay notas en este chat</p>
+                  </div>
                 ) : (
-                  <><Icon icon="mdi:content-save-outline" width={14} />Guardar nota</>
+                  <div className="flex flex-col gap-0">
+                    {todasNotas.map((nota) => (
+                      <div
+                        key={nota.id}
+                        className={`px-4 py-3 border-b ${B} last:border-0 ${
+                          nota.es_propia
+                            ? isDark ? "bg-[#0F4D8A]/10" : "bg-[#EFF6FF]"
+                            : ""
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className={`text-xs font-medium ${nota.es_propia ? "text-[#378ADD]" : T}`}>
+                            {nota.es_propia ? "Tú" : nota.admin_nombre}
+                          </span>
+                          {nota.es_propia && (
+                            <span className={`text-xs ${M} opacity-60`}>
+                              <Icon icon="mdi:pencil-outline" width={10} className="inline mr-0.5" />
+                              editable
+                            </span>
+                          )}
+                        </div>
+                        <p className={`text-xs ${M} leading-relaxed`}>{nota.contenido}</p>
+                        <p className={`text-xs mt-1 opacity-50 ${M}`}>{formatFecha(nota.actualizado_en)}</p>
+                      </div>
+                    ))}
+                  </div>
                 )}
-              </button>
-
-              {notaFecha && notaGuardada && (
-                <div className={`text-xs ${M} border-t ${B} pt-3`}>
-                  <p className="font-medium mb-1">Última nota guardada:</p>
-                  <p className={`text-xs ${M} italic line-clamp-3`}>"{notaGuardada}"</p>
-                  <p className={`text-xs mt-1 ${M} opacity-70`}>{formatFecha(notaFecha)}</p>
-                </div>
-              )}
+              </div>
             </div>
           )}
         </div>

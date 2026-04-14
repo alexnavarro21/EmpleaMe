@@ -2,14 +2,20 @@ const router = require("express").Router();
 const db = require("../db");
 const { verificarToken, soloRol } = require("../middleware/auth");
 
-// GET /api/notas-admin/:conversacion_id — obtiene la nota del admin para esa conversación
+// GET /api/notas-admin/:conversacion_id — todas las notas de la conversación + la del admin actual
 router.get("/:conversacion_id", verificarToken, soloRol("centro"), async (req, res) => {
   try {
-    const [[nota]] = await db.query(
-      "SELECT contenido, actualizado_en FROM notas_admin WHERE conversacion_id = ? AND admin_id = ?",
-      [req.params.conversacion_id, req.usuario.id]
+    const [todas] = await db.query(
+      `SELECT n.id, n.admin_id, n.contenido, n.actualizado_en,
+              u.nombre AS admin_nombre,
+              n.admin_id = ? AS es_propia
+       FROM notas_admin n
+       JOIN usuarios u ON u.id = n.admin_id
+       WHERE n.conversacion_id = ?
+       ORDER BY n.actualizado_en DESC`,
+      [req.usuario.id, req.params.conversacion_id]
     );
-    res.json(nota || { contenido: "", actualizado_en: null });
+    res.json(todas);
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }
