@@ -1,8 +1,48 @@
 import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 import { PageHeader, Paginacion } from "../components/ui";
 import { getNotificaciones, marcarNotificacionesLeidas } from "../services/api";
+
+function getRoleFromPath(pathname) {
+  if (pathname.startsWith("/admin"))    return "admin";
+  if (pathname.startsWith("/empresa"))  return "empresa";
+  return "estudiante";
+}
+
+function getNotifLink(tipo, role) {
+  const links = {
+    estudiante: {
+      mensaje:               "/estudiante/mensajeria",
+      comentario:            "/estudiante/dashboard",
+      postulacion_aceptada:  "/estudiante/postulaciones",
+      postulacion_rechazada: "/estudiante/postulaciones",
+      vacante_cerrada:       "/estudiante/postulaciones",
+      practica_completada:   "/estudiante/perfil",
+      postulacion_nueva:     "/estudiante/buscar",
+    },
+    empresa: {
+      mensaje:               "/empresa/mensajeria",
+      comentario:            "/empresa/inicio",
+      postulacion_nueva:     "/empresa/dashboard",
+      postulacion_aceptada:  "/empresa/dashboard",
+      postulacion_rechazada: "/empresa/dashboard",
+      vacante_cerrada:       "/empresa/dashboard",
+      practica_completada:   "/empresa/dashboard",
+    },
+    admin: {
+      mensaje:               "/admin/mensajeria",
+      comentario:            "/admin/inicio",
+      postulacion_nueva:     "/admin/talleres",
+      postulacion_aceptada:  "/admin/monitoreo",
+      postulacion_rechazada: "/admin/monitoreo",
+      vacante_cerrada:       "/admin/monitoreo",
+      practica_completada:   "/admin/monitoreo",
+    },
+  };
+  return links[role]?.[tipo] || null;
+}
 
 const TIPO_CFG = {
   mensaje:               { icon: "mdi:message-outline",          color: "text-blue-500",   bg: "bg-blue-100",    label: "Mensaje"     },
@@ -35,6 +75,9 @@ function tiempoRelativo(fecha) {
 
 export default function Notificaciones() {
   const { isDark } = useDark();
+  const navigate   = useNavigate();
+  const location   = useLocation();
+  const role       = getRoleFromPath(location.pathname);
   const T  = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M  = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B  = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
@@ -126,13 +169,16 @@ export default function Notificaciones() {
       ) : (
         <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
           {paginadas.map((n, i) => {
-            const cfg = TIPO_CFG[n.tipo] || { icon: "mdi:bell-outline", color: "text-blue-500", bg: "bg-blue-100", label: n.tipo };
+            const cfg  = TIPO_CFG[n.tipo] || { icon: "mdi:bell-outline", color: "text-blue-500", bg: "bg-blue-100", label: n.tipo };
+            const link = getNotifLink(n.tipo, role);
             return (
               <div
                 key={n.id}
+                onClick={() => link && navigate(link)}
                 className={`flex items-start gap-4 px-5 py-4 transition-colors ${
                   i < paginadas.length - 1 ? `border-b ${B}` : ""
-                } ${!n.leida ? (isDark ? "bg-[#0F4D8A]/10" : "bg-[#EFF6FF]") : (isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]")}`}
+                } ${!n.leida ? (isDark ? "bg-[#0F4D8A]/10" : "bg-[#EFF6FF]") : (isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]")}
+                ${link ? "cursor-pointer" : ""}`}
               >
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${cfg.bg}`}>
                   <Icon icon={cfg.icon} width={20} className={cfg.color} />
@@ -151,7 +197,14 @@ export default function Notificaciones() {
                   {n.contenido && (
                     <p className={`text-xs ${M} mt-0.5 leading-relaxed`}>{n.contenido}</p>
                   )}
-                  <p className={`text-xs ${M} mt-1.5`}>{tiempoRelativo(n.creada_en)}</p>
+                  <div className="flex items-center justify-between mt-1.5">
+                    <p className={`text-xs ${M}`}>{tiempoRelativo(n.creada_en)}</p>
+                    {link && (
+                      <span className="text-xs text-[#378ADD] flex items-center gap-0.5 opacity-70">
+                        Ver <Icon icon="mdi:arrow-right" width={12} />
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             );
