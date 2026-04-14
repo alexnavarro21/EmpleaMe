@@ -262,7 +262,7 @@ function buildCVHtml(datos) {
 // ─── Convierte una URL de imagen a base64 para evitar problemas CORS con html2canvas ──
 async function imageUrlToBase64(url) {
   try {
-    const res = await fetch(url, { credentials: "include" });
+    const res = await fetch(url);
     if (!res.ok) return null;
     const blob = await res.blob();
     return await new Promise((resolve) => {
