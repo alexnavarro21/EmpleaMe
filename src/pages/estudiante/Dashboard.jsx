@@ -294,7 +294,8 @@ function FeedCard({ pub, isDark, perfilCompleto }) {
               <video
                 src={src}
                 controls
-                className="rounded-lg max-h-72 w-full border"
+                className="rounded-lg w-full border"
+                style={{ maxHeight: "80vh" }}
                 onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
               />
             ) : (
@@ -906,9 +907,13 @@ export default function EstudianteDashboard() {
                       state={{ conversacionId: c.id }}
                       className={`flex items-center gap-2.5 ${i < Math.min(empresaConversaciones.length, 4) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}
                     >
-                      <div className="w-7 h-7 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                        {nombre[0]?.toUpperCase() || "?"}
-                      </div>
+                      {c.contraparte_foto ? (
+                        <img src={resolverMedia(c.contraparte_foto)} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
+                      ) : (
+                        <div className="w-7 h-7 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                          {nombre[0]?.toUpperCase() || "?"}
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <p className={`text-xs font-medium ${T} truncate`}>{nombre}</p>
                         <p className={`text-xs ${M} truncate`}>{c.ultimo_mensaje || "Sin mensajes"}</p>
@@ -1124,9 +1129,13 @@ export default function EstudianteDashboard() {
                     state={{ conversacionId: c.id }}
                     className={`flex items-center gap-2.5 ${i < Math.min(estudianteConversaciones.length, 3) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}
                   >
-                    <div className="w-7 h-7 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                      {nombre[0]?.toUpperCase() || "?"}
-                    </div>
+                    {c.contraparte_foto ? (
+                      <img src={resolverMedia(c.contraparte_foto)} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                        {nombre[0]?.toUpperCase() || "?"}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className={`text-xs font-medium ${T} truncate`}>{nombre}</p>
                       <p className={`text-xs ${M} truncate`}>{c.ultimo_mensaje || "Sin mensajes"}</p>
@@ -1154,9 +1163,13 @@ export default function EstudianteDashboard() {
               <p className={`text-xs font-semibold ${T} mb-3`}>Vacantes en el muro</p>
               {vacantes.map((v, i) => (
                 <div key={v.id} className={`flex items-center gap-2.5 ${i < vacantes.length - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}>
-                  <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-semibold ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}>
-                    {v.autor_nombre?.[0]?.toUpperCase() || "?"}
-                  </div>
+                  {v.autor_foto_perfil ? (
+                    <img src={resolverMedia(v.autor_foto_perfil)} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
+                  ) : (
+                    <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-semibold ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}>
+                      {v.autor_nombre?.[0]?.toUpperCase() || "?"}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <p className={`text-xs font-semibold ${T} truncate`}>{v.titulo || v.area || "Vacante"}</p>
                     <p className={`text-xs ${M} truncate`}>{v.autor_nombre}</p>

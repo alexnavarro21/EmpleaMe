@@ -13,6 +13,7 @@ router.get("/", verificarToken, async (req, res) => {
         `SELECT c.id, c.creada_en,
                 pe.usuario_id AS contraparte_id,
                 pe.nombre_completo AS contraparte,
+                pe.foto_perfil AS contraparte_foto,
                 (SELECT m.contenido FROM mensajes m WHERE m.conversacion_id = c.id AND m.remitente_id != ? ORDER BY m.enviado_en DESC LIMIT 1) AS ultimo_mensaje,
                 (SELECT m.enviado_en FROM mensajes m WHERE m.conversacion_id = c.id ORDER BY m.enviado_en DESC LIMIT 1) AS ultimo_tiempo,
                 (SELECT COUNT(*) FROM mensajes m WHERE m.conversacion_id = c.id AND m.leido = FALSE AND m.remitente_id != ?) AS no_leidos
@@ -27,6 +28,7 @@ router.get("/", verificarToken, async (req, res) => {
         `SELECT c.id, c.creada_en,
                 emp.usuario_id AS contraparte_id,
                 emp.nombre_empresa AS contraparte,
+                emp.foto_perfil AS contraparte_foto,
                 (SELECT m.contenido FROM mensajes m WHERE m.conversacion_id = c.id AND m.remitente_id != ? ORDER BY m.enviado_en DESC LIMIT 1) AS ultimo_mensaje,
                 (SELECT m.enviado_en FROM mensajes m WHERE m.conversacion_id = c.id ORDER BY m.enviado_en DESC LIMIT 1) AS ultimo_tiempo,
                 (SELECT COUNT(*) FROM mensajes m WHERE m.conversacion_id = c.id AND m.leido = FALSE AND m.remitente_id != ?) AS no_leidos
