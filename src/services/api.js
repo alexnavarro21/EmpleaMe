@@ -753,3 +753,26 @@ export async function completarPractica(postulacionId) {
   if (!res.ok) throw new Error(data.error || "Error al completar práctica");
   return data;
 }
+
+// ── Notas admin por conversación ──────────────────────────────────────────────
+
+export async function getNotaAdmin(conversacionId) {
+  const res = await fetch(`${BASE_URL}/notas-admin/${conversacionId}`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener nota");
+  return data;
+}
+
+export async function guardarNotaAdmin(conversacionId, contenido) {
+  const res = await fetch(`${BASE_URL}/notas-admin/${conversacionId}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify({ contenido }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al guardar nota");
+  return data;
+}
+

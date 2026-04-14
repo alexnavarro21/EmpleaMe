@@ -2,18 +2,25 @@ import { useState, useEffect, useRef } from "react";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge, PageHeader } from "../../components/ui";
-import { getConversaciones, getMensajes } from "../../services/api";
+import { getConversaciones, getMensajes, getNotaAdmin, guardarNotaAdmin } from "../../services/api";
 
 function timeLabel(iso) {
   if (!iso) return "";
   const d = new Date(iso);
   const now = new Date();
-  const diffMs = now - d;
-  const diffMin = Math.floor(diffMs / 60000);
+  const diffMin = Math.floor((now - d) / 60000);
   if (diffMin < 60) return `${diffMin}m`;
   const diffH = Math.floor(diffMin / 60);
   if (diffH < 24) return `${diffH}h`;
   return d.toLocaleDateString("es-CL", { day: "2-digit", month: "short" });
+}
+
+function formatFecha(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("es-CL", {
+    day: "2-digit", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
 }
 
 export default function AdminMensajeria() {
@@ -24,23 +31,29 @@ export default function AdminMensajeria() {
   const [loadingConvs, setLoadingConvs] = useState(true);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [search, setSearch] = useState("");
-  const [adminNote, setAdminNote] = useState("");
+
+  // Notas
+  const [notaTexto, setNotaTexto] = useState("");
+  const [notaGuardada, setNotaGuardada] = useState("");
+  const [notaFecha, setNotaFecha] = useState(null);
+  const [guardando, setGuardando] = useState(false);
+  const [guardadoOk, setGuardadoOk] = useState(false);
+
   const messagesEndRef = useRef(null);
   const pollRef = useRef(null);
 
-  const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
-  const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
-  const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
-  const S = isDark ? "bg-[#313130]" : "bg-[#F7F6F3]";
+  const T  = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
+  const M  = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
+  const B  = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
+  const S  = isDark ? "bg-[#313130]" : "bg-[#F7F6F3]";
   const cardBg = isDark ? "bg-[#262624]" : "bg-white";
 
-  useEffect(() => {
-    loadConversations();
-  }, []);
+  useEffect(() => { loadConversations(); }, []);
 
   useEffect(() => {
     if (selected) {
       loadMessages(selected);
+      loadNota(selected);
       clearInterval(pollRef.current);
       pollRef.current = setInterval(() => loadMessages(selected), 10000);
     }
@@ -75,6 +88,35 @@ export default function AdminMensajeria() {
     }
   }
 
+  async function loadNota(convId) {
+    try {
+      const data = await getNotaAdmin(convId);
+      setNotaTexto(data.contenido || "");
+      setNotaGuardada(data.contenido || "");
+      setNotaFecha(data.actualizado_en || null);
+    } catch {
+      setNotaTexto("");
+      setNotaGuardada("");
+      setNotaFecha(null);
+    }
+  }
+
+  async function handleGuardarNota() {
+    if (!selected) return;
+    setGuardando(true);
+    try {
+      await guardarNotaAdmin(selected, notaTexto);
+      setNotaGuardada(notaTexto);
+      setNotaFecha(new Date().toISOString());
+      setGuardadoOk(true);
+      setTimeout(() => setGuardadoOk(false), 2000);
+    } catch {
+      // silently fail
+    } finally {
+      setGuardando(false);
+    }
+  }
+
   const filteredConvs = conversations.filter((c) => {
     const q = search.toLowerCase();
     return (
@@ -84,6 +126,7 @@ export default function AdminMensajeria() {
   });
 
   const conv = conversations.find((c) => c.id === selected);
+  const notaModificada = notaTexto !== notaGuardada;
 
   return (
     <div>
@@ -92,8 +135,9 @@ export default function AdminMensajeria() {
         subtitle="Vista intermediaria de comunicaciones empresa — estudiante"
       />
 
-      <div className={`rounded-xl border ${B} overflow-hidden flex`} style={{ height: "600px" }}>
-        {/* Conversation list */}
+      <div className={`rounded-xl border ${B} overflow-hidden flex`} style={{ height: "640px" }}>
+
+        {/* ── Lista de conversaciones ── */}
         <div className={`w-72 flex-shrink-0 border-r ${B} flex flex-col ${cardBg}`}>
           <div className={`p-3 border-b ${B}`}>
             <div className="relative">
@@ -137,9 +181,7 @@ export default function AdminMensajeria() {
                     <span className={`text-xs font-medium ${T} truncate flex-1`}>
                       {c.nombre_estudiante || "Estudiante"}
                     </span>
-                    <span className={`text-xs ${M} flex-shrink-0 ml-2`}>
-                      {timeLabel(c.ultimo_tiempo)}
-                    </span>
+                    <span className={`text-xs ${M} flex-shrink-0 ml-2`}>{timeLabel(c.ultimo_tiempo)}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-[#378ADD] truncate flex-1">
@@ -158,7 +200,7 @@ export default function AdminMensajeria() {
           </div>
         </div>
 
-        {/* Message thread */}
+        {/* ── Hilo de mensajes ── */}
         <div className="flex-1 flex flex-col min-w-0">
           {!selected || !conv ? (
             <div className={`flex-1 flex flex-col items-center justify-center ${M}`}>
@@ -167,7 +209,6 @@ export default function AdminMensajeria() {
             </div>
           ) : (
             <>
-              {/* Thread header */}
               <div className={`px-5 py-3 border-b ${B} ${cardBg} flex items-center justify-between flex-shrink-0`}>
                 <div>
                   <p className={`text-sm font-semibold ${T}`}>
@@ -180,7 +221,6 @@ export default function AdminMensajeria() {
                 <Badge color="green">activa</Badge>
               </div>
 
-              {/* Admin notice */}
               <div className={`px-5 py-2 text-xs flex items-center gap-2 flex-shrink-0 ${
                 isDark ? "bg-[#1a2e42] text-[#B5D4F4]" : "bg-[#E6F1FB] text-[#0F4D8A]"
               }`}>
@@ -188,7 +228,6 @@ export default function AdminMensajeria() {
                 Como administrador puedes ver esta conversación, pero los participantes no ven tu presencia
               </div>
 
-              {/* Messages */}
               <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
                 {loadingMsgs ? (
                   <div className={`flex items-center justify-center h-full ${M}`}>
@@ -214,9 +253,7 @@ export default function AdminMensajeria() {
                           }`}>
                             {msg.contenido}
                           </div>
-                          <span className={`text-xs ${M} mt-1`}>
-                            {timeLabel(msg.enviado_en)}
-                          </span>
+                          <span className={`text-xs ${M} mt-1`}>{timeLabel(msg.enviado_en)}</span>
                         </div>
                       </div>
                     );
@@ -224,33 +261,73 @@ export default function AdminMensajeria() {
                 )}
                 <div ref={messagesEndRef} />
               </div>
-
-              {/* Admin note input */}
-              <div className={`px-5 py-3 border-t ${B} ${cardBg} flex-shrink-0`}>
-                <p className={`text-xs ${M} mb-2`}>Nota interna del administrador (solo visible para otros admins)</p>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Añadir nota interna..."
-                    value={adminNote}
-                    onChange={(e) => setAdminNote(e.target.value)}
-                    className={`flex-1 px-3 py-2 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
-                      isDark
-                        ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
-                        : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
-                    }`}
-                  />
-                  <button
-                    onClick={() => setAdminNote("")}
-                    className="px-4 py-2 bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB] rounded-lg text-sm transition-colors flex-shrink-0"
-                  >
-                    Guardar
-                  </button>
-                </div>
-              </div>
             </>
           )}
         </div>
+
+        {/* ── Panel de notas (derecha) ── */}
+        <div className={`w-64 flex-shrink-0 border-l ${B} flex flex-col ${cardBg}`}>
+          <div className={`px-4 py-3 border-b ${B} flex items-center gap-2`}>
+            <Icon icon="mdi:note-edit-outline" width={16} className="text-[#378ADD]" />
+            <span className={`text-sm font-semibold ${T}`}>Notas internas</span>
+          </div>
+
+          {!selected ? (
+            <div className={`flex-1 flex flex-col items-center justify-center gap-2 ${M} px-4 text-center`}>
+              <Icon icon="mdi:note-outline" width={28} className="opacity-30" />
+              <p className="text-xs">Selecciona una conversación para ver sus notas</p>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col p-4 gap-3 overflow-hidden">
+              <p className={`text-xs ${M}`}>
+                Solo visible para administradores. Se guarda por conversación.
+              </p>
+
+              <textarea
+                value={notaTexto}
+                onChange={(e) => setNotaTexto(e.target.value)}
+                placeholder="Escribe una nota sobre esta conversación..."
+                rows={8}
+                className={`w-full flex-1 px-3 py-2 rounded-lg text-xs outline-none border resize-none transition-all focus:border-[#378ADD] ${
+                  isDark
+                    ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
+                    : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
+                } ${notaModificada ? (isDark ? "border-yellow-600" : "border-yellow-400") : ""}`}
+              />
+
+              <button
+                onClick={handleGuardarNota}
+                disabled={guardando || !notaModificada}
+                className={`w-full py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2 ${
+                  guardadoOk
+                    ? "bg-green-600 text-white"
+                    : notaModificada
+                    ? "bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB]"
+                    : isDark
+                    ? "bg-[#313130] text-[#5F5E5A] cursor-not-allowed"
+                    : "bg-[#F7F6F3] text-[#B4B2A9] cursor-not-allowed"
+                }`}
+              >
+                {guardando ? (
+                  <><Icon icon="mdi:loading" width={14} className="animate-spin" />Guardando...</>
+                ) : guardadoOk ? (
+                  <><Icon icon="mdi:check" width={14} />Guardado</>
+                ) : (
+                  <><Icon icon="mdi:content-save-outline" width={14} />Guardar nota</>
+                )}
+              </button>
+
+              {notaFecha && notaGuardada && (
+                <div className={`text-xs ${M} border-t ${B} pt-3`}>
+                  <p className="font-medium mb-1">Última nota guardada:</p>
+                  <p className={`text-xs ${M} italic line-clamp-3`}>"{notaGuardada}"</p>
+                  <p className={`text-xs mt-1 ${M} opacity-70`}>{formatFecha(notaFecha)}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );
