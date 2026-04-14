@@ -128,7 +128,7 @@ router.post("/habilidades/asignar", ...auth, async (req, res) => {
       for (const h of habilidades) {
         await db.query(
           `INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
-           VALUES (?, ?, NULL, ?, TRUE)`,
+           VALUES (?, ?, 'Basico', ?, TRUE)`,
           [estudiante_id, h.habilidad_id, h.porcentaje ?? null]
         );
       }
