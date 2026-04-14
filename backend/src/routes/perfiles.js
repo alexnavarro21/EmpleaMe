@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const db = require("../db");
 const { verificarToken } = require("../middleware/auth");
+const upload = require("../middleware/multerConfig");
 
 // GET /api/perfiles/estudiante/:id
 router.get("/estudiante/:id", verificarToken, async (req, res) => {
@@ -137,6 +138,34 @@ router.get("/estudiantes", verificarToken, async (req, res) => {
       habilidades_raw: undefined,
     }));
     res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// PUT /api/perfiles/foto — subir foto de perfil al bucket
+router.put("/foto", verificarToken, upload.single("foto"), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "No se envió ninguna imagen" });
+
+  const url = req.file.location;
+  const { id, rol } = req.usuario;
+
+  try {
+    if (rol === "estudiante") {
+      await db.query(
+        "UPDATE perfiles_estudiantes SET foto_perfil = ? WHERE usuario_id = ?",
+        [url, id]
+      );
+    } else if (rol === "empresa") {
+      await db.query(
+        "UPDATE perfiles_empresas SET foto_perfil = ? WHERE usuario_id = ?",
+        [url, id]
+      );
+    } else {
+      return res.status(403).json({ error: "Rol no soportado para foto de perfil" });
+    }
+
+    res.json({ foto_perfil: url });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }

@@ -16,13 +16,10 @@ const adminRoutes           = require("./src/routes/admin");
 const notificacionesRoutes  = require("./src/routes/notificaciones");
 const talleresRoutes        = require("./src/routes/talleres");
 
-const path = require("path");
-
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/api/auth",            authRoutes);
 app.use("/api/usuarios",        usuariosRoutes);
