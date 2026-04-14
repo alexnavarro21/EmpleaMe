@@ -95,8 +95,8 @@ function buildCVHtml(datos) {
 
   const partes       = nombre.trim().split(" ");
   const inicial      = partes[0]?.charAt(0).toUpperCase() || "?";
-  const apellidos    = partes.slice(-2).join(" ").toUpperCase();
-  const primerNombre = partes.slice(0, partes.length - 2).join(" ");
+  const primerNombre = partes[0] || "";
+  const apellidos    = partes.slice(1).join(" ");
 
   const carreraDisplay = {
     "Mecanica Automotriz": "Técnico en Mecánica Automotriz",
