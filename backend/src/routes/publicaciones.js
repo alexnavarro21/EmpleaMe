@@ -157,26 +157,22 @@ router.post("/:id/like", verificarToken, async (req, res) => {
   }
 });
 
-// DELETE /api/publicaciones/:id — desactivar publicación (autor o centro)
+// DELETE /api/publicaciones/:id — borrar publicación y registros asociados
 router.delete("/:id", verificarToken, async (req, res) => {
   try {
     const { id, rol } = req.usuario;
-    let result;
+    const pubId = req.params.id;
 
-    if (rol === "centro") {
-      [result] = await db.query(
-        "UPDATE publicaciones SET esta_activa = FALSE WHERE id = ?",
-        [req.params.id]
-      );
-    } else {
-      [result] = await db.query(
-        "UPDATE publicaciones SET esta_activa = FALSE WHERE id = ? AND autor_id = ?",
-        [req.params.id, id]
-      );
-    }
+    // Verificar permisos
+    const [[pub]] = await db.query("SELECT autor_id FROM publicaciones WHERE id = ?", [pubId]);
+    if (!pub) return res.status(404).json({ error: "Publicación no encontrada" });
+    if (rol !== "centro" && pub.autor_id !== id)
+      return res.status(403).json({ error: "Sin permisos para eliminar esta publicación" });
 
-    if (result.affectedRows === 0)
-      return res.status(404).json({ error: "Publicación no encontrada o sin permisos" });
+    // Borrar registros asociados y luego la publicación
+    await db.query("DELETE FROM publicacion_likes WHERE publicacion_id = ?", [pubId]);
+    await db.query("DELETE FROM comentarios WHERE publicacion_id = ?", [pubId]);
+    await db.query("DELETE FROM publicaciones WHERE id = ?", [pubId]);
 
     res.json({ mensaje: "Publicación eliminada" });
   } catch (err) {

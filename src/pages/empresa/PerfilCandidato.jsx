@@ -74,13 +74,6 @@ export default function EmpresaPerfilCandidato() {
   const nombreCarrera = careerDisplay[student.carrera] || student.carrera;
   const habilidadesTecnicas = (student.habilidades || []).filter((h) => h.categoria === "tecnica");
   const habilidadesBlandas = (student.habilidades || []).filter((h) => h.categoria === "blanda");
-  const evidences = student.portafolio || [];
-
-  const evidenceIcon = (url) => {
-    if (url.endsWith(".mp4") || url.endsWith(".mov")) return "mdi:play-circle-outline";
-    if (url.endsWith(".pdf")) return "mdi:file-account-outline";
-    return "mdi:image-outline";
-  };
 
   return (
     <div>
@@ -194,19 +187,6 @@ export default function EmpresaPerfilCandidato() {
             </Card>
           )}
 
-          {evidences.length > 0 && (
-            <Card>
-              <p className={`text-sm font-medium ${T} mb-3`}>
-                Evidencias ({evidences.length})
-              </p>
-              {evidences.map((e) => (
-                <div key={e.id} className={`flex items-center gap-2 text-xs ${M} mb-2`}>
-                  <Icon icon={evidenceIcon(e.url_multimedia)} width={15} className="text-[#378ADD] flex-shrink-0" />
-                  <span className="truncate">{e.descripcion || e.url_multimedia}</span>
-                </div>
-              ))}
-            </Card>
-          )}
         </div>
 
         {/* Main content */}

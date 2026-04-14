@@ -28,6 +28,51 @@ router.post("/", verificarToken, soloRol("centro"), async (req, res) => {
   }
 });
 
+// GET /api/habilidades/:id/estudiantes  — estudiantes que tienen esta habilidad asignada
+router.get("/:id/estudiantes", verificarToken, soloRol("centro"), async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT pe.nombre_completo, pe.usuario_id
+       FROM habilidades_estudiantes he
+       JOIN perfiles_estudiantes pe ON pe.usuario_id = he.estudiante_id
+       WHERE he.habilidad_id = ?
+       ORDER BY pe.nombre_completo`,
+      [req.params.id]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// PUT /api/habilidades/:id  — editar nombre/categoría (solo centro)
+router.put("/:id", verificarToken, soloRol("centro"), async (req, res) => {
+  const { nombre, categoria } = req.body;
+  if (!nombre || !categoria)
+    return res.status(400).json({ error: "nombre y categoria son requeridos" });
+  try {
+    await db.query(
+      "UPDATE habilidades SET nombre = ?, categoria = ? WHERE id = ?",
+      [nombre, categoria, req.params.id]
+    );
+    res.json({ id: req.params.id, nombre, categoria });
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// DELETE /api/habilidades/:id  — eliminar del catálogo (solo centro)
+router.delete("/:id", verificarToken, soloRol("centro"), async (req, res) => {
+  try {
+    const [result] = await db.query("DELETE FROM habilidades WHERE id = ?", [req.params.id]);
+    if (result.affectedRows === 0)
+      return res.status(404).json({ error: "Habilidad no encontrada" });
+    res.json({ mensaje: "Habilidad eliminada" });
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
 // POST /api/habilidades/estudiante  — asignar habilidad a estudiante
 router.post("/estudiante", verificarToken, async (req, res) => {
   const { estudiante_id, habilidad_id, nivel_dominio } = req.body;

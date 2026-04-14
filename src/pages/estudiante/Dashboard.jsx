@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge } from "../../components/ui";
-import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante, toggleLike, getTalleres, getAdminStats, inscribirseEnTaller } from "../../services/api";
+import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante, toggleLike, getTalleres, getAdminStats, inscribirseEnTaller, eliminarPublicacion } from "../../services/api";
 import { calcularCompletitud } from "../../utils/perfilCompletitud";
 import CrearPublicacion from "../../components/CrearPublicacion";
 import VerMasModal from "../../components/VerMasModal";
@@ -168,11 +168,14 @@ function tiempoRelativo(fecha) {
   return `Hace ${Math.floor(diff / 86400)} días`;
 }
 
-function FeedCard({ pub, isDark, perfilCompleto }) {
+function FeedCard({ pub, isDark, perfilCompleto, onDeleted }) {
   const [liked, setLiked] = useState(!!pub.liked_by_me);
   const [likes, setLikes] = useState(pub.likes_count || 0);
   const [verMas, setVerMas] = useState(false);
   const [estadoPostula, setEstadoPostula] = useState("idle"); // idle | loading | ok | duplicado | error | incompleto
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const [confirmarEliminar, setConfirmarEliminar] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#E8E6E1]";
@@ -184,6 +187,19 @@ function FeedCard({ pub, isDark, perfilCompleto }) {
     ? { label: pub.vacante_tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica", color: pub.vacante_tipo === "puesto_laboral" ? "green" : "orange" }
     : (TIPO_BADGE[pub.tipo] || { label: pub.tipo, color: "blue" });
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+  const canDelete = usuario.rol === "centro" || pub.autor_id === usuario.id;
+
+  const handleEliminar = async () => {
+    setEliminando(true);
+    try {
+      await eliminarPublicacion(pub.id);
+      onDeleted?.(pub.id);
+    } catch (err) {
+      console.error(err);
+      setEliminando(false);
+      setConfirmarEliminar(false);
+    }
+  };
 
   const handlePostular = async () => {
     if (!pub.vacante_id || estadoPostula !== "idle") return;
@@ -213,7 +229,52 @@ function FeedCard({ pub, isDark, perfilCompleto }) {
             <p className={`text-xs ${M}`}>{tiempoRelativo(pub.publicado_en)}</p>
           </div>
         </Link>
-        <Badge color={badge.color}>{badge.label}</Badge>
+        <div className="flex items-center gap-2">
+          <Badge color={badge.color}>{badge.label}</Badge>
+          {canDelete && (
+            <div className="relative">
+              <button
+                onClick={() => { setMenuAbierto((v) => !v); setConfirmarEliminar(false); }}
+                className={`p-1 rounded-lg transition-colors ${HV} ${M}`}
+              >
+                <Icon icon="mdi:dots-vertical" width={16} />
+              </button>
+              {menuAbierto && (
+                <div className={`absolute right-0 top-full mt-1 z-20 rounded-xl border shadow-lg min-w-[160px] ${BG} ${B}`}>
+                  {!confirmarEliminar ? (
+                    <button
+                      onClick={() => setConfirmarEliminar(true)}
+                      className="flex items-center gap-2 w-full px-4 py-2.5 text-xs text-red-500 hover:bg-red-500/10 rounded-xl transition-colors"
+                    >
+                      <Icon icon="mdi:trash-can-outline" width={14} />
+                      Eliminar publicación
+                    </button>
+                  ) : (
+                    <div className="px-4 py-3">
+                      <p className={`text-xs ${T} font-medium mb-1`}>¿Eliminar publicación?</p>
+                      <p className={`text-xs ${M} mb-3`}>Esta acción no se puede deshacer.</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => { setConfirmarEliminar(false); setMenuAbierto(false); }}
+                          className={`flex-1 text-xs py-1.5 rounded-lg border ${B} ${T} hover:bg-black/5 transition-colors`}
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          onClick={handleEliminar}
+                          disabled={eliminando}
+                          className="flex-1 text-xs py-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-60"
+                        >
+                          {eliminando ? "..." : "Eliminar"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {pub.titulo && pub.titulo !== "Actualización de estado" && (
@@ -836,7 +897,6 @@ export default function EstudianteDashboard() {
             { icon: "mdi:send-check-outline",       label: "Mis postulaciones", to: "/estudiante/postulaciones" },
             { icon: "mdi:message-outline",           label: "Mensajería",        to: "/estudiante/mensajeria"    },
             { icon: "mdi:account-search-outline",    label: "Buscar perfiles",   to: "/estudiante/buscar"        },
-            { icon: "mdi:folder-multiple-outline",   label: "Mis evidencias",    to: "/estudiante/evidencias"    },
           ].map((link) => (
             <Link
               key={link.label}
@@ -875,7 +935,7 @@ export default function EstudianteDashboard() {
           return feedUnificado.map((item) =>
             item._tipo === "taller"
               ? <TallerCard key={`taller-${item.id}`} taller={item} isDark={isDark} perfilCompleto={perfilCompleto} />
-              : <FeedCard key={`pub-${item.id}`} pub={item} isDark={isDark} perfilCompleto={perfilCompleto} />
+              : <FeedCard key={`pub-${item.id}`} pub={item} isDark={isDark} perfilCompleto={perfilCompleto} onDeleted={(id) => setPublicaciones((prev) => prev.filter((p) => p.id !== id))} />
           );
         })()}
       </div>
