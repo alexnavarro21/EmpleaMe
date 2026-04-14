@@ -107,7 +107,7 @@ router.get("/empresas", verificarToken, async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT pe.usuario_id, pe.nombre_empresa, pe.descripcion, pe.telefono_contacto,
-              pe.region, pe.comuna,
+              pe.region, pe.comuna, pe.foto_perfil,
               COUNT(v.id) AS total_vacantes
        FROM perfiles_empresas pe
        LEFT JOIN vacantes v ON v.empresa_id = pe.usuario_id AND v.esta_activa = TRUE
@@ -125,7 +125,7 @@ router.get("/estudiantes", verificarToken, async (req, res) => {
     const [rows] = await db.query(
       `SELECT pe.usuario_id, pe.nombre_completo, pe.carrera, pe.semestre,
               pe.promedio, pe.calificacion_docente, pe.biografia,
-              pe.region, pe.comuna,
+              pe.region, pe.comuna, pe.foto_perfil,
               GROUP_CONCAT(h.nombre SEPARATOR '||') AS habilidades_raw
        FROM perfiles_estudiantes pe
        LEFT JOIN habilidades_estudiantes he ON he.estudiante_id = pe.usuario_id

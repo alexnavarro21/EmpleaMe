@@ -18,8 +18,12 @@ function resolverMedia(url) {
   return `${BASE_URL_GLOBAL}/uploads/${url}`;
 }
 
-function Avatar({ initial, color, size = "md" }) {
+function Avatar({ initial, color, size = "md", foto }) {
   const s = size === "lg" ? "w-14 h-14 text-xl" : size === "sm" ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm";
+  const resolvedFoto = foto ? resolverMedia(foto) : null;
+  if (resolvedFoto) {
+    return <img src={resolvedFoto} className={`${s} rounded-full object-cover flex-shrink-0 border-2 border-white`} alt="" />;
+  }
   return (
     <div className={`${s} rounded-full ${color} flex items-center justify-center text-white font-semibold flex-shrink-0`}>
       {initial}
@@ -203,9 +207,7 @@ function FeedCard({ pub, isDark, perfilCompleto }) {
           className="flex items-center gap-3 hover:opacity-80 transition-opacity"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-            {inicial}
-          </div>
+          <Avatar initial={inicial} color="bg-[#0F4D8A]" size="md" foto={pub.autor_foto_perfil} />
           <div>
             <p className={`text-sm font-semibold leading-tight ${T}`}>{pub.autor_nombre}</p>
             <p className={`text-xs ${M}`}>{tiempoRelativo(pub.publicado_en)}</p>
@@ -648,9 +650,12 @@ export default function EstudianteDashboard() {
             <div className="h-16 bg-gradient-to-r from-[#0A3A6A] to-[#378ADD]" />
             <div className="px-4 pb-4">
               <div className="-mt-7 mb-3">
-                <div className="w-14 h-14 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xl font-bold border-2 border-white">
-                  {(empresaPerfil?.nombre_empresa || usuario.nombre_empresa || "E")[0].toUpperCase()}
-                </div>
+                <Avatar
+                  initial={(empresaPerfil?.nombre_empresa || usuario.nombre_empresa || "E")[0].toUpperCase()}
+                  color="bg-[#0F4D8A]"
+                  size="lg"
+                  foto={empresaPerfil?.foto_perfil}
+                />
               </div>
               <p className={`text-sm font-semibold ${T}`}>{empresaPerfil?.nombre_empresa || usuario.nombre_empresa || "Mi empresa"}</p>
               <p className={`text-xs ${M} mt-0.5`}>Empresa verificada · EmpleaMe</p>
@@ -776,7 +781,7 @@ export default function EstudianteDashboard() {
           <div className="h-16 bg-gradient-to-r from-[#0A3A6A] to-[#378ADD]" />
           <div className="px-4 pb-4 text-center">
             <div className="-mt-7 mb-3 flex justify-center">
-              <Avatar initial={inicial} color="bg-[#0F4D8A]" size="lg" />
+              <Avatar initial={inicial} color="bg-[#0F4D8A]" size="lg" foto={perfil?.foto_perfil} />
             </div>
             <p className={`text-sm font-semibold ${T}`}>{nombre || "Sin nombre"}</p>
             <p className={`text-xs ${M} mt-0.5`}>{subtitleParts.join(" · ") || "Sin carrera"}</p>

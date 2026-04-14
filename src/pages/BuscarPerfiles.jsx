@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, PageHeader } from "../components/ui";
-import { getEstudiantes, getEmpresas, iniciarMensajeDirecto, iniciarConversacionConEmpresa } from "../services/api";
+import { getEstudiantes, getEmpresas, iniciarMensajeDirecto, iniciarConversacionConEmpresa, getMediaUrl } from "../services/api";
 import { REGIONES_COMUNAS, REGIONES } from "../data/regionesComunas";
 
 const careerDisplay = {
@@ -261,9 +261,13 @@ export default function BuscarPerfiles() {
                 return (
                   <Card key={s.usuario_id} className="hover:border-[#378ADD] transition-colors">
                     <div className="flex items-start gap-3 mb-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
-                        <Icon icon="mynaui:user-solid" width={22} className="text-[#378ADD]" />
-                      </div>
+                      {s.foto_perfil ? (
+                        <img src={getMediaUrl(s.foto_perfil)} className="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
+                      ) : (
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
+                          <Icon icon="mynaui:user-solid" width={22} className="text-[#378ADD]" />
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <p className={`text-sm font-semibold ${T} truncate`}>{s.nombre_completo}</p>
                         <p className={`text-xs ${M}`}>{nombreCarrera}{s.semestre ? ` · Sem. ${s.semestre}` : ""}</p>
@@ -329,9 +333,13 @@ export default function BuscarPerfiles() {
               {filteredCompanies.map((c) => (
                 <Card key={c.usuario_id} className="hover:border-[#378ADD] transition-colors">
                   <div className="flex items-start gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center flex-shrink-0 text-white font-bold text-sm">
-                      {c.nombre_empresa?.[0]?.toUpperCase() ?? "E"}
-                    </div>
+                    {c.foto_perfil ? (
+                      <img src={getMediaUrl(c.foto_perfil)} className="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center flex-shrink-0 text-white font-bold text-sm">
+                        {c.nombre_empresa?.[0]?.toUpperCase() ?? "E"}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-semibold ${T} truncate`}>{c.nombre_empresa}</p>
                       <p className={`text-xs ${M} flex items-center gap-1`}>

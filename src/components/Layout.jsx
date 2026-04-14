@@ -55,6 +55,12 @@ export default function Layout() {
     ? "empresa"
     : "estudiante";
 
+  const BASE_ORIGIN = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
+  const fotoRaw = localStorage.getItem("foto_perfil") || "";
+  const fotoPerfil = fotoRaw
+    ? (fotoRaw.startsWith("http") ? fotoRaw : `${BASE_ORIGIN}${fotoRaw}`)
+    : null;
+
   useEffect(() => {
     function handleClickOutside(e) {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -110,7 +116,10 @@ export default function Layout() {
                   : "text-[#B5D4F4] hover:text-[#E6F1FB] hover:bg-[#0F4D8A]/40"
               }`}
             >
-              <Icon icon="mynaui:user-solid" width={22} />
+              {fotoPerfil
+                ? <img src={fotoPerfil} className="w-7 h-7 rounded-full object-cover" alt="" />
+                : <Icon icon="mynaui:user-solid" width={22} />
+              }
             </button>
 
             {menuOpen && (

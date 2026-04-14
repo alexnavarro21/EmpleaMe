@@ -78,6 +78,7 @@ export default function EstudiantePerfil() {
         setRegion(data.region || "");
         setComuna(data.comuna || "");
         setFotoPerfil(data.foto_perfil || null);
+        localStorage.setItem("foto_perfil", data.foto_perfil || "");
         setHabilidades(data.habilidades || []);
         setIdiomas(data.idiomas || []);
         setHistorialAcademico(data.historial_academico || []);
@@ -218,6 +219,7 @@ export default function EstudiantePerfil() {
                       try {
                         const { foto_perfil } = await subirFotoPerfil(file);
                         setFotoPerfil(foto_perfil);
+                        localStorage.setItem("foto_perfil", foto_perfil || "");
                       } catch (err) {
                         setSaveMsg("Error al subir foto: " + err.message);
                       } finally {

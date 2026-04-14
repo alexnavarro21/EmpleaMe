@@ -91,6 +91,11 @@ router.get("/", verificarToken, async (req, res) => {
                 WHEN 'estudiante' THEN est.nombre_completo
                 ELSE 'Centro Educacional'
               END AS autor_nombre,
+              CASE u.rol
+                WHEN 'empresa'    THEN pe.foto_perfil
+                WHEN 'estudiante' THEN est.foto_perfil
+                ELSE NULL
+              END AS autor_foto_perfil,
               ${likesFields}
               ${vacanteTipoField}, v.esta_activa AS vacante_activa, v.area, v.modalidad, v.duracion, v.remuneracion, v.direccion
        FROM publicaciones p
