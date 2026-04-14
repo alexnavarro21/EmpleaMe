@@ -26,6 +26,8 @@ export default function EmpresaPerfilCandidato() {
   const [vacantesEmpresa, setVacantesEmpresa] = useState([]);
   const [vacanteSel, setVacanteSel] = useState(null);
   const [enviandoInvitacion, setEnviandoInvitacion] = useState(false);
+  const [expPagina, setExpPagina] = useState(1);
+  const [expPorPagina, setExpPorPagina] = useState(3);
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -269,34 +271,90 @@ export default function EmpresaPerfilCandidato() {
             </Card>
           )}
 
-          {(student.historial_laboral || []).length > 0 && (
-            <Card>
-              <h3 className={`text-sm font-semibold ${T} mb-3 flex items-center gap-2`}>
-                <Icon icon="mdi:briefcase-outline" width={16} className="text-[#378ADD]" />
-                Experiencia laboral
-              </h3>
-              <div className="flex flex-col gap-3">
-                {student.historial_laboral.map((l) => (
-                  <div key={l.id} className={`pb-3 border-b ${B} last:border-0 last:pb-0`}>
-                    <div className="flex items-start justify-between gap-2">
-                      <p className={`text-sm font-medium ${T}`}>{l.cargo}</p>
-                      <Badge color={l.tipo === "practica_completada" ? "green" : "blue"}>
-                        {l.tipo === "practica_completada" ? "Práctica" : "Verificado"}
-                      </Badge>
-                    </div>
-                    <p className={`text-xs ${M}`}>{l.empresa_nombre}</p>
-                    {(l.fecha_inicio || l.fecha_fin) && (
-                      <p className={`text-xs ${M}`}>
-                        {l.fecha_inicio ? new Date(l.fecha_inicio).toLocaleDateString("es-CL", { month: "short", year: "numeric" }) : "?"}
-                        {" – "}
-                        {l.fecha_fin ? new Date(l.fecha_fin).toLocaleDateString("es-CL", { month: "short", year: "numeric" }) : "Presente"}
-                      </p>
-                    )}
+          {(student.historial_laboral || []).length > 0 && (() => {
+            const totalExp = student.historial_laboral.length;
+            const totalPagExp = Math.ceil(totalExp / expPorPagina);
+            const expPaginadas = student.historial_laboral.slice(
+              (expPagina - 1) * expPorPagina,
+              expPagina * expPorPagina
+            );
+            return (
+              <Card>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className={`text-sm font-semibold ${T} flex items-center gap-2`}>
+                    <Icon icon="mdi:briefcase-outline" width={16} className="text-[#378ADD]" />
+                    Experiencia
+                  </h3>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-xs ${M}`}>Mostrar</span>
+                    <select
+                      value={expPorPagina}
+                      onChange={(e) => { setExpPorPagina(Number(e.target.value)); setExpPagina(1); }}
+                      className={`text-xs rounded-lg border ${B} ${BG} ${T} px-2 py-1 focus:outline-none`}
+                    >
+                      {[3, 5, 10].map((n) => (
+                        <option key={n} value={n}>{n}</option>
+                      ))}
+                    </select>
                   </div>
-                ))}
-              </div>
-            </Card>
-          )}
+                </div>
+                <div className="flex flex-col gap-3">
+                  {expPaginadas.map((l) => (
+                    <div key={l.id} className={`pb-3 border-b ${B} last:border-0 last:pb-0`}>
+                      <div className="flex items-start justify-between gap-2">
+                        <p className={`text-sm font-medium ${T}`}>{l.cargo}</p>
+                        <Badge color={l.tipo === "practica_completada" ? "green" : "blue"}>
+                          {l.tipo === "practica_completada" ? "Práctica" : "Verificado"}
+                        </Badge>
+                      </div>
+                      <p className={`text-xs ${M}`}>{l.empresa_nombre}</p>
+                      {(l.fecha_inicio || l.fecha_fin) && (
+                        <p className={`text-xs ${M}`}>
+                          {l.fecha_inicio ? new Date(l.fecha_inicio).toLocaleDateString("es-CL", { month: "short", year: "numeric" }) : "?"}
+                          {" – "}
+                          {l.fecha_fin ? new Date(l.fecha_fin).toLocaleDateString("es-CL", { month: "short", year: "numeric" }) : "Presente"}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {totalPagExp > 1 && (
+                  <div className={`flex items-center justify-between mt-4 pt-3 border-t ${B}`}>
+                    <span className={`text-xs ${M}`}>{totalExp} entradas</span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setExpPagina((p) => Math.max(1, p - 1))}
+                        disabled={expPagina === 1}
+                        className={`p-1 rounded-lg transition-colors disabled:opacity-30 ${M} hover:text-[#378ADD]`}
+                      >
+                        <Icon icon="mdi:chevron-left" width={16} />
+                      </button>
+                      {Array.from({ length: totalPagExp }, (_, i) => i + 1).map((n) => (
+                        <button
+                          key={n}
+                          onClick={() => setExpPagina(n)}
+                          className={`w-7 h-7 rounded-lg text-xs font-medium transition-colors ${
+                            expPagina === n
+                              ? "bg-[#378ADD] text-white"
+                              : `${M} hover:text-[#378ADD]`
+                          }`}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => setExpPagina((p) => Math.min(totalPagExp, p + 1))}
+                        disabled={expPagina === totalPagExp}
+                        className={`p-1 rounded-lg transition-colors disabled:opacity-30 ${M} hover:text-[#378ADD]`}
+                      >
+                        <Icon icon="mdi:chevron-right" width={16} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </Card>
+            );
+          })()}
 
           {!student.biografia && habilidadesTecnicas.length === 0 && habilidadesBlandas.length === 0 && (
             <Card>

@@ -16,6 +16,7 @@ const adminRoutes           = require("./src/routes/admin");
 const notificacionesRoutes  = require("./src/routes/notificaciones");
 const talleresRoutes        = require("./src/routes/talleres");
 const mediaRoutes           = require("./src/routes/media");
+const notasAdminRoutes      = require("./src/routes/notas_admin");
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use("/api/notificaciones",  notificacionesRoutes);
 app.use("/api/talleres",        talleresRoutes);
 app.use("/api/admin",           adminRoutes);
 app.use("/api/media",           mediaRoutes);
+app.use("/api/notas-admin",     notasAdminRoutes);
 
 app.get("/", (req, res) => res.json({ status: "EmpleaMe API corriendo" }));
 

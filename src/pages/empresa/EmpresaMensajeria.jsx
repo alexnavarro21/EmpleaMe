@@ -190,7 +190,12 @@ export default function EmpresaMensajeria() {
             <>
               <div className={`px-5 py-3 border-b ${B} ${cardBg} flex items-center justify-between flex-shrink-0`}>
                 <div>
-                  <p className={`text-sm font-semibold ${T}`}>{conv.contraparte}</p>
+                  <Link
+                    to={`/empresa/candidato/${conv.contraparte_id}`}
+                    className={`text-sm font-semibold hover:underline hover:text-[#378ADD] transition-colors ${T}`}
+                  >
+                    {conv.contraparte}
+                  </Link>
                   <p className={`text-xs ${M}`}>Candidato</p>
                 </div>
                 <Badge color="green">activa</Badge>

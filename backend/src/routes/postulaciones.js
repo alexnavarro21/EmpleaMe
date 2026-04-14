@@ -134,10 +134,14 @@ router.put("/:id/estado", verificarToken, soloRol("empresa"), async (req, res) =
     if (result.affectedRows === 0)
       return res.status(404).json({ error: "Postulación no encontrada o sin permisos" });
 
-    // Notificación al estudiante
+    // Notificación al estudiante y al admin
     try {
       const [[post]] = await db.query(
-        "SELECT p.estudiante_id, v.titulo FROM postulaciones p JOIN vacantes v ON v.id = p.vacante_id WHERE p.id = ?",
+        `SELECT p.estudiante_id, v.titulo, pe.nombre_completo AS estudiante_nombre
+         FROM postulaciones p
+         JOIN vacantes v ON v.id = p.vacante_id
+         JOIN perfiles_estudiantes pe ON pe.usuario_id = p.estudiante_id
+         WHERE p.id = ?`,
         [req.params.id]
       );
       if (post) {
@@ -149,6 +153,18 @@ router.put("/:id/estado", verificarToken, soloRol("empresa"), async (req, res) =
           "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido) VALUES (?, ?, ?, ?)",
           [post.estudiante_id, tipo, titulo, `Vacante: "${post.titulo}"`]
         );
+        // Notificación al centro (admin)
+        const [[centro]] = await db.query("SELECT id FROM usuarios WHERE rol = 'centro' LIMIT 1");
+        if (centro) {
+          const tituloAdmin = estado === "aceptado"
+            ? `Alumno aceptado en vacante`
+            : `Alumno no seleccionado en vacante`;
+          const contenidoAdmin = `${post.estudiante_nombre} ${estado === "aceptado" ? "fue aceptado/a" : "no fue seleccionado/a"} en "${post.titulo}"`;
+          await db.query(
+            "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido) VALUES (?, ?, ?, ?)",
+            [centro.id, tipo, tituloAdmin, contenidoAdmin]
+          );
+        }
       }
     } catch (_) {}
 
@@ -193,12 +209,19 @@ router.put("/:id/completar", verificarToken, soloRol("empresa"), async (req, res
       [post.estudiante_id, post.nombre_empresa, post.titulo, post.id]
     );
 
-    // Notificación al estudiante
+    // Notificación al estudiante y al admin
     try {
       await db.query(
         "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido) VALUES (?, 'practica_completada', ?, ?)",
         [post.estudiante_id, "¡Práctica completada!", `Tu práctica en "${post.titulo}" ha sido registrada en tu perfil de EmpleaMe`]
       );
+      const [[centro]] = await db.query("SELECT id FROM usuarios WHERE rol = 'centro' LIMIT 1");
+      if (centro) {
+        await db.query(
+          "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido) VALUES (?, 'practica_completada', ?, ?)",
+          [centro.id, `Práctica completada`, `${post.nombre_empresa} registró la práctica de un estudiante en "${post.titulo}"`]
+        );
+      }
     } catch (_) {}
 
     res.json({ mensaje: "Práctica marcada como completada" });

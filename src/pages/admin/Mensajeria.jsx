@@ -2,18 +2,25 @@ import { useState, useEffect, useRef } from "react";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge, PageHeader } from "../../components/ui";
-import { getConversaciones, getMensajes } from "../../services/api";
+import { getConversaciones, getMensajes, getNotasAdmin, agregarNotaAdmin } from "../../services/api";
 
 function timeLabel(iso) {
   if (!iso) return "";
   const d = new Date(iso);
   const now = new Date();
-  const diffMs = now - d;
-  const diffMin = Math.floor(diffMs / 60000);
+  const diffMin = Math.floor((now - d) / 60000);
   if (diffMin < 60) return `${diffMin}m`;
   const diffH = Math.floor(diffMin / 60);
   if (diffH < 24) return `${diffH}h`;
   return d.toLocaleDateString("es-CL", { day: "2-digit", month: "short" });
+}
+
+function formatFecha(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("es-CL", {
+    day: "2-digit", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
 }
 
 export default function AdminMensajeria() {
@@ -24,23 +31,28 @@ export default function AdminMensajeria() {
   const [loadingConvs, setLoadingConvs] = useState(true);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [search, setSearch] = useState("");
-  const [adminNote, setAdminNote] = useState("");
+
+  // Notas
+  const [todasNotas, setTodasNotas] = useState([]);
+  const [notaTexto, setNotaTexto] = useState("");
+  const [agregando, setAgregando] = useState(false);
+  const [agregadoOk, setAgregadoOk] = useState(false);
+
   const messagesEndRef = useRef(null);
   const pollRef = useRef(null);
 
-  const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
-  const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
-  const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
-  const S = isDark ? "bg-[#313130]" : "bg-[#F7F6F3]";
+  const T  = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
+  const M  = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
+  const B  = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
+  const S  = isDark ? "bg-[#313130]" : "bg-[#F7F6F3]";
   const cardBg = isDark ? "bg-[#262624]" : "bg-white";
 
-  useEffect(() => {
-    loadConversations();
-  }, []);
+  useEffect(() => { loadConversations(); }, []);
 
   useEffect(() => {
     if (selected) {
       loadMessages(selected);
+      loadNotas(selected);
       clearInterval(pollRef.current);
       pollRef.current = setInterval(() => loadMessages(selected), 10000);
     }
@@ -75,6 +87,31 @@ export default function AdminMensajeria() {
     }
   }
 
+  async function loadNotas(convId) {
+    try {
+      const data = await getNotasAdmin(convId);
+      setTodasNotas(data);
+    } catch {
+      setTodasNotas([]);
+    }
+  }
+
+  async function handleAgregarNota() {
+    if (!selected || !notaTexto.trim()) return;
+    setAgregando(true);
+    try {
+      await agregarNotaAdmin(selected, notaTexto);
+      setNotaTexto("");
+      setAgregadoOk(true);
+      setTimeout(() => setAgregadoOk(false), 2000);
+      await loadNotas(selected);
+    } catch {
+      // silently fail
+    } finally {
+      setAgregando(false);
+    }
+  }
+
   const filteredConvs = conversations.filter((c) => {
     const q = search.toLowerCase();
     return (
@@ -92,8 +129,9 @@ export default function AdminMensajeria() {
         subtitle="Vista intermediaria de comunicaciones empresa — estudiante"
       />
 
-      <div className={`rounded-xl border ${B} overflow-hidden flex`} style={{ height: "600px" }}>
-        {/* Conversation list */}
+      <div className={`rounded-xl border ${B} overflow-hidden flex`} style={{ height: "640px" }}>
+
+        {/* ── Lista de conversaciones ── */}
         <div className={`w-72 flex-shrink-0 border-r ${B} flex flex-col ${cardBg}`}>
           <div className={`p-3 border-b ${B}`}>
             <div className="relative">
@@ -137,9 +175,7 @@ export default function AdminMensajeria() {
                     <span className={`text-xs font-medium ${T} truncate flex-1`}>
                       {c.nombre_estudiante || "Estudiante"}
                     </span>
-                    <span className={`text-xs ${M} flex-shrink-0 ml-2`}>
-                      {timeLabel(c.ultimo_tiempo)}
-                    </span>
+                    <span className={`text-xs ${M} flex-shrink-0 ml-2`}>{timeLabel(c.ultimo_tiempo)}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-[#378ADD] truncate flex-1">
@@ -158,7 +194,7 @@ export default function AdminMensajeria() {
           </div>
         </div>
 
-        {/* Message thread */}
+        {/* ── Hilo de mensajes ── */}
         <div className="flex-1 flex flex-col min-w-0">
           {!selected || !conv ? (
             <div className={`flex-1 flex flex-col items-center justify-center ${M}`}>
@@ -167,7 +203,6 @@ export default function AdminMensajeria() {
             </div>
           ) : (
             <>
-              {/* Thread header */}
               <div className={`px-5 py-3 border-b ${B} ${cardBg} flex items-center justify-between flex-shrink-0`}>
                 <div>
                   <p className={`text-sm font-semibold ${T}`}>
@@ -180,7 +215,6 @@ export default function AdminMensajeria() {
                 <Badge color="green">activa</Badge>
               </div>
 
-              {/* Admin notice */}
               <div className={`px-5 py-2 text-xs flex items-center gap-2 flex-shrink-0 ${
                 isDark ? "bg-[#1a2e42] text-[#B5D4F4]" : "bg-[#E6F1FB] text-[#0F4D8A]"
               }`}>
@@ -188,7 +222,6 @@ export default function AdminMensajeria() {
                 Como administrador puedes ver esta conversación, pero los participantes no ven tu presencia
               </div>
 
-              {/* Messages */}
               <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
                 {loadingMsgs ? (
                   <div className={`flex items-center justify-center h-full ${M}`}>
@@ -214,9 +247,7 @@ export default function AdminMensajeria() {
                           }`}>
                             {msg.contenido}
                           </div>
-                          <span className={`text-xs ${M} mt-1`}>
-                            {timeLabel(msg.enviado_en)}
-                          </span>
+                          <span className={`text-xs ${M} mt-1`}>{timeLabel(msg.enviado_en)}</span>
                         </div>
                       </div>
                     );
@@ -224,33 +255,99 @@ export default function AdminMensajeria() {
                 )}
                 <div ref={messagesEndRef} />
               </div>
-
-              {/* Admin note input */}
-              <div className={`px-5 py-3 border-t ${B} ${cardBg} flex-shrink-0`}>
-                <p className={`text-xs ${M} mb-2`}>Nota interna del administrador (solo visible para otros admins)</p>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Añadir nota interna..."
-                    value={adminNote}
-                    onChange={(e) => setAdminNote(e.target.value)}
-                    className={`flex-1 px-3 py-2 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
-                      isDark
-                        ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
-                        : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
-                    }`}
-                  />
-                  <button
-                    onClick={() => setAdminNote("")}
-                    className="px-4 py-2 bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB] rounded-lg text-sm transition-colors flex-shrink-0"
-                  >
-                    Guardar
-                  </button>
-                </div>
-              </div>
             </>
           )}
         </div>
+
+        {/* ── Panel de notas (derecha) ── */}
+        <div className={`w-64 flex-shrink-0 border-l ${B} flex flex-col ${cardBg}`}>
+          <div className={`px-4 py-3 border-b ${B} flex items-center gap-2`}>
+            <Icon icon="mdi:note-edit-outline" width={16} className="text-[#378ADD]" />
+            <span className={`text-sm font-semibold ${T}`}>Notas internas</span>
+          </div>
+
+          {!selected ? (
+            <div className={`flex-1 flex flex-col items-center justify-center gap-2 ${M} px-4 text-center`}>
+              <Icon icon="mdi:note-outline" width={28} className="opacity-30" />
+              <p className="text-xs">Selecciona una conversación para ver sus notas</p>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col overflow-hidden">
+
+              {/* Input nueva nota */}
+              <div className={`p-4 flex flex-col gap-2 flex-shrink-0 border-b ${B}`}>
+                <textarea
+                  value={notaTexto}
+                  onChange={(e) => setNotaTexto(e.target.value)}
+                  placeholder="Escribe una nota..."
+                  rows={4}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleAgregarNota();
+                  }}
+                  className={`w-full px-3 py-2 rounded-lg text-xs outline-none border resize-none transition-all focus:border-[#378ADD] ${
+                    isDark
+                      ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
+                      : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
+                  }`}
+                />
+                <button
+                  onClick={handleAgregarNota}
+                  disabled={agregando || !notaTexto.trim()}
+                  className={`w-full py-1.5 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
+                    agregadoOk
+                      ? "bg-green-600 text-white"
+                      : notaTexto.trim()
+                      ? "bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB]"
+                      : isDark
+                      ? "bg-[#313130] text-[#5F5E5A] cursor-not-allowed"
+                      : "bg-[#F7F6F3] text-[#B4B2A9] cursor-not-allowed"
+                  }`}
+                >
+                  {agregando ? (
+                    <><Icon icon="mdi:loading" width={13} className="animate-spin" />Agregando...</>
+                  ) : agregadoOk ? (
+                    <><Icon icon="mdi:check" width={13} />Nota agregada</>
+                  ) : (
+                    <><Icon icon="mdi:plus" width={13} />Agregar nota</>
+                  )}
+                </button>
+                <p className={`text-xs ${M} opacity-60 text-center`}>Ctrl+Enter para agregar</p>
+              </div>
+
+              {/* Historial de notas */}
+              <div className="flex-1 overflow-y-auto">
+                {todasNotas.length === 0 ? (
+                  <div className={`px-4 py-8 text-center ${M}`}>
+                    <Icon icon="mdi:note-outline" width={28} className="mx-auto mb-2 opacity-30" />
+                    <p className="text-xs">Aún no hay notas en este chat</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col">
+                    {todasNotas.map((nota) => (
+                      <div
+                        key={nota.id}
+                        className={`px-4 py-3 border-b ${B} last:border-0 ${
+                          nota.es_propia
+                            ? isDark ? "bg-[#0F4D8A]/10" : "bg-[#EFF6FF]"
+                            : ""
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className={`text-xs font-semibold ${nota.es_propia ? "text-[#378ADD]" : T}`}>
+                            {nota.es_propia ? "Tú" : nota.admin_nombre}
+                          </span>
+                          <span className={`text-xs ${M} opacity-60`}>{formatFecha(nota.actualizado_en)}</span>
+                        </div>
+                        <p className={`text-xs ${M} leading-relaxed`}>{nota.contenido}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );

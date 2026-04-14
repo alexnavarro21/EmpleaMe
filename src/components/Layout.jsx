@@ -43,21 +43,27 @@ const messagingPaths = {
   admin: "/admin/mensajeria",
 };
 
+const notifPaths = {
+  estudiante: "/estudiante/notificaciones",
+  empresa: "/empresa/notificaciones",
+  admin: "/admin/notificaciones",
+};
+
 export default function Layout() {
   const { isDark, setIsDark } = useDark();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
-  const role = location.pathname.startsWith("/admin/") || location.pathname === "/admin"
-    ? "admin"
-    : location.pathname.startsWith("/empresa/") || location.pathname === "/empresa"
-    ? "empresa"
-    : "estudiante";
-
   const BASE_ORIGIN = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
   const BASE_API = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+
+  const role = usuario.rol === "centro"
+    ? "admin"
+    : usuario.rol === "empresa"
+    ? "empresa"
+    : "estudiante";
   const usuarioId = usuario.id;
 
   const [fotoPerfil, setFotoPerfil] = useState(() => {
@@ -121,9 +127,16 @@ export default function Layout() {
             </div>
           </div>
 
-          {/* Campana + perfil (derecha) */}
+          {/* Campana + mensajes + perfil (derecha) */}
           <div className="flex items-center gap-1">
-          {role !== "admin" && <NotificacionesBell role={role} />}
+          <Link
+            to={messagingPaths[role]}
+            className={`p-1.5 rounded-lg transition-colors text-[#B5D4F4] hover:text-[#E6F1FB] hover:bg-[#0F4D8A]/40`}
+            title="Mensajes"
+          >
+            <Icon icon="mdi:message-outline" width={22} />
+          </Link>
+          <NotificacionesBell role={role} />
 
           {/* Botón de perfil con popup */}
           <div className="relative" ref={menuRef}>
@@ -188,8 +201,22 @@ export default function Layout() {
                       : "text-[#2C2C2A] hover:bg-[#F0F4F8]"
                   }`}
                 >
-                  <Icon icon="ph:chat-circle-dots-fill" width={18} className="text-[#378ADD]" />
+                  <Icon icon="mdi:message-outline" width={18} className="text-[#378ADD]" />
                   Mensajes
+                </Link>
+
+                {/* Notificaciones */}
+                <Link
+                  to={notifPaths[role]}
+                  onClick={() => setMenuOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                    isDark
+                      ? "text-[#D3D1C7] hover:bg-[#0F4D8A]/30"
+                      : "text-[#2C2C2A] hover:bg-[#F0F4F8]"
+                  }`}
+                >
+                  <Icon icon="mdi:bell-outline" width={18} className="text-[#378ADD]" />
+                  Mis notificaciones
                 </Link>
 
                 {/* Separador */}

@@ -1,8 +1,41 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 import { getNotificaciones, marcarNotificacionesLeidas } from "../services/api";
+
+function getNotifLink(tipo, role) {
+  const links = {
+    estudiante: {
+      mensaje:               "/estudiante/mensajeria",
+      comentario:            "/estudiante/dashboard",
+      postulacion_aceptada:  "/estudiante/postulaciones",
+      postulacion_rechazada: "/estudiante/postulaciones",
+      vacante_cerrada:       "/estudiante/postulaciones",
+      practica_completada:   "/estudiante/perfil",
+      postulacion_nueva:     "/estudiante/buscar",
+    },
+    empresa: {
+      mensaje:               "/empresa/mensajeria",
+      comentario:            "/empresa/inicio",
+      postulacion_nueva:     "/empresa/dashboard",
+      postulacion_aceptada:  "/empresa/dashboard",
+      postulacion_rechazada: "/empresa/dashboard",
+      vacante_cerrada:       "/empresa/dashboard",
+      practica_completada:   "/empresa/dashboard",
+    },
+    admin: {
+      mensaje:               "/admin/mensajeria",
+      comentario:            "/admin/inicio",
+      postulacion_nueva:     "/admin/talleres",
+      postulacion_aceptada:  "/admin/monitoreo",
+      postulacion_rechazada: "/admin/monitoreo",
+      vacante_cerrada:       "/admin/monitoreo",
+      practica_completada:   "/admin/monitoreo",
+    },
+  };
+  return links[role]?.[tipo] || null;
+}
 
 const TIPO_CFG = {
   mensaje:               { icon: "mdi:message-outline",          color: "text-blue-500",   bg: "bg-blue-100"    },
@@ -25,13 +58,18 @@ function tiempoRelativo(fecha) {
 
 export default function NotificacionesBell({ role }) {
   const { isDark } = useDark();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [notifs, setNotifs] = useState([]);
   const [noLeidas, setNoLeidas] = useState(0);
   const [loading, setLoading] = useState(false);
   const ref = useRef(null);
 
-  const historialPath = role === "empresa" ? "/empresa/notificaciones" : "/estudiante/notificaciones";
+  const historialPath = role === "empresa"
+    ? "/empresa/notificaciones"
+    : role === "admin"
+    ? "/admin/notificaciones"
+    : "/estudiante/notificaciones";
 
   // Click outside closes dropdown
   useEffect(() => {
@@ -138,11 +176,15 @@ export default function NotificacionesBell({ role }) {
               </div>
             ) : (
               notifs.map((n) => {
-                const cfg = TIPO_CFG[n.tipo] || { icon: "mdi:bell-outline", color: "text-blue-500", bg: "bg-blue-100" };
+                const cfg  = TIPO_CFG[n.tipo] || { icon: "mdi:bell-outline", color: "text-blue-500", bg: "bg-blue-100" };
+                const link = getNotifLink(n.tipo, role);
                 return (
                   <div
                     key={n.id}
-                    className={`flex items-start gap-3 px-4 py-3 border-b ${B} last:border-0 ${!n.leida ? (isDark ? "bg-[#0F4D8A]/10" : "bg-[#EFF6FF]") : ""}`}
+                    onClick={() => { if (link) { setOpen(false); navigate(link); } }}
+                    className={`flex items-start gap-3 px-4 py-3 border-b ${B} last:border-0 transition-colors
+                      ${!n.leida ? (isDark ? "bg-[#0F4D8A]/10" : "bg-[#EFF6FF]") : ""}
+                      ${link ? (isDark ? "hover:bg-[#0F4D8A]/20 cursor-pointer" : "hover:bg-[#DBEAFE] cursor-pointer") : ""}`}
                   >
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${cfg.bg}`}>
                       <Icon icon={cfg.icon} width={16} className={cfg.color} />
@@ -154,9 +196,10 @@ export default function NotificacionesBell({ role }) {
                       )}
                       <p className={`text-xs ${M} mt-1`}>{tiempoRelativo(n.creada_en)}</p>
                     </div>
-                    {!n.leida && (
-                      <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1.5" />
-                    )}
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      {!n.leida && <span className="w-2 h-2 rounded-full bg-blue-500 mt-1.5" />}
+                      {link && <Icon icon="mdi:chevron-right" width={13} className={`${M} opacity-50`} />}
+                    </div>
                   </div>
                 );
               })
