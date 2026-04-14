@@ -13,7 +13,7 @@ import {
   getIdiomasEstudiante, agregarIdioma, eliminarIdioma,
   getHistorialAcademico, agregarHistorialAcademico, eliminarHistorialAcademico,
   getHistorialLaboral, agregarHistorialLaboral, eliminarHistorialLaboral,
-  crearHabilidad, actualizarHabilidad, eliminarHabilidad,
+  crearHabilidad, actualizarHabilidad, eliminarHabilidad, getEstudiantesDeHabilidad,
 } from "../../services/api";
 
 // ── Download helper ───────────────────────────────────────────────────────────
@@ -1082,6 +1082,8 @@ function TabHabilidades({ habilidades, onRefresh, isDark }) {
   const [editando, setEditando] = useState(null); // { id, nombre, categoria }
   const [eliminando, setEliminando] = useState(null);
   const [error, setError] = useState("");
+  // { id, nombre, afectados: [{nombre_completo}], cargando: bool }
+  const [confirmEliminar, setConfirmEliminar] = useState(null);
 
   const handleCrear = async () => {
     if (!nombre.trim()) { setError("El nombre es requerido"); return; }
@@ -1103,10 +1105,21 @@ function TabHabilidades({ habilidades, onRefresh, isDark }) {
     finally { setGuardando(false); }
   };
 
-  const handleEliminar = async (id) => {
-    if (!confirm("¿Eliminar esta habilidad? Los estudiantes que la tengan asignada podrían verse afectados.")) return;
-    setEliminando(id);
-    try { await eliminarHabilidad(id); await onRefresh(); }
+  const handleEliminar = async (h) => {
+    setConfirmEliminar({ id: h.id, nombre: h.nombre, afectados: [], cargando: true });
+    try {
+      const afectados = await getEstudiantesDeHabilidad(h.id);
+      setConfirmEliminar((prev) => prev ? { ...prev, afectados, cargando: false } : null);
+    } catch {
+      setConfirmEliminar((prev) => prev ? { ...prev, afectados: [], cargando: false } : null);
+    }
+  };
+
+  const confirmarEliminar = async () => {
+    if (!confirmEliminar) return;
+    setEliminando(confirmEliminar.id);
+    setConfirmEliminar(null);
+    try { await eliminarHabilidad(confirmEliminar.id); await onRefresh(); }
     catch (e) { setError(e.message); }
     finally { setEliminando(null); }
   };
@@ -1159,7 +1172,7 @@ function TabHabilidades({ habilidades, onRefresh, isDark }) {
                   <Icon icon="mdi:pencil-outline" width={15} />
                 </button>
                 <button
-                  onClick={() => handleEliminar(h.id)}
+                  onClick={() => handleEliminar(h)}
                   disabled={eliminando === h.id}
                   className={`p-1.5 rounded-lg transition-colors ${isDark ? "hover:bg-red-900/30" : "hover:bg-red-50"} text-red-500 disabled:opacity-40`}
                   title="Eliminar"
@@ -1208,6 +1221,75 @@ function TabHabilidades({ habilidades, onRefresh, isDark }) {
         <HabilidadLista lista={tecnicas} titulo="Habilidades técnicas" colorBadge="blue" />
         <HabilidadLista lista={blandas}  titulo="Habilidades blandas"  colorBadge="green" />
       </div>
+
+      {/* Modal confirmación eliminar */}
+      {confirmEliminar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className={`rounded-2xl border shadow-xl w-full max-w-sm p-6 ${isDark ? "bg-[#262624] border-[#3a3a38]" : "bg-white border-[#D3D1C7]"}`}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                <Icon icon="mdi:alert-outline" width={18} className="text-red-500" />
+              </div>
+              <div>
+                <p className={`text-sm font-semibold ${isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]"}`}>
+                  Eliminar habilidad
+                </p>
+                <p className={`text-xs ${isDark ? "text-[#888780]" : "text-[#5F5E5A]"}`}>
+                  "{confirmEliminar.nombre}"
+                </p>
+              </div>
+            </div>
+
+            {confirmEliminar.cargando ? (
+              <div className={`flex items-center gap-2 py-3 text-xs ${isDark ? "text-[#888780]" : "text-[#5F5E5A]"}`}>
+                <Icon icon="mdi:loading" width={15} className="animate-spin" />
+                Verificando estudiantes afectados...
+              </div>
+            ) : confirmEliminar.afectados.length > 0 ? (
+              <div className="mb-4">
+                <p className={`text-xs font-medium mb-2 text-amber-500`}>
+                  <Icon icon="mdi:account-alert-outline" width={14} className="inline mr-1" />
+                  {confirmEliminar.afectados.length} estudiante{confirmEliminar.afectados.length !== 1 ? "s" : ""} tienen esta habilidad asignada y la perderán:
+                </p>
+                <div className={`rounded-lg border ${isDark ? "border-[#3a3a38] bg-[#1e1e1c]" : "border-[#E8E6E1] bg-[#F7F6F3]"} max-h-36 overflow-y-auto`}>
+                  {confirmEliminar.afectados.map((e) => (
+                    <div key={e.usuario_id} className={`flex items-center gap-2 px-3 py-2 text-xs border-b last:border-0 ${isDark ? "border-[#3a3a38] text-[#D3D1C7]" : "border-[#E8E6E1] text-[#2C2C2A]"}`}>
+                      <Icon icon="mynaui:user-solid" width={13} className={isDark ? "text-[#888780]" : "text-[#5F5E5A]"} />
+                      {e.nombre_completo}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className={`text-xs mb-4 ${isDark ? "text-[#888780]" : "text-[#5F5E5A]"}`}>
+                Ningún estudiante tiene esta habilidad asignada actualmente.
+              </p>
+            )}
+
+            {!confirmEliminar.cargando && (
+              <p className={`text-xs mb-5 ${isDark ? "text-[#888780]" : "text-[#5F5E5A]"}`}>
+                Esta acción no se puede deshacer.
+              </p>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmEliminar(null)}
+                className={`flex-1 py-2 text-xs rounded-xl border transition-colors ${isDark ? "border-[#3a3a38] text-[#D3D1C7] hover:bg-[#313130]" : "border-[#D3D1C7] text-[#2C2C2A] hover:bg-[#F7F6F3]"}`}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmarEliminar}
+                disabled={confirmEliminar.cargando}
+                className="flex-1 py-2 text-xs rounded-xl bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

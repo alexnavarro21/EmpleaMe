@@ -75,6 +75,13 @@ export async function actualizarHabilidad(id, datos) {
   return data;
 }
 
+export async function getEstudiantesDeHabilidad(id) {
+  const res = await fetch(`${BASE_URL}/habilidades/${id}/estudiantes`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al consultar estudiantes");
+  return data; // [{ nombre_completo, usuario_id }]
+}
+
 export async function eliminarHabilidad(id) {
   const res = await fetch(`${BASE_URL}/habilidades/${id}`, {
     method: "DELETE",
