@@ -4,7 +4,7 @@ import { generarCV } from "../../utils/generarCV";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, SecondaryButton, FormField, PageHeader, TextAreaField, SoftSkillBar, Paginacion } from "../../components/ui";
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
-import { getEstudianteById, actualizarPerfilEstudiante, getPostulacionesEstudiante } from "../../services/api";
+import { getEstudianteById, actualizarPerfilEstudiante, getPostulacionesEstudiante, subirFotoPerfil, getMediaUrl } from "../../services/api";
 import { REGIONES_COMUNAS, REGIONES } from "../../data/regionesComunas";
 import { validarRut, formatearRut } from "../../utils/validarRut";
 import { calcularCompletitud } from "../../utils/perfilCompletitud";
@@ -40,6 +40,8 @@ export default function EstudiantePerfil() {
   const [historialAcademico, setHistorialAcademico] = useState([]);
   const [historialLaboral, setHistorialLaboral] = useState([]);
   const [postulaciones, setPostulaciones] = useState([]);
+  const [fotoPerfil, setFotoPerfil] = useState(null);
+  const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [paginaLaboral, setPaginaLaboral]     = useState(1);
   const [porPaginaLaboral, setPorPaginaLaboral] = useState(5);
 
@@ -75,6 +77,7 @@ export default function EstudiantePerfil() {
         setRut(data.rut || "");
         setRegion(data.region || "");
         setComuna(data.comuna || "");
+        setFotoPerfil(data.foto_perfil || null);
         setHabilidades(data.habilidades || []);
         setIdiomas(data.idiomas || []);
         setHistorialAcademico(data.historial_academico || []);
@@ -194,8 +197,40 @@ export default function EstudiantePerfil() {
         {/* Left: profile card */}
         <div className="flex flex-col gap-4">
           <Card className="text-center">
-            <div className={`w-20 h-20 rounded-full mx-auto mb-3 flex items-center justify-center ${S}`}>
-              <Icon icon="mynaui:user-solid" width={40} className="text-[#378ADD]" />
+            <div className="relative w-20 h-20 mx-auto mb-3">
+              {fotoPerfil ? (
+                <img src={getMediaUrl(fotoPerfil)} alt="Foto de perfil" className="w-20 h-20 rounded-full object-cover" />
+              ) : (
+                <div className={`w-20 h-20 rounded-full flex items-center justify-center ${S}`}>
+                  <Icon icon="mynaui:user-solid" width={40} className="text-[#378ADD]" />
+                </div>
+              )}
+              {editMode && (
+                <label className="absolute inset-0 rounded-full flex items-center justify-center bg-black/50 cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setSubiendoFoto(true);
+                      try {
+                        const { foto_perfil } = await subirFotoPerfil(file);
+                        setFotoPerfil(foto_perfil);
+                      } catch (err) {
+                        setSaveMsg("Error al subir foto: " + err.message);
+                      } finally {
+                        setSubiendoFoto(false);
+                      }
+                    }}
+                  />
+                  {subiendoFoto
+                    ? <Icon icon="mdi:loading" width={22} className="text-white animate-spin" />
+                    : <Icon icon="mdi:camera" width={22} className="text-white" />
+                  }
+                </label>
+              )}
             </div>
             <p className={`text-base font-semibold ${T}`}>{nombre || "Sin nombre"}</p>
             <p className={`text-xs ${M}`}>{nombreCarrera || "Sin carrera"}</p>
