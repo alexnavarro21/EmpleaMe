@@ -259,9 +259,32 @@ function buildCVHtml(datos) {
     </div>`;
 }
 
+// ─── Convierte una URL de imagen a base64 para evitar problemas CORS con html2canvas ──
+async function imageUrlToBase64(url) {
+  try {
+    const res = await fetch(url, { credentials: "include" });
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
 // ─── Función exportada ────────────────────────────────────────────────────────
 export async function generarCV(datos, onProgreso) {
   // 1. Crear contenedor oculto fuera de la pantalla
+  // Convertir foto a base64 para que html2canvas pueda renderizarla sin CORS
+  let datosConFoto = { ...datos };
+  if (datos.fotoUrl) {
+    const base64 = await imageUrlToBase64(datos.fotoUrl);
+    datosConFoto.fotoUrl = base64 || null;
+  }
+
   const wrapper = document.createElement("div");
   wrapper.style.cssText = `
     position: fixed;
@@ -271,7 +294,7 @@ export async function generarCV(datos, onProgreso) {
     background: white;
     z-index: -9999;
   `;
-  wrapper.innerHTML = buildCVHtml(datos);
+  wrapper.innerHTML = buildCVHtml(datosConFoto);
   document.body.appendChild(wrapper);
 
   try {
