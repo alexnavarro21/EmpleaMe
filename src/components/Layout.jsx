@@ -121,8 +121,15 @@ export default function Layout() {
             </div>
           </div>
 
-          {/* Campana + perfil (derecha) */}
+          {/* Campana + mensajes + perfil (derecha) */}
           <div className="flex items-center gap-1">
+          <Link
+            to={messagingPaths[role]}
+            className={`p-1.5 rounded-lg transition-colors text-[#B5D4F4] hover:text-[#E6F1FB] hover:bg-[#0F4D8A]/40`}
+            title="Mensajes"
+          >
+            <Icon icon="mdi:message-outline" width={22} />
+          </Link>
           <NotificacionesBell role={role} />
 
           {/* Botón de perfil con popup */}
