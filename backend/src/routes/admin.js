@@ -112,9 +112,34 @@ router.post("/evaluaciones", ...auth, async (req, res) => {
 // - Técnicas: nivel_dominio = 'Basico'|'Intermedio'|'Avanzado', porcentaje = null
 // - Blandas:  nivel_dominio = null, porcentaje = 0-100
 router.post("/habilidades/asignar", ...auth, async (req, res) => {
-  const { estudiante_id, habilidades } = req.body;
-  if (!estudiante_id || !Array.isArray(habilidades) || !habilidades.length)
+  const { estudiante_id, habilidades, modo } = req.body;
+  if (!estudiante_id || !Array.isArray(habilidades))
     return res.status(400).json({ error: "estudiante_id y habilidades son requeridos" });
+
+  // modo "blandas": reemplaza TODAS las blandas del estudiante (permite dejar en 0)
+  if (modo === "blandas") {
+    try {
+      await db.query(
+        `DELETE he FROM habilidades_estudiantes he
+         JOIN habilidades h ON h.id = he.habilidad_id
+         WHERE he.estudiante_id = ? AND h.categoria = 'blanda'`,
+        [estudiante_id]
+      );
+      for (const h of habilidades) {
+        await db.query(
+          `INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+           VALUES (?, ?, NULL, ?, TRUE)`,
+          [estudiante_id, h.habilidad_id, h.porcentaje ?? null]
+        );
+      }
+      return res.json({ mensaje: `${habilidades.length} habilidades blandas actualizadas` });
+    } catch (err) {
+      return res.status(500).json({ error: "Error del servidor", detalle: err.message });
+    }
+  }
+
+  if (!habilidades.length)
+    return res.status(400).json({ error: "habilidades no puede estar vacío" });
 
   try {
     for (const h of habilidades) {

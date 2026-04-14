@@ -273,12 +273,12 @@ function TabEditarEstudiante({ estudiantes, habilidades, isDark }) {
   }
 
   async function handleGuardarBlandas() {
+    if (!selectedId) return;
     const payload = Object.entries(selectedBlandas2)
       .map(([habilidad_id, porcentaje]) => ({ habilidad_id: Number(habilidad_id), nivel_dominio: null, porcentaje: Number(porcentaje) }));
-    if (!selectedId || !payload.length) return;
     setSaving(true); setMsg("");
     try {
-      await asignarHabilidadesTecnicas({ estudiante_id: Number(selectedId), habilidades: payload });
+      await asignarHabilidadesTecnicas({ estudiante_id: Number(selectedId), habilidades: payload, modo: "blandas" });
       setMsg("Habilidades blandas guardadas");
     } catch (e) { setMsg("Error: " + e.message); }
     finally { setSaving(false); }
@@ -514,8 +514,8 @@ function TabEditarEstudiante({ estudiantes, habilidades, isDark }) {
               )}
               {selectedId && (
                 <div className="mt-4">
-                  <PrimaryButton onClick={handleGuardarBlandas} disabled={!totalBlandas || saving} className="w-full">
-                    {saving ? "Guardando..." : `Guardar ${totalBlandas} blandas`}
+                  <PrimaryButton onClick={handleGuardarBlandas} disabled={saving} className="w-full">
+                    {saving ? "Guardando..." : totalBlandas > 0 ? `Guardar ${totalBlandas} blandas` : "Guardar (quitar todas)"}
                   </PrimaryButton>
                 </div>
               )}
