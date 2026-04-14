@@ -147,7 +147,7 @@ router.get("/estudiantes", verificarToken, async (req, res) => {
 router.put("/foto", verificarToken, upload.single("foto"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No se envió ninguna imagen" });
 
-  const url = req.file.location;
+  const url = `/api/media/${req.file.key}`;
   const { id, rol } = req.usuario;
 
   try {
