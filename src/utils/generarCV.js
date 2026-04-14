@@ -105,10 +105,10 @@ function buildCVHtml(datos) {
 
   /* ── Sidebar ─────────────────────────── */
   const avatarHtml = fotoUrl
-    ? `<img src="${fotoUrl}" style="width:86px;height:86px;border-radius:50%;object-fit:cover;border:3px solid ${C.accent};display:block;margin:0 auto 16px;"/>`
-    : `<div style="width:86px;height:86px;border-radius:50%;background:#24487a;border:3px solid ${C.accent};
+    ? `<img src="${fotoUrl}" style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid ${C.accent};display:block;margin:0 auto 16px;"/>`
+    : `<div style="width:110px;height:110px;border-radius:50%;background:#24487a;border:3px solid ${C.accent};
                    display:flex;align-items:center;justify-content:center;
-                   font-size:34px;font-weight:800;color:#fff;margin:0 auto 16px;">${inicial}</div>`;
+                   font-size:40px;font-weight:800;color:#fff;margin:0 auto 16px;">${inicial}</div>`;
 
   const contactRows = [
     telefono           && `<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;font-size:10.5px;">${icon("phone")} ${telefono}</div>`,
@@ -219,10 +219,10 @@ function buildCVHtml(datos) {
                   padding:24px 28px 20px 24px;background:#fff;
                   border-bottom:3px solid ${C.navy};position:relative;z-index:1;">
         ${fotoUrl
-          ? `<img src="${fotoUrl}" style="width:86px;height:86px;border-radius:50%;object-fit:cover;border:3px solid ${C.accent};flex-shrink:0;"/>`
-          : `<div style="width:86px;height:86px;border-radius:50%;background:${C.navy};
+          ? `<img src="${fotoUrl}" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid ${C.accent};flex-shrink:0;"/>`
+          : `<div style="width:100px;height:100px;border-radius:50%;background:${C.navy};
                          border:3px solid ${C.accent};display:flex;align-items:center;
-                         justify-content:center;font-size:34px;font-weight:800;
+                         justify-content:center;font-size:38px;font-weight:800;
                          color:#fff;flex-shrink:0;">${inicial}</div>`
         }
         <div>
