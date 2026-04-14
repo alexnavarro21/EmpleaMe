@@ -203,7 +203,7 @@ function FeedCard({ pub, isDark, perfilCompleto }) {
         <Link
           to={pub.autor_rol === "empresa"
             ? `/empresa-publica/${pub.autor_id}`
-            : `/${usuario.rol}/candidato/${pub.autor_id}`}
+            : `/${usuario.rol === "centro" ? "admin" : usuario.rol}/candidato/${pub.autor_id}`}
           className="flex items-center gap-3 hover:opacity-80 transition-opacity"
           onClick={(e) => e.stopPropagation()}
         >
