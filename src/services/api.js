@@ -650,6 +650,15 @@ export async function toggleLike(publicacionId) {
   return data; // { liked: bool, total: number }
 }
 
+export async function eliminarPublicacion(publicacionId) {
+  const res = await fetch(`${BASE_URL}/publicaciones/${publicacionId}`, {
+    method: "DELETE", headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al eliminar publicación");
+  return data;
+}
+
 // ── Talleres ──────────────────────────────────────────────────────────────────
 
 export async function getTalleres(todos = false) {
