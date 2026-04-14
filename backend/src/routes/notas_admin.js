@@ -7,8 +7,8 @@ router.get("/:conversacion_id", verificarToken, soloRol("centro"), async (req, r
   try {
     const [todas] = await db.query(
       `SELECT n.id, n.admin_id, n.contenido, n.actualizado_en,
-              u.nombre AS admin_nombre,
-              n.admin_id = ? AS es_propia
+              u.correo AS admin_nombre,
+              (n.admin_id = ?) AS es_propia
        FROM notas_admin n
        JOIN usuarios u ON u.id = n.admin_id
        WHERE n.conversacion_id = ?
