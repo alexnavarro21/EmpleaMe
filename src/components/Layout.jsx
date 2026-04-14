@@ -43,6 +43,12 @@ const messagingPaths = {
   admin: "/admin/mensajeria",
 };
 
+const notifPaths = {
+  estudiante: "/estudiante/notificaciones",
+  empresa: "/empresa/notificaciones",
+  admin: "/admin/notificaciones",
+};
+
 export default function Layout() {
   const { isDark, setIsDark } = useDark();
   const location = useLocation();
@@ -195,8 +201,22 @@ export default function Layout() {
                       : "text-[#2C2C2A] hover:bg-[#F0F4F8]"
                   }`}
                 >
-                  <Icon icon="ph:chat-circle-dots-fill" width={18} className="text-[#378ADD]" />
+                  <Icon icon="mdi:message-outline" width={18} className="text-[#378ADD]" />
                   Mensajes
+                </Link>
+
+                {/* Notificaciones */}
+                <Link
+                  to={notifPaths[role]}
+                  onClick={() => setMenuOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                    isDark
+                      ? "text-[#D3D1C7] hover:bg-[#0F4D8A]/30"
+                      : "text-[#2C2C2A] hover:bg-[#F0F4F8]"
+                  }`}
+                >
+                  <Icon icon="mdi:bell-outline" width={18} className="text-[#378ADD]" />
+                  Mis notificaciones
                 </Link>
 
                 {/* Separador */}
