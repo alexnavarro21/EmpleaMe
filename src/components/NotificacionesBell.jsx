@@ -31,7 +31,11 @@ export default function NotificacionesBell({ role }) {
   const [loading, setLoading] = useState(false);
   const ref = useRef(null);
 
-  const historialPath = role === "empresa" ? "/empresa/notificaciones" : "/estudiante/notificaciones";
+  const historialPath = role === "empresa"
+    ? "/empresa/notificaciones"
+    : role === "admin"
+    ? "/admin/notificaciones"
+    : "/estudiante/notificaciones";
 
   // Click outside closes dropdown
   useEffect(() => {

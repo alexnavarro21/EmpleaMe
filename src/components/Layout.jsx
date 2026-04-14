@@ -49,15 +49,15 @@ export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
-  const role = location.pathname.startsWith("/admin/") || location.pathname === "/admin"
-    ? "admin"
-    : location.pathname.startsWith("/empresa/") || location.pathname === "/empresa"
-    ? "empresa"
-    : "estudiante";
-
   const BASE_ORIGIN = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
   const BASE_API = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+
+  const role = usuario.rol === "centro"
+    ? "admin"
+    : usuario.rol === "empresa"
+    ? "empresa"
+    : "estudiante";
   const usuarioId = usuario.id;
 
   const [fotoPerfil, setFotoPerfil] = useState(() => {
@@ -123,7 +123,7 @@ export default function Layout() {
 
           {/* Campana + perfil (derecha) */}
           <div className="flex items-center gap-1">
-          {role !== "admin" && <NotificacionesBell role={role} />}
+          <NotificacionesBell role={role} />
 
           {/* Botón de perfil con popup */}
           <div className="relative" ref={menuRef}>

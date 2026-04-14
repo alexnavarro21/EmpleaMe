@@ -73,6 +73,7 @@ export default function App() {
             <Route path="/admin/monitoreo" element={<AdminMonitoreo />} />
             <Route path="/admin/buscar" element={<BuscarPerfiles />} />
             <Route path="/admin/candidato/:id" element={<EmpresaCandidato />} />
+            <Route path="/admin/notificaciones" element={<Notificaciones />} />
           </Route>
         </Routes>
       </DarkModeProvider>
