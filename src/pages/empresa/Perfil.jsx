@@ -4,7 +4,7 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, SecondaryButton, FormField, PageHeader } from "../../components/ui";
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
-import { getEmpresaById, actualizarPerfilEmpresa, getVacantesEmpresa } from "../../services/api";
+import { getEmpresaById, actualizarPerfilEmpresa, getVacantesEmpresa, subirFotoPerfil, getMediaUrl } from "../../services/api";
 import { REGIONES_COMUNAS, REGIONES } from "../../data/regionesComunas";
 
 
@@ -21,6 +21,8 @@ export default function EmpresaPerfil() {
   const [region, setRegion] = useState("");
   const [comuna, setComuna] = useState("");
   const [vacantes, setVacantes] = useState([]);
+  const [fotoPerfil, setFotoPerfil] = useState(null);
+  const [subiendoFoto, setSubiendoFoto] = useState(false);
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -37,6 +39,8 @@ export default function EmpresaPerfil() {
           getVacantesEmpresa(usuario.id),
         ]);
         setNombreEmpresa(perfil.nombre_empresa || "");
+        setFotoPerfil(perfil.foto_perfil || null);
+        localStorage.setItem(`foto_perfil_${usuario.id}`,perfil.foto_perfil || "");
         setTelefono(perfil.telefono_contacto || "");
         setDescripcion(perfil.descripcion || "");
         setRegion(perfil.region || "");
@@ -114,10 +118,43 @@ export default function EmpresaPerfil() {
         {/* Left: card de empresa */}
         <div className="flex flex-col gap-4">
           <Card className="text-center">
-            <div className={`w-20 h-20 rounded-full mx-auto mb-3 flex items-center justify-center bg-[#0F4D8A]`}>
-              <span className="text-3xl font-bold text-white">
-                {nombreEmpresa ? nombreEmpresa[0].toUpperCase() : "E"}
-              </span>
+            <div className="relative w-20 h-20 mx-auto mb-3">
+              {fotoPerfil ? (
+                <img src={getMediaUrl(fotoPerfil)} alt="Logo empresa" className="w-20 h-20 rounded-full object-cover" />
+              ) : (
+                <div className="w-20 h-20 rounded-full flex items-center justify-center bg-[#0F4D8A]">
+                  <span className="text-3xl font-bold text-white">
+                    {nombreEmpresa ? nombreEmpresa[0].toUpperCase() : "E"}
+                  </span>
+                </div>
+              )}
+              {editMode && (
+                <label className="absolute inset-0 rounded-full flex items-center justify-center bg-black/50 cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setSubiendoFoto(true);
+                      try {
+                        const { foto_perfil } = await subirFotoPerfil(file);
+                        setFotoPerfil(foto_perfil);
+                        localStorage.setItem(`foto_perfil_${usuario.id}`,foto_perfil || "");
+                      } catch (err) {
+                        setSaveMsg("Error al subir foto: " + err.message);
+                      } finally {
+                        setSubiendoFoto(false);
+                      }
+                    }}
+                  />
+                  {subiendoFoto
+                    ? <Icon icon="mdi:loading" width={22} className="text-white animate-spin" />
+                    : <Icon icon="mdi:camera" width={22} className="text-white" />
+                  }
+                </label>
+              )}
             </div>
             <p className={`text-base font-semibold ${T}`}>{nombreEmpresa || "Sin nombre"}</p>
             <p className={`text-xs ${M}`}>{usuario.correo}</p>

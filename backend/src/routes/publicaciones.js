@@ -18,7 +18,7 @@ router.post("/", verificarToken, upload.single("archivo_multimedia"), async (req
     );
     const tipoId = tipoDb.length > 0 ? tipoDb[0].id : 1;
 
-    const url_multimedia = archivo ? `/uploads/${archivo.filename}` : null;
+    const url_multimedia = archivo ? `/api/media/${archivo.key}` : null;
 
     const [result] = await db.query(
       "INSERT INTO publicaciones (autor_id, tipo_id, vacante_id, titulo, contenido, url_multimedia) VALUES (?, ?, ?, ?, ?, ?)",
@@ -91,6 +91,11 @@ router.get("/", verificarToken, async (req, res) => {
                 WHEN 'estudiante' THEN est.nombre_completo
                 ELSE 'Centro Educacional'
               END AS autor_nombre,
+              CASE u.rol
+                WHEN 'empresa'    THEN pe.foto_perfil
+                WHEN 'estudiante' THEN est.foto_perfil
+                ELSE NULL
+              END AS autor_foto_perfil,
               ${likesFields}
               ${vacanteTipoField}, v.esta_activa AS vacante_activa, v.area, v.modalidad, v.duracion, v.remuneracion, v.direccion
        FROM publicaciones p

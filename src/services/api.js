@@ -1,4 +1,11 @@
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+const BACKEND_ORIGIN = BASE_URL.replace(/\/api$/, "");
+
+export function getMediaUrl(path) {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  return `${BACKEND_ORIGIN}${path}`;
+}
 
 
 function getToken() {
@@ -189,6 +196,19 @@ export async function actualizarPerfilEstudiante(id, datos) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al actualizar perfil");
   return data;
+}
+
+export async function subirFotoPerfil(archivo) {
+  const form = new FormData();
+  form.append("foto", archivo);
+  const res = await fetch(`${BASE_URL}/perfiles/foto`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    body: form,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al subir foto");
+  return data; // { foto_perfil: "/api/media/uploads/..." }
 }
 
 // ── Postulaciones ─────────────────────────────────────────────────────────────

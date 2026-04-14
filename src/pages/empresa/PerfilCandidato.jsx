@@ -4,7 +4,7 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, SecondaryButton, PageHeader, SoftSkillBar } from "../../components/ui";
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
-import { getEstudianteById, iniciarConversacion, iniciarMensajeDirecto, getVacantesEmpresa, enviarMensaje } from "../../services/api";
+import { getEstudianteById, iniciarConversacion, iniciarMensajeDirecto, getVacantesEmpresa, enviarMensaje, getMediaUrl } from "../../services/api";
 
 const careerDisplay = {
   "Administracion": "Administración",
@@ -92,9 +92,13 @@ export default function EmpresaPerfilCandidato() {
         {/* Left sidebar */}
         <div className="flex flex-col gap-4">
           <Card className="text-center">
-            <div className={`w-20 h-20 rounded-full mx-auto mb-3 flex items-center justify-center ${S}`}>
-              <Icon icon="mynaui:user-solid" width={44} className="text-[#378ADD]" />
-            </div>
+            {student.foto_perfil ? (
+              <img src={getMediaUrl(student.foto_perfil)} className="w-20 h-20 rounded-full object-cover mx-auto mb-3" alt="" />
+            ) : (
+              <div className={`w-20 h-20 rounded-full mx-auto mb-3 flex items-center justify-center ${S}`}>
+                <Icon icon="mynaui:user-solid" width={44} className="text-[#378ADD]" />
+              </div>
+            )}
             <p className={`text-lg font-semibold ${T}`}>{student.nombre_completo}</p>
             <p className={`text-sm ${M}`}>{nombreCarrera}</p>
             {(student.comuna || student.region) && (

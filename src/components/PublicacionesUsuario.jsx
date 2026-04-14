@@ -39,6 +39,25 @@ function MiniPostCard({ pub, isDark }) {
     return `${BASE_URL}/uploads/${url}`;
   }
 
+  const thumbnail = pub.url_multimedia ? (() => {
+    const src = resolverMedia(pub.url_multimedia);
+    const esVideo = /\.(mp4|webm|ogg|mov|avi)(\?|$)/i.test(pub.url_multimedia);
+    return (
+      <div className="relative w-16 h-16 rounded-lg overflow-hidden border flex-shrink-0 bg-black">
+        {esVideo ? (
+          <>
+            <video src={src} className="w-full h-full object-cover" muted />
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+              <Icon icon="mdi:play-circle" width={24} className="text-white" />
+            </div>
+          </>
+        ) : (
+          <img src={src} alt="" className="w-full h-full object-cover" />
+        )}
+      </div>
+    );
+  })() : null;
+
   return (
     <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
       <div className="flex items-center justify-between px-5 pt-4 pb-3">
@@ -46,28 +65,17 @@ function MiniPostCard({ pub, isDark }) {
         <Badge color={badge.color}>{badge.label}</Badge>
       </div>
 
-      {pub.titulo && pub.titulo !== "Actualización de estado" && (
-        <div className="px-5 pb-2">
-          <p className={`text-sm font-semibold ${T}`}>{pub.titulo}</p>
+      <div className="flex items-start gap-3 px-5 pb-4">
+        <div className="flex-1 min-w-0">
+          {pub.titulo && pub.titulo !== "Actualización de estado" && (
+            <p className={`text-sm font-semibold ${T} mb-1`}>{pub.titulo}</p>
+          )}
+          {pub.contenido && (
+            <p className={`text-sm leading-relaxed ${T} line-clamp-3`}>{pub.contenido}</p>
+          )}
         </div>
-      )}
-
-      {pub.contenido && (
-        <div className="px-5 pb-4">
-          <p className={`text-sm leading-relaxed ${T} line-clamp-4`}>{pub.contenido}</p>
-        </div>
-      )}
-
-      {pub.url_multimedia && (
-        <div className="px-5 pb-4">
-          <img
-            src={resolverMedia(pub.url_multimedia)}
-            alt="Multimedia"
-            className="rounded-lg max-h-56 w-full object-cover border"
-            onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
-          />
-        </div>
-      )}
+        {thumbnail}
+      </div>
 
       <div className={`border-t ${B}`} />
       <button

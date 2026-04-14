@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const db = require("../db");
 const { verificarToken } = require("../middleware/auth");
+const upload = require("../middleware/multerConfig");
 
 // GET /api/perfiles/estudiante/:id
 router.get("/estudiante/:id", verificarToken, async (req, res) => {
@@ -106,7 +107,7 @@ router.get("/empresas", verificarToken, async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT pe.usuario_id, pe.nombre_empresa, pe.descripcion, pe.telefono_contacto,
-              pe.region, pe.comuna,
+              pe.region, pe.comuna, pe.foto_perfil,
               COUNT(v.id) AS total_vacantes
        FROM perfiles_empresas pe
        LEFT JOIN vacantes v ON v.empresa_id = pe.usuario_id AND v.esta_activa = TRUE
@@ -124,7 +125,7 @@ router.get("/estudiantes", verificarToken, async (req, res) => {
     const [rows] = await db.query(
       `SELECT pe.usuario_id, pe.nombre_completo, pe.carrera, pe.semestre,
               pe.promedio, pe.calificacion_docente, pe.biografia,
-              pe.region, pe.comuna,
+              pe.region, pe.comuna, pe.foto_perfil,
               GROUP_CONCAT(h.nombre SEPARATOR '||') AS habilidades_raw
        FROM perfiles_estudiantes pe
        LEFT JOIN habilidades_estudiantes he ON he.estudiante_id = pe.usuario_id
@@ -137,6 +138,34 @@ router.get("/estudiantes", verificarToken, async (req, res) => {
       habilidades_raw: undefined,
     }));
     res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// PUT /api/perfiles/foto — subir foto de perfil al bucket
+router.put("/foto", verificarToken, upload.single("foto"), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "No se envió ninguna imagen" });
+
+  const url = `/api/media/${req.file.key}`;
+  const { id, rol } = req.usuario;
+
+  try {
+    if (rol === "estudiante") {
+      await db.query(
+        "UPDATE perfiles_estudiantes SET foto_perfil = ? WHERE usuario_id = ?",
+        [url, id]
+      );
+    } else if (rol === "empresa") {
+      await db.query(
+        "UPDATE perfiles_empresas SET foto_perfil = ? WHERE usuario_id = ?",
+        [url, id]
+      );
+    } else {
+      return res.status(403).json({ error: "Rol no soportado para foto de perfil" });
+    }
+
+    res.json({ foto_perfil: url });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }

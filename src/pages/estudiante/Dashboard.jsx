@@ -18,8 +18,12 @@ function resolverMedia(url) {
   return `${BASE_URL_GLOBAL}/uploads/${url}`;
 }
 
-function Avatar({ initial, color, size = "md" }) {
+function Avatar({ initial, color, size = "md", foto }) {
   const s = size === "lg" ? "w-14 h-14 text-xl" : size === "sm" ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm";
+  const resolvedFoto = foto ? resolverMedia(foto) : null;
+  if (resolvedFoto) {
+    return <img src={resolvedFoto} className={`${s} rounded-full object-cover flex-shrink-0 border-2 border-white`} alt="" />;
+  }
   return (
     <div className={`${s} rounded-full ${color} flex items-center justify-center text-white font-semibold flex-shrink-0`}>
       {initial}
@@ -199,13 +203,11 @@ function FeedCard({ pub, isDark, perfilCompleto }) {
         <Link
           to={pub.autor_rol === "empresa"
             ? `/empresa-publica/${pub.autor_id}`
-            : `/${usuario.rol}/candidato/${pub.autor_id}`}
+            : `/${usuario.rol === "centro" ? "admin" : usuario.rol}/candidato/${pub.autor_id}`}
           className="flex items-center gap-3 hover:opacity-80 transition-opacity"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-            {inicial}
-          </div>
+          <Avatar initial={inicial} color="bg-[#0F4D8A]" size="md" foto={pub.autor_foto_perfil} />
           <div>
             <p className={`text-sm font-semibold leading-tight ${T}`}>{pub.autor_nombre}</p>
             <p className={`text-xs ${M}`}>{tiempoRelativo(pub.publicado_en)}</p>
@@ -283,16 +285,30 @@ function FeedCard({ pub, isDark, perfilCompleto }) {
         </div>
       )}
 
-      {pub.url_multimedia && (
-        <div className="px-4 pb-3">
-          <img
-            src={resolverMedia(pub.url_multimedia)}
-            alt="Multimedia"
-            className="rounded-lg max-h-72 w-full object-cover border"
-            onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
-          />
-        </div>
-      )}
+      {pub.url_multimedia && (() => {
+        const src = resolverMedia(pub.url_multimedia);
+        const esVideo = /\.(mp4|webm|ogg|mov|avi)(\?|$)/i.test(pub.url_multimedia);
+        return (
+          <div className="px-4 pb-3">
+            {esVideo ? (
+              <video
+                src={src}
+                controls
+                className="rounded-lg w-full border"
+                style={{ maxHeight: "80vh" }}
+                onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
+              />
+            ) : (
+              <img
+                src={src}
+                alt="Multimedia"
+                className="rounded-lg max-h-72 w-full object-cover border"
+                onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
+              />
+            )}
+          </div>
+        );
+      })()}
 
       <div className={`border-t ${B}`} />
       <div className="flex items-center px-2 py-1">
@@ -648,9 +664,12 @@ export default function EstudianteDashboard() {
             <div className="h-16 bg-gradient-to-r from-[#0A3A6A] to-[#378ADD]" />
             <div className="px-4 pb-4">
               <div className="-mt-7 mb-3">
-                <div className="w-14 h-14 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xl font-bold border-2 border-white">
-                  {(empresaPerfil?.nombre_empresa || usuario.nombre_empresa || "E")[0].toUpperCase()}
-                </div>
+                <Avatar
+                  initial={(empresaPerfil?.nombre_empresa || usuario.nombre_empresa || "E")[0].toUpperCase()}
+                  color="bg-[#0F4D8A]"
+                  size="lg"
+                  foto={empresaPerfil?.foto_perfil}
+                />
               </div>
               <p className={`text-sm font-semibold ${T}`}>{empresaPerfil?.nombre_empresa || usuario.nombre_empresa || "Mi empresa"}</p>
               <p className={`text-xs ${M} mt-0.5`}>Empresa verificada · EmpleaMe</p>
@@ -776,7 +795,7 @@ export default function EstudianteDashboard() {
           <div className="h-16 bg-gradient-to-r from-[#0A3A6A] to-[#378ADD]" />
           <div className="px-4 pb-4 text-center">
             <div className="-mt-7 mb-3 flex justify-center">
-              <Avatar initial={inicial} color="bg-[#0F4D8A]" size="lg" />
+              <Avatar initial={inicial} color="bg-[#0F4D8A]" size="lg" foto={perfil?.foto_perfil} />
             </div>
             <p className={`text-sm font-semibold ${T}`}>{nombre || "Sin nombre"}</p>
             <p className={`text-xs ${M} mt-0.5`}>{subtitleParts.join(" · ") || "Sin carrera"}</p>
@@ -888,9 +907,13 @@ export default function EstudianteDashboard() {
                       state={{ conversacionId: c.id }}
                       className={`flex items-center gap-2.5 ${i < Math.min(empresaConversaciones.length, 4) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}
                     >
-                      <div className="w-7 h-7 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                        {nombre[0]?.toUpperCase() || "?"}
-                      </div>
+                      {c.contraparte_foto ? (
+                        <img src={resolverMedia(c.contraparte_foto)} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
+                      ) : (
+                        <div className="w-7 h-7 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                          {nombre[0]?.toUpperCase() || "?"}
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <p className={`text-xs font-medium ${T} truncate`}>{nombre}</p>
                         <p className={`text-xs ${M} truncate`}>{c.ultimo_mensaje || "Sin mensajes"}</p>
@@ -1106,9 +1129,13 @@ export default function EstudianteDashboard() {
                     state={{ conversacionId: c.id }}
                     className={`flex items-center gap-2.5 ${i < Math.min(estudianteConversaciones.length, 3) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}
                   >
-                    <div className="w-7 h-7 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                      {nombre[0]?.toUpperCase() || "?"}
-                    </div>
+                    {c.contraparte_foto ? (
+                      <img src={resolverMedia(c.contraparte_foto)} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                        {nombre[0]?.toUpperCase() || "?"}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className={`text-xs font-medium ${T} truncate`}>{nombre}</p>
                       <p className={`text-xs ${M} truncate`}>{c.ultimo_mensaje || "Sin mensajes"}</p>
@@ -1136,9 +1163,13 @@ export default function EstudianteDashboard() {
               <p className={`text-xs font-semibold ${T} mb-3`}>Vacantes en el muro</p>
               {vacantes.map((v, i) => (
                 <div key={v.id} className={`flex items-center gap-2.5 ${i < vacantes.length - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}>
-                  <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-semibold ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}>
-                    {v.autor_nombre?.[0]?.toUpperCase() || "?"}
-                  </div>
+                  {v.autor_foto_perfil ? (
+                    <img src={resolverMedia(v.autor_foto_perfil)} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
+                  ) : (
+                    <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-semibold ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}>
+                      {v.autor_nombre?.[0]?.toUpperCase() || "?"}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <p className={`text-xs font-semibold ${T} truncate`}>{v.titulo || v.area || "Vacante"}</p>
                     <p className={`text-xs ${M} truncate`}>{v.autor_nombre}</p>

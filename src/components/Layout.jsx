@@ -55,6 +55,31 @@ export default function Layout() {
     ? "empresa"
     : "estudiante";
 
+  const BASE_ORIGIN = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
+  const BASE_API = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+  const usuarioId = usuario.id;
+
+  const [fotoPerfil, setFotoPerfil] = useState(() => {
+    const raw = localStorage.getItem(`foto_perfil_${usuarioId}`) || "";
+    return raw ? (raw.startsWith("http") ? raw : `${BASE_ORIGIN}${raw}`) : null;
+  });
+
+  useEffect(() => {
+    if (!usuarioId || role === "admin") return;
+    const endpoint = role === "empresa"
+      ? `${BASE_API}/perfiles/empresa/${usuarioId}`
+      : `${BASE_API}/perfiles/estudiante/${usuarioId}`;
+    fetch(endpoint, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } })
+      .then((r) => r.json())
+      .then((data) => {
+        const raw = data.foto_perfil || "";
+        localStorage.setItem(`foto_perfil_${usuarioId}`, raw);
+        setFotoPerfil(raw ? (raw.startsWith("http") ? raw : `${BASE_ORIGIN}${raw}`) : null);
+      })
+      .catch(() => {});
+  }, [usuarioId, role]);
+
   useEffect(() => {
     function handleClickOutside(e) {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -110,7 +135,10 @@ export default function Layout() {
                   : "text-[#B5D4F4] hover:text-[#E6F1FB] hover:bg-[#0F4D8A]/40"
               }`}
             >
-              <Icon icon="mynaui:user-solid" width={22} />
+              {fotoPerfil
+                ? <img src={fotoPerfil} className="w-7 h-7 rounded-full object-cover" alt="" />
+                : <Icon icon="mynaui:user-solid" width={22} />
+              }
             </button>
 
             {menuOpen && (
