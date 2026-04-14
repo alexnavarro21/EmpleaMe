@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge, PageHeader } from "../../components/ui";
-import { getConversaciones, getMensajes, getNotasAdmin, guardarNotaAdmin } from "../../services/api";
+import { getConversaciones, getMensajes, getNotasAdmin, agregarNotaAdmin } from "../../services/api";
 
 function timeLabel(iso) {
   if (!iso) return "";
@@ -35,9 +35,8 @@ export default function AdminMensajeria() {
   // Notas
   const [todasNotas, setTodasNotas] = useState([]);
   const [notaTexto, setNotaTexto] = useState("");
-  const [notaGuardada, setNotaGuardada] = useState("");
-  const [guardando, setGuardando] = useState(false);
-  const [guardadoOk, setGuardadoOk] = useState(false);
+  const [agregando, setAgregando] = useState(false);
+  const [agregadoOk, setAgregadoOk] = useState(false);
 
   const messagesEndRef = useRef(null);
   const pollRef = useRef(null);
@@ -92,30 +91,24 @@ export default function AdminMensajeria() {
     try {
       const data = await getNotasAdmin(convId);
       setTodasNotas(data);
-      const propia = data.find((n) => n.es_propia);
-      setNotaTexto(propia?.contenido || "");
-      setNotaGuardada(propia?.contenido || "");
     } catch {
       setTodasNotas([]);
-      setNotaTexto("");
-      setNotaGuardada("");
     }
   }
 
-  async function handleGuardarNota() {
-    if (!selected) return;
-    setGuardando(true);
+  async function handleAgregarNota() {
+    if (!selected || !notaTexto.trim()) return;
+    setAgregando(true);
     try {
-      await guardarNotaAdmin(selected, notaTexto);
-      setNotaGuardada(notaTexto);
-      setGuardadoOk(true);
-      setTimeout(() => setGuardadoOk(false), 2000);
-      // Refrescar lista completa para que se refleje la fecha actualizada
+      await agregarNotaAdmin(selected, notaTexto);
+      setNotaTexto("");
+      setAgregadoOk(true);
+      setTimeout(() => setAgregadoOk(false), 2000);
       await loadNotas(selected);
     } catch {
       // silently fail
     } finally {
-      setGuardando(false);
+      setAgregando(false);
     }
   }
 
@@ -128,7 +121,6 @@ export default function AdminMensajeria() {
   });
 
   const conv = conversations.find((c) => c.id === selected);
-  const notaModificada = notaTexto !== notaGuardada;
 
   return (
     <div>
@@ -282,59 +274,55 @@ export default function AdminMensajeria() {
           ) : (
             <div className="flex-1 flex flex-col overflow-hidden">
 
-              {/* Editor: mi nota */}
-              <div className="p-4 flex flex-col gap-2 flex-shrink-0">
-                <p className={`text-xs font-medium ${T}`}>Mi nota</p>
+              {/* Input nueva nota */}
+              <div className={`p-4 flex flex-col gap-2 flex-shrink-0 border-b ${B}`}>
                 <textarea
                   value={notaTexto}
                   onChange={(e) => setNotaTexto(e.target.value)}
-                  placeholder="Escribe una nota sobre esta conversación..."
-                  rows={5}
+                  placeholder="Escribe una nota..."
+                  rows={4}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleAgregarNota();
+                  }}
                   className={`w-full px-3 py-2 rounded-lg text-xs outline-none border resize-none transition-all focus:border-[#378ADD] ${
                     isDark
                       ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
                       : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
-                  } ${notaModificada ? (isDark ? "border-yellow-600" : "border-yellow-400") : ""}`}
+                  }`}
                 />
                 <button
-                  onClick={handleGuardarNota}
-                  disabled={guardando || !notaModificada}
+                  onClick={handleAgregarNota}
+                  disabled={agregando || !notaTexto.trim()}
                   className={`w-full py-1.5 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
-                    guardadoOk
+                    agregadoOk
                       ? "bg-green-600 text-white"
-                      : notaModificada
+                      : notaTexto.trim()
                       ? "bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB]"
                       : isDark
                       ? "bg-[#313130] text-[#5F5E5A] cursor-not-allowed"
                       : "bg-[#F7F6F3] text-[#B4B2A9] cursor-not-allowed"
                   }`}
                 >
-                  {guardando ? (
-                    <><Icon icon="mdi:loading" width={13} className="animate-spin" />Guardando...</>
-                  ) : guardadoOk ? (
-                    <><Icon icon="mdi:check" width={13} />Guardado</>
+                  {agregando ? (
+                    <><Icon icon="mdi:loading" width={13} className="animate-spin" />Agregando...</>
+                  ) : agregadoOk ? (
+                    <><Icon icon="mdi:check" width={13} />Nota agregada</>
                   ) : (
-                    <><Icon icon="mdi:content-save-outline" width={13} />Guardar nota</>
+                    <><Icon icon="mdi:plus" width={13} />Agregar nota</>
                   )}
                 </button>
+                <p className={`text-xs ${M} opacity-60 text-center`}>Ctrl+Enter para agregar</p>
               </div>
 
-              {/* Lista de todas las notas */}
-              <div className={`border-t ${B} flex-1 overflow-y-auto`}>
-                <p className={`text-xs font-medium ${T} px-4 pt-3 pb-2`}>
-                  Todas las notas
-                  {todasNotas.length > 0 && (
-                    <span className={`ml-1.5 text-xs font-normal ${M}`}>({todasNotas.length})</span>
-                  )}
-                </p>
-
+              {/* Historial de notas */}
+              <div className="flex-1 overflow-y-auto">
                 {todasNotas.length === 0 ? (
-                  <div className={`px-4 py-6 text-center ${M}`}>
-                    <Icon icon="mdi:note-off-outline" width={24} className="mx-auto mb-2 opacity-30" />
+                  <div className={`px-4 py-8 text-center ${M}`}>
+                    <Icon icon="mdi:note-outline" width={28} className="mx-auto mb-2 opacity-30" />
                     <p className="text-xs">Aún no hay notas en este chat</p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-0">
+                  <div className="flex flex-col">
                     {todasNotas.map((nota) => (
                       <div
                         key={nota.id}
@@ -345,18 +333,12 @@ export default function AdminMensajeria() {
                         }`}
                       >
                         <div className="flex items-center justify-between mb-1">
-                          <span className={`text-xs font-medium ${nota.es_propia ? "text-[#378ADD]" : T}`}>
+                          <span className={`text-xs font-semibold ${nota.es_propia ? "text-[#378ADD]" : T}`}>
                             {nota.es_propia ? "Tú" : nota.admin_nombre}
                           </span>
-                          {nota.es_propia && (
-                            <span className={`text-xs ${M} opacity-60`}>
-                              <Icon icon="mdi:pencil-outline" width={10} className="inline mr-0.5" />
-                              editable
-                            </span>
-                          )}
+                          <span className={`text-xs ${M} opacity-60`}>{formatFecha(nota.actualizado_en)}</span>
                         </div>
                         <p className={`text-xs ${M} leading-relaxed`}>{nota.contenido}</p>
-                        <p className={`text-xs mt-1 opacity-50 ${M}`}>{formatFecha(nota.actualizado_en)}</p>
                       </div>
                     ))}
                   </div>

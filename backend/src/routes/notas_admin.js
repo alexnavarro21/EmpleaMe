@@ -21,18 +21,16 @@ router.get("/:conversacion_id", verificarToken, soloRol("centro"), async (req, r
   }
 });
 
-// PUT /api/notas-admin/:conversacion_id — crea o actualiza la nota
-router.put("/:conversacion_id", verificarToken, soloRol("centro"), async (req, res) => {
+// POST /api/notas-admin/:conversacion_id — agrega una nueva nota al historial
+router.post("/:conversacion_id", verificarToken, soloRol("centro"), async (req, res) => {
   const { contenido } = req.body;
-  if (contenido === undefined) return res.status(400).json({ error: "contenido es requerido" });
+  if (!contenido?.trim()) return res.status(400).json({ error: "La nota no puede estar vacía" });
   try {
     await db.query(
-      `INSERT INTO notas_admin (conversacion_id, admin_id, contenido)
-       VALUES (?, ?, ?)
-       ON DUPLICATE KEY UPDATE contenido = VALUES(contenido), actualizado_en = CURRENT_TIMESTAMP`,
-      [req.params.conversacion_id, req.usuario.id, contenido]
+      "INSERT INTO notas_admin (conversacion_id, admin_id, contenido) VALUES (?, ?, ?)",
+      [req.params.conversacion_id, req.usuario.id, contenido.trim()]
     );
-    res.json({ mensaje: "Nota guardada" });
+    res.status(201).json({ mensaje: "Nota agregada" });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }

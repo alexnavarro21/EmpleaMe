@@ -765,14 +765,14 @@ export async function getNotasAdmin(conversacionId) {
   return data;
 }
 
-export async function guardarNotaAdmin(conversacionId, contenido) {
+export async function agregarNotaAdmin(conversacionId, contenido) {
   const res = await fetch(`${BASE_URL}/notas-admin/${conversacionId}`, {
-    method: "PUT",
+    method: "POST",
     headers: authHeaders(),
     body: JSON.stringify({ contenido }),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Error al guardar nota");
+  if (!res.ok) throw new Error(data.error || "Error al agregar nota");
   return data;
 }
 
