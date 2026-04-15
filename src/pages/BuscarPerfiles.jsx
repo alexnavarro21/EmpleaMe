@@ -299,6 +299,9 @@ export default function BuscarPerfiles() {
   const [modalTaller,        setModalTaller]        = useState(null);
   const [selectedHabilidades, setSelectedHabilidades] = useState([]);
   const [habBusqueda,         setHabBusqueda]         = useState("");
+  const [selectedModalidad,   setSelectedModalidad]   = useState("");
+  const [filtroPrecio,        setFiltroPrecio]        = useState("todas"); // todas | gratuito | pago
+  const [filtroRemuneracion,  setFiltroRemuneracion]  = useState("todas"); // todas | con_paga | sin_paga
 
   const T  = isDark ? "text-[#D3D1C7]"   : "text-[#2C2C2A]";
   const M  = isDark ? "text-[#888780]"   : "text-[#5F5E5A]";
@@ -367,6 +370,9 @@ export default function BuscarPerfiles() {
     const q = search.toLowerCase();
     if (!(v.titulo?.toLowerCase().includes(q) || v.nombre_empresa?.toLowerCase().includes(q) || v.area?.toLowerCase().includes(q))) return false;
     if (selectedCareer && selectedCareer !== "Todas" && v.area !== selectedCareer) return false;
+    if (selectedModalidad && v.modalidad?.toLowerCase() !== selectedModalidad) return false;
+    if (filtroRemuneracion === "con_paga"  && !v.remuneracion?.trim()) return false;
+    if (filtroRemuneracion === "sin_paga"  &&  v.remuneracion?.trim()) return false;
     if (selectedHabilidades.length > 0) {
       const vHabs = (v.habilidades || []).map((h) => h.nombre.toLowerCase());
       if (!selectedHabilidades.some((h) => vHabs.includes(h.toLowerCase()))) return false;
@@ -378,6 +384,10 @@ export default function BuscarPerfiles() {
     const q = search.toLowerCase();
     if (!(t.titulo?.toLowerCase().includes(q) || t.area?.toLowerCase().includes(q) || t.descripcion?.toLowerCase().includes(q))) return false;
     if (selectedCareer && selectedCareer !== "Todas" && t.area !== selectedCareer) return false;
+    if (selectedModalidad && t.modalidad?.toLowerCase() !== selectedModalidad) return false;
+    const costo = parseFloat(t.costo) || 0;
+    if (filtroPrecio === "gratuito" && costo > 0) return false;
+    if (filtroPrecio === "pago"     && costo <= 0) return false;
     if (selectedHabilidades.length > 0) {
       const tHabs = (t.habilidades || []).map((h) => (h.nombre || h).toLowerCase());
       if (!selectedHabilidades.some((h) => tHabs.includes(h.toLowerCase()))) return false;
@@ -395,7 +405,7 @@ export default function BuscarPerfiles() {
   const tabLabel = { estudiantes: "estudiante", empresas: "empresa", vacantes: "vacante", talleres: "taller" }[tab];
   const usuarioActual = JSON.parse(localStorage.getItem("usuario") || "{}");
 
-  const limpiarFiltros = () => { setSearch(""); setSelectedCareer("Todas"); setMinGpa(1); setSelectedRegion(""); setSelectedComuna(""); setSelectedHabilidades([]); setHabBusqueda(""); };
+  const limpiarFiltros = () => { setSearch(""); setSelectedCareer("Todas"); setMinGpa(1); setSelectedRegion(""); setSelectedComuna(""); setSelectedHabilidades([]); setHabBusqueda(""); setSelectedModalidad(""); setFiltroPrecio("todas"); setFiltroRemuneracion("todas"); };
 
   const handleContactarEstudiante = async (id) => {
     setContactandoId(id);
@@ -497,6 +507,70 @@ export default function BuscarPerfiles() {
                   >
                     <Icon icon={a === "Todas" ? "mdi:view-grid-outline" : "mdi:tag-outline"} width={14} />
                     {a}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Filtro modalidad (vacantes / talleres) */}
+            {(tab === "vacantes" || tab === "talleres") && (
+              <div className={`border-t ${B} pt-4 mb-4`}>
+                <label className={`block text-xs mb-2 ${M}`}>Modalidad</label>
+                {[
+                  { value: "",           label: "Todas",      icon: "mdi:view-grid-outline"  },
+                  { value: "presencial", label: "Presencial", icon: "streamline:city-hall-remix" },
+                  { value: "remoto",     label: "Remoto",     icon: "mdi:monitor-outline"     },
+                  { value: "hibrido",    label: "Híbrido",    icon: "mdi:home-work-outline"   },
+                ].map((m) => (
+                  <button key={m.value} onClick={() => setSelectedModalidad(m.value)}
+                    className={`w-full text-left text-sm px-3 py-1.5 rounded-lg mb-1 transition-colors flex items-center gap-2 ${
+                      selectedModalidad === m.value ? "bg-[#0F4D8A] text-[#E6F1FB]" : `${T} hover:bg-[#0F4D8A]/10`
+                    }`}
+                  >
+                    <Icon icon={m.icon} width={14} />
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Filtro remuneración (vacantes) */}
+            {tab === "vacantes" && (
+              <div className={`border-t ${B} pt-4 mb-4`}>
+                <label className={`block text-xs mb-2 ${M}`}>Remuneración</label>
+                {[
+                  { value: "todas",    label: "Todas",         icon: "mdi:view-grid-outline"   },
+                  { value: "con_paga", label: "Con paga",      icon: "mdi:currency-usd"        },
+                  { value: "sin_paga", label: "Sin paga",      icon: "mdi:currency-usd-off"    },
+                ].map((r) => (
+                  <button key={r.value} onClick={() => setFiltroRemuneracion(r.value)}
+                    className={`w-full text-left text-sm px-3 py-1.5 rounded-lg mb-1 transition-colors flex items-center gap-2 ${
+                      filtroRemuneracion === r.value ? "bg-[#0F4D8A] text-[#E6F1FB]" : `${T} hover:bg-[#0F4D8A]/10`
+                    }`}
+                  >
+                    <Icon icon={r.icon} width={14} />
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Filtro precio (talleres) */}
+            {tab === "talleres" && (
+              <div className={`border-t ${B} pt-4 mb-4`}>
+                <label className={`block text-xs mb-2 ${M}`}>Precio</label>
+                {[
+                  { value: "todas",   label: "Todos",    icon: "mdi:view-grid-outline" },
+                  { value: "gratuito",label: "Gratuito", icon: "mdi:gift-outline"      },
+                  { value: "pago",    label: "De pago",  icon: "mdi:currency-usd"      },
+                ].map((p) => (
+                  <button key={p.value} onClick={() => setFiltroPrecio(p.value)}
+                    className={`w-full text-left text-sm px-3 py-1.5 rounded-lg mb-1 transition-colors flex items-center gap-2 ${
+                      filtroPrecio === p.value ? "bg-[#0F4D8A] text-[#E6F1FB]" : `${T} hover:bg-[#0F4D8A]/10`
+                    }`}
+                  >
+                    <Icon icon={p.icon} width={14} />
+                    {p.label}
                   </button>
                 ))}
               </div>
