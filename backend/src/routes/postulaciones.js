@@ -105,7 +105,7 @@ router.get("/vacante/:id", verificarToken, soloRol("empresa"), async (req, res) 
     const [rows] = await db.query(
       `SELECT p.id, p.estado, p.fecha_creacion,
               pe.usuario_id AS estudiante_id, pe.nombre_completo, pe.carrera,
-              pe.promedio, pe.calificacion_docente, pe.biografia
+              pe.promedio, pe.calificacion_docente, pe.biografia, pe.foto_perfil
        FROM postulaciones p
        JOIN perfiles_estudiantes pe ON pe.usuario_id = p.estudiante_id
        WHERE p.vacante_id = ?

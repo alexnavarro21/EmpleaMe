@@ -220,7 +220,7 @@ export default function EstudiantePerfil() {
                       try {
                         const { foto_perfil } = await subirFotoPerfil(file);
                         setFotoPerfil(foto_perfil);
-                        localStorage.setItem("foto_perfil", foto_perfil || "");
+                        localStorage.setItem(`foto_perfil_${usuario.id}`, foto_perfil || "");
                       } catch (err) {
                         setSaveMsg("Error al subir foto: " + err.message);
                       } finally {

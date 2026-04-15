@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
-import { getPostulantesPorVacante, actualizarEstadoPostulacion, iniciarConversacion, getResumenIA } from "../services/api";
+import { getPostulantesPorVacante, actualizarEstadoPostulacion, iniciarConversacion, getResumenIA, getMediaUrl } from "../services/api";
 
 const estadoConfig = {
   pendiente:  { label: "Pendiente",  color: "bg-blue-100 text-blue-700"   },
@@ -170,9 +170,13 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
                   >
                     <div className="flex items-center gap-3 p-3">
                       {/* Avatar */}
-                      <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                        {p.nombre_completo?.charAt(0).toUpperCase() || "?"}
-                      </div>
+                      {p.foto_perfil ? (
+                        <img src={getMediaUrl(p.foto_perfil)} className="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                          {p.nombre_completo?.charAt(0).toUpperCase() || "?"}
+                        </div>
+                      )}
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">
