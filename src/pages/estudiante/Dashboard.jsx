@@ -176,8 +176,13 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [confirmarEliminar, setConfirmarEliminar] = useState(false);
   const [eliminando, setEliminando] = useState(false);
-  const [siguiendo, setSiguiendo] = useState(() => siguiendoIds?.has(pub.autor_id) ?? false);
+  const [siguiendo, setSiguiendo] = useState(false);
   const [toggleandoSeguir, setToggleandoSeguir] = useState(false);
+
+  // Sincroniza cuando el Set de siguiendo carga o cambia
+  useEffect(() => {
+    setSiguiendo(siguiendoIds?.has(pub.autor_id) ?? false);
+  }, [siguiendoIds, pub.autor_id]);
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#E8E6E1]";
