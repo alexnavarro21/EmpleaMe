@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge } from "../../components/ui";
-import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante, toggleLike, getTalleres, getAdminStats, inscribirseEnTaller, eliminarPublicacion } from "../../services/api";
+import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante, toggleLike, getTalleres, getAdminStats, inscribirseEnTaller, eliminarPublicacion, eliminarTaller } from "../../services/api";
 import { calcularCompletitud } from "../../utils/perfilCompletitud";
 import CrearPublicacion from "../../components/CrearPublicacion";
 import VerMasModal from "../../components/VerMasModal";
@@ -447,8 +447,11 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted }) {
   );
 }
 
-function TallerCard({ taller, isDark, perfilCompleto }) {
+function TallerCard({ taller, isDark, perfilCompleto, onDeleted }) {
   const [estadoInscripcion, setEstadoInscripcion] = useState("idle"); // idle | loading | ok | duplicado | sin_cupos | error | incompleto
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const [confirmarEliminar, setConfirmarEliminar] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
   const T  = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
@@ -459,6 +462,18 @@ function TallerCard({ taller, isDark, perfilCompleto }) {
 
   const gratuito = !taller.costo || Number(taller.costo) === 0;
   const costoStr = gratuito ? "Gratuito" : `$${Number(taller.costo).toLocaleString("es-CL")}`;
+
+  const handleEliminarTaller = async () => {
+    setEliminando(true);
+    try {
+      await eliminarTaller(taller.id);
+      onDeleted?.(taller.id);
+    } catch (err) {
+      console.error(err);
+      setEliminando(false);
+      setConfirmarEliminar(false);
+    }
+  };
 
   const handleInscribirse = async () => {
     if (estadoInscripcion !== "idle") return;
@@ -488,7 +503,52 @@ function TallerCard({ taller, isDark, perfilCompleto }) {
             <p className={`text-xs ${M}`}>{tiempoRelativo(taller.creado_en)}</p>
           </div>
         </div>
-        <Badge color="purple">Taller</Badge>
+        <div className="flex items-center gap-2">
+          <Badge color="purple">Taller</Badge>
+          {usuario.rol === "centro" && (
+            <div className="relative">
+              <button
+                onClick={() => { setMenuAbierto((v) => !v); setConfirmarEliminar(false); }}
+                className={`p-1 rounded-lg transition-colors ${HV} ${M}`}
+              >
+                <Icon icon="mdi:dots-vertical" width={15} />
+              </button>
+              {menuAbierto && (
+                <div className={`absolute right-0 top-full mt-1 z-20 rounded-xl border shadow-lg min-w-[160px] ${BG} ${B}`}>
+                  {!confirmarEliminar ? (
+                    <button
+                      onClick={() => setConfirmarEliminar(true)}
+                      className="flex items-center gap-2 w-full px-4 py-2.5 text-xs text-red-500 hover:bg-red-500/10 rounded-xl transition-colors"
+                    >
+                      <Icon icon="mdi:trash-can-outline" width={14} />
+                      Eliminar taller
+                    </button>
+                  ) : (
+                    <div className="px-4 py-3">
+                      <p className={`text-xs ${T} font-medium mb-1`}>¿Eliminar taller?</p>
+                      <p className={`text-xs ${M} mb-3`}>Esta acción no se puede deshacer.</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => { setConfirmarEliminar(false); setMenuAbierto(false); }}
+                          className={`flex-1 text-xs py-1.5 rounded-lg border ${B} ${T} hover:bg-black/5 transition-colors`}
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          onClick={handleEliminarTaller}
+                          disabled={eliminando}
+                          className="flex-1 text-xs py-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-60"
+                        >
+                          {eliminando ? "..." : "Eliminar"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Título */}
@@ -933,7 +993,7 @@ export default function EstudianteDashboard() {
 
           return feedUnificado.map((item) =>
             item._tipo === "taller"
-              ? <TallerCard key={`taller-${item.id}`} taller={item} isDark={isDark} perfilCompleto={perfilCompleto} />
+              ? <TallerCard key={`taller-${item.id}`} taller={item} isDark={isDark} perfilCompleto={perfilCompleto} onDeleted={(id) => setTalleres((prev) => prev.filter((t) => t.id !== id))} />
               : <FeedCard key={`pub-${item.id}`} pub={item} isDark={isDark} perfilCompleto={perfilCompleto} onDeleted={(id) => setPublicaciones((prev) => prev.filter((p) => p.id !== id))} />
           );
         })()}
