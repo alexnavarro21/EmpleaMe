@@ -255,7 +255,7 @@ export default function EmpresaPublicarVacante() {
                   return (
                     <div key={cat} className="mb-3">
                       <p className={`text-xs font-medium ${M} mb-1.5`}>
-                        {cat === "tecnica" ? "Técnicas" : "Blandas"}
+                        {cat === "tecnica" ? "Técnicas" : "Socioemocionales"}
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {grupo.map((h) => (

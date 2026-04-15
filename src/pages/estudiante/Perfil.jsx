@@ -470,7 +470,7 @@ export default function EstudiantePerfil() {
                     <div className={`pt-5 border-t ${B}`}>
                       <div className="flex items-center gap-2 mb-4">
                         <Icon icon="hugeicons:brain-02" width={18} className="text-[#378ADD]" />
-                        <p className={`text-xs font-medium ${T}`}>Habilidades blandas</p>
+                        <p className={`text-xs font-medium ${T}`}>Competencias socioemocionales</p>
                         <span className={`text-xs ${M}`}>— evaluadas por docente</span>
                       </div>
                       {habilidadesBlandas.map((h) => (

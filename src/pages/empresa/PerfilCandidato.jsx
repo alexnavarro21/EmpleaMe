@@ -268,7 +268,7 @@ export default function EmpresaPerfilCandidato() {
             <Card>
               <h3 className={`text-sm font-semibold ${T} mb-4 flex items-center gap-2`}>
                 <Icon icon="hugeicons:brain-02" width={16} className="text-[#378ADD]" />
-                Habilidades blandas
+                Competencias socioemocionales
                 <span className={`text-xs font-normal ${M}`}>— evaluadas por docente</span>
               </h3>
               {habilidadesBlandas.map((h) => (

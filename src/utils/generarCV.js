@@ -136,13 +136,17 @@ function buildCVHtml(datos) {
     `<div style="display:flex;align-items:center;margin-bottom:6px;font-size:10.5px;">${dot}${h.nombre}</div>`
   ).join("");
 
+  const todasHabilidades = [...habilidadesBlandas, ...habilidadesTecnicas];
+  const todasHabilidadesHtml = todasHabilidades.map(h =>
+    `<div style="display:flex;align-items:center;margin-bottom:6px;font-size:10.5px;">${dot}${h.nombre}</div>`
+  ).join("");
+
   const sidebarContent = `
     <div style="color:${C.sideText};line-height:1.5;">
       ${avatarHtml}
       ${contactRows ? sideSection("Contacto", contactRows) : ""}
       ${idiomas.length ? sideSection("Idiomas", idiomasHtml) : ""}
-      ${habilidadesBlandas.length ? sideSection("Habilidades", hBlandasHtml) : ""}
-      ${habilidadesTecnicas.length ? sideSection("Hab. Técnicas", hTecnicasHtml) : ""}
+      ${todasHabilidades.length ? sideSection("Habilidades", todasHabilidadesHtml) : ""}
     </div>`;
 
   /* ── Main ────────────────────────────── */
