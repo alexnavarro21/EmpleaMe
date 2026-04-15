@@ -205,6 +205,15 @@ export async function actualizarPerfilEstudiante(id, datos) {
   return data;
 }
 
+export async function guardarCvExperiencias(estudianteId, ids) {
+  const res = await fetch(`${BASE_URL}/perfiles/estudiante/${estudianteId}/cv-experiencias`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify({ ids }),
+  });
+  if (!res.ok) throw new Error("Error al guardar selección de CV");
+}
+
 export async function subirFotoPerfil(archivo) {
   const form = new FormData();
   form.append("foto", archivo);

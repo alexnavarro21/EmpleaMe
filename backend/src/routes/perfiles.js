@@ -54,6 +54,21 @@ router.get("/estudiante/:id", verificarToken, async (req, res) => {
   }
 });
 
+// PATCH /api/perfiles/estudiante/:id/cv-experiencias — guarda IDs favoritos para el CV
+router.patch("/estudiante/:id/cv-experiencias", verificarToken, async (req, res) => {
+  const { ids } = req.body; // array de IDs
+  if (!Array.isArray(ids)) return res.status(400).json({ error: "ids debe ser un array" });
+  try {
+    await db.query(
+      "UPDATE perfiles_estudiantes SET cv_experiencias = ? WHERE usuario_id = ?",
+      [JSON.stringify(ids), req.params.id]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
 // PUT /api/perfiles/estudiante/:id
 router.put("/estudiante/:id", verificarToken, async (req, res) => {
   const { nombre_completo, carrera, telefono, biografia, semestre, promedio, estado_civil, rut, region, comuna } = req.body;

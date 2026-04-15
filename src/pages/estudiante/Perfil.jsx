@@ -4,7 +4,7 @@ import { generarCV } from "../../utils/generarCV";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, SecondaryButton, FormField, PageHeader, TextAreaField, SoftSkillBar, Paginacion } from "../../components/ui";
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
-import { getEstudianteById, actualizarPerfilEstudiante, getPostulacionesEstudiante, subirFotoPerfil, getMediaUrl } from "../../services/api";
+import { getEstudianteById, actualizarPerfilEstudiante, getPostulacionesEstudiante, subirFotoPerfil, getMediaUrl, guardarCvExperiencias } from "../../services/api";
 import { REGIONES_COMUNAS, REGIONES } from "../../data/regionesComunas";
 import { validarRut, formatearRut } from "../../utils/validarRut";
 import { calcularCompletitud } from "../../utils/perfilCompletitud";
@@ -83,6 +83,17 @@ export default function EstudiantePerfil() {
         setIdiomas(data.idiomas || []);
         setHistorialAcademico(data.historial_academico || []);
         setHistorialLaboral(data.historial_laboral || []);
+        // Sincronizar favoritos desde DB si localStorage está vacío
+        if (data.cv_experiencias) {
+          try {
+            const idsDb = JSON.parse(data.cv_experiencias);
+            const lsRaw = localStorage.getItem(`favoritos_laborales_${usuario.id}`);
+            if (!lsRaw) {
+              setFavoritosLaboral(idsDb);
+              localStorage.setItem(`favoritos_laborales_${usuario.id}`, JSON.stringify(idsDb));
+            }
+          } catch {}
+        }
       }
       if (posts.status === "fulfilled") setPostulaciones(posts.value);
     }).finally(() => setLoading(false));
@@ -155,6 +166,7 @@ export default function EstudiantePerfil() {
         next = [...prev, id];
       }
       localStorage.setItem(`favoritos_laborales_${usuario.id}`, JSON.stringify(next));
+      guardarCvExperiencias(usuario.id, next).catch(() => {});
       return next;
     });
   };

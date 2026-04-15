@@ -95,7 +95,14 @@ export default function EmpresaPerfilCandidato() {
         idiomas:   student.idiomas   || [],
         habilidadesBlandas:  habilidadesBlandas,
         habilidadesTecnicas: habilidadesTecnicas,
-        experiencia: student.historial_laboral  || [],
+        experiencia: (() => {
+          const todos = student.historial_laboral || [];
+          try {
+            const ids = student.cv_experiencias ? JSON.parse(student.cv_experiencias) : null;
+            if (ids && ids.length > 0) return todos.filter(e => ids.includes(e.id));
+          } catch {}
+          return todos;
+        })(),
         formacion:   student.historial_academico || [],
       });
     } finally {
