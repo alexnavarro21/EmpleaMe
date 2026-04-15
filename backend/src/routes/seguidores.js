@@ -76,15 +76,29 @@ router.post("/:id/toggle", verificarToken, async (req, res) => {
       // Crear notificación para el usuario seguido
       const seguidor = await getDatosUsuario(seguidorId);
       if (seguidor) {
-        await db.query(
-          `INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido)
-           VALUES (?, 'seguidor', ?, ?)`,
-          [
-            seguidoId,
-            `${seguidor.nombre} ahora te sigue`,
-            `${seguidor.nombre} comenzó a seguirte en EmpleaMe.`,
-          ]
-        );
+        // Intentar guardar con referencia_id (migración 26); si la columna no existe, sin referencia
+        try {
+          await db.query(
+            `INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido, referencia_id)
+             VALUES (?, 'seguidor', ?, ?, ?)`,
+            [
+              seguidoId,
+              `${seguidor.nombre} ahora te sigue`,
+              `${seguidor.nombre} comenzó a seguirte en EmpleaMe.`,
+              seguidorId,
+            ]
+          );
+        } catch {
+          await db.query(
+            `INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido)
+             VALUES (?, 'seguidor', ?, ?)`,
+            [
+              seguidoId,
+              `${seguidor.nombre} ahora te sigue`,
+              `${seguidor.nombre} comenzó a seguirte en EmpleaMe.`,
+            ]
+          );
+        }
       }
 
       res.json({ siguiendo: true });
