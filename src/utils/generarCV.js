@@ -95,8 +95,8 @@ function buildCVHtml(datos) {
 
   const partes       = nombre.trim().split(" ");
   const inicial      = partes[0]?.charAt(0).toUpperCase() || "?";
-  const apellidos    = partes.slice(-2).join(" ").toUpperCase();
-  const primerNombre = partes.slice(0, partes.length - 2).join(" ");
+  const primerNombre = partes[0] || "";
+  const apellidos    = partes.slice(1).join(" ");
 
   const carreraDisplay = {
     "Mecanica Automotriz": "Técnico en Mecánica Automotriz",
@@ -105,10 +105,10 @@ function buildCVHtml(datos) {
 
   /* ── Sidebar ─────────────────────────── */
   const avatarHtml = fotoUrl
-    ? `<img src="${fotoUrl}" style="width:86px;height:86px;border-radius:50%;object-fit:cover;border:3px solid ${C.accent};display:block;margin:0 auto 16px;"/>`
-    : `<div style="width:86px;height:86px;border-radius:50%;background:#24487a;border:3px solid ${C.accent};
+    ? `<img src="${fotoUrl}" style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid ${C.accent};display:block;margin:0 auto 16px;"/>`
+    : `<div style="width:110px;height:110px;border-radius:50%;background:#24487a;border:3px solid ${C.accent};
                    display:flex;align-items:center;justify-content:center;
-                   font-size:34px;font-weight:800;color:#fff;margin:0 auto 16px;">${inicial}</div>`;
+                   font-size:40px;font-weight:800;color:#fff;margin:0 auto 16px;">${inicial}</div>`;
 
   const contactRows = [
     telefono           && `<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;font-size:10.5px;">${icon("phone")} ${telefono}</div>`,
@@ -219,10 +219,10 @@ function buildCVHtml(datos) {
                   padding:24px 28px 20px 24px;background:#fff;
                   border-bottom:3px solid ${C.navy};position:relative;z-index:1;">
         ${fotoUrl
-          ? `<img src="${fotoUrl}" style="width:86px;height:86px;border-radius:50%;object-fit:cover;border:3px solid ${C.accent};flex-shrink:0;"/>`
-          : `<div style="width:86px;height:86px;border-radius:50%;background:${C.navy};
+          ? `<img src="${fotoUrl}" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid ${C.accent};flex-shrink:0;"/>`
+          : `<div style="width:100px;height:100px;border-radius:50%;background:${C.navy};
                          border:3px solid ${C.accent};display:flex;align-items:center;
-                         justify-content:center;font-size:34px;font-weight:800;
+                         justify-content:center;font-size:38px;font-weight:800;
                          color:#fff;flex-shrink:0;">${inicial}</div>`
         }
         <div>
@@ -259,9 +259,32 @@ function buildCVHtml(datos) {
     </div>`;
 }
 
+// ─── Convierte una URL de imagen a base64 para evitar problemas CORS con html2canvas ──
+async function imageUrlToBase64(url) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
 // ─── Función exportada ────────────────────────────────────────────────────────
 export async function generarCV(datos, onProgreso) {
   // 1. Crear contenedor oculto fuera de la pantalla
+  // Convertir foto a base64 para que html2canvas pueda renderizarla sin CORS
+  let datosConFoto = { ...datos };
+  if (datos.fotoUrl) {
+    const base64 = await imageUrlToBase64(datos.fotoUrl);
+    datosConFoto.fotoUrl = base64 || null;
+  }
+
   const wrapper = document.createElement("div");
   wrapper.style.cssText = `
     position: fixed;
@@ -271,7 +294,7 @@ export async function generarCV(datos, onProgreso) {
     background: white;
     z-index: -9999;
   `;
-  wrapper.innerHTML = buildCVHtml(datos);
+  wrapper.innerHTML = buildCVHtml(datosConFoto);
   document.body.appendChild(wrapper);
 
   try {
