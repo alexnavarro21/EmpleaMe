@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
-import { getPostulantesPorVacante, actualizarEstadoPostulacion, iniciarConversacion } from "../services/api";
+import { getPostulantesPorVacante, actualizarEstadoPostulacion, iniciarConversacion, getResumenIA } from "../services/api";
 
 const estadoConfig = {
   pendiente:  { label: "Pendiente",  color: "bg-blue-100 text-blue-700"   },
@@ -32,6 +32,8 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
   const [loading, setLoading] = useState(true);
   const [contactandoId, setContactandoId] = useState(null);
   const [actualizandoId, setActualizandoId] = useState(null);
+  const [resumenes, setResumenes] = useState({});      // { estudiante_id: { texto, cargando, abierto } }
+
 
   useEffect(() => {
     getPostulantesPorVacante(vacante.id)
@@ -65,6 +67,30 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
       console.error(err);
     } finally {
       setContactandoId(null);
+    }
+  };
+
+  const toggleResumen = async (estudianteId) => {
+    const actual = resumenes[estudianteId];
+
+    // Si ya tiene texto y está abierto, solo cerrar
+    if (actual?.texto && actual.abierto) {
+      setResumenes(prev => ({ ...prev, [estudianteId]: { ...prev[estudianteId], abierto: false } }));
+      return;
+    }
+    // Si ya tiene texto y está cerrado, solo abrir
+    if (actual?.texto && !actual.abierto) {
+      setResumenes(prev => ({ ...prev, [estudianteId]: { ...prev[estudianteId], abierto: true } }));
+      return;
+    }
+
+    // Generar por primera vez
+    setResumenes(prev => ({ ...prev, [estudianteId]: { texto: null, cargando: true, abierto: true } }));
+    try {
+      const { resumen } = await getResumenIA(estudianteId, vacante.id);
+      setResumenes(prev => ({ ...prev, [estudianteId]: { texto: resumen, cargando: false, abierto: true } }));
+    } catch (err) {
+      setResumenes(prev => ({ ...prev, [estudianteId]: { texto: `Error: ${err.message}`, cargando: false, abierto: true } }));
     }
   };
 
@@ -140,85 +166,122 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
                 return (
                   <div
                     key={p.id}
-                    className={`flex items-center gap-3 p-3 rounded-xl border ${B} ${isDark ? "bg-[#262624]" : "bg-white"}`}
+                    className={`rounded-xl border ${B} ${isDark ? "bg-[#262624]" : "bg-white"} overflow-hidden`}
                   >
-                    {/* Avatar */}
-                    <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                      {p.nombre_completo?.charAt(0).toUpperCase() || "?"}
-                    </div>
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className={`text-sm font-medium ${T} truncate`}>{p.nombre_completo}</p>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${cfg.color}`}>
-                          {cfg.label}
-                        </span>
+                    <div className="flex items-center gap-3 p-3">
+                      {/* Avatar */}
+                      <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                        {p.nombre_completo?.charAt(0).toUpperCase() || "?"}
                       </div>
-                      <p className={`text-xs ${M}`}>
-                        {p.carrera}
-                        {p.promedio ? ` · Nota: ${parseFloat(p.promedio).toFixed(1)}` : ""}
-                        {p.calificacion_docente ? ` · Eval: ${parseFloat(p.calificacion_docente).toFixed(1)}` : ""}
-                      </p>
-                      <p className={`text-xs ${M}`}>{tiempoRelativo(p.fecha_creacion)}</p>
-                    </div>
 
-                    {/* Acciones */}
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      {/* Cambiar estado */}
-                      {actualizando ? (
-                        <Icon icon="mdi:loading" width={18} className={`animate-spin ${M}`} />
-                      ) : p.estado === "pendiente" ? (
-                        <>
-                          <button
-                            onClick={() => handleEstado(p.id, "aceptado")}
-                            title="Aceptar"
-                            className="text-xs px-2.5 py-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors font-medium"
-                          >
-                            Aceptar
-                          </button>
-                          <button
-                            onClick={() => handleEstado(p.id, "rechazado")}
-                            title="Rechazar"
-                            className="text-xs px-2.5 py-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-colors font-medium"
-                          >
-                            Rechazar
-                          </button>
-                        </>
-                      ) : (
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className={`text-sm font-medium ${T} truncate`}>{p.nombre_completo}</p>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${cfg.color}`}>
+                            {cfg.label}
+                          </span>
+                        </div>
+                        <p className={`text-xs ${M}`}>
+                          {p.carrera}
+                          {p.promedio ? ` · Nota: ${parseFloat(p.promedio).toFixed(1)}` : ""}
+                          {p.calificacion_docente ? ` · Eval: ${parseFloat(p.calificacion_docente).toFixed(1)}` : ""}
+                        </p>
+                        <p className={`text-xs ${M}`}>{tiempoRelativo(p.fecha_creacion)}</p>
+                      </div>
+
+                      {/* Acciones */}
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {/* Botón resumen IA */}
                         <button
-                          onClick={() => handleEstado(p.id, "pendiente")}
-                          title="Volver a pendiente"
-                          className={`text-xs px-2.5 py-1.5 rounded-lg border ${B} ${M} hover:border-[#378ADD] hover:text-[#378ADD] transition-colors`}
+                          onClick={() => toggleResumen(p.estudiante_id)}
+                          title="Resumen IA"
+                          className={`p-2 rounded-lg ${HV} transition-colors ${
+                            resumenes[p.estudiante_id]?.abierto
+                              ? "text-purple-500"
+                              : `${M} hover:text-purple-500`
+                          }`}
                         >
-                          Pendiente
+                          {resumenes[p.estudiante_id]?.cargando
+                            ? <Icon icon="mdi:loading" width={18} className="animate-spin" />
+                            : <Icon icon="mdi:robot-excited-outline" width={18} />}
                         </button>
-                      )}
 
-                      {/* Mensaje */}
-                      <button
-                        onClick={() => handleContactar(p.estudiante_id)}
-                        disabled={contactandoId === p.estudiante_id}
-                        title="Enviar mensaje"
-                        className={`p-2 rounded-lg ${HV} transition-colors ${M} hover:text-[#378ADD] disabled:opacity-40`}
-                      >
-                        <Icon
-                          icon={contactandoId === p.estudiante_id ? "mdi:loading" : "mdi:message-outline"}
-                          width={18}
-                          className={contactandoId === p.estudiante_id ? "animate-spin" : ""}
-                        />
-                      </button>
+                        {/* Cambiar estado */}
+                        {actualizando ? (
+                          <Icon icon="mdi:loading" width={18} className={`animate-spin ${M}`} />
+                        ) : p.estado === "pendiente" ? (
+                          <>
+                            <button
+                              onClick={() => handleEstado(p.id, "aceptado")}
+                              title="Aceptar"
+                              className="text-xs px-2.5 py-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors font-medium"
+                            >
+                              Aceptar
+                            </button>
+                            <button
+                              onClick={() => handleEstado(p.id, "rechazado")}
+                              title="Rechazar"
+                              className="text-xs px-2.5 py-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-colors font-medium"
+                            >
+                              Rechazar
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => handleEstado(p.id, "pendiente")}
+                            title="Volver a pendiente"
+                            className={`text-xs px-2.5 py-1.5 rounded-lg border ${B} ${M} hover:border-[#378ADD] hover:text-[#378ADD] transition-colors`}
+                          >
+                            Pendiente
+                          </button>
+                        )}
 
-                      {/* Ver perfil */}
-                      <Link
-                        to={`/empresa/candidato/${p.estudiante_id}`}
-                        title="Ver perfil"
-                        className={`p-2 rounded-lg ${HV} transition-colors ${M} hover:text-[#378ADD]`}
-                        onClick={onClose}
-                      >
-                        <Icon icon="mdi:account-outline" width={18} />
-                      </Link>
+                        {/* Mensaje */}
+                        <button
+                          onClick={() => handleContactar(p.estudiante_id)}
+                          disabled={contactandoId === p.estudiante_id}
+                          title="Enviar mensaje"
+                          className={`p-2 rounded-lg ${HV} transition-colors ${M} hover:text-[#378ADD] disabled:opacity-40`}
+                        >
+                          <Icon
+                            icon={contactandoId === p.estudiante_id ? "mdi:loading" : "mdi:message-outline"}
+                            width={18}
+                            className={contactandoId === p.estudiante_id ? "animate-spin" : ""}
+                          />
+                        </button>
+
+                        {/* Ver perfil */}
+                        <Link
+                          to={`/empresa/candidato/${p.estudiante_id}`}
+                          title="Ver perfil"
+                          className={`p-2 rounded-lg ${HV} transition-colors ${M} hover:text-[#378ADD]`}
+                          onClick={onClose}
+                        >
+                          <Icon icon="mdi:account-outline" width={18} />
+                        </Link>
+                      </div>
                     </div>
+
+                    {/* Panel resumen IA */}
+                    {resumenes[p.estudiante_id]?.abierto && (
+                      <div className={`px-4 pb-4 pt-1 border-t ${B} ${isDark ? "bg-[#1e1e1c]" : "bg-[#F7F6F3]"}`}>
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Icon icon="mdi:robot-excited-outline" width={14} className="text-purple-500" />
+                          <span className="text-xs font-semibold text-purple-500">Resumen IA</span>
+                        </div>
+                        {resumenes[p.estudiante_id]?.cargando ? (
+                          <div className={`flex items-center gap-2 text-xs ${M}`}>
+                            <Icon icon="mdi:loading" width={14} className="animate-spin" />
+                            Analizando perfil...
+                          </div>
+                        ) : (
+                          <p className={`text-xs ${M} leading-relaxed whitespace-pre-line`}>
+                            {resumenes[p.estudiante_id]?.texto}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}

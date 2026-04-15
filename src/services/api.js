@@ -792,3 +792,14 @@ export async function agregarNotaAdmin(conversacionId, contenido) {
   return data;
 }
 
+// ── IA ────────────────────────────────────────────────────────────────────────
+
+export async function getResumenIA(estudianteId, vacanteId) {
+  const res = await fetch(`${BASE_URL}/ia/resumen/${estudianteId}/${vacanteId}`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al generar resumen");
+  return data; // { resumen, desde_cache }
+}
+
