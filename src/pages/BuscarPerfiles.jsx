@@ -302,6 +302,7 @@ export default function BuscarPerfiles() {
   const [selectedModalidad,   setSelectedModalidad]   = useState("");
   const [filtroPrecio,        setFiltroPrecio]        = useState("todas"); // todas | gratuito | pago
   const [filtroRemuneracion,  setFiltroRemuneracion]  = useState("todas"); // todas | con_paga | sin_paga
+  const [minEvalDocente,      setMinEvalDocente]      = useState(1);
 
   const T  = isDark ? "text-[#D3D1C7]"   : "text-[#2C2C2A]";
   const M  = isDark ? "text-[#888780]"   : "text-[#5F5E5A]";
@@ -348,6 +349,7 @@ export default function BuscarPerfiles() {
     if (!(s.nombre_completo.toLowerCase().includes(q) || (s.habilidades || []).some((sk) => sk.toLowerCase().includes(q)))) return false;
     if (!(selectedCareer === "Todas" || s.carrera === selectedCareer || nombreCarrera === selectedCareer)) return false;
     if (s.promedio && s.promedio < minGpa) return false;
+    if (minEvalDocente > 1 && s.calificacion_docente && parseFloat(s.calificacion_docente) < minEvalDocente) return false;
     if (selectedRegion && s.region !== selectedRegion) return false;
     if (selectedComuna && s.comuna !== selectedComuna) return false;
     if (selectedHabilidades.length > 0) {
@@ -405,7 +407,7 @@ export default function BuscarPerfiles() {
   const tabLabel = { estudiantes: "estudiante", empresas: "empresa", vacantes: "vacante", talleres: "taller" }[tab];
   const usuarioActual = JSON.parse(localStorage.getItem("usuario") || "{}");
 
-  const limpiarFiltros = () => { setSearch(""); setSelectedCareer("Todas"); setMinGpa(1); setSelectedRegion(""); setSelectedComuna(""); setSelectedHabilidades([]); setHabBusqueda(""); setSelectedModalidad(""); setFiltroPrecio("todas"); setFiltroRemuneracion("todas"); };
+  const limpiarFiltros = () => { setSearch(""); setSelectedCareer("Todas"); setMinGpa(1); setMinEvalDocente(1); setSelectedRegion(""); setSelectedComuna(""); setSelectedHabilidades([]); setHabBusqueda(""); setSelectedModalidad(""); setFiltroPrecio("todas"); setFiltroRemuneracion("todas"); };
 
   const handleContactarEstudiante = async (id) => {
     setContactandoId(id);
@@ -484,13 +486,23 @@ export default function BuscarPerfiles() {
                   })}
                 </div>
                 {role !== "estudiante" && (
-                  <div className="mb-4">
-                    <label className={`block text-xs mb-2 ${M}`}>
-                      Nota mínima: <strong className={T}>{minGpa > 1 ? minGpa.toFixed(1) : "Sin filtro"}</strong>
-                    </label>
-                    <input type="range" min="1" max="7" step="0.1" value={minGpa} onChange={(e) => setMinGpa(parseFloat(e.target.value))} className="w-full accent-[#0F4D8A]" />
-                    <div className={`flex justify-between text-xs ${M} mt-1`}><span>1.0</span><span>4.0</span><span>7.0</span></div>
-                  </div>
+                  <>
+                    <div className="mb-4">
+                      <label className={`block text-xs mb-2 ${M}`}>
+                        Nota mínima: <strong className={T}>{minGpa > 1 ? minGpa.toFixed(1) : "Sin filtro"}</strong>
+                      </label>
+                      <input type="range" min="1" max="7" step="0.1" value={minGpa} onChange={(e) => setMinGpa(parseFloat(e.target.value))} className="w-full accent-[#0F4D8A]" />
+                      <div className={`flex justify-between text-xs ${M} mt-1`}><span>1.0</span><span>4.0</span><span>7.0</span></div>
+                    </div>
+                    <div className="mb-4">
+                      <label className={`block text-xs mb-2 ${M}`}>
+                        Eval. docente mín.: <strong className={T}>{minEvalDocente > 1 ? minEvalDocente.toFixed(1) : "Sin filtro"}</strong>
+                      </label>
+                      <input type="range" min="1" max="7" step="0.1" value={minEvalDocente} onChange={(e) => setMinEvalDocente(parseFloat(e.target.value))} className="w-full accent-[#378ADD]" />
+                      <div className={`flex justify-between text-xs ${M} mt-1`}><span>1.0</span><span>4.0</span><span>7.0</span></div>
+                      <p className={`text-xs ${M} mt-1`}>Solo filtra estudiantes con evaluación registrada</p>
+                    </div>
+                  </>
                 )}
               </>
             )}
