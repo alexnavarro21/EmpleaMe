@@ -94,7 +94,7 @@ router.get("/resumen/:estudiante_id/:vacante_id", verificarToken, soloRol("empre
     // 5. Generar nuevo resumen con Gemini 1.5 Flash
     const prompt = buildPrompt(perfil, habilidades, idiomas, historial_academico, historial_laboral, posts, vacante);
 
-    const model   = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model   = genAI.getGenerativeModel({ model: "gemini-2.5-flash-preview-04-17" });
     const result  = await model.generateContent(prompt);
     const resumen = result.response.text().trim();
 
