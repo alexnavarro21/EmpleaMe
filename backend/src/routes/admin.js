@@ -558,4 +558,91 @@ router.delete("/historial-laboral/:id", ...auth, async (req, res) => {
   }
 });
 
+// ── Creación masiva de alumnos — plantilla y subida ──────────────────────────
+
+// GET /api/admin/alumnos/template
+router.get("/alumnos/template", ...auth, (req, res) => {
+  const data = [
+    ["Nombre Completo", "Correo", "Telefono", "Contrasena"],
+    ["Juan Pérez", "juan.perez@ejemplo.cl", "+56912345678", "Clave123!"],
+  ];
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws["!cols"] = [{ wch: 30 }, { wch: 30 }, { wch: 18 }, { wch: 18 }];
+  XLSX.utils.book_append_sheet(wb, ws, "Alumnos");
+
+  const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+  res.setHeader("Content-Disposition", "attachment; filename=plantilla_alumnos.xlsx");
+  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  res.send(buffer);
+});
+
+// POST /api/admin/alumnos/excel
+// Formato (hoja 1): Nombre Completo | Correo | Telefono | Contrasena
+router.post("/alumnos/excel", ...auth, upload.single("archivo"), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "Se requiere un archivo Excel" });
+
+  const bcrypt = require("bcrypt");
+
+  try {
+    const wb   = XLSX.read(req.file.buffer, { type: "buffer" });
+    const ws   = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+
+    if (rows.length < 2) return res.status(400).json({ error: "El archivo no contiene datos" });
+
+    const creados  = [];
+    const errores  = [];
+    const omitidos = [];
+
+    for (let i = 1; i < rows.length; i++) {
+      const fila          = rows[i];
+      const nombre        = String(fila[0] ?? "").trim();
+      const correo        = String(fila[1] ?? "").trim().toLowerCase();
+      const telefono      = String(fila[2] ?? "").trim() || null;
+      const contrasenaRaw = String(fila[3] ?? "").trim();
+
+      if (!nombre && !correo) continue; // fila vacía
+
+      if (!nombre)        { errores.push(`Fila ${i + 1}: nombre vacío`);            continue; }
+      if (!correo)        { errores.push(`Fila ${i + 1}: correo vacío`);            continue; }
+      if (!contrasenaRaw) { errores.push(`Fila ${i + 1} (${correo}): contraseña vacía`); continue; }
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+        errores.push(`Fila ${i + 1}: correo inválido "${correo}"`);
+        continue;
+      }
+
+      const [[existente]] = await db.query("SELECT id FROM usuarios WHERE correo = ?", [correo]);
+      if (existente) { omitidos.push(correo); continue; }
+
+      const conn = await db.getConnection();
+      try {
+        await conn.beginTransaction();
+        const hash = await bcrypt.hash(contrasenaRaw, 10);
+        const [result] = await conn.query(
+          "INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES (?, ?, 'estudiante')",
+          [correo, hash]
+        );
+        await conn.query(
+          "INSERT INTO perfiles_estudiantes (usuario_id, nombre_completo, telefono) VALUES (?, ?, ?)",
+          [result.insertId, nombre, telefono]
+        );
+        await conn.commit();
+        creados.push({ correo, nombre });
+      } catch (e) {
+        await conn.rollback();
+        errores.push(`Fila ${i + 1} (${correo}): ${e.message}`);
+      } finally {
+        conn.release();
+      }
+    }
+
+    res.json({ creados: creados.length, filas: creados, omitidos, errores });
+  } catch (err) {
+    res.status(500).json({ error: "Error procesando el archivo", detalle: err.message });
+  }
+});
+
 module.exports = router;

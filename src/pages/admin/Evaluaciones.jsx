@@ -9,7 +9,7 @@ import {
   getEstudiantes, getHabilidades,
   guardarEvaluacion, getEvaluaciones,
   asignarHabilidadesTecnicas,
-  subirExcelTests, subirExcelPromedios,
+  subirExcelTests, subirExcelPromedios, subirExcelAlumnos,
   getIdiomasEstudiante, agregarIdioma, eliminarIdioma,
   getHistorialAcademico, agregarHistorialAcademico, eliminarHistorialAcademico,
   getHistorialLaboral, agregarHistorialLaboral, eliminarHistorialLaboral,
@@ -1294,6 +1294,142 @@ function TabHabilidades({ habilidades, onRefresh, isDark }) {
   );
 }
 
+// TAB 6: Creación masiva de alumnos
+function TabCrearAlumnos({ isDark }) {
+  const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
+  const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
+  const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
+  const [dragging, setDragging]   = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [result, setResult]       = useState(null);
+  const [dlError, setDlError]     = useState("");
+  const fileRef                   = useRef();
+
+  async function handleFile(file) {
+    if (!file) return;
+    setUploading(true); setResult(null);
+    try {
+      const res = await subirExcelAlumnos(file);
+      setResult(res);
+    } catch (e) {
+      setResult({ error: e.message });
+    } finally { setUploading(false); }
+  }
+
+  return (
+    <div className="grid grid-cols-3 gap-6">
+      <div className="col-span-2">
+        <Card>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className={`text-sm font-semibold ${T}`}>Crear cuentas de alumnos en masa</h3>
+            <button
+              onClick={() => descargarPlantilla("/admin/alumnos/template", "plantilla_alumnos.xlsx", setDlError)}
+              className="flex items-center gap-1.5 text-xs text-[#378ADD] hover:underline"
+            >
+              <Icon icon="mdi:download" width={14} />
+              Descargar plantilla
+            </button>
+          </div>
+          {dlError && <p className="text-xs text-red-400 mb-2">Error: {dlError}</p>}
+          <p className={`text-xs ${M} mb-4`}>
+            Completa la plantilla con <strong>Nombre Completo</strong>, <strong>Correo</strong>, <strong>Teléfono</strong> y <strong>Contraseña</strong> de cada alumno. Los estudiantes podrán completar el resto de su perfil al ingresar. Los correos ya registrados se omiten sin generar error.
+          </p>
+
+          <div
+            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => { e.preventDefault(); setDragging(false); handleFile(e.dataTransfer.files[0]); }}
+            onClick={() => fileRef.current?.click()}
+            className={`rounded-xl border-2 border-dashed py-12 flex flex-col items-center cursor-pointer transition-colors mb-4 ${
+              dragging ? "border-[#378ADD] bg-[#E6F1FB]/20"
+                       : isDark ? "border-[#3a3a38] hover:border-[#378ADD]"
+                                : "border-[#D3D1C7] hover:border-[#378ADD]"
+            }`}
+          >
+            <Icon icon="mdi:microsoft-excel" width={44} className="text-green-500 mb-3" />
+            <p className={`text-sm ${T} mb-1`}>{uploading ? "Procesando..." : "Arrastra el Excel o haz clic para seleccionar"}</p>
+            <p className={`text-xs ${M}`}>.xlsx, .xls</p>
+            <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden"
+              onChange={(e) => handleFile(e.target.files[0])} />
+          </div>
+
+          {result && !result.error && (
+            <div className={`rounded-xl border ${B} overflow-hidden`}>
+              <div className={`px-4 py-2.5 flex items-center gap-4 ${isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]"}`}>
+                <span className="flex items-center gap-1.5 text-sm font-medium text-green-500">
+                  <Icon icon="mdi:check-circle" width={16} />
+                  {result.creados} cuenta{result.creados !== 1 ? "s" : ""} creada{result.creados !== 1 ? "s" : ""}
+                </span>
+                {result.omitidos?.length > 0 && (
+                  <span className={`text-xs ${M}`}>{result.omitidos.length} omitido{result.omitidos.length !== 1 ? "s" : ""} (ya existían)</span>
+                )}
+              </div>
+              {result.errores?.length > 0 && (
+                <div className="px-4 py-3">
+                  <p className={`text-xs font-medium ${M} mb-1`}>Advertencias:</p>
+                  {result.errores.map((e, i) => (
+                    <p key={i} className="text-xs text-orange-400 mb-0.5">· {e}</p>
+                  ))}
+                </div>
+              )}
+              {result.filas?.length > 0 && (
+                <div className={`border-t ${B}`}>
+                  <table className="w-full">
+                    <thead>
+                      <tr className={`${isDark ? "bg-[#313130]" : "bg-[#F7F6F3]"}`}>
+                        <th className={`text-left text-xs font-medium ${M} px-4 py-2`}>Nombre</th>
+                        <th className={`text-left text-xs font-medium ${M} px-4 py-2`}>Correo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {result.filas.map((f, i) => (
+                        <tr key={i} className={`border-t ${B}`}>
+                          <td className={`px-4 py-2 text-xs ${T}`}>{f.nombre}</td>
+                          <td className={`px-4 py-2 text-xs ${M}`}>{f.correo}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+          {result?.error && <p className="text-sm text-red-400 mt-2">Error: {result.error}</p>}
+        </Card>
+      </div>
+
+      <Card>
+        <p className={`text-sm font-semibold ${T} mb-3`}>Formato esperado</p>
+        <div className={`rounded-lg border ${B} overflow-x-auto text-xs mb-4`}>
+          <div className={`flex px-3 py-2 font-medium ${M} border-b ${B} ${isDark ? "bg-[#313130]" : "bg-[#F7F6F3]"} gap-2 min-w-max`}>
+            <span className="w-24 flex-shrink-0">Nombre Completo</span>
+            <span className="w-24 flex-shrink-0">Correo</span>
+            <span className="w-20 flex-shrink-0">Telefono</span>
+            <span className="w-20 flex-shrink-0">Contrasena</span>
+          </div>
+          <div className={`flex px-3 py-2 border-b ${B} gap-2 min-w-max ${T}`}>
+            <span className="w-24 flex-shrink-0 truncate">Juan Pérez</span>
+            <span className="w-24 flex-shrink-0 truncate">juan@inst.cl</span>
+            <span className="w-20 flex-shrink-0">+56912345</span>
+            <span className="w-20 flex-shrink-0">Clave123!</span>
+          </div>
+          <div className={`flex px-3 py-2 gap-2 min-w-max ${T}`}>
+            <span className="w-24 flex-shrink-0 truncate">María López</span>
+            <span className="w-24 flex-shrink-0 truncate">maria@inst.cl</span>
+            <span className="w-20 flex-shrink-0"></span>
+            <span className="w-20 flex-shrink-0">Pass456!</span>
+          </div>
+        </div>
+        <ul className={`text-xs ${M} space-y-1.5`}>
+          <li>· El teléfono es opcional, puede dejarse vacío.</li>
+          <li>· Los correos ya registrados se omiten automáticamente.</li>
+          <li>· Los alumnos completan carrera, semestre y demás datos al iniciar sesión.</li>
+        </ul>
+      </Card>
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 const TABS = [
@@ -1302,6 +1438,7 @@ const TABS = [
   { key: "tests",             label: "Tests socioemocionales",icon: "hugeicons:brain-02" },
   { key: "promedios",         label: "Promedios académicos",  icon: "mdi:school-outline" },
   { key: "habilidades",       label: "Habilidades",           icon: "mdi:tag-multiple-outline" },
+  { key: "crear_alumnos",    label: "Crear alumnos",         icon: "mdi:account-multiple-plus-outline" },
 ];
 
 export default function GestionEstudiantes() {
@@ -1359,6 +1496,7 @@ export default function GestionEstudiantes() {
           {tab === "tests"             && <TabTests  isDark={isDark} />}
           {tab === "promedios"         && <TabPromedios isDark={isDark} />}
           {tab === "habilidades"       && <TabHabilidades habilidades={habilidades} onRefresh={cargarHabilidades} isDark={isDark} />}
+          {tab === "crear_alumnos"     && <TabCrearAlumnos isDark={isDark} />}
         </>
       )}
     </div>

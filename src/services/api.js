@@ -517,6 +517,20 @@ export async function subirExcelPromedios(archivo) {
   return data;
 }
 
+// Subir Excel de alumnos  →  POST /api/admin/alumnos/excel
+export async function subirExcelAlumnos(archivo) {
+  const formData = new FormData();
+  formData.append("archivo", archivo);
+  const res = await fetch(`${BASE_URL}/admin/alumnos/excel`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${getToken()}` },
+    body: formData,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al procesar el archivo");
+  return data;
+}
+
 // KPIs del panel  →  GET /api/admin/stats
 export async function getAdminStats() {
   const res = await fetch(`${BASE_URL}/admin/stats`, { headers: authHeaders() });
