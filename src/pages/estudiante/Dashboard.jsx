@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge } from "../../components/ui";
-import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante, toggleLike, getTalleres, getAdminStats, inscribirseEnTaller, eliminarPublicacion, eliminarTaller } from "../../services/api";
+import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante, toggleLike, getTalleres, getAdminStats, inscribirseEnTaller, eliminarPublicacion, eliminarTaller, getSiguiendo, toggleSeguir } from "../../services/api";
 import { calcularCompletitud } from "../../utils/perfilCompletitud";
 import CrearPublicacion from "../../components/CrearPublicacion";
 import VerMasModal from "../../components/VerMasModal";
@@ -168,7 +168,7 @@ function tiempoRelativo(fecha) {
   return `Hace ${Math.floor(diff / 86400)} días`;
 }
 
-function FeedCard({ pub, isDark, perfilCompleto, onDeleted }) {
+function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSeguirToggled }) {
   const [liked, setLiked] = useState(!!pub.liked_by_me);
   const [likes, setLikes] = useState(pub.likes_count || 0);
   const [verMas, setVerMas] = useState(false);
@@ -176,6 +176,8 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted }) {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [confirmarEliminar, setConfirmarEliminar] = useState(false);
   const [eliminando, setEliminando] = useState(false);
+  const [siguiendo, setSiguiendo] = useState(() => siguiendoIds?.has(pub.autor_id) ?? false);
+  const [toggleandoSeguir, setToggleandoSeguir] = useState(false);
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#E8E6E1]";
@@ -198,6 +200,20 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted }) {
       console.error(err);
       setEliminando(false);
       setConfirmarEliminar(false);
+    }
+  };
+
+  const handleToggleSeguir = async () => {
+    if (toggleandoSeguir || pub.autor_id === usuario.id) return;
+    setToggleandoSeguir(true);
+    try {
+      const res = await toggleSeguir(pub.autor_id);
+      setSiguiendo(res.siguiendo);
+      onSeguirToggled?.(pub.autor_id, res.siguiendo);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setToggleandoSeguir(false);
     }
   };
 
@@ -230,6 +246,26 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted }) {
           </div>
         </Link>
         <div className="flex items-center gap-2">
+          {/* Botón Seguir (no se muestra al propio autor ni al admin) */}
+          {pub.autor_id !== usuario.id && usuario.rol !== "centro" && (
+            <button
+              onClick={handleToggleSeguir}
+              disabled={toggleandoSeguir}
+              title={siguiendo ? "Dejar de seguir" : "Seguir"}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 border ${
+                siguiendo
+                  ? `${isDark ? "border-[#3a3a38] text-[#888780] hover:border-red-500/40 hover:text-red-400" : "border-[#D3D1C7] text-[#5F5E5A] hover:border-red-300 hover:text-red-500"}`
+                  : "border-[#378ADD]/50 text-[#378ADD] hover:bg-[#378ADD]/10"
+              }`}
+            >
+              <Icon
+                icon={toggleandoSeguir ? "mdi:loading" : siguiendo ? "mdi:account-check" : "mdi:account-plus-outline"}
+                width={13}
+                className={toggleandoSeguir ? "animate-spin" : ""}
+              />
+              {siguiendo ? "Siguiendo" : "Seguir"}
+            </button>
+          )}
           <Badge color={badge.color}>{badge.label}</Badge>
           {canDelete && (
             <div className="relative">
@@ -851,6 +887,7 @@ export default function EstudianteDashboard() {
   const [perfil, setPerfil] = useState(null);
   const [publicaciones, setPublicaciones] = useState([]);
   const [talleres, setTalleres] = useState([]);
+  const [siguiendoIds, setSiguiendoIds] = useState(new Set());
 
   // Estado estudiante extra
   const [estudiantePostulaciones, setEstudiantePostulaciones] = useState([]);
@@ -886,6 +923,11 @@ export default function EstudianteDashboard() {
     }
     cargarPublicaciones();
     getTalleres().then(setTalleres).catch(console.error);
+    if (usuario.id) {
+      getSiguiendo(usuario.id)
+        .then((lista) => setSiguiendoIds(new Set(lista.map((u) => u.id))))
+        .catch(() => {});
+    }
   }, [usuario.id]);
 
   const nombre = perfil?.nombre_completo || "";
@@ -1140,7 +1182,21 @@ export default function EstudianteDashboard() {
           return feedUnificado.map((item) =>
             item._tipo === "taller"
               ? <TallerCard key={`taller-${item.id}`} taller={item} isDark={isDark} perfilCompleto={perfilCompleto} onDeleted={(id) => setTalleres((prev) => prev.filter((t) => t.id !== id))} />
-              : <FeedCard key={`pub-${item.id}`} pub={item} isDark={isDark} perfilCompleto={perfilCompleto} onDeleted={(id) => setPublicaciones((prev) => prev.filter((p) => p.id !== id))} />
+              : <FeedCard
+                  key={`pub-${item.id}`}
+                  pub={item}
+                  isDark={isDark}
+                  perfilCompleto={perfilCompleto}
+                  onDeleted={(id) => setPublicaciones((prev) => prev.filter((p) => p.id !== id))}
+                  siguiendoIds={siguiendoIds}
+                  onSeguirToggled={(autorId, nuevoEstado) => {
+                    setSiguiendoIds((prev) => {
+                      const next = new Set(prev);
+                      if (nuevoEstado) next.add(autorId); else next.delete(autorId);
+                      return next;
+                    });
+                  }}
+                />
           );
         })()}
       </div>

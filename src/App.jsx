@@ -25,6 +25,7 @@ import AdminMensajeria from "./pages/admin/Mensajeria";
 import BuscarPerfiles from "./pages/BuscarPerfiles";
 import PerfilEmpresaPublico from "./pages/PerfilEmpresaPublico";
 import Notificaciones from "./pages/Notificaciones";
+import Seguidores from "./pages/Seguidores";
 
 
 export default function App() {
@@ -45,6 +46,7 @@ export default function App() {
             <Route path="/estudiante/postulaciones" element={<MisPostulaciones />} />
             <Route path="/estudiante/buscar" element={<BuscarPerfiles />} />
             <Route path="/estudiante/notificaciones" element={<Notificaciones />} />
+            <Route path="/estudiante/seguidores" element={<Seguidores />} />
             <Route path="/estudiante/candidato/:id" element={<EmpresaCandidato />} />
 
             {/* Empresa */}
@@ -57,6 +59,7 @@ export default function App() {
             <Route path="/empresa/candidato/:id" element={<EmpresaCandidato />} />
             <Route path="/empresa/mensajeria" element={<EmpresaMensajeria />} />
             <Route path="/empresa/notificaciones" element={<Notificaciones />} />
+            <Route path="/empresa/seguidores" element={<Seguidores />} />
 
             {/* Admin / Profesor */}
             <Route path="/admin/inicio" element={<EstudianteDashboard />} />
