@@ -888,6 +888,7 @@ export default function EstudianteDashboard() {
   const [publicaciones, setPublicaciones] = useState([]);
   const [talleres, setTalleres] = useState([]);
   const [siguiendoIds, setSiguiendoIds] = useState(new Set());
+  const [tabFeed, setTabFeed] = useState("principal"); // "principal" | "siguiendo"
 
   // Estado estudiante extra
   const [estudiantePostulaciones, setEstudiantePostulaciones] = useState([]);
@@ -1163,18 +1164,81 @@ export default function EstudianteDashboard() {
       <div className="flex flex-col gap-4">
         {(isEstudiante || isEmpresa || isAdmin) && <CrearPublicacion onPublicado={cargarPublicaciones} />}
 
+        {/* Tabs del feed */}
+        {(isEstudiante || isEmpresa) && (
+          <div className={`flex border-b ${B}`}>
+            <button
+              onClick={() => setTabFeed("principal")}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+                tabFeed === "principal"
+                  ? "border-[#378ADD] text-[#378ADD]"
+                  : `border-transparent ${M} hover:text-[#378ADD]`
+              }`}
+            >
+              <Icon icon="mdi:newspaper-variant-outline" width={15} />
+              Principal
+            </button>
+            <button
+              onClick={() => setTabFeed("siguiendo")}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+                tabFeed === "siguiendo"
+                  ? "border-[#378ADD] text-[#378ADD]"
+                  : `border-transparent ${M} hover:text-[#378ADD]`
+              }`}
+            >
+              <Icon icon="mdi:account-arrow-right-outline" width={15} />
+              Siguiendo
+              {siguiendoIds.size > 0 && (
+                <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                  tabFeed === "siguiendo"
+                    ? "bg-[#378ADD]/15 text-[#378ADD]"
+                    : isDark ? "bg-[#3a3a38] text-[#888780]" : "bg-[#E8E6E1] text-[#5F5E5A]"
+                }`}>
+                  {siguiendoIds.size}
+                </span>
+              )}
+            </button>
+          </div>
+        )}
+
         {(() => {
-          const feedUnificado = [
+          const todoElFeed = [
             ...publicaciones.map((p) => ({ ...p, _tipo: "publicacion", _fecha: new Date(p.publicado_en) })),
             ...talleres.map((t) => ({ ...t, _tipo: "taller", _fecha: new Date(t.creado_en) })),
           ].sort((a, b) => b._fecha - a._fecha);
 
+          // Filtrar por tab
+          const feedUnificado = tabFeed === "siguiendo"
+            ? todoElFeed.filter((item) => siguiendoIds.has(item.autor_id ?? item.creado_por))
+            : todoElFeed;
+
           if (feedUnificado.length === 0) {
             return (
               <div className={`rounded-xl border ${B} ${BG} p-10 text-center ${M}`}>
-                <Icon icon="mdi:newspaper-variant-outline" width={40} className="mx-auto mb-3 opacity-40" />
-                <p className={`text-sm font-medium ${T}`}>Aún no hay publicaciones</p>
-                <p className="text-xs mt-1">¡Sé el primero en compartir algo!</p>
+                <Icon
+                  icon={tabFeed === "siguiendo" ? "mdi:account-arrow-right-outline" : "mdi:newspaper-variant-outline"}
+                  width={40}
+                  className="mx-auto mb-3 opacity-40"
+                />
+                {tabFeed === "siguiendo" ? (
+                  <>
+                    <p className={`text-sm font-medium ${T}`}>
+                      {siguiendoIds.size === 0
+                        ? "Aún no sigues a nadie"
+                        : "Los perfiles que sigues no han publicado nada"}
+                    </p>
+                    <p className="text-xs mt-1">
+                      {siguiendoIds.size === 0
+                        ? "Sigue a estudiantes o empresas para ver sus publicaciones aquí."
+                        : "Cuando publiquen algo, aparecerá aquí."}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className={`text-sm font-medium ${T}`}>Aún no hay publicaciones</p>
+                    <p className="text-xs mt-1">¡Sé el primero en compartir algo!</p>
+                  </>
+                )}
               </div>
             );
           }
