@@ -1,10 +1,10 @@
 const router      = require("express").Router();
 const crypto      = require("crypto");
-const Anthropic   = require("@anthropic-ai/sdk");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 const db          = require("../db");
 const { verificarToken, soloRol } = require("../middleware/auth");
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // ── Construye un hash SHA-256 del perfil del estudiante ──────────────────────
 function calcularHashPerfil(perfil, habilidades, idiomas, historial_academico, historial_laboral, portafolio, posts) {
@@ -94,7 +94,7 @@ Genera un resumen en español con estas secciones (sin markdown, texto plano):
 router.get("/resumen/:estudiante_id/:vacante_id", verificarToken, soloRol("empresa"), async (req, res) => {
   const { estudiante_id, vacante_id } = req.params;
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.GEMINI_API_KEY) {
     return res.status(503).json({ error: "Servicio de IA no configurado. Contacta al administrador." });
   }
 
@@ -133,16 +133,12 @@ router.get("/resumen/:estudiante_id/:vacante_id", verificarToken, soloRol("empre
       return res.json({ resumen: cacheado.resumen, desde_cache: true });
     }
 
-    // 5. Generar nuevo resumen con Claude Haiku
+    // 5. Generar nuevo resumen con Gemini 1.5 Flash
     const prompt = buildPrompt(perfil, habilidades, idiomas, historial_academico, historial_laboral, portafolio, posts, vacante);
 
-    const mensaje = await client.messages.create({
-      model:      "claude-haiku-4-5",
-      max_tokens: 500,
-      messages:   [{ role: "user", content: prompt }],
-    });
-
-    const resumen = mensaje.content[0].text.trim();
+    const model   = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result  = await model.generateContent(prompt);
+    const resumen = result.response.text().trim();
 
     // 6. Guardar o actualizar en caché
     await db.query(
