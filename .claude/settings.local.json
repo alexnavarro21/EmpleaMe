@@ -4,7 +4,8 @@
       "Bash(npm install:*)",
       "Bash(git checkout:*)",
       "Bash(grep -E \"\\\\.js$\")",
-      "Bash(grep -A 20 \"CREATE TABLE publicaciones\" /c/Users/rikis/OneDrive/Escritorio/Proyecto_IS/EmpleaMe/sql/*.sql)"
+      "Bash(grep -A 20 \"CREATE TABLE publicaciones\" /c/Users/rikis/OneDrive/Escritorio/Proyecto_IS/EmpleaMe/sql/*.sql)",
+      "Bash(npm run *)"
     ]
   }
 }

@@ -50,7 +50,7 @@ const notifPaths = {
 };
 
 export default function Layout() {
-  const { isDark, setIsDark } = useDark();
+  const { isDark, setIsDark, isContrast, setTheme } = useDark();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -98,8 +98,10 @@ export default function Layout() {
 
 
   return (
-    <div className={isDark ? "dark" : ""}>
-      <div className={`min-h-screen font-sans ${isDark ? "bg-[#1e1e1c]" : "bg-[#F0F4F8]"}`}>
+    <div className={isDark ? "dark" : isContrast ? "colorblind-mode" : ""}>
+      <div className={`min-h-screen font-sans ${
+        isContrast ? "bg-[#FFF9E8]" : isDark ? "bg-[#1e1e1c]" : "bg-[#F0F4F8]"
+      }`}>
 
         {/* Navbar */}
         <nav className="bg-[#0A3A6A] h-14 flex items-center justify-between px-6 sticky top-0 z-50 shadow-sm">
@@ -243,6 +245,32 @@ export default function Layout() {
                     <span
                       className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white transition-all duration-200 ${
                         isDark ? "left-[16px]" : "left-[2px]"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Modo alto contraste (daltónico) */}
+                <div className={`flex items-center justify-between px-4 py-3 text-sm ${
+                  isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]"
+                }`}>
+                  <div className="flex items-center gap-3">
+                    <Icon
+                      icon="ph:eye-fill"
+                      width={18}
+                      className={isContrast ? "text-[#C45E00]" : isDark ? "text-[#888780]" : "text-[#5F5E5A]"}
+                    />
+                    Alto contraste
+                  </div>
+                  <button
+                    onClick={() => setTheme(isContrast ? (isDark ? "dark" : "light") : "colorblind")}
+                    className={`w-8 h-[18px] rounded-full relative transition-colors duration-200 flex-shrink-0 ${
+                      isContrast ? "bg-[#C45E00]" : isDark ? "bg-[#3a3a38]" : "bg-[#D3D1C7]"
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white transition-all duration-200 ${
+                        isContrast ? "left-[16px]" : "left-[2px]"
                       }`}
                     />
                   </button>

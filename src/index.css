@@ -1,1 +1,29 @@
 @import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════════
+   MODO ALTO CONTRASTE — DALTÓNICO
+   Se activa con la clase .colorblind-mode en el root.
+   Sobrescribe las clases Tailwind de modo claro para mayor
+   contraste. Paleta basada en el estándar Okabe-Ito.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Fondos de página */
+.colorblind-mode .bg-\[\#F0F4F8\]   { background-color: #FFF9E8 !important; }
+.colorblind-mode .bg-\[\#F7F6F3\]   { background-color: #FFFDF5 !important; }
+
+/* Texto primario → casi negro cálido */
+.colorblind-mode .text-\[\#2C2C2A\] { color: #1A1510 !important; }
+
+/* Texto secundario → gris oscuro cálido (contraste ≥ 7:1 sobre blanco) */
+.colorblind-mode .text-\[\#5F5E5A\] { color: #3A3428 !important; }
+
+/* Etiquetas y placeholders → más visibles */
+.colorblind-mode .text-\[\#B4B2A9\] { color: #6A6455 !important; }
+.colorblind-mode .text-\[\#888780\] { color: #4A4438 !important; }
+
+/* Bordes → más definidos */
+.colorblind-mode .border-\[\#D3D1C7\] { border-color: #BFB49A !important; }
+.colorblind-mode .border-\[\#E8E6E1\] { border-color: #C8BC9A !important; }
+
+/* Hover backgrounds en modo claro */
+.colorblind-mode .hover\:bg-\[\#F7F6F3\]:hover { background-color: #FFF3D0 !important; }
