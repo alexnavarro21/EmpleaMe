@@ -564,7 +564,6 @@ router.delete("/historial-laboral/:id", ...auth, async (req, res) => {
 router.get("/alumnos/template", ...auth, (req, res) => {
   const data = [
     ["Nombre Completo", "Correo", "Telefono", "Contrasena"],
-    ["Juan Pérez", "juan.perez@ejemplo.cl", "+56912345678", "Clave123!"],
   ];
 
   const wb = XLSX.utils.book_new();
