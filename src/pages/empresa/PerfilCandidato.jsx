@@ -74,8 +74,10 @@ export default function EmpresaPerfilCandidato() {
   }
 
   const nombreCarrera = careerDisplay[student.carrera] || student.carrera;
-  const habilidadesTecnicas = (student.habilidades || []).filter((h) => h.categoria === "tecnica");
-  const habilidadesBlandas = (student.habilidades || []).filter((h) => h.categoria === "blanda");
+
+  const sortHabs = (habs) => [...habs].sort((a, b) => (b.porcentaje ?? 0) - (a.porcentaje ?? 0)).slice(0, 3);
+  const habilidadesTecnicas = sortHabs((student.habilidades || []).filter((h) => h.categoria === "tecnica"));
+  const habilidadesBlandas  = sortHabs((student.habilidades || []).filter((h) => h.categoria === "blanda"));
 
   const descargarCV = async () => {
     if (generandoCV) return;

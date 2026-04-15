@@ -7,7 +7,10 @@ const upload = require("../middleware/multerConfig");
 router.get("/estudiante/:id", verificarToken, async (req, res) => {
   try {
     const [perfil] = await db.query(
-      "SELECT * FROM perfiles_estudiantes WHERE usuario_id = ?",
+      `SELECT pe.*, u.correo
+       FROM perfiles_estudiantes pe
+       JOIN usuarios u ON u.id = pe.usuario_id
+       WHERE pe.usuario_id = ?`,
       [req.params.id]
     );
     if (perfil.length === 0)

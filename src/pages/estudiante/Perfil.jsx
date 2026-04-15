@@ -172,8 +172,9 @@ export default function EstudiantePerfil() {
   };
 
   const nombreCarrera = careerDisplay[carrera] || carrera;
-  const habilidadesTecnicas = habilidades.filter((h) => h.categoria === "tecnica");
-  const habilidadesBlandas = habilidades.filter((h) => h.categoria === "blanda");
+  const sortHabs = (habs) => [...habs].sort((a, b) => (b.porcentaje ?? 0) - (a.porcentaje ?? 0)).slice(0, 3);
+  const habilidadesTecnicas = sortHabs(habilidades.filter((h) => h.categoria === "tecnica"));
+  const habilidadesBlandas  = sortHabs(habilidades.filter((h) => h.categoria === "blanda"));
   const laboralesFavoritos = historialLaboral.filter((l) => favoritosLaboral.includes(l.id));
 
   const rutValido = validarRut(rut);
