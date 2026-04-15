@@ -116,6 +116,7 @@ router.get("/resumen/:estudiante_id/:vacante_id", verificarToken, soloRol("empre
   } catch (err) {
     console.error("Error generando resumen IA:", err.message);
     res.status(500).json({ error: "Error al generar el resumen. Intenta de nuevo." });
+    console.error(err);
   }
 });
 
