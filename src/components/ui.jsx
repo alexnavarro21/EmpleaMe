@@ -98,28 +98,40 @@ export function Card({ children, className = "" }) {
 }
 
 export function Badge({ children, color = "blue" }) {
-  const { isContrast } = useDark();
+  const { isDark, isContrast } = useDark();
+
+  const lightVariants = {
+    blue:   "bg-[#E6F1FB] text-[#0F4D8A]",
+    green:  "bg-green-50 text-green-700",
+    yellow: "bg-yellow-50 text-yellow-700",
+    red:    "bg-red-50 text-red-700",
+    gray:   "bg-[#F7F6F3] text-[#5F5E5A]",
+    orange: "bg-orange-50 text-orange-700",
+    purple: "bg-purple-50 text-purple-700",
+  };
+
+  const darkVariants = {
+    blue:   "bg-[#0F4D8A]/30 text-[#85B7EB]",
+    green:  "bg-green-500/15 text-green-400",
+    yellow: "bg-yellow-500/15 text-yellow-300",
+    red:    "bg-red-500/15 text-red-400",
+    gray:   "bg-[#313130] text-[#888780]",
+    orange: "bg-orange-500/15 text-orange-400",
+    purple: "bg-purple-500/15 text-purple-400",
+  };
 
   // Modo alto contraste: bordes visibles + colores Okabe-Ito seguros para daltónicos
-  const variants = isContrast
-    ? {
-        blue:   "bg-[#DDEEFF] text-[#003D7A] border border-[#0057A8] font-semibold",
-        green:  "bg-[#D4F0DC] text-[#1A5C28] border border-[#1E7A3A] font-semibold",
-        yellow: "bg-[#FFF0C0] text-[#5C3A00] border border-[#C45E00] font-semibold",
-        red:    "bg-[#FFE4D0] text-[#8A2600] border border-[#C45E00] font-semibold",
-        gray:   "bg-[#F0EDE4] text-[#3A3428] border border-[#9A9278] font-semibold",
-        orange: "bg-[#FFE4D0] text-[#8A2600] border border-[#C45E00] font-semibold",
-        purple: "bg-[#EDE8FF] text-[#4A0080] border border-[#6B00B6] font-semibold",
-      }
-    : {
-        blue:   "bg-[#E6F1FB] text-[#0F4D8A]",
-        green:  "bg-green-50 text-green-700",
-        yellow: "bg-yellow-50 text-yellow-700",
-        red:    "bg-red-50 text-red-700",
-        gray:   "bg-[#F7F6F3] text-[#5F5E5A]",
-        orange: "bg-orange-50 text-orange-700",
-        purple: "bg-purple-50 text-purple-700",
-      };
+  const contrastVariants = {
+    blue:   "bg-[#DDEEFF] text-[#003D7A] border border-[#0057A8] font-semibold",
+    green:  "bg-[#D4F0DC] text-[#1A5C28] border border-[#1E7A3A] font-semibold",
+    yellow: "bg-[#FFF0C0] text-[#5C3A00] border border-[#C45E00] font-semibold",
+    red:    "bg-[#FFE4D0] text-[#8A2600] border border-[#C45E00] font-semibold",
+    gray:   "bg-[#F0EDE4] text-[#3A3428] border border-[#9A9278] font-semibold",
+    orange: "bg-[#FFE4D0] text-[#8A2600] border border-[#C45E00] font-semibold",
+    purple: "bg-[#EDE8FF] text-[#4A0080] border border-[#6B00B6] font-semibold",
+  };
+
+  const variants = isContrast ? contrastVariants : isDark ? darkVariants : lightVariants;
 
   return (
     <span className={`inline-block text-xs px-2.5 py-0.5 rounded-full font-medium ${variants[color] ?? variants.blue}`}>

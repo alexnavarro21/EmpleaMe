@@ -45,13 +45,13 @@ function getNotifLink(tipo, role) {
 }
 
 const TIPO_CFG = {
-  mensaje:               { icon: "mdi:message-outline",          color: "text-blue-500",   bg: "bg-blue-100",    label: "Mensaje"     },
-  comentario:            { icon: "mdi:comment-account-outline",  color: "text-purple-500", bg: "bg-purple-100",  label: "Comentario"  },
-  postulacion_nueva:     { icon: "mdi:briefcase-plus-outline",   color: "text-teal-600",   bg: "bg-teal-100",    label: "Postulación" },
-  postulacion_aceptada:  { icon: "mdi:briefcase-check-outline",  color: "text-green-600",  bg: "bg-green-100",   label: "Aceptado"    },
-  postulacion_rechazada: { icon: "mdi:briefcase-remove-outline", color: "text-red-500",    bg: "bg-red-100",     label: "Rechazado"   },
-  vacante_cerrada:       { icon: "mdi:close-circle-outline",     color: "text-orange-500", bg: "bg-orange-100",  label: "Vacante"     },
-  practica_completada:   { icon: "mdi:star-circle-outline",      color: "text-yellow-500", bg: "bg-yellow-100",  label: "Completado"  },
+  mensaje:               { icon: "mdi:message-outline",          color: "text-blue-500",   colorDark: "text-blue-400",   bg: "bg-blue-100",    bgDark: "bg-blue-500/15",    label: "Mensaje"     },
+  comentario:            { icon: "mdi:comment-account-outline",  color: "text-purple-500", colorDark: "text-purple-400", bg: "bg-purple-100",  bgDark: "bg-purple-500/15",  label: "Comentario"  },
+  postulacion_nueva:     { icon: "mdi:briefcase-plus-outline",   color: "text-teal-600",   colorDark: "text-teal-400",   bg: "bg-teal-100",    bgDark: "bg-teal-500/15",    label: "Postulación" },
+  postulacion_aceptada:  { icon: "mdi:briefcase-check-outline",  color: "text-green-600",  colorDark: "text-green-400",  bg: "bg-green-100",   bgDark: "bg-green-500/15",   label: "Aceptado"    },
+  postulacion_rechazada: { icon: "mdi:briefcase-remove-outline", color: "text-red-500",    colorDark: "text-red-400",    bg: "bg-red-100",     bgDark: "bg-red-500/15",     label: "Rechazado"   },
+  vacante_cerrada:       { icon: "mdi:close-circle-outline",     color: "text-orange-500", colorDark: "text-orange-400", bg: "bg-orange-100",  bgDark: "bg-orange-500/15",  label: "Vacante"     },
+  practica_completada:   { icon: "mdi:star-circle-outline",      color: "text-yellow-500", colorDark: "text-yellow-400", bg: "bg-yellow-100",  bgDark: "bg-yellow-500/15",  label: "Completado"  },
 };
 
 const FILTROS = [
@@ -169,7 +169,9 @@ export default function Notificaciones() {
       ) : (
         <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
           {paginadas.map((n, i) => {
-            const cfg  = TIPO_CFG[n.tipo] || { icon: "mdi:bell-outline", color: "text-blue-500", bg: "bg-blue-100", label: n.tipo };
+            const cfg  = TIPO_CFG[n.tipo] || { icon: "mdi:bell-outline", color: "text-blue-500", colorDark: "text-blue-400", bg: "bg-blue-100", bgDark: "bg-blue-500/15", label: n.tipo };
+            const cfgBg    = isDark ? cfg.bgDark    : cfg.bg;
+            const cfgColor = isDark ? cfg.colorDark : cfg.color;
             const link = getNotifLink(n.tipo, role);
             return (
               <div
@@ -180,8 +182,8 @@ export default function Notificaciones() {
                 } ${!n.leida ? (isDark ? "bg-[#0F4D8A]/10" : "bg-[#EFF6FF]") : (isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]")}
                 ${link ? "cursor-pointer" : ""}`}
               >
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${cfg.bg}`}>
-                  <Icon icon={cfg.icon} width={20} className={cfg.color} />
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${cfgBg}`}>
+                  <Icon icon={cfg.icon} width={20} className={cfgColor} />
                 </div>
 
                 <div className="flex-1 min-w-0">

@@ -307,8 +307,8 @@ export default function EmpresaDashboard() {
                         disabled={toggling === v.id}
                         className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors ${
                           v.esta_activa
-                            ? "bg-red-50 text-red-600 hover:bg-red-100"
-                            : "bg-green-50 text-green-700 hover:bg-green-100"
+                            ? isDark ? "bg-red-500/15 text-red-400 hover:bg-red-500/25" : "bg-red-50 text-red-600 hover:bg-red-100"
+                            : isDark ? "bg-green-500/15 text-green-400 hover:bg-green-500/25" : "bg-green-50 text-green-700 hover:bg-green-100"
                         } disabled:opacity-50`}
                       >
                         <Icon
@@ -385,13 +385,13 @@ export default function EmpresaDashboard() {
                       <>
                         <button
                           onClick={() => handleAceptar(p)}
-                          className="text-xs px-2 py-1 rounded bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                          className={`text-xs px-2 py-1 rounded transition-colors ${isDark ? "bg-green-500/15 text-green-400 hover:bg-green-500/25" : "bg-green-100 text-green-700 hover:bg-green-200"}`}
                         >
                           Aceptar
                         </button>
                         <button
                           onClick={() => setModalRechazar(p)}
-                          className="text-xs px-2 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+                          className={`text-xs px-2 py-1 rounded transition-colors ${isDark ? "bg-red-500/15 text-red-400 hover:bg-red-500/25" : "bg-red-100 text-red-700 hover:bg-red-200"}`}
                         >
                           Rechazar
                         </button>
@@ -452,7 +452,7 @@ export default function EmpresaDashboard() {
                   <button
                     onClick={() => handleCompletar(p.id)}
                     disabled={completando === p.id}
-                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors disabled:opacity-50"
+                    className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${isDark ? "bg-green-500/15 text-green-400 hover:bg-green-500/25" : "bg-green-100 text-green-700 hover:bg-green-200"}`}
                   >
                     <Icon
                       icon={completando === p.id ? "mdi:loading" : "mdi:check-circle-outline"}

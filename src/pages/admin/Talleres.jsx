@@ -402,13 +402,13 @@ function InscritosView({ taller, onVolver, isDark }) {
         <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
           {filtrados.map((ins, i) => {
             const cfg = {
-              pendiente: { label: "Pendiente", color: "bg-amber-100 text-amber-700" },
-              aceptado:  { label: "Aceptado",  color: "bg-green-100 text-green-700" },
-              rechazado: { label: "Rechazado", color: "bg-red-100 text-red-600"     },
-            }[ins.estado] || { label: ins.estado, color: "bg-gray-100 text-gray-600" };
+              pendiente: { label: "Pendiente", color: isDark ? "bg-amber-500/15 text-amber-400"  : "bg-amber-100 text-amber-700" },
+              aceptado:  { label: "Aceptado",  color: isDark ? "bg-green-500/15 text-green-400"  : "bg-green-100 text-green-700" },
+              rechazado: { label: "Rechazado", color: isDark ? "bg-red-500/15 text-red-400"      : "bg-red-100 text-red-600"     },
+            }[ins.estado] || { label: ins.estado, color: isDark ? "bg-[#3a3a38] text-[#888780]" : "bg-gray-100 text-gray-600" };
             return (
               <div key={ins.id} className={`flex items-center gap-4 px-5 py-4 ${i < filtrados.length - 1 ? `border-b ${B}` : ""}`}>
-                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 text-sm font-semibold flex-shrink-0">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 ${isDark ? "bg-purple-500/15 text-purple-400" : "bg-purple-100 text-purple-700"}`}>
                   {ins.nombre_completo?.[0]?.toUpperCase() || "?"}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -426,13 +426,13 @@ function InscritosView({ taller, onVolver, isDark }) {
                 <div className="flex items-center gap-2 flex-shrink-0">
                   {ins.estado !== "aceptado" && (
                     <button onClick={() => handleEstado(ins.id, "aceptado")} disabled={actualizando === ins.id}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors disabled:opacity-40">
+                      className={`text-xs px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 ${isDark ? "bg-green-500/15 text-green-400 hover:bg-green-500/25" : "bg-green-50 text-green-700 hover:bg-green-100"}`}>
                       Aceptar
                     </button>
                   )}
                   {ins.estado !== "rechazado" && (
                     <button onClick={() => handleEstado(ins.id, "rechazado")} disabled={actualizando === ins.id}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-40">
+                      className={`text-xs px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 ${isDark ? "bg-red-500/15 text-red-400 hover:bg-red-500/25" : "bg-red-50 text-red-600 hover:bg-red-100"}`}>
                       Rechazar
                     </button>
                   )}
@@ -639,8 +639,8 @@ export default function AdminTalleres() {
                           disabled={toggling === t.id}
                           className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors ${
                             t.esta_activo
-                              ? "bg-red-50 text-red-600 hover:bg-red-100"
-                              : "bg-purple-50 text-purple-700 hover:bg-purple-100"
+                              ? isDark ? "bg-red-500/15 text-red-400 hover:bg-red-500/25" : "bg-red-50 text-red-600 hover:bg-red-100"
+                              : isDark ? "bg-purple-500/15 text-purple-400 hover:bg-purple-500/25" : "bg-purple-50 text-purple-700 hover:bg-purple-100"
                           } disabled:opacity-50`}
                         >
                           <Icon icon={toggling === t.id ? "mdi:loading" : t.esta_activo ? "mdi:pause-circle-outline" : "mdi:play-circle-outline"}
@@ -713,14 +713,14 @@ export default function AdminTalleres() {
                     <button
                       onClick={() => handleEstadoInscripcion(ins.id, "aceptado")}
                       disabled={actualizando === ins.id}
-                      className="text-xs px-2 py-1 rounded bg-green-100 text-green-700 hover:bg-green-200 transition-colors disabled:opacity-50"
+                      className={`text-xs px-2 py-1 rounded transition-colors disabled:opacity-50 ${isDark ? "bg-green-500/15 text-green-400 hover:bg-green-500/25" : "bg-green-100 text-green-700 hover:bg-green-200"}`}
                     >
                       Aceptar
                     </button>
                     <button
                       onClick={() => handleEstadoInscripcion(ins.id, "rechazado")}
                       disabled={actualizando === ins.id}
-                      className="text-xs px-2 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200 transition-colors disabled:opacity-50"
+                      className={`text-xs px-2 py-1 rounded transition-colors disabled:opacity-50 ${isDark ? "bg-red-500/15 text-red-400 hover:bg-red-500/25" : "bg-red-100 text-red-700 hover:bg-red-200"}`}
                     >
                       Rechazar
                     </button>

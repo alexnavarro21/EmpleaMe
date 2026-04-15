@@ -949,7 +949,7 @@ export default function EstudianteDashboard() {
             <div className="flex items-center justify-between mb-3">
               <p className={`text-xs font-semibold ${T}`}>Mensajes</p>
               {mensajesNoLeidos.length > 0 && (
-                <span className="text-xs bg-red-100 text-red-600 font-semibold px-2 py-0.5 rounded-full">
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isDark ? "bg-red-500/15 text-red-400" : "bg-red-100 text-red-600"}`}>
                   {mensajesNoLeidos.length} sin leer
                 </span>
               )}

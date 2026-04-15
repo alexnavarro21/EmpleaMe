@@ -6,9 +6,9 @@ import { PageHeader, Paginacion } from "../../components/ui";
 import { getPostulacionesEstudiante } from "../../services/api";
 
 const ESTADO_CFG = {
-  pendiente: { label: "Pendiente", color: "text-blue-500",  bg: "bg-blue-50",  icon: "mdi:clock-outline"        },
-  aceptado:  { label: "Aceptado",  color: "text-green-600", bg: "bg-green-50", icon: "mdi:check-circle-outline" },
-  rechazado: { label: "Rechazado", color: "text-red-500",   bg: "bg-red-50",   icon: "mdi:close-circle-outline" },
+  pendiente: { label: "Pendiente", color: "text-blue-500",  colorDark: "text-blue-400",  bg: "bg-blue-50",  bgDark: "bg-blue-500/15",  icon: "mdi:clock-outline"        },
+  aceptado:  { label: "Aceptado",  color: "text-green-600", colorDark: "text-green-400", bg: "bg-green-50", bgDark: "bg-green-500/15", icon: "mdi:check-circle-outline" },
+  rechazado: { label: "Rechazado", color: "text-red-500",   colorDark: "text-red-400",   bg: "bg-red-50",   bgDark: "bg-red-500/15",   icon: "mdi:close-circle-outline" },
 };
 
 function tiempoRelativo(fecha) {
@@ -149,15 +149,17 @@ export default function MisPostulaciones() {
       ) : (
         <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
           {paginadas.map((p, i) => {
-            const cfg = ESTADO_CFG[p.estado] || { label: p.estado, color: M, bg: "", icon: "mdi:help-circle-outline" };
+            const cfg = ESTADO_CFG[p.estado] || { label: p.estado, color: M, colorDark: M, bg: "", bgDark: "", icon: "mdi:help-circle-outline" };
+            const cfgBg    = isDark ? cfg.bgDark    : cfg.bg;
+            const cfgColor = isDark ? cfg.colorDark : cfg.color;
             return (
               <div
                 key={p.id}
                 className={`flex items-start gap-4 px-5 py-4 ${i < paginadas.length - 1 ? `border-b ${B}` : ""}`}
               >
                 {/* Icono estado */}
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${cfg.bg}`}>
-                  <Icon icon={cfg.icon} width={18} className={cfg.color} />
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${cfgBg}`}>
+                  <Icon icon={cfg.icon} width={18} className={cfgColor} />
                 </div>
 
                 {/* Info vacante */}
@@ -172,7 +174,7 @@ export default function MisPostulaciones() {
                 </div>
 
                 {/* Badge estado */}
-                <span className={`flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${cfg.bg} ${cfg.color}`}>
+                <span className={`flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${cfgBg} ${cfgColor}`}>
                   {cfg.label}
                 </span>
               </div>
