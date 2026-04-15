@@ -50,44 +50,7 @@ function buildPrompt(perfil, habilidades, idiomas, historial_academico, historia
     ? posts.slice(0, 5).map(p => `- "${p.titulo}": ${p.contenido || ""}`).join("\n")
     : "Sin publicaciones";
 
-  return `Eres un asistente de reclutamiento para la plataforma EmpleaMe. Analiza el perfil de este estudiante y genera un resumen conciso para ayudar a la empresa a decidir si es un buen candidato para la vacante.
-
-VACANTE:
-- Título: ${vacante.titulo}
-- Área: ${vacante.area || "No especificada"}
-- Modalidad: ${vacante.modalidad || "No especificada"}
-- Tipo: ${vacante.tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica profesional"}
-${vacante.descripcion ? `- Descripción: ${vacante.descripcion}` : ""}
-
-PERFIL DEL ESTUDIANTE:
-- Nombre: ${perfil.nombre_completo}
-- Carrera: ${perfil.carrera}
-- Semestre: ${perfil.semestre || "No especificado"}
-- Promedio académico: ${perfil.promedio ? `${perfil.promedio} / 7.0` : "No registrado"}
-- Evaluación docente: ${perfil.calificacion_docente ? `${perfil.calificacion_docente} / 7.0` : "No registrada"}
-- Sobre mí: ${perfil.biografia || "Sin biografía"}
-
-Habilidades técnicas: ${hTecnicas || "No especificadas"}
-Habilidades blandas: ${hBlandas || "No especificadas"}
-Idiomas: ${idiomasStr}
-
-Historial académico:
-${histAcad || "No registrado"}
-
-Experiencia laboral:
-${histLab}
-
-Portafolio:
-${portafolioStr}
-
-Publicaciones recientes:
-${postsStr}
-
-Genera un resumen en español con estas secciones (sin markdown, texto plano):
-1. PERFIL GENERAL: 2 oraciones describiendo al estudiante.
-2. PUNTOS FUERTES: 2-3 fortalezas relevantes para esta vacante.
-3. ÁREAS DE MEJORA: 1-2 aspectos a considerar.
-4. COMPATIBILIDAD: Una frase final indicando qué tan compatible es con la vacante (Alta / Media / Baja) y por qué.`;
+  return `1+1`;
 }
 
 // ── GET /api/ia/resumen/:estudiante_id/:vacante_id ───────────────────────────
