@@ -35,10 +35,10 @@ function getNotifLink(tipo, role) {
       mensaje:               "/admin/mensajeria",
       comentario:            "/admin/inicio",
       postulacion_nueva:     "/admin/talleres",
-      postulacion_aceptada:  "/admin/monitoreo",
-      postulacion_rechazada: "/admin/monitoreo",
-      vacante_cerrada:       "/admin/monitoreo",
-      practica_completada:   "/admin/monitoreo",
+      postulacion_aceptada:  "/admin/panel",
+      postulacion_rechazada: "/admin/panel",
+      vacante_cerrada:       "/admin/panel",
+      practica_completada:   "/admin/panel",
     },
   };
   return links[role]?.[tipo] || null;

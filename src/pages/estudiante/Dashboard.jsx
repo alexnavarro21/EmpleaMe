@@ -355,8 +355,8 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted }) {
               <video
                 src={src}
                 controls
-                className="rounded-lg w-full border"
-                style={{ maxHeight: "80vh" }}
+                className="rounded-lg w-full"
+                style={{ maxHeight: "80vh", background: "transparent" }}
                 onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
               />
             ) : (
@@ -832,7 +832,6 @@ export default function EstudianteDashboard() {
               { icon: "mdi:school-outline",           label: "Talleres",             to: "/admin/talleres"     },
               { icon: "mdi:clipboard-check-outline",  label: "Evaluaciones",         to: "/admin/evaluaciones" },
               { icon: "mdi:message-outline",          label: "Mensajería",           to: "/admin/mensajeria"   },
-              { icon: "mdi:monitor-dashboard",        label: "Monitoreo",            to: "/admin/monitoreo"    },
               { icon: "mdi:account-search-outline",   label: "Buscar perfiles",      to: "/admin/buscar"       },
             ].map((link) => (
               <Link

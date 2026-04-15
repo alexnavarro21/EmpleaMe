@@ -173,8 +173,8 @@ export default function VerMasModal({ pub, onClose }) {
               <video
                 src={src}
                 controls
-                className="rounded-xl w-full border mb-4"
-                style={{ maxHeight: "70vh" }}
+                className="rounded-xl w-full mb-4"
+                style={{ maxHeight: "70vh", background: "transparent" }}
                 onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
               />
             ) : (
