@@ -22,7 +22,7 @@ function calcularHashPerfil(perfil, habilidades, idiomas, historial_academico, h
   return crypto.createHash("sha256").update(contenido).digest("hex");
 }
 
-// ── Construye el prompt para Claude ─────────────────────────────────────────
+// ── Construye el prompt para Gemini ─────────────────────────────────────────
 function buildPrompt(perfil, habilidades, idiomas, historial_academico, historial_laboral, posts, vacante) {
   const hTecnicas = habilidades.filter(h => h.categoria === "tecnica").map(h => `${h.nombre}${h.nivel_dominio ? ` (${h.nivel_dominio})` : ""}`).join(", ");
   const hBlandas  = habilidades.filter(h => h.categoria === "blanda").map(h => h.nombre).join(", ");
