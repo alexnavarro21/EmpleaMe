@@ -83,7 +83,7 @@ router.get("/empresa", verificarToken, soloRol("empresa"), async (req, res) => {
     const [rows] = await db.query(
       `SELECT p.id, p.estado, p.fecha_creacion,
               pe.usuario_id AS estudiante_id, pe.nombre_completo, pe.carrera,
-              pe.promedio, pe.calificacion_docente,
+              pe.promedio, pe.calificacion_docente, pe.foto_perfil,
               v.titulo AS vacante_titulo, v.id AS vacante_id
        FROM postulaciones p
        JOIN perfiles_estudiantes pe ON pe.usuario_id = p.estudiante_id

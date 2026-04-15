@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, StatCard, PageHeader, PrimaryButton, Paginacion } from "../../components/ui";
-import { getVacantesEmpresa, getPostulantesEmpresa, getPostulantesAceptados, actualizarEstadoPostulacion, iniciarConversacion, enviarMensaje, activarVacante, desactivarVacante, completarPractica } from "../../services/api";
+import { getVacantesEmpresa, getPostulantesEmpresa, getPostulantesAceptados, actualizarEstadoPostulacion, iniciarConversacion, enviarMensaje, activarVacante, desactivarVacante, completarPractica, getMediaUrl } from "../../services/api";
 import PostulantesVacanteModal from "../../components/PostulantesVacanteModal";
 
 const postColor = { pendiente: "blue", aceptado: "green", rechazado: "gray" };
@@ -354,12 +354,20 @@ export default function EmpresaDashboard() {
             <div className="flex flex-col gap-3">
               {postulantes.slice(0, 6).map((p) => (
                 <div key={p.id} className={`flex items-center gap-3 p-3 rounded-lg border ${B}`}>
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
-                    <Icon icon="mynaui:user-solid" width={20} className="text-[#378ADD]" />
-                  </div>
+                  <Link to={`/empresa/candidato/${p.estudiante_id}`} className="flex-shrink-0">
+                    {p.foto_perfil ? (
+                      <img src={getMediaUrl(p.foto_perfil)} className="w-9 h-9 rounded-full object-cover" alt="" />
+                    ) : (
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center ${S}`}>
+                        <Icon icon="mynaui:user-solid" width={20} className="text-[#378ADD]" />
+                      </div>
+                    )}
+                  </Link>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className={`text-sm font-medium ${T} truncate`}>{p.nombre_completo}</p>
+                      <Link to={`/empresa/candidato/${p.estudiante_id}`} className={`text-sm font-medium ${T} truncate hover:text-[#378ADD] transition-colors`}>
+                        {p.nombre_completo}
+                      </Link>
                       <Badge color={postColor[p.estado]}>{postLabel[p.estado]}</Badge>
                     </div>
                     <p className={`text-xs ${M}`}>
