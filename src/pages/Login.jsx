@@ -22,7 +22,10 @@ export default function Login() {
   const [activeRole, setActiveRole] = useState("estudiante");
   const [regNombreCompleto, setRegNombreCompleto] = useState("");
   const [regCarrera, setRegCarrera] = useState("");
+  const [regSemestre, setRegSemestre] = useState("");
+  const [regTelefono, setRegTelefono] = useState("");
   const [regNombreEmpresa, setRegNombreEmpresa] = useState("");
+  const [regTelefonoEmpresa, setRegTelefonoEmpresa] = useState("");
   const [regCorreo, setRegCorreo] = useState("");
   const [regContrasena, setRegContrasena] = useState("");
   const [regConfirm, setRegConfirm] = useState("");
@@ -49,15 +52,15 @@ export default function Login() {
     setRegError("");
 
     if (!regCorreo || !regContrasena) {
-      setRegError("Completa todos los campos.");
+      setRegError("Completa todos los campos obligatorios.");
       return;
     }
     if (activeRole === "estudiante" && (!regNombreCompleto || !regCarrera)) {
-      setRegError("Completa nombre completo y carrera.");
+      setRegError("Nombre completo y carrera son obligatorios.");
       return;
     }
     if (activeRole === "empresa" && !regNombreEmpresa) {
-      setRegError("Ingresa el nombre de la empresa.");
+      setRegError("El nombre de la empresa es obligatorio.");
       return;
     }
     if (regContrasena.length < 8) {
@@ -71,14 +74,16 @@ export default function Login() {
 
     setRegLoading(true);
     try {
-      // El backend devuelve { mensaje, id }, sin token → hacemos auto-login
       await registrarUsuario({
         correo: regCorreo,
         contrasena: regContrasena,
-        rol: activeRole === "admin" ? "centro" : activeRole,
+        rol: activeRole,
         nombre_completo: regNombreCompleto || undefined,
         carrera: regCarrera || undefined,
+        semestre: regSemestre || undefined,
+        telefono: regTelefono || undefined,
         nombre_empresa: regNombreEmpresa || undefined,
+        telefono_contacto: regTelefonoEmpresa || undefined,
       });
       const { token, usuario } = await loginUsuario(regCorreo, regContrasena);
       localStorage.setItem("token", token);
@@ -193,48 +198,92 @@ export default function Login() {
 
             {activeTab === "register" && (
               <form className="flex flex-col gap-1" onSubmit={handleRegister}>
-                <div className="grid grid-cols-3 gap-2 mb-3">
+                {/* Selector de rol: solo Estudiante y Empresa */}
+                <div className="grid grid-cols-2 gap-3 mb-4">
                   {[
-                    { id: "estudiante", label: "Estudiante", desc: "Busco práctica" },
-                    { id: "empresa", label: "Empresa", desc: "Ofrezco práctica" },
-                    { id: "admin", label: "Admin/Docente", desc: "Gestión y evaluación" },
+                    { id: "estudiante", label: "Estudiante", desc: "Busco práctica profesional" },
+                    { id: "empresa",    label: "Empresa",    desc: "Quiero publicar vacantes"   },
                   ].map((role) => (
                     <button
                       type="button"
                       key={role.id}
                       onClick={() => setActiveRole(role.id)}
-                      className={`rounded-lg p-3 text-center border transition-all ${
+                      className={`rounded-xl p-3.5 text-center border transition-all ${
                         activeRole === role.id
                           ? `border-2 border-[#378ADD] ${isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]"}`
                           : `border ${isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]"}`
                       }`}
                     >
-                      <p className={`text-sm font-medium ${isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]"}`}>
+                      <p className={`text-sm font-semibold ${isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]"}`}>
                         {role.label}
                       </p>
                       <p className="text-xs text-[#888780] mt-0.5">{role.desc}</p>
                     </button>
                   ))}
                 </div>
+
+                {/* Campos para Estudiante */}
                 {activeRole === "estudiante" && (
                   <>
-                    <FormField label="Nombre completo" type="text" placeholder="Tu nombre y apellido" value={regNombreCompleto} onChange={(e) => setRegNombreCompleto(e.target.value)} isDark={isDark} />
-                    <SelectField label="Carrera" value={regCarrera} onChange={(e) => setRegCarrera(e.target.value)} isDark={isDark}>
-                      <option value="">Selecciona tu carrera</option>
-                      <option value="Administracion">Administración</option>
-                      <option value="Mecanica Automotriz">Mecánica Automotriz</option>
-                    </SelectField>
+                    <FormField
+                      label="Nombre completo *"
+                      type="text"
+                      placeholder="Tu nombre y apellido"
+                      value={regNombreCompleto}
+                      onChange={(e) => setRegNombreCompleto(e.target.value)}
+                      isDark={isDark}
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <SelectField label="Carrera *" value={regCarrera} onChange={(e) => setRegCarrera(e.target.value)} isDark={isDark}>
+                        <option value="">Selecciona tu carrera</option>
+                        <option value="Administracion">Administración</option>
+                        <option value="Mecanica Automotriz">Mecánica Automotriz</option>
+                      </SelectField>
+                      <SelectField label="Semestre" value={regSemestre} onChange={(e) => setRegSemestre(e.target.value)} isDark={isDark}>
+                        <option value="">Semestre (opcional)</option>
+                        {[1,2,3,4,5,6].map((s) => (
+                          <option key={s} value={s}>{s}° semestre</option>
+                        ))}
+                      </SelectField>
+                    </div>
+                    <FormField
+                      label="Teléfono (opcional)"
+                      type="tel"
+                      placeholder="+56 9 1234 5678"
+                      value={regTelefono}
+                      onChange={(e) => setRegTelefono(e.target.value)}
+                      isDark={isDark}
+                    />
                   </>
                 )}
+
+                {/* Campos para Empresa */}
                 {activeRole === "empresa" && (
-                  <FormField label="Nombre de la empresa" type="text" placeholder="Ej: Automotriz Salinas" value={regNombreEmpresa} onChange={(e) => setRegNombreEmpresa(e.target.value)} isDark={isDark} />
+                  <>
+                    <FormField
+                      label="Nombre de la empresa *"
+                      type="text"
+                      placeholder="Ej: Automotriz Salinas SpA"
+                      value={regNombreEmpresa}
+                      onChange={(e) => setRegNombreEmpresa(e.target.value)}
+                      isDark={isDark}
+                    />
+                    <FormField
+                      label="Teléfono de contacto (opcional)"
+                      type="tel"
+                      placeholder="+56 2 1234 5678"
+                      value={regTelefonoEmpresa}
+                      onChange={(e) => setRegTelefonoEmpresa(e.target.value)}
+                      isDark={isDark}
+                    />
+                  </>
                 )}
-                {activeRole === "admin" && (
-                  <FormField label="Nombre completo" type="text" placeholder="Tu nombre y apellido" value={regNombreCompleto} onChange={(e) => setRegNombreCompleto(e.target.value)} isDark={isDark} />
-                )}
-                <FormField label="Correo electrónico" type="email" placeholder="tucorreo@email.com" value={regCorreo} onChange={(e) => setRegCorreo(e.target.value)} isDark={isDark} />
-                <FormField label="Contraseña" type="password" placeholder="Mínimo 8 caracteres" value={regContrasena} onChange={(e) => setRegContrasena(e.target.value)} isDark={isDark} />
-                <FormField label="Confirmar contraseña" type="password" placeholder="Repite tu contraseña" value={regConfirm} onChange={(e) => setRegConfirm(e.target.value)} isDark={isDark} />
+
+                {/* Campos comunes */}
+                <FormField label="Correo electrónico *" type="email" placeholder="tucorreo@email.com" value={regCorreo} onChange={(e) => setRegCorreo(e.target.value)} isDark={isDark} />
+                <FormField label="Contraseña *" type="password" placeholder="Mínimo 8 caracteres" value={regContrasena} onChange={(e) => setRegContrasena(e.target.value)} isDark={isDark} />
+                <FormField label="Confirmar contraseña *" type="password" placeholder="Repite tu contraseña" value={regConfirm} onChange={(e) => setRegConfirm(e.target.value)} isDark={isDark} />
+
                 {regError && (
                   <p className="text-xs text-red-500 mt-1">{regError}</p>
                 )}

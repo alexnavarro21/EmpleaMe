@@ -45,12 +45,18 @@ router.post("/login", async (req, res) => {
 
 // POST /api/auth/register
 router.post("/register", async (req, res) => {
-  const { correo, contrasena, rol, nombre_completo, carrera, nombre_empresa } = req.body;
+  const {
+    correo, contrasena, rol,
+    // estudiante
+    nombre_completo, carrera, semestre, telefono,
+    // empresa
+    nombre_empresa, telefono_contacto,
+  } = req.body;
 
   if (!correo || !contrasena || !rol)
     return res.status(400).json({ error: "Correo, contraseña y rol son requeridos" });
 
-  if (!["estudiante", "empresa", "centro"].includes(rol))
+  if (!["estudiante", "empresa"].includes(rol))
     return res.status(400).json({ error: "Rol inválido" });
 
   const conn = await db.getConnection();
@@ -68,15 +74,15 @@ router.post("/register", async (req, res) => {
       if (!nombre_completo || !carrera)
         return res.status(400).json({ error: "nombre_completo y carrera son requeridos para estudiante" });
       await conn.query(
-        "INSERT INTO perfiles_estudiantes (usuario_id, nombre_completo, carrera) VALUES (?, ?, ?)",
-        [usuarioId, nombre_completo, carrera]
+        "INSERT INTO perfiles_estudiantes (usuario_id, nombre_completo, carrera, semestre, telefono) VALUES (?, ?, ?, ?, ?)",
+        [usuarioId, nombre_completo, carrera, semestre || null, telefono || null]
       );
     } else if (rol === "empresa") {
       if (!nombre_empresa)
         return res.status(400).json({ error: "nombre_empresa es requerido para empresa" });
       await conn.query(
-        "INSERT INTO perfiles_empresas (usuario_id, nombre_empresa) VALUES (?, ?)",
-        [usuarioId, nombre_empresa]
+        "INSERT INTO perfiles_empresas (usuario_id, nombre_empresa, telefono_contacto) VALUES (?, ?, ?)",
+        [usuarioId, nombre_empresa, telefono_contacto || null]
       );
     }
 
