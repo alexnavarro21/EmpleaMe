@@ -106,9 +106,13 @@ export default function VerMasModal({ pub, onClose }) {
         {/* Header */}
         <div className={`flex items-center justify-between px-5 py-4 border-b ${B}`}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white font-semibold text-sm">
-              {pub.autor_nombre?.charAt(0).toUpperCase() || "?"}
-            </div>
+            {pub.autor_foto_perfil ? (
+              <img src={resolverMedia(pub.autor_foto_perfil)} className="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                {pub.autor_nombre?.charAt(0).toUpperCase() || "?"}
+              </div>
+            )}
             <div>
               <p className={`text-sm font-semibold ${T}`}>{pub.autor_nombre}</p>
               <p className={`text-xs ${M}`}>{tiempoRelativo(pub.publicado_en)}</p>
@@ -242,9 +246,13 @@ export default function VerMasModal({ pub, onClose }) {
               <div className="flex flex-col gap-3 mb-4">
                 {comentarios.map((c) => (
                   <div key={c.id} className="flex gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                      {c.autor_nombre?.charAt(0).toUpperCase() || "?"}
-                    </div>
+                    {c.autor_foto_perfil ? (
+                      <img src={resolverMedia(c.autor_foto_perfil)} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                        {c.autor_nombre?.charAt(0).toUpperCase() || "?"}
+                      </div>
+                    )}
                     <div className={`flex-1 px-3 py-2 rounded-xl ${S}`}>
                       <div className="flex items-center gap-2 mb-0.5">
                         <span className={`text-xs font-semibold ${T}`}>{c.autor_nombre}</span>
