@@ -5,6 +5,7 @@ import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, SecondaryButton, PageHeader, SoftSkillBar } from "../../components/ui";
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
 import { getEstudianteById, iniciarConversacion, iniciarMensajeDirecto, getVacantesEmpresa, enviarMensaje, getMediaUrl } from "../../services/api";
+import { generarCV } from "../../utils/generarCV";
 
 const careerDisplay = {
   "Administracion": "Administración",
@@ -28,6 +29,7 @@ export default function EmpresaPerfilCandidato() {
   const [enviandoInvitacion, setEnviandoInvitacion] = useState(false);
   const [expPagina, setExpPagina] = useState(1);
   const [expPorPagina, setExpPorPagina] = useState(3);
+  const [generandoCV, setGenerandoCV] = useState(false);
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -74,6 +76,32 @@ export default function EmpresaPerfilCandidato() {
   const nombreCarrera = careerDisplay[student.carrera] || student.carrera;
   const habilidadesTecnicas = (student.habilidades || []).filter((h) => h.categoria === "tecnica");
   const habilidadesBlandas = (student.habilidades || []).filter((h) => h.categoria === "blanda");
+
+  const descargarCV = async () => {
+    if (generandoCV) return;
+    setGenerandoCV(true);
+    try {
+      await generarCV({
+        nombre:   student.nombre_completo,
+        carrera:  student.carrera,
+        telefono: student.telefono || "",
+        correo:   student.correo   || "",
+        region:   student.region   || "",
+        comuna:   student.comuna   || "",
+        rut:      student.rut      || "",
+        biografia: student.biografia || "",
+        promedio:  student.promedio  || "",
+        fotoUrl:   student.foto_perfil ? getMediaUrl(student.foto_perfil) : null,
+        idiomas:   student.idiomas   || [],
+        habilidadesBlandas:  habilidadesBlandas,
+        habilidadesTecnicas: habilidadesTecnicas,
+        experiencia: student.historial_laboral  || [],
+        formacion:   student.historial_academico || [],
+      });
+    } finally {
+      setGenerandoCV(false);
+    }
+  };
 
   return (
     <div>
@@ -155,6 +183,16 @@ export default function EmpresaPerfilCandidato() {
                   Invitar a vacante
                 </SecondaryButton>
               )}
+              <SecondaryButton
+                className="w-full flex items-center justify-center gap-2"
+                disabled={generandoCV}
+                onClick={descargarCV}
+              >
+                {generandoCV
+                  ? <Icon icon="mdi:loading" width={16} className="animate-spin" />
+                  : <Icon icon="mdi:file-download-outline" width={16} />}
+                {generandoCV ? "Generando PDF..." : "Descargar CV"}
+              </SecondaryButton>
             </div>
           </Card>
 
