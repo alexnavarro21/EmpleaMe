@@ -331,7 +331,7 @@ export default function BuscarPerfiles() {
       .finally(() => setLoading(false));
   }, []);
 
-  const uniqueCareers = ["Todas", ...new Set(students.map((s) => s.carrera))];
+  const uniqueCareers = ["Todas", ...new Set(students.map((s) => s.carrera).filter(Boolean))];
   const uniqueAreas   = ["Todas", ...new Set(
     (tab === "vacantes" ? vacantes : talleres).map((x) => x.area).filter(Boolean)
   )];
