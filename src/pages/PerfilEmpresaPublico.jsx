@@ -4,7 +4,7 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 import { Card, Badge, SecondaryButton, PrimaryButton, PageHeader, Paginacion } from "../components/ui";
 import PublicacionesUsuario from "../components/PublicacionesUsuario";
-import { getEmpresaById, getVacantesEmpresa, postularAVacante, iniciarConversacionConEmpresa, getEstudianteById, getMediaUrl } from "../services/api";
+import { getEmpresaById, getVacantesEmpresa, postularAVacante, iniciarConversacionConEmpresa, getEstudianteById, getMediaUrl, toggleSeguir, getEstadoSeguimiento } from "../services/api";
 import { calcularCompletitud } from "../utils/perfilCompletitud";
 
 export default function PerfilEmpresaPublico() {
@@ -23,6 +23,9 @@ export default function PerfilEmpresaPublico() {
   const [paginaVacantes, setPaginaVacantes] = useState(1);
   const [porPaginaVacantes, setPorPaginaVacantes] = useState(3);
   const [busquedaVacante, setBusquedaVacante] = useState("");
+  const [siguiendo, setSiguiendo] = useState(false);
+  const [seguidoresCount, setSeguidoresCount] = useState(0);
+  const [toggleandoSeguir, setToggleandoSeguir] = useState(false);
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -44,7 +47,30 @@ export default function PerfilEmpresaPublico() {
         setPerfilCompleto(calcularCompletitud(propio.value) === 100);
       }
     }).finally(() => setLoading(false));
+
+    // Estado de seguimiento (cualquier rol, excepto ver su propio perfil)
+    if (usuario.id && parseInt(id) !== usuario.id) {
+      getEstadoSeguimiento(id)
+        .then((est) => {
+          setSiguiendo(est.siguiendo);
+          setSeguidoresCount(est.seguidores);
+        })
+        .catch(() => {});
+    }
   }, [id]);
+
+  const handleToggleSeguir = async () => {
+    setToggleandoSeguir(true);
+    try {
+      const res = await toggleSeguir(id);
+      setSiguiendo(res.siguiendo);
+      setSeguidoresCount((c) => res.siguiendo ? c + 1 : Math.max(0, c - 1));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setToggleandoSeguir(false);
+    }
+  };
 
   const handlePostular = async (vacanteId) => {
     if (!perfilCompleto) {
@@ -121,6 +147,33 @@ export default function PerfilEmpresaPublico() {
             <p className={`text-xs ${M} mb-3`}>Empresa registrada en EmpleaMe</p>
             <Badge color="blue">Empresa Verificada</Badge>
 
+            {/* Botón Seguir (visible para todos excepto la propia empresa) */}
+            {usuario.id && parseInt(id) !== usuario.id && (
+              <button
+                onClick={handleToggleSeguir}
+                disabled={toggleandoSeguir}
+                className={`mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 border ${
+                  siguiendo
+                    ? `${isDark ? "border-[#3a3a38] text-[#D3D1C7] hover:bg-red-500/10 hover:border-red-500/40 hover:text-red-400" : "border-[#D3D1C7] text-[#5F5E5A] hover:bg-red-50 hover:border-red-300 hover:text-red-500"}`
+                    : "border-[#378ADD] bg-[#378ADD]/10 text-[#378ADD] hover:bg-[#378ADD]/20"
+                }`}
+              >
+                <Icon
+                  icon={toggleandoSeguir ? "mdi:loading" : siguiendo ? "mdi:account-check" : "mdi:account-plus-outline"}
+                  width={16}
+                  className={toggleandoSeguir ? "animate-spin" : ""}
+                />
+                {toggleandoSeguir ? "..." : siguiendo ? "Siguiendo" : "Seguir"}
+              </button>
+            )}
+
+            {seguidoresCount > 0 && (
+              <p className={`text-xs ${M} mt-2`}>
+                <Icon icon="mdi:account-group-outline" width={12} className="inline mr-1" />
+                {seguidoresCount} seguidor{seguidoresCount !== 1 ? "es" : ""}
+              </p>
+            )}
+
             {esEstudiante && (
               <button
                 onClick={async () => {
@@ -135,7 +188,7 @@ export default function PerfilEmpresaPublico() {
                   }
                 }}
                 disabled={contactando}
-                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB] text-sm font-medium transition-colors disabled:opacity-50"
+                className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB] text-sm font-medium transition-colors disabled:opacity-50"
               >
                 <Icon icon={contactando ? "mdi:loading" : "mdi:message-outline"} width={16} className={contactando ? "animate-spin" : ""} />
                 {contactando ? "Abriendo chat..." : "Contactar empresa"}

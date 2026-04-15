@@ -6,6 +6,9 @@
       "Bash(grep -E \"\\\\.js$\")",
       "Bash(grep -A 20 \"CREATE TABLE publicaciones\" /c/Users/rikis/OneDrive/Escritorio/Proyecto_IS/EmpleaMe/sql/*.sql)",
       "Bash(npm run *)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\rikis\\.claude\\projects\\c--Users-rikis-Desktop-Proyecto-IS-EmpleaMe\\memory"
     ]
   }
 }

@@ -59,8 +59,9 @@ export default function CrearPublicacion({ onPublicado }) {
             value={titulo}
             onChange={(e) => setTitulo(e.target.value)}
             placeholder="Título (opcional)"
-            className={`w-full bg-transparent outline-none text-sm font-semibold mb-2 ${isDark ? "text-[#D3D1C7] placeholder-[#5F5E5A]" : "text-[#2C2C2A] placeholder-[#888780]"}`}
+            className={`w-full bg-transparent outline-none text-sm font-semibold pb-2 ${isDark ? "text-[#D3D1C7] placeholder-[#5F5E5A]" : "text-[#2C2C2A] placeholder-[#888780]"}`}
           />
+          <div className={`border-t mb-3 ${isDark ? "border-[#3a3a38]" : "border-[#E8E6E1]"}`} />
           <textarea
             value={contenido}
             onChange={(e) => setContenido(e.target.value)}

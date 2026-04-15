@@ -48,6 +48,11 @@ const notifPaths = {
   admin: "/admin/notificaciones",
 };
 
+const seguidoresPaths = {
+  estudiante: "/estudiante/seguidores",
+  empresa: "/empresa/seguidores",
+};
+
 export default function Layout() {
   const { isDark, setIsDark, isContrast, setTheme } = useDark();
   const location = useLocation();
@@ -189,6 +194,22 @@ export default function Layout() {
                   >
                     <Icon icon="mdi:clipboard-list-outline" width={18} className="text-[#378ADD]" />
                     Mis postulaciones
+                  </Link>
+                )}
+
+                {/* Seguidores (estudiante y empresa) */}
+                {seguidoresPaths[role] && (
+                  <Link
+                    to={seguidoresPaths[role]}
+                    onClick={() => setMenuOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                      isDark
+                        ? "text-[#D3D1C7] hover:bg-[#0F4D8A]/30"
+                        : "text-[#2C2C2A] hover:bg-[#F0F4F8]"
+                    }`}
+                  >
+                    <Icon icon="mdi:account-group-outline" width={18} className="text-[#378ADD]" />
+                    Seguidores
                   </Link>
                 )}
 

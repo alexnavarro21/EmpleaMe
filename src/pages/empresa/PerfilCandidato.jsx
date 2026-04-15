@@ -4,7 +4,7 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, SecondaryButton, PageHeader, SoftSkillBar } from "../../components/ui";
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
-import { getEstudianteById, iniciarConversacion, iniciarMensajeDirecto, getVacantesEmpresa, enviarMensaje, getMediaUrl } from "../../services/api";
+import { getEstudianteById, iniciarConversacion, iniciarMensajeDirecto, getVacantesEmpresa, enviarMensaje, getMediaUrl, toggleSeguir, getEstadoSeguimiento } from "../../services/api";
 import { generarCV } from "../../utils/generarCV";
 
 const careerDisplay = {
@@ -30,6 +30,9 @@ export default function EmpresaPerfilCandidato() {
   const [expPagina, setExpPagina] = useState(1);
   const [expPorPagina, setExpPorPagina] = useState(3);
   const [generandoCV, setGenerandoCV] = useState(false);
+  const [siguiendo, setSiguiendo] = useState(false);
+  const [seguidoresCount, setSeguidoresCount] = useState(0);
+  const [toggleandoSeguir, setToggleandoSeguir] = useState(false);
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -42,6 +45,16 @@ export default function EmpresaPerfilCandidato() {
       .then(setStudent)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+
+    // Estado de seguimiento (no aplica si eres el mismo usuario)
+    if (viewer.id && parseInt(id) !== viewer.id) {
+      getEstadoSeguimiento(id)
+        .then((est) => {
+          setSiguiendo(est.siguiendo);
+          setSeguidoresCount(est.seguidores);
+        })
+        .catch(() => {});
+    }
   }, [id]);
 
   useEffect(() => {
@@ -78,6 +91,19 @@ export default function EmpresaPerfilCandidato() {
   const sortHabs = (habs) => [...habs].sort((a, b) => (b.porcentaje ?? 0) - (a.porcentaje ?? 0)).slice(0, 3);
   const habilidadesTecnicas = sortHabs((student.habilidades || []).filter((h) => h.categoria === "tecnica"));
   const habilidadesBlandas  = sortHabs((student.habilidades || []).filter((h) => h.categoria === "blanda"));
+
+  const handleToggleSeguir = async () => {
+    setToggleandoSeguir(true);
+    try {
+      const res = await toggleSeguir(id);
+      setSiguiendo(res.siguiendo);
+      setSeguidoresCount((c) => res.siguiendo ? c + 1 : Math.max(0, c - 1));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setToggleandoSeguir(false);
+    }
+  };
 
   const descargarCV = async () => {
     if (generandoCV) return;
@@ -156,6 +182,34 @@ export default function EmpresaPerfilCandidato() {
                 C.E. Cardenal J.M. Caro
               </p>
             </div>
+
+            {/* Contador de seguidores */}
+            {seguidoresCount > 0 && (
+              <p className={`text-xs ${M} mt-3 flex items-center justify-center gap-1`}>
+                <Icon icon="mdi:account-group-outline" width={12} />
+                {seguidoresCount} seguidor{seguidoresCount !== 1 ? "es" : ""}
+              </p>
+            )}
+
+            {/* Botón Seguir */}
+            {viewer.id && parseInt(id) !== viewer.id && (
+              <button
+                onClick={handleToggleSeguir}
+                disabled={toggleandoSeguir}
+                className={`mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 border ${
+                  siguiendo
+                    ? `${isDark ? "border-[#3a3a38] text-[#D3D1C7] hover:bg-red-500/10 hover:border-red-500/40 hover:text-red-400" : "border-[#D3D1C7] text-[#5F5E5A] hover:bg-red-50 hover:border-red-300 hover:text-red-500"}`
+                    : "border-[#378ADD] bg-[#378ADD]/10 text-[#378ADD] hover:bg-[#378ADD]/20"
+                }`}
+              >
+                <Icon
+                  icon={toggleandoSeguir ? "mdi:loading" : siguiendo ? "mdi:account-check" : "mdi:account-plus-outline"}
+                  width={16}
+                  className={toggleandoSeguir ? "animate-spin" : ""}
+                />
+                {toggleandoSeguir ? "..." : siguiendo ? "Siguiendo" : "Seguir"}
+              </button>
+            )}
 
             <div className="flex flex-col gap-2 mt-4">
               <PrimaryButton

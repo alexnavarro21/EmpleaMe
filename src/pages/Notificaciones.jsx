@@ -11,7 +11,21 @@ function getRoleFromPath(pathname) {
   return "estudiante";
 }
 
-function getNotifLink(tipo, role) {
+function getNotifLink(tipo, role, referenciaId) {
+  // Notificación de seguidor: navegar al perfil del usuario que te siguió
+  if (tipo === "seguidor" && referenciaId) {
+    const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+    // Necesitamos saber el rol del seguidor para armar el link correcto.
+    // Como no lo tenemos, usamos la ruta de candidato (funciona para ambos roles
+    // ya que PerfilCandidato soporta empresas y estudiantes).
+    const prefix = role === "empresa" ? "empresa" : role === "admin" ? "admin" : "estudiante";
+    return `/${prefix}/candidato/${referenciaId}`;
+  }
+  if (tipo === "seguidor") {
+    // Sin referencia_id: ir a la página de seguidores
+    return role === "empresa" ? "/empresa/seguidores" : "/estudiante/seguidores";
+  }
+
   const links = {
     estudiante: {
       mensaje:               "/estudiante/mensajeria",
@@ -52,10 +66,12 @@ const TIPO_CFG = {
   postulacion_rechazada: { icon: "mdi:briefcase-remove-outline", color: "text-red-500",    colorDark: "text-red-400",    bg: "bg-red-100",     bgDark: "bg-red-500/15",     label: "Rechazado"   },
   vacante_cerrada:       { icon: "mdi:close-circle-outline",     color: "text-orange-500", colorDark: "text-orange-400", bg: "bg-orange-100",  bgDark: "bg-orange-500/15",  label: "Vacante"     },
   practica_completada:   { icon: "mdi:star-circle-outline",      color: "text-yellow-500", colorDark: "text-yellow-400", bg: "bg-yellow-100",  bgDark: "bg-yellow-500/15",  label: "Completado"  },
+  seguidor:              { icon: "mdi:account-plus-outline",     color: "text-sky-500",    colorDark: "text-sky-400",    bg: "bg-sky-100",     bgDark: "bg-sky-500/15",     label: "Seguidor"    },
 };
 
 const FILTROS = [
   { key: "todas",                label: "Todas"        },
+  { key: "seguidor",             label: "Seguidores"   },
   { key: "mensaje",              label: "Mensajes"     },
   { key: "comentario",           label: "Comentarios"  },
   { key: "postulacion_aceptada", label: "Aceptadas"    },
@@ -172,7 +188,7 @@ export default function Notificaciones() {
             const cfg  = TIPO_CFG[n.tipo] || { icon: "mdi:bell-outline", color: "text-blue-500", colorDark: "text-blue-400", bg: "bg-blue-100", bgDark: "bg-blue-500/15", label: n.tipo };
             const cfgBg    = isDark ? cfg.bgDark    : cfg.bg;
             const cfgColor = isDark ? cfg.colorDark : cfg.color;
-            const link = getNotifLink(n.tipo, role);
+            const link = getNotifLink(n.tipo, role, n.referencia_id);
             return (
               <div
                 key={n.id}

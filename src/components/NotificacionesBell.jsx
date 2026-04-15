@@ -4,7 +4,15 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 import { getNotificaciones, marcarNotificacionesLeidas } from "../services/api";
 
-function getNotifLink(tipo, role) {
+function getNotifLink(tipo, role, referenciaId) {
+  if (tipo === "seguidor" && referenciaId) {
+    const prefix = role === "empresa" ? "empresa" : role === "admin" ? "admin" : "estudiante";
+    return `/${prefix}/candidato/${referenciaId}`;
+  }
+  if (tipo === "seguidor") {
+    return role === "empresa" ? "/empresa/seguidores" : "/estudiante/seguidores";
+  }
+
   const links = {
     estudiante: {
       mensaje:               "/estudiante/mensajeria",
@@ -45,6 +53,7 @@ const TIPO_CFG = {
   postulacion_rechazada: { icon: "mdi:briefcase-remove-outline", color: "text-red-400",    bg: "bg-red-500/15"     },
   vacante_cerrada:       { icon: "mdi:close-circle-outline",     color: "text-orange-400", bg: "bg-orange-500/15"  },
   practica_completada:   { icon: "mdi:star-circle-outline",      color: "text-yellow-400", bg: "bg-yellow-500/15"  },
+  seguidor:              { icon: "mdi:account-plus-outline",     color: "text-sky-400",    bg: "bg-sky-500/15"     },
 };
 
 function tiempoRelativo(fecha) {
@@ -177,7 +186,7 @@ export default function NotificacionesBell({ role }) {
             ) : (
               notifs.map((n) => {
                 const cfg  = TIPO_CFG[n.tipo] || { icon: "mdi:bell-outline", color: "text-blue-400", bg: "bg-blue-500/15" };
-                const link = getNotifLink(n.tipo, role);
+                const link = getNotifLink(n.tipo, role, n.referencia_id);
                 return (
                   <div
                     key={n.id}

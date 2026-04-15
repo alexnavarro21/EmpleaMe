@@ -833,3 +833,46 @@ export async function getResumenIA(estudianteId, vacanteId) {
   return data; // { resumen, desde_cache }
 }
 
+// ── Seguidores ────────────────────────────────────────────────────────────────
+
+// Seguir / dejar de seguir a un usuario
+export async function toggleSeguir(usuarioId) {
+  const res = await fetch(`${BASE_URL}/seguidores/${usuarioId}/toggle`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al seguir usuario");
+  return data; // { siguiendo: true|false }
+}
+
+// Estado de seguimiento + conteos del usuario :id
+export async function getEstadoSeguimiento(usuarioId) {
+  const res = await fetch(`${BASE_URL}/seguidores/${usuarioId}/estado`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener estado");
+  return data; // { siguiendo, seguidores, siguiendo_count }
+}
+
+// Lista de seguidores del usuario :id
+export async function getSeguidores(usuarioId) {
+  const res = await fetch(`${BASE_URL}/seguidores/${usuarioId}/seguidores`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener seguidores");
+  return data;
+}
+
+// Lista de usuarios que sigue el usuario :id
+export async function getSiguiendo(usuarioId) {
+  const res = await fetch(`${BASE_URL}/seguidores/${usuarioId}/siguiendo`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener siguiendo");
+  return data;
+}
+

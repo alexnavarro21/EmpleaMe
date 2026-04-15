@@ -2,6 +2,21 @@ const router = require("express").Router();
 const db = require("../db");
 const { verificarToken } = require("../middleware/auth");
 
+// Detecta si la columna referencia_id existe (migración 26)
+let referenciaDisponible = null;
+async function tieneReferenciaId() {
+  if (referenciaDisponible !== null) return referenciaDisponible;
+  try {
+    const [cols] = await db.query(
+      "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='notificaciones' AND COLUMN_NAME='referencia_id' AND TABLE_SCHEMA=DATABASE() LIMIT 1"
+    );
+    referenciaDisponible = cols.length > 0;
+  } catch {
+    referenciaDisponible = false;
+  }
+  return referenciaDisponible;
+}
+
 // GET /api/notificaciones?pagina=1&porPagina=10
 router.get("/", verificarToken, async (req, res) => {
   const { id } = req.usuario;
@@ -9,6 +24,7 @@ router.get("/", verificarToken, async (req, res) => {
   const porPagina = Math.min(50, parseInt(req.query.porPagina) || 10);
   const offset    = (pagina - 1) * porPagina;
   try {
+    const conRef = await tieneReferenciaId();
     const [[{ total }]] = await db.query(
       "SELECT COUNT(*) AS total FROM notificaciones WHERE usuario_id = ?", [id]
     );
@@ -16,7 +32,7 @@ router.get("/", verificarToken, async (req, res) => {
       "SELECT COUNT(*) AS noLeidas FROM notificaciones WHERE usuario_id = ? AND leida = FALSE", [id]
     );
     const [rows] = await db.query(
-      `SELECT id, tipo, titulo, contenido, leida, creada_en
+      `SELECT id, tipo, titulo, contenido, ${conRef ? "referencia_id," : ""} leida, creada_en
        FROM notificaciones
        WHERE usuario_id = ?
        ORDER BY creada_en DESC
