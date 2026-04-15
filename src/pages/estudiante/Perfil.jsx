@@ -4,7 +4,7 @@ import { generarCV } from "../../utils/generarCV";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, SecondaryButton, FormField, PageHeader, TextAreaField, SoftSkillBar, Paginacion } from "../../components/ui";
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
-import { getEstudianteById, actualizarPerfilEstudiante, getPostulacionesEstudiante, subirFotoPerfil, getMediaUrl } from "../../services/api";
+import { getEstudianteById, actualizarPerfilEstudiante, getPostulacionesEstudiante, subirFotoPerfil, getMediaUrl, guardarCvExperiencias } from "../../services/api";
 import { REGIONES_COMUNAS, REGIONES } from "../../data/regionesComunas";
 import { validarRut, formatearRut } from "../../utils/validarRut";
 import { calcularCompletitud } from "../../utils/perfilCompletitud";
@@ -83,6 +83,17 @@ export default function EstudiantePerfil() {
         setIdiomas(data.idiomas || []);
         setHistorialAcademico(data.historial_academico || []);
         setHistorialLaboral(data.historial_laboral || []);
+        // Sincronizar favoritos desde DB si localStorage está vacío
+        if (data.cv_experiencias) {
+          try {
+            const idsDb = JSON.parse(data.cv_experiencias);
+            const lsRaw = localStorage.getItem(`favoritos_laborales_${usuario.id}`);
+            if (!lsRaw) {
+              setFavoritosLaboral(idsDb);
+              localStorage.setItem(`favoritos_laborales_${usuario.id}`, JSON.stringify(idsDb));
+            }
+          } catch {}
+        }
       }
       if (posts.status === "fulfilled") setPostulaciones(posts.value);
     }).finally(() => setLoading(false));
@@ -155,13 +166,15 @@ export default function EstudiantePerfil() {
         next = [...prev, id];
       }
       localStorage.setItem(`favoritos_laborales_${usuario.id}`, JSON.stringify(next));
+      guardarCvExperiencias(usuario.id, next).catch(() => {});
       return next;
     });
   };
 
   const nombreCarrera = careerDisplay[carrera] || carrera;
-  const habilidadesTecnicas = habilidades.filter((h) => h.categoria === "tecnica");
-  const habilidadesBlandas = habilidades.filter((h) => h.categoria === "blanda");
+  const sortHabs = (habs) => [...habs].sort((a, b) => (b.porcentaje ?? 0) - (a.porcentaje ?? 0)).slice(0, 3);
+  const habilidadesTecnicas = sortHabs(habilidades.filter((h) => h.categoria === "tecnica"));
+  const habilidadesBlandas  = sortHabs(habilidades.filter((h) => h.categoria === "blanda"));
   const laboralesFavoritos = historialLaboral.filter((l) => favoritosLaboral.includes(l.id));
 
   const rutValido = validarRut(rut);
@@ -220,7 +233,7 @@ export default function EstudiantePerfil() {
                       try {
                         const { foto_perfil } = await subirFotoPerfil(file);
                         setFotoPerfil(foto_perfil);
-                        localStorage.setItem("foto_perfil", foto_perfil || "");
+                        localStorage.setItem(`foto_perfil_${usuario.id}`, foto_perfil || "");
                       } catch (err) {
                         setSaveMsg("Error al subir foto: " + err.message);
                       } finally {
@@ -457,7 +470,7 @@ export default function EstudiantePerfil() {
                     <div className={`pt-5 border-t ${B}`}>
                       <div className="flex items-center gap-2 mb-4">
                         <Icon icon="hugeicons:brain-02" width={18} className="text-[#378ADD]" />
-                        <p className={`text-xs font-medium ${T}`}>Habilidades blandas</p>
+                        <p className={`text-xs font-medium ${T}`}>Competencias socioemocionales</p>
                         <span className={`text-xs ${M}`}>— evaluadas por docente</span>
                       </div>
                       {habilidadesBlandas.map((h) => (

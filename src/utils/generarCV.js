@@ -136,13 +136,17 @@ function buildCVHtml(datos) {
     `<div style="display:flex;align-items:center;margin-bottom:6px;font-size:10.5px;">${dot}${h.nombre}</div>`
   ).join("");
 
+  const todasHabilidades = [...habilidadesBlandas, ...habilidadesTecnicas];
+  const todasHabilidadesHtml = todasHabilidades.map(h =>
+    `<div style="display:flex;align-items:center;margin-bottom:6px;font-size:10.5px;">${dot}${h.nombre}</div>`
+  ).join("");
+
   const sidebarContent = `
     <div style="color:${C.sideText};line-height:1.5;">
       ${avatarHtml}
       ${contactRows ? sideSection("Contacto", contactRows) : ""}
       ${idiomas.length ? sideSection("Idiomas", idiomasHtml) : ""}
-      ${habilidadesBlandas.length ? sideSection("Habilidades", hBlandasHtml) : ""}
-      ${habilidadesTecnicas.length ? sideSection("Hab. Técnicas", hTecnicasHtml) : ""}
+      ${todasHabilidades.length ? sideSection("Habilidades", todasHabilidadesHtml) : ""}
     </div>`;
 
   /* ── Main ────────────────────────────── */
@@ -218,13 +222,13 @@ function buildCVHtml(datos) {
       <div style="display:flex;align-items:center;gap:20px;
                   padding:24px 28px 20px 24px;background:#fff;
                   border-bottom:3px solid ${C.navy};position:relative;z-index:1;">
-        ${fotoUrl
-          ? `<img src="${fotoUrl}" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid ${C.accent};flex-shrink:0;"/>`
-          : `<div style="width:100px;height:100px;border-radius:50%;background:${C.navy};
-                         border:3px solid ${C.accent};display:flex;align-items:center;
-                         justify-content:center;font-size:38px;font-weight:800;
-                         color:#fff;flex-shrink:0;">${inicial}</div>`
-        }
+        <svg width="80" height="80" viewBox="0 0 130 130" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+          <rect width="130" height="130" rx="28" fill="#185FA5"/>
+          <rect x="32" y="48" width="66" height="48" rx="8" fill="white"/>
+          <path d="M44,48 L44,40 Q44,34 51,34 L79,34 Q86,34 86,40 L86,48" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round"/>
+          <rect x="32" y="69" width="66" height="4" fill="#B5D4F4"/>
+          <polyline points="44,73 57,86 86,59" fill="none" stroke="#185FA5" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
         <div>
           <div style="font-size:26px;font-weight:300;color:${C.textDark};letter-spacing:1px;line-height:1.1;">
             ${primerNombre} <span style="font-weight:800;color:${C.navy};">${apellidos}</span>

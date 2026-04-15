@@ -4,17 +4,19 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 import { getComentarios, crearComentario, iniciarConversacionConEmpresa, postularAVacante } from "../services/api";
 
-const TIPO_BADGE = {
-  logro:      { label: "Logro",      color: "bg-yellow-100 text-yellow-700" },
-  evaluacion: { label: "Evaluación", color: "bg-green-100 text-green-700"   },
-  match:      { label: "Match",      color: "bg-blue-100 text-blue-700"     },
-  general:    { label: "General",    color: "bg-blue-100 text-blue-700"     },
-};
+function TIPO_BADGE(isDark) {
+  return {
+    logro:      { label: "Logro",      color: isDark ? "bg-yellow-500/15 text-yellow-400" : "bg-yellow-100 text-yellow-700" },
+    evaluacion: { label: "Evaluación", color: isDark ? "bg-green-500/15 text-green-400"  : "bg-green-100 text-green-700"   },
+    match:      { label: "Match",      color: isDark ? "bg-blue-500/15 text-blue-400"    : "bg-blue-100 text-blue-700"     },
+    general:    { label: "General",    color: isDark ? "bg-blue-500/15 text-blue-400"    : "bg-blue-100 text-blue-700"     },
+  };
+}
 
-function badgeVacante(vacante_tipo) {
+function badgeVacante(vacante_tipo, isDark) {
   return vacante_tipo === "puesto_laboral"
-    ? { label: "Puesto laboral", color: "bg-green-100 text-green-700" }
-    : { label: "Práctica",       color: "bg-orange-100 text-orange-700" };
+    ? { label: "Puesto laboral", color: isDark ? "bg-green-500/15 text-green-400"  : "bg-green-100 text-green-700"  }
+    : { label: "Práctica",       color: isDark ? "bg-orange-500/15 text-orange-400": "bg-orange-100 text-orange-700" };
 }
 
 function tiempoRelativo(fecha) {
@@ -49,8 +51,8 @@ export default function VerMasModal({ pub, onClose }) {
     return `${BASE_URL}/uploads/${url}`;
   }
   const badge = pub.tipo === "vacante"
-    ? badgeVacante(pub.vacante_tipo)
-    : (TIPO_BADGE[pub.tipo] || { label: pub.tipo, color: "bg-blue-100 text-blue-700" });
+    ? badgeVacante(pub.vacante_tipo, isDark)
+    : (TIPO_BADGE(isDark)[pub.tipo] || { label: pub.tipo, color: isDark ? "bg-blue-500/15 text-blue-400" : "bg-blue-100 text-blue-700" });
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
   useEffect(() => {
@@ -106,9 +108,13 @@ export default function VerMasModal({ pub, onClose }) {
         {/* Header */}
         <div className={`flex items-center justify-between px-5 py-4 border-b ${B}`}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white font-semibold text-sm">
-              {pub.autor_nombre?.charAt(0).toUpperCase() || "?"}
-            </div>
+            {pub.autor_foto_perfil ? (
+              <img src={resolverMedia(pub.autor_foto_perfil)} className="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                {pub.autor_nombre?.charAt(0).toUpperCase() || "?"}
+              </div>
+            )}
             <div>
               <p className={`text-sm font-semibold ${T}`}>{pub.autor_nombre}</p>
               <p className={`text-xs ${M}`}>{tiempoRelativo(pub.publicado_en)}</p>
@@ -195,11 +201,11 @@ export default function VerMasModal({ pub, onClose }) {
                 disabled={estadoPostula !== "idle" || !pub.vacante_activa}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
                   estadoPostula === "ok"
-                    ? "bg-green-100 text-green-700 cursor-default"
+                    ? isDark ? "bg-green-500/15 text-green-400 cursor-default" : "bg-green-100 text-green-700 cursor-default"
                     : estadoPostula === "duplicado"
-                    ? "bg-amber-100 text-amber-700 cursor-default"
+                    ? isDark ? "bg-amber-500/15 text-amber-400 cursor-default" : "bg-amber-100 text-amber-700 cursor-default"
                     : estadoPostula === "error"
-                    ? "bg-red-100 text-red-700"
+                    ? isDark ? "bg-red-500/15 text-red-400" : "bg-red-100 text-red-700"
                     : "bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white"
                 }`}
               >
@@ -242,9 +248,13 @@ export default function VerMasModal({ pub, onClose }) {
               <div className="flex flex-col gap-3 mb-4">
                 {comentarios.map((c) => (
                   <div key={c.id} className="flex gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                      {c.autor_nombre?.charAt(0).toUpperCase() || "?"}
-                    </div>
+                    {c.autor_foto_perfil ? (
+                      <img src={resolverMedia(c.autor_foto_perfil)} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                        {c.autor_nombre?.charAt(0).toUpperCase() || "?"}
+                      </div>
+                    )}
                     <div className={`flex-1 px-3 py-2 rounded-xl ${S}`}>
                       <div className="flex items-center gap-2 mb-0.5">
                         <span className={`text-xs font-semibold ${T}`}>{c.autor_nombre}</span>

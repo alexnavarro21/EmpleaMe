@@ -74,8 +74,10 @@ export default function EmpresaPerfilCandidato() {
   }
 
   const nombreCarrera = careerDisplay[student.carrera] || student.carrera;
-  const habilidadesTecnicas = (student.habilidades || []).filter((h) => h.categoria === "tecnica");
-  const habilidadesBlandas = (student.habilidades || []).filter((h) => h.categoria === "blanda");
+
+  const sortHabs = (habs) => [...habs].sort((a, b) => (b.porcentaje ?? 0) - (a.porcentaje ?? 0)).slice(0, 3);
+  const habilidadesTecnicas = sortHabs((student.habilidades || []).filter((h) => h.categoria === "tecnica"));
+  const habilidadesBlandas  = sortHabs((student.habilidades || []).filter((h) => h.categoria === "blanda"));
 
   const descargarCV = async () => {
     if (generandoCV) return;
@@ -95,7 +97,14 @@ export default function EmpresaPerfilCandidato() {
         idiomas:   student.idiomas   || [],
         habilidadesBlandas:  habilidadesBlandas,
         habilidadesTecnicas: habilidadesTecnicas,
-        experiencia: student.historial_laboral  || [],
+        experiencia: (() => {
+          const todos = student.historial_laboral || [];
+          try {
+            const ids = student.cv_experiencias ? JSON.parse(student.cv_experiencias) : null;
+            if (ids && ids.length > 0) return todos.filter(e => ids.includes(e.id));
+          } catch {}
+          return todos;
+        })(),
         formacion:   student.historial_academico || [],
       });
     } finally {
@@ -259,7 +268,7 @@ export default function EmpresaPerfilCandidato() {
             <Card>
               <h3 className={`text-sm font-semibold ${T} mb-4 flex items-center gap-2`}>
                 <Icon icon="hugeicons:brain-02" width={16} className="text-[#378ADD]" />
-                Habilidades blandas
+                Competencias socioemocionales
                 <span className={`text-xs font-normal ${M}`}>— evaluadas por docente</span>
               </h3>
               {habilidadesBlandas.map((h) => (

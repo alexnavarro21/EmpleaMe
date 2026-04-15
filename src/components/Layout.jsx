@@ -18,7 +18,7 @@ const navLinks = {
     { to: "/empresa/inicio", label: "Inicio" },
     { to: "/empresa/dashboard", label: "Panel" },
     { to: "/empresa/publicar", label: "Publicar Vacante" },
-    { to: "/empresa/buscador", label: "Búsqueda" },
+    { to: "/empresa/buscar", label: "Búsqueda" },
   ],
   admin: [
     { to: "/admin/inicio", label: "Inicio" },

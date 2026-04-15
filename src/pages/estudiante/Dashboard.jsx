@@ -447,11 +447,149 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted }) {
   );
 }
 
+function TallerVerMasModal({ taller, isDark, perfilCompleto, onClose }) {
+  const [estadoInscripcion, setEstadoInscripcion] = useState("idle");
+  const T  = isDark ? "text-[#D3D1C7]"   : "text-[#2C2C2A]";
+  const M  = isDark ? "text-[#888780]"   : "text-[#5F5E5A]";
+  const B  = isDark ? "border-[#3a3a38]" : "border-[#E8E6E1]";
+  const BG = isDark ? "bg-[#1e1e1c]"     : "bg-white";
+  const S  = isDark ? "bg-[#262624]"     : "bg-[#F7F6F3]";
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+
+  const gratuito = !taller.costo || Number(taller.costo) === 0;
+  const costoStr = gratuito ? "Gratuito" : `$${Number(taller.costo).toLocaleString("es-CL")}`;
+  const puedeInscribirse = usuario.rol === "estudiante"
+    && (taller.esta_activo === true || taller.esta_activo === 1)
+    && (taller.permite_inscripcion === true || taller.permite_inscripcion === 1);
+
+  const handleInscribirse = async () => {
+    if (estadoInscripcion !== "idle") return;
+    if (!perfilCompleto) { setEstadoInscripcion("incompleto"); return; }
+    setEstadoInscripcion("loading");
+    try {
+      await inscribirseEnTaller(taller.id);
+      setEstadoInscripcion("ok");
+    } catch (err) {
+      const msg = err.message?.toLowerCase();
+      if (msg?.includes("ya estás")) setEstadoInscripcion("duplicado");
+      else if (msg?.includes("cupos")) setEstadoInscripcion("sin_cupos");
+      else setEstadoInscripcion("error");
+    }
+  };
+
+  const infoItems = [
+    taller.area      && { icon: "mdi:tag-outline",            label: taller.area,     color: "text-purple-500" },
+    taller.modalidad && { icon: "mdi:map-marker-outline",     label: taller.modalidad },
+    taller.duracion  && { icon: "mdi:clock-outline",          label: taller.duracion  },
+    taller.horario   && { icon: "mdi:calendar-clock-outline", label: taller.horario   },
+    taller.cupos != null && { icon: "mdi:account-group-outline", label: `${taller.cupos_disponibles ?? taller.cupos} cupos disponibles` },
+    taller.fecha_inicio && { icon: "mdi:calendar-start", label: new Date(taller.fecha_inicio).toLocaleDateString("es-CL") },
+    { icon: gratuito ? "mdi:gift-outline" : "mdi:currency-usd", label: costoStr, color: gratuito ? "text-green-500" : "text-amber-500" },
+  ].filter(Boolean);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
+      <div className={`relative w-full max-w-lg max-h-[88vh] flex flex-col rounded-2xl shadow-2xl border ${B} ${BG}`} onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className={`px-5 py-4 border-b ${B} flex items-start justify-between gap-3`}>
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
+              <Icon icon="mdi:school-outline" width={20} className="text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={`text-base font-semibold ${T} leading-snug`}>{taller.titulo}</p>
+              <p className={`text-xs ${M}`}>C.E. Cardenal J.M. Caro</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${taller.esta_activo ? "bg-green-500/15 text-green-400" : "bg-red-500/15 text-red-400"}`}>
+              {taller.esta_activo ? "Activo" : "Cerrado"}
+            </span>
+            <button onClick={onClose} className={`p-1.5 rounded-lg transition-colors ${M}`}>
+              <Icon icon="mdi:close" width={18} />
+            </button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="overflow-y-auto flex-1 px-5 py-4 flex flex-col gap-4">
+          <div className={`flex flex-wrap gap-3 p-3 rounded-xl border ${B} ${S}`}>
+            {infoItems.map((item, i) => (
+              <div key={i} className="flex items-center gap-1.5">
+                <Icon icon={item.icon} width={14} className={item.color || M} />
+                <span className={`text-xs ${item.color || M} capitalize`}>{item.label}</span>
+              </div>
+            ))}
+          </div>
+          {taller.descripcion && (
+            <div>
+              <p className={`text-xs font-semibold uppercase tracking-wide ${M} mb-1.5`}>Descripción</p>
+              <p className={`text-sm leading-relaxed ${T}`}>{taller.descripcion}</p>
+            </div>
+          )}
+          {taller.requisitos && (
+            <div>
+              <p className={`text-xs font-semibold uppercase tracking-wide ${M} mb-1.5`}>Requisitos</p>
+              <p className={`text-sm leading-relaxed ${T}`}>{taller.requisitos}</p>
+            </div>
+          )}
+          {!puedeInscribirse && usuario.rol === "estudiante" && (
+            <p className={`text-xs ${M} text-center`}>
+              {!(taller.esta_activo === true || taller.esta_activo === 1)
+                ? "Este taller no está activo actualmente."
+                : "Este taller es solo informativo, no acepta inscripciones."}
+            </p>
+          )}
+        </div>
+
+        {/* Footer */}
+        {puedeInscribirse && (
+          <div className={`px-5 py-3 border-t ${B}`}>
+            <button
+              onClick={handleInscribirse}
+              disabled={estadoInscripcion !== "idle"}
+              className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
+                estadoInscripcion === "ok"         ? (isDark ? "bg-green-500/15 text-green-400"    : "bg-green-100 text-green-700")
+                : estadoInscripcion === "duplicado"  ? (isDark ? "bg-amber-500/15 text-amber-400"   : "bg-amber-100 text-amber-700")
+                : estadoInscripcion === "sin_cupos"  ? (isDark ? "bg-red-500/15 text-red-400"      : "bg-red-100 text-red-700")
+                : estadoInscripcion === "incompleto" ? (isDark ? "bg-orange-500/15 text-orange-400" : "bg-orange-100 text-orange-700")
+                : estadoInscripcion === "error"      ? (isDark ? "bg-red-500/15 text-red-400"      : "bg-red-100 text-red-700")
+                : estadoInscripcion === "loading"    ? (isDark ? "bg-purple-500/20 text-purple-300" : "bg-purple-100 text-purple-700")
+                : "bg-purple-600 hover:bg-purple-700 text-white"
+              }`}
+            >
+              <Icon
+                icon={
+                  estadoInscripcion === "ok"         ? "mdi:check-circle-outline"   :
+                  estadoInscripcion === "duplicado"  ? "mdi:information-outline"    :
+                  estadoInscripcion === "sin_cupos"  ? "mdi:account-cancel-outline" :
+                  estadoInscripcion === "incompleto" ? "mdi:account-alert-outline"  :
+                  estadoInscripcion === "error"      ? "mdi:alert-circle-outline"   :
+                  estadoInscripcion === "loading"    ? "mdi:loading"                : "mdi:clipboard-plus-outline"
+                }
+                width={16}
+                className={estadoInscripcion === "loading" ? "animate-spin" : ""}
+              />
+              {estadoInscripcion === "ok"         ? "¡Ya estás inscrito!"           :
+               estadoInscripcion === "duplicado"  ? "Ya estabas inscrito"           :
+               estadoInscripcion === "sin_cupos"  ? "Sin cupos disponibles"         :
+               estadoInscripcion === "incompleto" ? "Completa tu perfil primero"    :
+               estadoInscripcion === "error"      ? "Error al inscribirse"          :
+               estadoInscripcion === "loading"    ? "Inscribiendo..."               : "Inscribirse"}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function TallerCard({ taller, isDark, perfilCompleto, onDeleted }) {
   const [estadoInscripcion, setEstadoInscripcion] = useState("idle"); // idle | loading | ok | duplicado | sin_cupos | error | incompleto
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [confirmarEliminar, setConfirmarEliminar] = useState(false);
   const [eliminando, setEliminando] = useState(false);
+  const [verMas, setVerMas] = useState(false);
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
   const T  = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
@@ -633,7 +771,7 @@ function TallerCard({ taller, isDark, perfilCompleto, onDeleted }) {
           <Icon icon="mdi:thumb-up-outline" width={16} />
           Me interesa
         </button>
-        <button className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${HV} ${M}`}>
+        <button onClick={() => setVerMas(true)} className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${HV} ${M}`}>
           <Icon icon="mdi:information-outline" width={16} />
           Ver más
         </button>
@@ -679,6 +817,14 @@ function TallerCard({ taller, isDark, perfilCompleto, onDeleted }) {
           </div>
         )}
       </div>
+      {verMas && (
+        <TallerVerMasModal
+          taller={taller}
+          isDark={isDark}
+          perfilCompleto={perfilCompleto}
+          onClose={() => setVerMas(false)}
+        />
+      )}
     </div>
   );
 }
@@ -1145,8 +1291,8 @@ export default function EstudianteDashboard() {
               </div>
               {talleres.filter(t => t.esta_activo).slice(0, 3).map((t, i, arr) => (
                 <div key={t.id} className={`flex items-center gap-2.5 ${i < arr.length - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}>
-                  <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                    <Icon icon="mdi:school-outline" width={14} className="text-purple-600" />
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? "bg-purple-500/15" : "bg-purple-100"}`}>
+                    <Icon icon="mdi:school-outline" width={14} className={isDark ? "text-purple-400" : "text-purple-600"} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className={`text-xs font-medium ${T} truncate`}>{t.titulo}</p>
@@ -1165,7 +1311,7 @@ export default function EstudianteDashboard() {
             <div className={`rounded-xl border ${B} ${BG} p-4`}>
               <p className={`text-xs font-semibold ${T} mb-3`}>Cobertura de evaluaciones</p>
               <div className="flex items-center gap-2 mb-2">
-                <div className="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden">
+                <div className={`flex-1 h-2 rounded-full overflow-hidden ${isDark ? "bg-[#3a3a38]" : "bg-gray-200"}`}>
                   <div
                     className="h-2 rounded-full bg-purple-500 transition-all"
                     style={{ width: `${adminStats.total_estudiantes > 0 ? Math.round((adminStats.estudiantes_evaluados / adminStats.total_estudiantes) * 100) : 0}%` }}
@@ -1230,7 +1376,7 @@ export default function EstudianteDashboard() {
           <div className="flex items-center justify-between mb-3">
             <p className={`text-xs font-semibold ${T}`}>Mensajes</p>
             {estudianteConversaciones.some((c) => c.no_leidos > 0) && (
-              <span className="text-xs bg-red-100 text-red-600 font-semibold px-2 py-0.5 rounded-full">
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isDark ? "bg-red-500/15 text-red-400" : "bg-red-100 text-red-600"}`}>
                 {estudianteConversaciones.reduce((a, c) => a + (c.no_leidos || 0), 0)} sin leer
               </span>
             )}

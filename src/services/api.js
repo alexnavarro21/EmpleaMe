@@ -94,6 +94,13 @@ export async function eliminarHabilidad(id) {
 
 // ── Vacantes ──────────────────────────────────────────────────────────────────
 
+export async function getVacantes() {
+  const res = await fetch(`${BASE_URL}/vacantes`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener vacantes");
+  return data;
+}
+
 export async function getVacantesEmpresa(empresaId) {
   const res = await fetch(`${BASE_URL}/vacantes/empresa/${empresaId}`, {
     headers: authHeaders(),
@@ -203,6 +210,15 @@ export async function actualizarPerfilEstudiante(id, datos) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al actualizar perfil");
   return data;
+}
+
+export async function guardarCvExperiencias(estudianteId, ids) {
+  const res = await fetch(`${BASE_URL}/perfiles/estudiante/${estudianteId}/cv-experiencias`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify({ ids }),
+  });
+  if (!res.ok) throw new Error("Error al guardar selección de CV");
 }
 
 export async function subirFotoPerfil(archivo) {

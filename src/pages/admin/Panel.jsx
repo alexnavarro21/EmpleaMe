@@ -7,7 +7,7 @@ import { getAdminStats } from "../../services/api";
 
 const quickLinks = [
   { to: "/admin/usuarios", icon: "mdi:account-group-outline", label: "Gestión de usuarios", desc: "Ver y administrar cuentas" },
-  { to: "/admin/evaluaciones", icon: "mdi:clipboard-list-outline", label: "Registrar evaluaciones", desc: "Competencias técnicas y blandas" },
+  { to: "/admin/evaluaciones", icon: "mdi:clipboard-list-outline", label: "Registrar evaluaciones", desc: "Competencias técnicas y socioemocionales" },
   { to: "/admin/notas", icon: "icon-park-outline:excel", label: "Importar notas", desc: "Excel / CSV con calificaciones" },
   { to: "/admin/tests", icon: "hugeicons:brain-02", label: "Tests socioemocionales", desc: "Cargar y asignar tests" },
   { to: "/admin/talleres", icon: "mdi:school-outline", label: "Gestión de talleres", desc: "Crear y administrar talleres" },

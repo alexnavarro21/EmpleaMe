@@ -7,7 +7,10 @@ const upload = require("../middleware/multerConfig");
 router.get("/estudiante/:id", verificarToken, async (req, res) => {
   try {
     const [perfil] = await db.query(
-      "SELECT * FROM perfiles_estudiantes WHERE usuario_id = ?",
+      `SELECT pe.*, u.correo
+       FROM perfiles_estudiantes pe
+       JOIN usuarios u ON u.id = pe.usuario_id
+       WHERE pe.usuario_id = ?`,
       [req.params.id]
     );
     if (perfil.length === 0)
@@ -49,6 +52,21 @@ router.get("/estudiante/:id", verificarToken, async (req, res) => {
     );
 
     res.json({ ...perfil[0], habilidades, portafolio, idiomas, historial_academico, historial_laboral });
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// PATCH /api/perfiles/estudiante/:id/cv-experiencias — guarda IDs favoritos para el CV
+router.patch("/estudiante/:id/cv-experiencias", verificarToken, async (req, res) => {
+  const { ids } = req.body; // array de IDs
+  if (!Array.isArray(ids)) return res.status(400).json({ error: "ids debe ser un array" });
+  try {
+    await db.query(
+      "UPDATE perfiles_estudiantes SET cv_experiencias = ? WHERE usuario_id = ?",
+      [JSON.stringify(ids), req.params.id]
+    );
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }

@@ -2,13 +2,15 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
-import { getPostulantesPorVacante, actualizarEstadoPostulacion, iniciarConversacion, getResumenIA } from "../services/api";
+import { getPostulantesPorVacante, actualizarEstadoPostulacion, iniciarConversacion, getResumenIA, getMediaUrl } from "../services/api";
 
-const estadoConfig = {
-  pendiente:  { label: "Pendiente",  color: "bg-blue-100 text-blue-700"   },
-  aceptado:   { label: "Aceptado",   color: "bg-green-100 text-green-700" },
-  rechazado:  { label: "Rechazado",  color: "bg-red-100 text-red-700"     },
-};
+function estadoConfig(isDark) {
+  return {
+    pendiente:  { label: "Pendiente",  color: isDark ? "bg-blue-500/15 text-blue-400"  : "bg-blue-100 text-blue-700"   },
+    aceptado:   { label: "Aceptado",   color: isDark ? "bg-green-500/15 text-green-400": "bg-green-100 text-green-700" },
+    rechazado:  { label: "Rechazado",  color: isDark ? "bg-red-500/15 text-red-400"    : "bg-red-100 text-red-700"     },
+  };
+}
 
 function tiempoRelativo(fecha) {
   const diff = Math.floor((Date.now() - new Date(fecha)) / 1000);
@@ -122,17 +124,17 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
                 <span className="font-semibold text-[#378ADD]">{postulantes.length}</span> postulantes
               </span>
               {counts.pendiente > 0 && (
-                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                <span className={`text-xs px-2 py-0.5 rounded-full ${isDark ? "bg-blue-500/15 text-blue-400" : "bg-blue-100 text-blue-700"}`}>
                   {counts.pendiente} pendiente{counts.pendiente > 1 ? "s" : ""}
                 </span>
               )}
               {counts.aceptado > 0 && (
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                <span className={`text-xs px-2 py-0.5 rounded-full ${isDark ? "bg-green-500/15 text-green-400" : "bg-green-100 text-green-700"}`}>
                   {counts.aceptado} aceptado{counts.aceptado > 1 ? "s" : ""}
                 </span>
               )}
               {counts.rechazado > 0 && (
-                <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
+                <span className={`text-xs px-2 py-0.5 rounded-full ${isDark ? "bg-red-500/15 text-red-400" : "bg-red-100 text-red-700"}`}>
                   {counts.rechazado} rechazado{counts.rechazado > 1 ? "s" : ""}
                 </span>
               )}
@@ -161,7 +163,7 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
           ) : (
             <div className="flex flex-col gap-3">
               {postulantes.map((p) => {
-                const cfg = estadoConfig[p.estado] || estadoConfig.pendiente;
+                const cfg = estadoConfig(isDark)[p.estado] || estadoConfig(isDark).pendiente;
                 const actualizando = actualizandoId === p.id;
                 return (
                   <div
@@ -170,9 +172,13 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
                   >
                     <div className="flex items-center gap-3 p-3">
                       {/* Avatar */}
-                      <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                        {p.nombre_completo?.charAt(0).toUpperCase() || "?"}
-                      </div>
+                      {p.foto_perfil ? (
+                        <img src={getMediaUrl(p.foto_perfil)} className="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                          {p.nombre_completo?.charAt(0).toUpperCase() || "?"}
+                        </div>
+                      )}
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">
@@ -215,14 +221,14 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
                             <button
                               onClick={() => handleEstado(p.id, "aceptado")}
                               title="Aceptar"
-                              className="text-xs px-2.5 py-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors font-medium"
+                              className={`text-xs px-2.5 py-1.5 rounded-lg transition-colors font-medium ${isDark ? "bg-green-500/15 text-green-400 hover:bg-green-500/25" : "bg-green-100 text-green-700 hover:bg-green-200"}`}
                             >
                               Aceptar
                             </button>
                             <button
                               onClick={() => handleEstado(p.id, "rechazado")}
                               title="Rechazar"
-                              className="text-xs px-2.5 py-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-colors font-medium"
+                              className={`text-xs px-2.5 py-1.5 rounded-lg transition-colors font-medium ${isDark ? "bg-red-500/15 text-red-400 hover:bg-red-500/25" : "bg-red-100 text-red-700 hover:bg-red-200"}`}
                             >
                               Rechazar
                             </button>

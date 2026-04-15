@@ -12,6 +12,11 @@ router.get("/", verificarToken, async (req, res) => {
                 WHEN 'estudiante' THEN est.nombre_completo
                 ELSE 'Centro Educacional'
               END AS autor_nombre,
+              CASE u.rol
+                WHEN 'empresa'    THEN pe.foto_perfil
+                WHEN 'estudiante' THEN est.foto_perfil
+                ELSE NULL
+              END AS autor_foto_perfil,
               u.rol AS autor_rol
        FROM comentarios c
        JOIN usuarios u ON u.id = c.autor_id

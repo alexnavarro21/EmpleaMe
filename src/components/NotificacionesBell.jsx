@@ -38,13 +38,13 @@ function getNotifLink(tipo, role) {
 }
 
 const TIPO_CFG = {
-  mensaje:               { icon: "mdi:message-outline",          color: "text-blue-500",   bg: "bg-blue-100"    },
-  comentario:            { icon: "mdi:comment-account-outline",  color: "text-purple-500", bg: "bg-purple-100"  },
-  postulacion_nueva:     { icon: "mdi:briefcase-plus-outline",   color: "text-teal-600",   bg: "bg-teal-100"    },
-  postulacion_aceptada:  { icon: "mdi:briefcase-check-outline",  color: "text-green-600",  bg: "bg-green-100"   },
-  postulacion_rechazada: { icon: "mdi:briefcase-remove-outline", color: "text-red-500",    bg: "bg-red-100"     },
-  vacante_cerrada:       { icon: "mdi:close-circle-outline",     color: "text-orange-500", bg: "bg-orange-100"  },
-  practica_completada:   { icon: "mdi:star-circle-outline",      color: "text-yellow-500", bg: "bg-yellow-100"  },
+  mensaje:               { icon: "mdi:message-outline",          color: "text-blue-400",   bg: "bg-blue-500/15"    },
+  comentario:            { icon: "mdi:comment-account-outline",  color: "text-purple-400", bg: "bg-purple-500/15"  },
+  postulacion_nueva:     { icon: "mdi:briefcase-plus-outline",   color: "text-teal-400",   bg: "bg-teal-500/15"    },
+  postulacion_aceptada:  { icon: "mdi:briefcase-check-outline",  color: "text-green-400",  bg: "bg-green-500/15"   },
+  postulacion_rechazada: { icon: "mdi:briefcase-remove-outline", color: "text-red-400",    bg: "bg-red-500/15"     },
+  vacante_cerrada:       { icon: "mdi:close-circle-outline",     color: "text-orange-400", bg: "bg-orange-500/15"  },
+  practica_completada:   { icon: "mdi:star-circle-outline",      color: "text-yellow-400", bg: "bg-yellow-500/15"  },
 };
 
 function tiempoRelativo(fecha) {
@@ -176,7 +176,7 @@ export default function NotificacionesBell({ role }) {
               </div>
             ) : (
               notifs.map((n) => {
-                const cfg  = TIPO_CFG[n.tipo] || { icon: "mdi:bell-outline", color: "text-blue-500", bg: "bg-blue-100" };
+                const cfg  = TIPO_CFG[n.tipo] || { icon: "mdi:bell-outline", color: "text-blue-400", bg: "bg-blue-500/15" };
                 const link = getNotifLink(n.tipo, role);
                 return (
                   <div

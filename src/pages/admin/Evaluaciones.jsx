@@ -279,7 +279,7 @@ function TabEditarEstudiante({ estudiantes, habilidades, isDark }) {
     setSaving(true); setMsg("");
     try {
       await asignarHabilidadesTecnicas({ estudiante_id: Number(selectedId), habilidades: payload, modo: "blandas" });
-      setMsg("Habilidades blandas guardadas");
+      setMsg("Competencias socioemocionales guardadas");
     } catch (e) { setMsg("Error: " + e.message); }
     finally { setSaving(false); }
   }
@@ -372,7 +372,7 @@ function TabEditarEstudiante({ estudiantes, habilidades, isDark }) {
 
   const SUB_TABS = [
     { key: "tecnicas",  label: "Técnicas",  icon: "mdi:wrench-outline" },
-    { key: "blandas",   label: "Blandas",   icon: "mdi:account-heart-outline" },
+    { key: "blandas",   label: "Socioemocionales", icon: "mdi:account-heart-outline" },
     { key: "idiomas",   label: "Idiomas",   icon: "mdi:translate" },
     { key: "historial", label: "Historial", icon: "mdi:briefcase-outline" },
   ];
@@ -472,7 +472,7 @@ function TabEditarEstudiante({ estudiantes, habilidades, isDark }) {
                   <p className="text-sm">Busca un estudiante arriba para comenzar</p>
                 </div>
               ) : blandas.length === 0 ? (
-                <p className={`text-xs ${M}`}>Sin habilidades blandas en el catálogo</p>
+                <p className={`text-xs ${M}`}>Sin competencias socioemocionales en el catálogo</p>
               ) : (
                 <div className={`rounded-xl border ${B} overflow-hidden`}>
                   <div className={`px-4 py-2.5 text-xs font-semibold ${M} ${S} border-b ${B} flex items-center`}>
@@ -515,16 +515,16 @@ function TabEditarEstudiante({ estudiantes, habilidades, isDark }) {
               {selectedId && (
                 <div className="mt-4">
                   <PrimaryButton onClick={handleGuardarBlandas} disabled={saving} className="w-full">
-                    {saving ? "Guardando..." : totalBlandas > 0 ? `Guardar ${totalBlandas} blandas` : "Guardar (quitar todas)"}
+                    {saving ? "Guardando..." : totalBlandas > 0 ? `Guardar ${totalBlandas} socioemocionales` : "Guardar (quitar todas)"}
                   </PrimaryButton>
                 </div>
               )}
             </Card>
           </div>
           <Card>
-            <h3 className={`text-sm font-semibold ${T} mb-3`}>Blandas actuales</h3>
+            <h3 className={`text-sm font-semibold ${T} mb-3`}>Socioemocionales actuales</h3>
             {currentSkills.filter((h) => h.categoria === "blanda").length === 0 ? (
-              <p className={`text-xs ${M}`}>{selectedId ? "Sin blandas asignadas" : "Busca un estudiante"}</p>
+              <p className={`text-xs ${M}`}>{selectedId ? "Sin competencias socioemocionales asignadas" : "Busca un estudiante"}</p>
             ) : (
               currentSkills.filter((h) => h.categoria === "blanda").map((h, i) => (
                 <div key={i} className={`flex justify-between items-center py-1.5 border-b ${B} last:border-0`}>
@@ -780,7 +780,7 @@ function TabEvaluacion({ estudiantes, habilidades, isDark }) {
           {blandas.length > 0 && (
             <div className={`p-4 rounded-xl ${S} mb-4`}>
               <div className="flex justify-between mb-3">
-                <h4 className={`text-sm font-semibold ${T}`}>Habilidades blandas</h4>
+                <h4 className={`text-sm font-semibold ${T}`}>Competencias socioemocionales</h4>
                 <span className="text-xs text-[#378ADD]">Prom: {softAvg}</span>
               </div>
               {blandas.map((h) => (
@@ -869,7 +869,7 @@ function TabTests({ isDark }) {
           </div>
           {dlError && <p className="text-xs text-red-400 mb-2">Error: {dlError}</p>}
           <p className={`text-xs ${M} mb-4`}>
-            La plantilla tiene una fila por estudiante. Las columnas son <strong>Correo</strong>, <strong>Nombre</strong> y luego una columna por cada habilidad blanda. Rellena las celdas con un porcentaje de <strong>0 a 100</strong>; las celdas vacías se omiten.
+            La plantilla tiene una fila por estudiante. Las columnas son <strong>Correo</strong>, <strong>Nombre</strong> y luego una columna por cada competencia socioemocional. Rellena las celdas con un porcentaje de <strong>0 a 100</strong>; las celdas vacías se omiten.
           </p>
 
           <div
@@ -1152,7 +1152,7 @@ function TabHabilidades({ habilidades, onRefresh, isDark }) {
                   className={`${inputCls} w-32`}
                 >
                   <option value="tecnica">Técnica</option>
-                  <option value="blanda">Blanda</option>
+                  <option value="blanda">Socioemocional</option>
                 </select>
                 <button onClick={handleEditar} disabled={guardando} className="px-3 py-1.5 text-xs rounded-lg bg-[#0F4D8A] text-white hover:bg-[#0A3A6A] transition-colors disabled:opacity-50">
                   {guardando ? "..." : "Guardar"}
@@ -1207,7 +1207,7 @@ function TabHabilidades({ habilidades, onRefresh, isDark }) {
             <label className={`block text-xs mb-1 ${M}`}>Categoría</label>
             <select value={categoria} onChange={(e) => setCategoria(e.target.value)} className={inputCls}>
               <option value="tecnica">Técnica</option>
-              <option value="blanda">Blanda</option>
+              <option value="blanda">Socioemocional</option>
             </select>
           </div>
           <PrimaryButton onClick={handleCrear} disabled={guardando}>
@@ -1219,7 +1219,7 @@ function TabHabilidades({ habilidades, onRefresh, isDark }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <HabilidadLista lista={tecnicas} titulo="Habilidades técnicas" colorBadge="blue" />
-        <HabilidadLista lista={blandas}  titulo="Habilidades blandas"  colorBadge="green" />
+        <HabilidadLista lista={blandas}  titulo="Competencias socioemocionales"  colorBadge="green" />
       </div>
 
       {/* Modal confirmación eliminar */}
@@ -1227,8 +1227,8 @@ function TabHabilidades({ habilidades, onRefresh, isDark }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className={`rounded-2xl border shadow-xl w-full max-w-sm p-6 ${isDark ? "bg-[#262624] border-[#3a3a38]" : "bg-white border-[#D3D1C7]"}`}>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                <Icon icon="mdi:alert-outline" width={18} className="text-red-500" />
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? "bg-red-500/15" : "bg-red-100"}`}>
+                <Icon icon="mdi:alert-outline" width={18} className={isDark ? "text-red-400" : "text-red-500"} />
               </div>
               <div>
                 <p className={`text-sm font-semibold ${isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]"}`}>
