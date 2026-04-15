@@ -1227,8 +1227,8 @@ function TabHabilidades({ habilidades, onRefresh, isDark }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className={`rounded-2xl border shadow-xl w-full max-w-sm p-6 ${isDark ? "bg-[#262624] border-[#3a3a38]" : "bg-white border-[#D3D1C7]"}`}>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                <Icon icon="mdi:alert-outline" width={18} className="text-red-500" />
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? "bg-red-500/15" : "bg-red-100"}`}>
+                <Icon icon="mdi:alert-outline" width={18} className={isDark ? "text-red-400" : "text-red-500"} />
               </div>
               <div>
                 <p className={`text-sm font-semibold ${isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]"}`}>

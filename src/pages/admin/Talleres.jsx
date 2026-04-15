@@ -691,8 +691,8 @@ export default function AdminTalleres() {
             <div className="flex flex-col gap-3">
               {inscritosPendientes.slice(0, 6).map((ins) => (
                 <div key={ins.id} className={`flex items-center gap-3 p-3 rounded-lg border ${B}`}>
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-purple-100`}>
-                    <Icon icon="mynaui:user-solid" width={20} className="text-purple-600" />
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? "bg-purple-500/15" : "bg-purple-100"}`}>
+                    <Icon icon="mynaui:user-solid" width={20} className={isDark ? "text-purple-400" : "text-purple-600"} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">

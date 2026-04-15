@@ -1145,8 +1145,8 @@ export default function EstudianteDashboard() {
               </div>
               {talleres.filter(t => t.esta_activo).slice(0, 3).map((t, i, arr) => (
                 <div key={t.id} className={`flex items-center gap-2.5 ${i < arr.length - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}>
-                  <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                    <Icon icon="mdi:school-outline" width={14} className="text-purple-600" />
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? "bg-purple-500/15" : "bg-purple-100"}`}>
+                    <Icon icon="mdi:school-outline" width={14} className={isDark ? "text-purple-400" : "text-purple-600"} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className={`text-xs font-medium ${T} truncate`}>{t.titulo}</p>
@@ -1165,7 +1165,7 @@ export default function EstudianteDashboard() {
             <div className={`rounded-xl border ${B} ${BG} p-4`}>
               <p className={`text-xs font-semibold ${T} mb-3`}>Cobertura de evaluaciones</p>
               <div className="flex items-center gap-2 mb-2">
-                <div className="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden">
+                <div className={`flex-1 h-2 rounded-full overflow-hidden ${isDark ? "bg-[#3a3a38]" : "bg-gray-200"}`}>
                   <div
                     className="h-2 rounded-full bg-purple-500 transition-all"
                     style={{ width: `${adminStats.total_estudiantes > 0 ? Math.round((adminStats.estudiantes_evaluados / adminStats.total_estudiantes) * 100) : 0}%` }}
@@ -1230,7 +1230,7 @@ export default function EstudianteDashboard() {
           <div className="flex items-center justify-between mb-3">
             <p className={`text-xs font-semibold ${T}`}>Mensajes</p>
             {estudianteConversaciones.some((c) => c.no_leidos > 0) && (
-              <span className="text-xs bg-red-100 text-red-600 font-semibold px-2 py-0.5 rounded-full">
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isDark ? "bg-red-500/15 text-red-400" : "bg-red-100 text-red-600"}`}>
                 {estudianteConversaciones.reduce((a, c) => a + (c.no_leidos || 0), 0)} sin leer
               </span>
             )}
