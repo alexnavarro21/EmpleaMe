@@ -1,0 +1,371 @@
+================================================================================
+  EMPLEAME — EXPLICACIÓN DE ARCHIVOS DEL PROYECTO
+  Actualizado: 2026-04-21
+================================================================================
+
+Este archivo explica brevemente qué hace cada archivo del proyecto.
+Excluye archivos SQL, node_modules, dist y assets de imagen.
+Se debe actualizar cada vez que se añaden o modifican archivos relevantes.
+
+────────────────────────────────────────────────────────────────────────────────
+RAÍZ DEL PROYECTO
+────────────────────────────────────────────────────────────────────────────────
+
+index.html
+  - HTML base de la SPA. Solo define el <div id="root"> donde React se monta.
+
+vite.config.js
+  - Configuración de Vite (bundler). Define alias, plugins de React y puerto de dev.
+
+eslint.config.js
+  - Reglas de linting para mantener consistencia de código en el frontend.
+
+package.json (raíz)
+  - Dependencias y scripts del frontend (dev, build, preview).
+
+.gitignore (raíz)
+  - Lista de archivos/carpetas ignorados por git (node_modules, .env, dist, etc.).
+
+README.md
+  - Documentación general del proyecto (instalación, estructura, uso).
+
+Cosas a hacer (20_04).txt
+  - Notas internas del equipo con tareas pendientes (no es código).
+
+────────────────────────────────────────────────────────────────────────────────
+FRONTEND — src/
+────────────────────────────────────────────────────────────────────────────────
+
+src/main.jsx
+  - Punto de entrada de React. Monta el componente <App /> en el DOM.
+
+src/App.jsx
+  - Define todas las rutas de la aplicación con React Router.
+  - Organiza rutas por rol: estudiante, empresa, admin/centro.
+  - Envuelve todo en el proveedor de modo oscuro (DarkModeProvider).
+
+src/App.css / src/index.css
+  - Estilos globales. index.css incluye las directivas de Tailwind CSS.
+
+────────────────────────────────────────────────────────────────────────────────
+FRONTEND — src/context/
+────────────────────────────────────────────────────────────────────────────────
+
+src/context/DarkModeContext.jsx
+  - Contexto global que maneja el tema de la app: claro, oscuro o alto contraste.
+  - Persiste la preferencia en localStorage.
+  - Expone el hook useDark() para que cualquier componente lea y cambie el tema.
+
+────────────────────────────────────────────────────────────────────────────────
+FRONTEND — src/services/
+────────────────────────────────────────────────────────────────────────────────
+
+src/services/api.js
+  - Todas las llamadas HTTP al backend agrupadas por módulo.
+  - Maneja autenticación añadiendo el token JWT en cada petición.
+  - Módulos cubiertos: auth, perfiles, vacantes, postulaciones, conversaciones,
+    mensajes directos, publicaciones, comentarios, notificaciones, talleres,
+    admin, IA, seguidores.
+
+────────────────────────────────────────────────────────────────────────────────
+FRONTEND — src/utils/
+────────────────────────────────────────────────────────────────────────────────
+
+src/utils/generarCV.js
+  - Genera el CV de un estudiante en PDF y lo descarga automáticamente.
+  - Construye un HTML con diseño de dos columnas (sidebar azul + contenido).
+  - Usa html2canvas para renderizar el HTML y jsPDF para crear el PDF final.
+
+src/utils/perfilCompletitud.js
+  - Calcula el porcentaje de completitud del perfil de un estudiante (0–100%).
+  - Evalúa 8 campos: nombre, carrera, teléfono, biografía, estado civil, RUT,
+    región y comuna.
+
+src/utils/validarRut.js
+  - Valida un RUT chileno con dígito verificador (algoritmo módulo 11).
+  - También exporta formatearRut() para dar formato XX.XXX.XXX-Y al escribir.
+
+────────────────────────────────────────────────────────────────────────────────
+FRONTEND — src/data/
+────────────────────────────────────────────────────────────────────────────────
+
+src/data/regionesComunas.js
+  - Objeto estático con las 16 regiones de Chile y sus comunas.
+  - Se usa en formularios de perfil para los selectores de región/comuna.
+
+────────────────────────────────────────────────────────────────────────────────
+FRONTEND — src/components/
+────────────────────────────────────────────────────────────────────────────────
+
+src/components/Layout.jsx
+  - Navbar principal compartido por todos los roles.
+  - Muestra links de navegación según el rol del usuario logueado.
+  - Incluye menú de perfil con: foto, mis postulaciones, seguidores, mensajes,
+    notificaciones, modo oscuro/alto contraste y cierre de sesión.
+
+src/components/NotificacionesBell.jsx
+  - Ícono de campana en el navbar con badge del número de notificaciones no leídas.
+  - Al hacer clic abre un popover con las últimas notificaciones.
+  - Marca como leídas al abrir el panel.
+
+src/components/CrearPublicacion.jsx
+  - Formulario para crear una nueva publicación en el feed.
+  - Permite adjuntar archivos multimedia (imágenes, videos).
+  - Llama a la IA para moderar el contenido antes de publicar.
+
+src/components/FileUploader.jsx
+  - Componente reutilizable de carga de archivos con drag & drop.
+  - Muestra vista previa de imagen o ícono según el tipo de archivo.
+
+src/components/PublicacionesUsuario.jsx
+  - Lista las publicaciones de un usuario específico en su perfil.
+  - Permite eliminar publicaciones propias.
+
+src/components/PostulantesVacanteModal.jsx
+  - Modal que muestra la lista de postulantes a una vacante específica.
+  - Permite a la empresa cambiar el estado de cada postulación.
+
+src/components/VerMasModal.jsx
+  - Modal genérico para mostrar el texto completo de una publicación o descripción.
+
+src/components/ui.jsx
+  - Biblioteca de componentes UI reutilizables del proyecto.
+  - Incluye: botones (PrimaryButton, SecondaryButton, DangerButton), inputs,
+    badges, tarjetas y otros elementos de diseño consistentes.
+
+────────────────────────────────────────────────────────────────────────────────
+FRONTEND — src/pages/
+────────────────────────────────────────────────────────────────────────────────
+
+src/pages/Login.jsx
+  - Pantalla de inicio de sesión y registro.
+  - Maneja los roles: estudiante, empresa y centro (admin).
+  - Guarda token y datos del usuario en localStorage al autenticarse.
+
+src/pages/BuscarPerfiles.jsx
+  - Buscador de perfiles accesible desde cualquier rol.
+  - Permite buscar estudiantes y empresas con filtros.
+
+src/pages/Notificaciones.jsx
+  - Página completa de notificaciones con paginación.
+  - Muestra todas las notificaciones del usuario ordenadas por fecha.
+
+src/pages/PerfilEmpresaPublico.jsx
+  - Vista pública del perfil de una empresa, accesible sin importar el rol.
+  - Muestra información de la empresa, vacantes activas y publicaciones.
+
+src/pages/Seguidores.jsx
+  - Página que muestra los seguidores del usuario y a quiénes sigue.
+  - Permite seguir/dejar de seguir directamente desde la lista.
+
+────────────────────────────────────────────────────────────────────────────────
+FRONTEND — src/pages/estudiante/
+────────────────────────────────────────────────────────────────────────────────
+
+src/pages/estudiante/Dashboard.jsx
+  - Feed principal del estudiante (y también de empresa/admin en "Inicio").
+  - Muestra publicaciones, vacantes disponibles y talleres activos.
+  - Permite crear publicaciones, dar like y comentar.
+
+src/pages/estudiante/Perfil.jsx
+  - Página de perfil editable del estudiante.
+  - Secciones: datos personales, foto, habilidades, idiomas, experiencia,
+    formación académica y generación del CV en PDF.
+
+src/pages/estudiante/EstudianteMensajeria.jsx
+  - Chat del estudiante: conversaciones con empresas (mensajería empresa↔estudiante)
+    y mensajes directos con otros estudiantes.
+
+src/pages/estudiante/MisPostulaciones.jsx
+  - Lista todas las postulaciones del estudiante con su estado actual
+    (pendiente, aceptada, rechazada, completada).
+
+────────────────────────────────────────────────────────────────────────────────
+FRONTEND — src/pages/empresa/
+────────────────────────────────────────────────────────────────────────────────
+
+src/pages/empresa/Dashboard.jsx
+  - Panel de la empresa: lista sus vacantes publicadas.
+  - Permite ver postulantes por vacante, activar/desactivar vacantes.
+
+src/pages/empresa/Perfil.jsx
+  - Perfil editable de la empresa: nombre, descripción, teléfono, logo, etc.
+
+src/pages/empresa/PublicarVacante.jsx
+  - Formulario para crear una nueva vacante de empleo o práctica.
+  - Incluye campos: título, área, modalidad, habilidades requeridas, descripción.
+
+src/pages/empresa/BuscadorEstudiantes.jsx
+  - Buscador de estudiantes con filtros por carrera y habilidades.
+  - Permite a la empresa ver el perfil e iniciar conversación con un candidato.
+
+src/pages/empresa/PerfilCandidato.jsx
+  - Vista del perfil completo de un estudiante desde la perspectiva de empresa/admin.
+  - Muestra habilidades, idiomas, experiencia, notas de IA y permite contactar.
+
+src/pages/empresa/EmpresaMensajeria.jsx
+  - Chat de la empresa con estudiantes (conversaciones iniciadas por cualquiera).
+
+────────────────────────────────────────────────────────────────────────────────
+FRONTEND — src/pages/admin/
+────────────────────────────────────────────────────────────────────────────────
+
+src/pages/admin/Panel.jsx
+  - Panel de control del administrador/centro con KPIs generales:
+    total usuarios, estudiantes, empresas, postulaciones, etc.
+
+src/pages/admin/Usuarios.jsx
+  - Lista todos los usuarios del sistema con su rol y estado.
+  - Permite al admin activar/desactivar cuentas.
+
+src/pages/admin/Evaluaciones.jsx
+  - Gestión académica de estudiantes: asignar habilidades técnicas, subir
+    resultados de tests socioemocionales, promedios e historial académico/laboral.
+  - También importa datos masivos desde archivos Excel.
+
+src/pages/admin/ImportarNotas.jsx
+  - Subpágina o componente para importar notas desde Excel al sistema.
+
+src/pages/admin/Talleres.jsx
+  - CRUD de talleres formativos: crear, editar, activar/desactivar, eliminar.
+  - Muestra la lista de inscritos por taller y gestiona sus estados.
+
+src/pages/admin/Tests.jsx
+  - Redirige a Evaluaciones (la funcionalidad fue unificada ahí).
+
+src/pages/admin/Mensajeria.jsx
+  - Chat del administrador con estudiantes o empresas.
+  - Incluye panel lateral de notas privadas por conversación.
+
+────────────────────────────────────────────────────────────────────────────────
+BACKEND — backend/
+────────────────────────────────────────────────────────────────────────────────
+
+backend/index.js
+  - Servidor Express principal. Registra todos los routers bajo /api/*.
+  - Configura CORS y parseo de JSON. Escucha en el puerto definido en .env.
+
+backend/package.json
+  - Dependencias del backend (express, mysql2, jsonwebtoken, multer, etc.).
+
+backend/scripts/set-bucket-public.js
+  - Script utilitario de configuración de S3 (Cloudflare R2).
+  - Establece la ACL pública en el bucket para que los archivos subidos
+    sean accesibles sin autenticación.
+
+────────────────────────────────────────────────────────────────────────────────
+BACKEND — backend/src/
+────────────────────────────────────────────────────────────────────────────────
+
+backend/src/db.js
+  - Crea y exporta el pool de conexiones a MySQL (Railway).
+  - Usa variables de entorno para host, puerto, usuario y contraseña.
+
+────────────────────────────────────────────────────────────────────────────────
+BACKEND — backend/src/middleware/
+────────────────────────────────────────────────────────────────────────────────
+
+backend/src/middleware/auth.js
+  - verificarToken: middleware que valida el JWT en el header Authorization.
+  - soloRol(...roles): middleware que restringe rutas a roles específicos
+    (ej: solo "centro", solo "empresa").
+
+backend/src/middleware/multerConfig.js
+  - Configura multer para subir archivos directamente a Cloudflare R2 (S3).
+  - Los archivos se guardan en /uploads/ con nombre único y ACL pública.
+  - Límite de 50 MB por archivo.
+
+────────────────────────────────────────────────────────────────────────────────
+BACKEND — backend/src/routes/
+────────────────────────────────────────────────────────────────────────────────
+
+backend/src/routes/auth.js
+  - POST /api/auth/register — crea un nuevo usuario (estudiante, empresa, centro).
+  - POST /api/auth/login    — autentica y devuelve un token JWT.
+
+backend/src/routes/usuarios.js
+  - Gestión de cuentas de usuario: listar, activar/desactivar, cambiar rol.
+  - Usado principalmente por el admin.
+
+backend/src/routes/perfiles.js
+  - CRUD de perfiles de estudiante y empresa.
+  - GET  perfiles/estudiante/:id | perfiles/empresa/:id
+  - PUT  para actualizar datos y foto de perfil.
+
+backend/src/routes/habilidades.js
+  - CRUD de habilidades del catálogo (nombre, categoría).
+  - Permite consultar qué estudiantes tienen una habilidad específica.
+
+backend/src/routes/vacantes.js
+  - CRUD de vacantes de empleo/práctica publicadas por empresas.
+  - Rutas para activar, desactivar y filtrar vacantes por empresa.
+
+backend/src/routes/postulaciones.js
+  - Gestión de postulaciones: crear, consultar, cambiar estado.
+  - Rutas para el estudiante (mis postulaciones) y empresa (ver postulantes).
+  - Incluye marcar práctica como completada.
+
+backend/src/routes/conversaciones.js
+  - Conversaciones empresa↔estudiante: crear, listar, y mensajes dentro de ellas.
+
+backend/src/routes/mensajes_directos.js
+  - Mensajes directos estudiante↔estudiante: crear conversación y enviar mensajes.
+
+backend/src/routes/publicaciones.js
+  - CRUD del feed de publicaciones: crear (con o sin multimedia), listar,
+    eliminar, dar/quitar like.
+
+backend/src/routes/comentarios.js
+  - Añadir y listar comentarios en publicaciones.
+
+backend/src/routes/notificaciones.js
+  - Obtener notificaciones del usuario con paginación.
+  - Marcar notificaciones como leídas.
+  - Contar no leídas (para el badge de la campana).
+
+backend/src/routes/talleres.js
+  - CRUD de talleres y gestión de inscripciones.
+  - Rutas para inscribirse, ver inscritos y actualizar estado de inscripción.
+
+backend/src/routes/admin.js
+  - Rutas exclusivas del rol centro/admin:
+  - KPIs y estadísticas generales del sistema.
+  - Asignación de habilidades técnicas a estudiantes.
+  - Importación de tests socioemocionales, promedios y alumnos desde Excel.
+  - Gestión de evaluaciones, idiomas e historial académico/laboral.
+
+backend/src/routes/media.js
+  - Sirve archivos multimedia subidos (imágenes, videos) desde el almacenamiento.
+
+backend/src/routes/notas_admin.js
+  - Notas privadas del admin vinculadas a conversaciones específicas.
+  - Solo el admin puede ver y crear estas notas.
+
+backend/src/routes/ia.js
+  - Integración con IA (Claude/OpenAI):
+  - GET /ia/resumen/:estudianteId/:vacanteId — genera resumen de compatibilidad.
+  - GET /ia/ranking/:vacanteId              — ranking de postulantes por IA con caché.
+  - POST /ia/moderar                        — modera contenido antes de publicar.
+
+backend/src/routes/seguidores.js
+  - Sistema de seguimiento entre usuarios.
+  - toggle: seguir o dejar de seguir a alguien.
+  - estado: si el usuario actual ya sigue al otro + conteos.
+  - seguidores / siguiendo: listas de cada tipo.
+
+────────────────────────────────────────────────────────────────────────────────
+ARCHIVOS DE CONFIGURACIÓN
+────────────────────────────────────────────────────────────────────────────────
+
+.env (raíz)
+  - Variables de entorno del frontend: URL del backend (VITE_API_URL).
+
+backend/.env
+  - Variables del backend: credenciales MySQL, JWT_SECRET, credenciales S3/R2.
+
+public/empleame-icono.svg / public/favicon.svg / public/icons.svg
+  - Assets SVG públicos: ícono de la app, favicon y set de íconos.
+
+================================================================================
+  FIN DEL DOCUMENTO
+================================================================================
