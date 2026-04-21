@@ -6,7 +6,7 @@ import {
   PageHeader, TextAreaField,
 } from "../../components/ui";
 import {
-  getEstudiantes, getHabilidades,
+  getEstudiantes, getHabilidades, getEstudianteById,
   guardarEvaluacion, getEvaluaciones,
   asignarHabilidadesTecnicas,
   subirExcelTests, subirExcelPromedios, subirExcelAlumnos,
@@ -227,26 +227,24 @@ function TabEditarEstudiante({ estudiantes, habilidades, isDark }) {
       setIdiomas([]); setAcademico([]); setLaboral([]);
       return;
     }
-    import("../../services/api").then(({ getEstudianteById }) => {
-      getEstudianteById(selectedId).then((data) => {
-        const curr = data.habilidades || [];
-        setCurrentSkills(curr);
-        const preTec = {};
-        const preBlnd = {};
-        curr.forEach((h) => {
-          if (h.categoria === "tecnica" || h.categoria === "técnica") {
-            preTec[h.id || h.habilidad_id] = h.nivel_dominio || "";
-          } else if (h.categoria === "blanda") {
-            preBlnd[h.id || h.habilidad_id] = h.porcentaje ?? 50;
-          }
-        });
-        setSelected(preTec);
-        setSelectedBlandas2(preBlnd);
-        setIdiomas(data.idiomas || []);
-        setAcademico(data.historial_academico || []);
-        setLaboral(data.historial_laboral || []);
-      }).catch(() => {});
-    });
+    getEstudianteById(selectedId).then((data) => {
+      const curr = data.habilidades || [];
+      setCurrentSkills(curr);
+      const preTec = {};
+      const preBlnd = {};
+      curr.forEach((h) => {
+        if (h.categoria === "tecnica" || h.categoria === "técnica") {
+          preTec[h.id || h.habilidad_id] = h.nivel_dominio || "";
+        } else if (h.categoria === "blanda") {
+          preBlnd[h.id || h.habilidad_id] = h.porcentaje ?? 50;
+        }
+      });
+      setSelected(preTec);
+      setSelectedBlandas2(preBlnd);
+      setIdiomas(data.idiomas || []);
+      setAcademico(data.historial_academico || []);
+      setLaboral(data.historial_laboral || []);
+    }).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
 
@@ -267,6 +265,8 @@ function TabEditarEstudiante({ estudiantes, habilidades, isDark }) {
     setSaving(true); setMsg("");
     try {
       await asignarHabilidadesTecnicas({ estudiante_id: Number(selectedId), habilidades: payload });
+      const data = await getEstudianteById(selectedId);
+      setCurrentSkills(data.habilidades || []);
       setMsg("Habilidades técnicas guardadas");
     } catch (e) { setMsg("Error: " + e.message); }
     finally { setSaving(false); }
@@ -279,6 +279,8 @@ function TabEditarEstudiante({ estudiantes, habilidades, isDark }) {
     setSaving(true); setMsg("");
     try {
       await asignarHabilidadesTecnicas({ estudiante_id: Number(selectedId), habilidades: payload, modo: "blandas" });
+      const data = await getEstudianteById(selectedId);
+      setCurrentSkills(data.habilidades || []);
       setMsg("Competencias socioemocionales guardadas");
     } catch (e) { setMsg("Error: " + e.message); }
     finally { setSaving(false); }
