@@ -554,6 +554,15 @@ function TallerVerMasModal({ taller, isDark, perfilCompleto, onClose }) {
 
         {/* Body */}
         <div className="overflow-y-auto flex-1 px-5 py-4 flex flex-col gap-4">
+          {taller.url_multimedia && (() => {
+            const src = resolverMedia(taller.url_multimedia);
+            const esVideo = /\.(mp4|webm|ogg|mov|avi)(\?|$)/i.test(taller.url_multimedia);
+            return esVideo ? (
+              <video src={src} controls className="w-full rounded-lg max-h-80 object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+            ) : (
+              <img src={src} alt="" className="w-full rounded-lg max-h-80 object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+            );
+          })()}
           <div className={`flex flex-wrap gap-3 p-3 rounded-xl border ${B} ${S}`}>
             {infoItems.map((item, i) => (
               <div key={i} className="flex items-center gap-1.5">
