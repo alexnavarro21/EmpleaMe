@@ -9,6 +9,9 @@ router.post("/login", async (req, res) => {
   if (!correo || !contrasena)
     return res.status(400).json({ error: "Correo y contraseña requeridos" });
 
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo))
+    return res.status(400).json({ error: "Formato de correo inválido" });
+
   try {
     const [rows] = await db.query(
       "SELECT * FROM usuarios WHERE correo = ?",
@@ -55,6 +58,12 @@ router.post("/register", async (req, res) => {
 
   if (!correo || !contrasena || !rol)
     return res.status(400).json({ error: "Correo, contraseña y rol son requeridos" });
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo))
+    return res.status(400).json({ error: "Formato de correo inválido" });
+
+  if (contrasena.length < 6)
+    return res.status(400).json({ error: "La contraseña debe tener al menos 6 caracteres" });
 
   if (!["estudiante", "empresa"].includes(rol))
     return res.status(400).json({ error: "Rol inválido" });

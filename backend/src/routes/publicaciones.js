@@ -8,6 +8,12 @@ router.post("/", verificarToken, upload.single("archivo_multimedia"), async (req
   const { titulo, contenido, tipo_nombre, vacante_id, tipo } = req.body;
   const archivo = req.file;
 
+  if (titulo && titulo.length > 200)
+    return res.status(400).json({ error: "El título no puede superar 200 caracteres" });
+
+  if (contenido && contenido.length > 5000)
+    return res.status(400).json({ error: "El contenido no puede superar 5000 caracteres" });
+
   const tituloFinal = titulo || "Actualización de estado";
   const tipoFinal = tipo_nombre || tipo || (archivo ? "multimedia" : "general");
 

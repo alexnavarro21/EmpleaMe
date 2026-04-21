@@ -20,7 +20,16 @@ const MIME_MAP = {
   pdf: 'application/pdf',
 };
 
+const ALLOWED_EXTENSIONS = new Set(Object.keys(MIME_MAP));
+
 const upload = multer({
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).slice(1).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.has(ext)) {
+      return cb(new Error(`Tipo de archivo no permitido: .${ext}`));
+    }
+    cb(null, true);
+  },
   storage: multerS3({
     s3,
     bucket: (_req, _file, cb) => cb(null, process.env.S3_BUCKET_NAME),

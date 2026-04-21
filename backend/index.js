@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 
 const authRoutes            = require("./src/routes/auth");
@@ -23,6 +24,7 @@ const seguidoresRoutes      = require("./src/routes/seguidores");
 
 const app = express();
 
+app.use(helmet());
 app.use(cors({
   origin: process.env.FRONTEND_URL || "http://localhost:5173",
   credentials: true,

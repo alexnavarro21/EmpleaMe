@@ -37,6 +37,9 @@ router.post("/", verificarToken, async (req, res) => {
   const { contenido } = req.body;
   if (!contenido?.trim())
     return res.status(400).json({ error: "El contenido es requerido" });
+
+  if (contenido.length > 1000)
+    return res.status(400).json({ error: "El comentario no puede superar 1000 caracteres" });
   try {
     const [result] = await db.query(
       "INSERT INTO comentarios (publicacion_id, autor_id, contenido) VALUES (?, ?, ?)",

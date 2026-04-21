@@ -60,6 +60,12 @@ router.post("/", verificarToken, soloRol("empresa"), upload.single("archivo_mult
   const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, remuneracion, direccion, beneficios, fecha_limite, habilidades, tipo } = req.body;
   if (!titulo || !descripcion)
     return res.status(400).json({ error: "titulo y descripcion son requeridos" });
+
+  if (titulo.length > 150)
+    return res.status(400).json({ error: "El título no puede superar 150 caracteres" });
+
+  if (descripcion.length > 3000)
+    return res.status(400).json({ error: "La descripción no puede superar 3000 caracteres" });
   const tipoValido = tipo === "puesto_laboral" ? "puesto_laboral" : "practica";
   try {
     const [result] = await db.query(

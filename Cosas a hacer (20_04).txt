@@ -7,14 +7,12 @@
   [P0] CRITICO - SEGURIDAD (hacer antes de mostrar a nadie)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-[ ] Eliminar soporte de contraseñas en texto plano en auth.js
-    (lineas que hacen contrasena === hash, bypasseando bcrypt)
+[~] Eliminar soporte de contraseñas en texto plano en auth.js
+    PENDIENTE HASTA PUBLICACION - hay datos de prueba importantes
 
-[ ] Restringir CORS: cambiar app.use(cors()) a una lista blanca
-    de origenes permitidos (frontend URL de produccion y localhost)
+[x] Restringir CORS - HECHO (branch fix/seguridad-p0)
 
-[ ] Agregar rate limiting en /auth/login y /auth/register
-    para prevenir fuerza bruta (instalar express-rate-limit)
+[x] Rate limiting en /api/auth - HECHO (10 intentos / 15 min)
 
 [ ] Cambiar JWT_SECRET del .env - el actual dice literalmente
     "cambiar_en_produccion" y sigue igual
@@ -132,5 +130,17 @@
 
 [ ] Moderacion de contenido antes de publicar
     (el endpoint de IA /ia/moderar existe pero no se usa en UI)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  [P5] LO ULTIMO LO ULTIMO LO ULTIMO - PERFILES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Indicador de completitud del perfil del estudiante
+[ ] Campo de URL de portafolio en perfil de estudiante
+[ ] Logo de empresa
+[ ] Reseñas/calificaciones de empresas por parte de estudiantes
+[ ] Sistema de verificacion de empresas (badge verificada)
+[ ] Opcion para que el estudiante controle campos publicos
 
 ===============================================================
