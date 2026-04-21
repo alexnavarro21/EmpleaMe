@@ -17,7 +17,7 @@ router.get("/estudiante/:id", verificarToken, async (req, res) => {
       return res.status(404).json({ error: "Perfil no encontrado" });
 
     const [habilidades] = await db.query(
-      `SELECT he.id, h.nombre, h.categoria, he.nivel_dominio, he.porcentaje, he.esta_validada
+      `SELECT h.id, h.nombre, h.categoria, he.nivel_dominio, he.porcentaje, he.esta_validada
        FROM habilidades_estudiantes he
        JOIN habilidades h ON h.id = he.habilidad_id
        WHERE he.estudiante_id = ?`,
