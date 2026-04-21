@@ -23,6 +23,10 @@ const seguidoresRoutes      = require("./src/routes/seguidores");
 const app = express();
 
 app.use(cors());
+app.use((req, _res, next) => {
+  if (req.method !== "GET") console.log("[REQ]", req.method, req.path, req.headers["content-type"] || "");
+  next();
+});
 app.use(express.json());
 
 app.use("/api/auth",            authRoutes);

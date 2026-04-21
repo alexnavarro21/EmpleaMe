@@ -59,8 +59,19 @@ router.get("/", verificarToken, async (req, res) => {
   }
 });
 
+const uploadMulti = (req, res, next) => {
+  upload.single("archivo_multimedia")(req, res, (err) => {
+    if (err) {
+      console.error("[MULTER ERR]", req.method, req.path, "name:", err.name, "code:", err.code, "msg:", err.message);
+      console.error(err.stack);
+      return res.status(500).json({ error: "Error del servidor", detalle: err.message, code: err.code, name: err.name });
+    }
+    next();
+  });
+};
+
 // POST /api/talleres — crear taller (solo admin)
-router.post("/", verificarToken, soloRol("centro"), upload.single("archivo_multimedia"), async (req, res) => {
+router.post("/", verificarToken, soloRol("centro"), uploadMulti, async (req, res) => {
   const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, costo, direccion, fecha_inicio, fecha_limite, cupos, permite_inscripcion } = req.body;
   if (!titulo) return res.status(400).json({ error: "El título es requerido" });
   const url_multimedia = req.file ? `/api/media/${req.file.key}` : null;
@@ -92,7 +103,7 @@ router.post("/", verificarToken, soloRol("centro"), upload.single("archivo_multi
 });
 
 // PUT /api/talleres/:id — editar taller (solo admin)
-router.put("/:id", verificarToken, soloRol("centro"), upload.single("archivo_multimedia"), async (req, res) => {
+router.put("/:id", verificarToken, soloRol("centro"), uploadMulti, async (req, res) => {
   const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, costo, direccion, fecha_inicio, fecha_limite, cupos, permite_inscripcion, quitar_multimedia } = req.body;
   try {
     // Si sube archivo nuevo → usar ese; si pide quitar → null; si no → mantener el actual
