@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
-import { getPostulantesPorVacante, actualizarEstadoPostulacion, iniciarConversacion, getResumenIA, getMediaUrl } from "../services/api";
+import { getPostulantesPorVacante, actualizarEstadoPostulacion, iniciarConversacion, getResumenIA, getRankingIA, getMediaUrl } from "../services/api";
 
 function estadoConfig(isDark) {
   return {
@@ -41,35 +41,19 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
 
   const PUNTAJE = { Alta: 3, Media: 2, Baja: 1 };
 
-  function parsearCompatibilidad(texto) {
-    if (!texto) return "Baja";
-    const match = texto.match(/COMPATIBILIDAD[^:\n]*[:\s]+(Alta|Media|Baja)/i);
-    return match ? match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase() : "Baja";
-  }
-
   const handleRanking = async () => {
     if (rankingActivo) { setRankingActivo(false); return; }
     setRankingCargando(true);
-    const nuevos = {};
-    await Promise.allSettled(
-      postulantes.map(async (p) => {
-        try {
-          const cached = resumenes[p.estudiante_id]?.texto;
-          let texto = cached;
-          if (!texto) {
-            const res = await getResumenIA(p.estudiante_id, vacante.id);
-            texto = res.resumen;
-            setResumenes(prev => ({ ...prev, [p.estudiante_id]: { texto, cargando: false, abierto: false } }));
-          }
-          nuevos[p.estudiante_id] = parsearCompatibilidad(texto);
-        } catch {
-          nuevos[p.estudiante_id] = "Baja";
-        }
-      })
-    );
-    setCompatibilidades(nuevos);
-    setRankingActivo(true);
-    setRankingCargando(false);
+    try {
+      const { ranking } = await getRankingIA(vacante.id);
+      const nuevos = Object.fromEntries(ranking.map(r => [r.estudiante_id, r.compatibilidad]));
+      setCompatibilidades(nuevos);
+      setRankingActivo(true);
+    } catch (err) {
+      console.error("Error ranking IA:", err);
+    } finally {
+      setRankingCargando(false);
+    }
   };
 
   const postulantesOrdenados = rankingActivo

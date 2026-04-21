@@ -150,6 +150,128 @@ router.get("/resumen/:estudiante_id/:vacante_id", verificarToken, soloRol("empre
   }
 });
 
+// GET /api/ia/ranking/:vacante_id — ranking de postulantes por compatibilidad (con caché)
+router.get("/ranking/:vacante_id", verificarToken, soloRol("empresa"), async (req, res) => {
+  const vacante_id = parseInt(req.params.vacante_id);
+  const empresaId  = req.usuario.id;
+
+  if (!process.env.GEMINI_API_KEY)
+    return res.status(503).json({ error: "Servicio de IA no configurado. Contacta al administrador." });
+
+  try {
+    // 1. Verificar que la vacante pertenece a esta empresa
+    const [[vacante]] = await db.query(
+      "SELECT id, titulo, area, modalidad, tipo, descripcion FROM vacantes WHERE id = ? AND empresa_id = ?",
+      [vacante_id, empresaId]
+    );
+    if (!vacante) return res.status(404).json({ error: "Vacante no encontrada" });
+
+    // 2. Obtener postulantes ordenados por ID para hash consistente
+    const [postulantes] = await db.query(
+      "SELECT p.estudiante_id FROM postulaciones p WHERE p.vacante_id = ? ORDER BY p.estudiante_id ASC",
+      [vacante_id]
+    );
+    if (postulantes.length === 0) return res.json({ ranking: [], desde_cache: false });
+
+    const estudianteIds = postulantes.map(p => p.estudiante_id);
+
+    // 3. Obtener perfil_hash actuales de resumenes_ia para calcular el hash del ranking
+    const [hashRows] = await db.query(
+      `SELECT estudiante_id, perfil_hash FROM resumenes_ia WHERE vacante_id = ? AND estudiante_id IN (?)`,
+      [vacante_id, estudianteIds]
+    );
+    const hashMap = Object.fromEntries(hashRows.map(r => [r.estudiante_id, r.perfil_hash]));
+
+    const rankingHashInput = JSON.stringify(
+      estudianteIds.map(id => ({ id, h: hashMap[id] || "none" }))
+    );
+    const rankingHashCandidate = crypto.createHash("sha256").update(rankingHashInput).digest("hex");
+
+    // 4. Revisar caché de ranking
+    const [[cached]] = await db.query(
+      "SELECT ranking, ranking_hash FROM rankings_ia WHERE vacante_id = ?",
+      [vacante_id]
+    );
+    if (cached && cached.ranking_hash === rankingHashCandidate) {
+      return res.json({ ranking: JSON.parse(cached.ranking), desde_cache: true });
+    }
+
+    // 5. Generar / refrescar resúmenes y extraer compatibilidad
+    const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+    const PUNTAJE = { Alta: 3, Media: 2, Baja: 1 };
+    const resultados = [];
+
+    for (const estudianteId of estudianteIds) {
+      try {
+        const [[perfil]]              = await db.query("SELECT * FROM perfiles_estudiantes WHERE usuario_id = ?", [estudianteId]);
+        if (!perfil) { resultados.push({ estudiante_id: estudianteId, compatibilidad: "Baja" }); continue; }
+
+        const [habilidades]           = await db.query(`SELECT h.nombre, h.categoria, he.nivel_dominio FROM habilidades_estudiantes he JOIN habilidades h ON h.id = he.habilidad_id WHERE he.estudiante_id = ?`, [estudianteId]);
+        const [idiomas]               = await db.query("SELECT idioma, nivel FROM idiomas_estudiantes WHERE estudiante_id = ?", [estudianteId]);
+        const [historial_academico]   = await db.query("SELECT titulo, institucion, fecha_inicio, fecha_fin FROM historial_academico WHERE estudiante_id = ? ORDER BY fecha_inicio DESC", [estudianteId]);
+        const [historial_laboral]     = await db.query("SELECT cargo, empresa_nombre, descripcion, fecha_inicio, fecha_fin FROM historial_laboral WHERE estudiante_id = ? ORDER BY fecha_inicio DESC", [estudianteId]);
+        const [posts]                 = await db.query("SELECT titulo, contenido FROM publicaciones WHERE autor_id = ? ORDER BY publicado_en DESC LIMIT 5", [estudianteId]);
+
+        const hashActual = calcularHashPerfil(perfil, habilidades, idiomas, historial_academico, historial_laboral, posts);
+
+        const [[cacheado]] = await db.query(
+          "SELECT resumen, perfil_hash FROM resumenes_ia WHERE estudiante_id = ? AND vacante_id = ?",
+          [estudianteId, vacante_id]
+        );
+
+        let resumen;
+        if (cacheado && cacheado.perfil_hash === hashActual) {
+          resumen = cacheado.resumen;
+        } else {
+          const prompt = buildPrompt(perfil, habilidades, idiomas, historial_academico, historial_laboral, posts, vacante);
+          const result = await model.generateContent(prompt);
+          resumen = result.response.text().trim();
+          await db.query(
+            `INSERT INTO resumenes_ia (estudiante_id, vacante_id, resumen, perfil_hash)
+             VALUES (?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE resumen = VALUES(resumen), perfil_hash = VALUES(perfil_hash)`,
+            [estudianteId, vacante_id, resumen, hashActual]
+          );
+        }
+
+        const match = resumen.match(/COMPATIBILIDAD[^:\n]*[:\s]+(Alta|Media|Baja)/i);
+        const compatibilidad = match
+          ? match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase()
+          : "Baja";
+
+        resultados.push({ estudiante_id: estudianteId, compatibilidad, puntaje: PUNTAJE[compatibilidad] || 1 });
+      } catch {
+        resultados.push({ estudiante_id: estudianteId, compatibilidad: "Baja", puntaje: 1 });
+      }
+    }
+
+    resultados.sort((a, b) => b.puntaje - a.puntaje);
+
+    // 6. Recomputar hash final con los perfil_hash reales (ya guardados en resumenes_ia)
+    const [hashRowsFresh] = await db.query(
+      `SELECT estudiante_id, perfil_hash FROM resumenes_ia WHERE vacante_id = ? AND estudiante_id IN (?)`,
+      [vacante_id, estudianteIds]
+    );
+    const hashMapFresh = Object.fromEntries(hashRowsFresh.map(r => [r.estudiante_id, r.perfil_hash]));
+    const rankingHashFinal = crypto.createHash("sha256").update(
+      JSON.stringify(estudianteIds.map(id => ({ id, h: hashMapFresh[id] || "none" })))
+    ).digest("hex");
+
+    // 7. Guardar ranking en caché
+    await db.query(
+      `INSERT INTO rankings_ia (vacante_id, ranking, ranking_hash)
+       VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE ranking = VALUES(ranking), ranking_hash = VALUES(ranking_hash), generado_en = NOW()`,
+      [vacante_id, JSON.stringify(resultados), rankingHashFinal]
+    );
+
+    res.json({ ranking: resultados, desde_cache: false });
+  } catch (err) {
+    console.error("Error generando ranking:", err.message);
+    res.status(500).json({ error: "Error al generar el ranking. Intenta de nuevo." });
+  }
+});
+
 // POST /api/ia/moderar — verifica si un contenido es apropiado para la plataforma
 router.post("/moderar", verificarToken, async (req, res) => {
   const { contenido } = req.body;
