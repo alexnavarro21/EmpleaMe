@@ -754,10 +754,14 @@ function TallerCard({ taller, isDark, perfilCompleto, onDeleted }) {
       {taller.url_multimedia && (() => {
         const src = resolverMedia(taller.url_multimedia);
         const esVideo = /\.(mp4|webm|ogg|mov|avi)(\?|$)/i.test(taller.url_multimedia);
-        return esVideo ? (
-          <video src={src} controls className="w-full rounded-lg max-h-72 object-cover mb-3" onError={(e) => { e.currentTarget.style.display = "none"; }} />
-        ) : (
-          <img src={src} alt="" className="w-full rounded-lg max-h-72 object-cover mb-3" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+        return (
+          <div className="px-4 pb-3">
+            {esVideo ? (
+              <video src={src} controls className="w-full rounded-lg max-h-72 object-cover" onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }} />
+            ) : (
+              <img src={src} alt="" className="w-full rounded-lg max-h-72 object-cover" onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }} />
+            )}
+          </div>
         );
       })()}
 
