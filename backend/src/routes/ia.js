@@ -234,7 +234,7 @@ router.get("/ranking/:vacante_id", verificarToken, soloRol("empresa"), async (re
           );
         }
 
-        const match = resumen.match(/COMPATIBILIDAD[^:\n]*[:\s]+(Alta|Media|Baja)/i);
+        const match = resumen.match(/COMPATIBILIDAD[^\n]*(Alta|Media|Baja)/i);
         const compatibilidad = match
           ? match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase()
           : "Baja";
