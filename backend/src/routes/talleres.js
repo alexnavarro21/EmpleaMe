@@ -59,20 +59,14 @@ router.get("/", verificarToken, async (req, res) => {
   }
 });
 
-const uploadMulti = (req, res, next) => {
-  upload.single("archivo_multimedia")(req, res, (err) => {
-    if (err) {
-      console.error("[MULTER ERR]", req.method, req.path, "name:", err.name, "code:", err.code, "msg:", err.message);
-      console.error(err.stack);
-      return res.status(500).json({ error: "Error del servidor", detalle: err.message, code: err.code, name: err.name });
-    }
-    next();
-  });
-};
+const uploadMulti = upload.single("archivo_multimedia");
+
+const toBool = (v) => v === true || v === "true" || v === "1" || v === 1;
+const toIntOrNull = (v) => (v == null || v === "" ? null : parseInt(v, 10));
+const toNumOrZero = (v) => (v == null || v === "" ? 0 : Number(v));
 
 // POST /api/talleres — crear taller (solo admin)
 router.post("/", verificarToken, soloRol("centro"), uploadMulti, async (req, res) => {
-  console.log("[TALLERES POST] body keys:", Object.keys(req.body), "file?:", !!req.file, req.file ? { key: req.file.key, size: req.file.size } : null);
   const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, costo, direccion, fecha_inicio, fecha_limite, cupos, permite_inscripcion } = req.body;
   if (!titulo) return res.status(400).json({ error: "El título es requerido" });
   const url_multimedia = req.file ? `/api/media/${req.file.key}` : null;
@@ -88,20 +82,18 @@ router.post("/", verificarToken, soloRol("centro"), uploadMulti, async (req, res
         modalidad   || "presencial",
         duracion    || null,
         horario     || null,
-        costo != null ? costo : 0,
+        toNumOrZero(costo),
         direccion   || null,
         fecha_inicio || null,
         fecha_limite || null,
-        cupos != null ? cupos : null,
-        permite_inscripcion != null ? permite_inscripcion : true,
+        toIntOrNull(cupos),
+        permite_inscripcion != null ? toBool(permite_inscripcion) : true,
         url_multimedia,
       ]
     );
     res.status(201).json({ id: result.insertId, mensaje: "Taller creado", url_multimedia });
   } catch (err) {
-    console.error("[TALLERES POST ERR]", err.code, err.message, err.sqlMessage);
-    console.error(err.stack);
-    res.status(500).json({ error: "Error del servidor", detalle: err.message, code: err.code, sql: err.sqlMessage });
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }
 });
 
@@ -131,12 +123,12 @@ router.put("/:id", verificarToken, soloRol("centro"), uploadMulti, async (req, r
         modalidad   || "presencial",
         duracion    || null,
         horario     || null,
-        costo != null ? costo : 0,
+        toNumOrZero(costo),
         direccion   || null,
         fecha_inicio || null,
         fecha_limite || null,
-        cupos != null ? cupos : null,
-        permite_inscripcion != null ? permite_inscripcion : true,
+        toIntOrNull(cupos),
+        permite_inscripcion != null ? toBool(permite_inscripcion) : true,
         url_multimedia,
         req.params.id,
       ]

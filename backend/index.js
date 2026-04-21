@@ -23,10 +23,6 @@ const seguidoresRoutes      = require("./src/routes/seguidores");
 const app = express();
 
 app.use(cors());
-app.use((req, _res, next) => {
-  if (req.method !== "GET") console.log("[REQ]", req.method, req.path, req.headers["content-type"] || "");
-  next();
-});
 app.use(express.json());
 
 app.use("/api/auth",            authRoutes);
@@ -48,11 +44,6 @@ app.use("/api/ia",             iaRoutes);
 app.use("/api/seguidores",    seguidoresRoutes);
 
 app.get("/", (req, res) => res.json({ status: "EmpleaMe API corriendo" }));
-
-app.use((err, req, res, next) => {
-  console.error("[ERROR]", req.method, req.path, err.message, err.stack);
-  res.status(err.status || 500).json({ error: "Error del servidor", detalle: err.message });
-});
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));
