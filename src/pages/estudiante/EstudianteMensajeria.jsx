@@ -63,6 +63,7 @@ export default function EstudianteMensajeria() {
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [sending, setSending] = useState(false);
   const bottomRef = useRef(null);
+  const lastMsgIdRef = useRef(null);
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -116,10 +117,16 @@ export default function EstudianteMensajeria() {
       .finally(() => setLoadingMsgs(false));
   }, [selectedDirecta]);
 
-  // Scroll al último mensaje
+  // Scroll al último mensaje solo cuando llega uno nuevo
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [mensajesEmpresa, mensajesDirecta]);
+    const msgs = tab === "empresas" ? mensajesEmpresa : mensajesDirecta;
+    if (msgs.length === 0) return;
+    const lastId = msgs[msgs.length - 1].id;
+    if (lastId !== lastMsgIdRef.current) {
+      lastMsgIdRef.current = lastId;
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [mensajesEmpresa, mensajesDirecta, tab]);
 
   // Polling mensajes empresa
   useEffect(() => {

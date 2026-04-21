@@ -49,6 +49,7 @@ export default function EmpresaMensajeria() {
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [sending, setSending] = useState(false);
   const bottomRef = useRef(null);
+  const lastMsgIdRef = useRef(null);
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -81,9 +82,14 @@ export default function EmpresaMensajeria() {
       .finally(() => setLoadingMsgs(false));
   }, [selected]);
 
-  // Scroll al último mensaje
+  // Scroll al último mensaje solo cuando llega uno nuevo
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messages.length === 0) return;
+    const lastId = messages[messages.length - 1].id;
+    if (lastId !== lastMsgIdRef.current) {
+      lastMsgIdRef.current = lastId;
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages]);
 
   // Polling cada 5 segundos para mensajes nuevos
@@ -213,7 +219,7 @@ export default function EmpresaMensajeria() {
                   </p>
                 ) : (
                   messages.map((msg) => {
-                    const isMe = msg.remitente_id === usuario.id;
+                    const isMe = Number(msg.remitente_id) === Number(usuario.id);
                     return (
                       <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
                         <div className={`max-w-xs flex flex-col ${isMe ? "items-end" : "items-start"}`}>
