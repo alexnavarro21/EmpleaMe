@@ -1,7 +1,136 @@
+===============================================================
+  EMPLEAME - PENDIENTES ORDENADOS POR PRIORIDAD
+  Actualizado: 21/04/2026
+===============================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  [P0] CRITICO - SEGURIDAD (hacer antes de mostrar a nadie)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Eliminar soporte de contraseñas en texto plano en auth.js
+    (lineas que hacen contrasena === hash, bypasseando bcrypt)
+
+[ ] Restringir CORS: cambiar app.use(cors()) a una lista blanca
+    de origenes permitidos (frontend URL de produccion y localhost)
+
+[ ] Agregar rate limiting en /auth/login y /auth/register
+    para prevenir fuerza bruta (instalar express-rate-limit)
+
+[ ] Cambiar JWT_SECRET del .env - el actual dice literalmente
+    "cambiar_en_produccion" y sigue igual
+
+[ ] Agregar helmet.js para headers de seguridad:
+    X-Frame-Options, X-Content-Type-Options, CSP, etc.
+
+[ ] Validar y limitar tipos/tamaños de archivos en uploads
+    (actualmente no hay filtro de tipo ni limite de peso)
+
+[ ] Agregar validacion de formato en inputs criticos:
+    email valido en registro, longitud maxima en textos,
+    sanitizacion de HTML en publicaciones/comentarios
 
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  [P1] ALTO - FUNCIONALIDAD CORE INCOMPLETA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-- cambiar barra de busqueda
-- sistema de reporte
-- fotos/videos a talleres
-- paginas o filtro de fechas de publiaciones en el muro
+[ ] Estados de postulacion para empresa: poder cambiar a
+    "en revision", "entrevista", "oferta enviada", "aceptado",
+    "rechazado" - y que el estudiante lo vea en Mis Postulaciones
+
+[ ] Cerrar/archivar vacantes: cuando ya se lleno el puesto,
+    marcarla como "cubierta" (diferente a solo desactivar)
+
+[ ] Paginacion en todas las listas: vacantes, postulaciones,
+    publicaciones, usuarios. Ahora tienen LIMIT hardcodeado de 20
+
+[ ] Admin Tests.jsx: conectar a backend real, el tab "Cargar test"
+    y "Resultados" estan con datos hardcodeados / sin API
+
+[ ] Sistema de reporte de contenido (estaba en lista anterior):
+    boton para reportar publicaciones, comentarios o perfiles
+
+[ ] Busqueda y filtros de vacantes para estudiantes:
+    por area, modalidad (remoto/presencial), tipo de puesto
+
+[ ] Filtros de busqueda de estudiantes para empresas:
+    por carrera, habilidades, rango de promedio
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  [P2] MEDIO - PRIVACIDAD Y CONTROL DE DATOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Las empresas ven el promedio y calificacion del docente
+    de cada postulante - revisar si eso debe ser visible o no
+
+[ ] Opcion para que el estudiante haga su perfil privado
+    o controle que campos son publicos (ej: ocultar promedio)
+
+[ ] No hay logs de auditoría: quien vio qué datos de estudiante,
+    que hizo el admin. Agregar registro de acciones criticas
+
+[ ] Los mensajes no tienen fecha de expiracion ni opcion de borrado.
+    Agregar opcion de borrar conversacion o mensaje propio
+
+[ ] Paginas o filtro de fechas en el muro (estaba en lista anterior)
+
+[ ] Cambiar barra de busqueda (estaba en lista anterior)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  [P3] MEDIO - UX Y FEATURES IMPORTANTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Notificaciones por email: cuando llega una postulacion,
+    cuando cambia el estado, cuando hay mensaje nuevo
+
+[ ] Dashboard empresa con metricas: cuantas postulaciones
+    recibio cada vacante, perfil promedio del candidato
+
+[ ] Indicador de completitud del perfil del estudiante
+    (barra de progreso: "tu perfil esta al 60%")
+
+[ ] Contador de mensajes no leidos en la lista de conversaciones
+
+[ ] Logo de empresa: que puedan subir foto/logo igual que estudiantes
+
+[ ] Sistema de verificacion de empresas (evitar cuentas falsas):
+    badge de "empresa verificada" con proceso de validacion
+
+[ ] Capacidad maxima en talleres y lista de espera
+
+[ ] Exportar lista de asistentes de un taller para el instructor
+
+[ ] Fotos/videos a talleres (estaba en lista anterior) - ya hay rama
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  [P4] BAJO - MEJORAS Y POLISH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Requerimientos minimos de contrasena: longitud, mayusculas,
+    numeros (actualmente acepta cualquier cosa)
+
+[ ] Busqueda global: un solo input que busque vacantes,
+    empresas y estudiantes a la vez
+
+[ ] Analytics para admin: tasa de llenado de vacantes,
+    tasa de aceptacion, tiempo promedio de proceso
+
+[ ] Indicadores de escritura en mensajes (typing indicator)
+
+[ ] Campo de URL de portafolio en perfil de estudiante
+
+[ ] Reseñas/calificaciones de empresas por parte de estudiantes
+
+[ ] Acciones masivas en admin: cambiar estado de varias
+    postulaciones o vacantes a la vez
+
+[ ] Fechas limite en vacantes: cerrar automaticamente
+    al llegar a fecha_limite (el campo existe pero no se usa)
+
+[ ] Moderacion de contenido antes de publicar
+    (el endpoint de IA /ia/moderar existe pero no se usa en UI)
+
+===============================================================

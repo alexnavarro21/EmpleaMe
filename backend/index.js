@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const rateLimit = require("express-rate-limit");
 
 const authRoutes            = require("./src/routes/auth");
 const usuariosRoutes        = require("./src/routes/usuarios");
@@ -22,10 +23,21 @@ const seguidoresRoutes      = require("./src/routes/seguidores");
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  credentials: true,
+}));
 app.use(express.json());
 
-app.use("/api/auth",            authRoutes);
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 10,
+  message: { error: "Demasiados intentos. Intenta de nuevo en 15 minutos." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use("/api/auth",            authLimiter, authRoutes);
 app.use("/api/usuarios",        usuariosRoutes);
 app.use("/api/perfiles",        perfilesRoutes);
 app.use("/api/habilidades",     habilidadesRoutes);
