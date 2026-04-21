@@ -35,6 +35,49 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
   const [contactandoId, setContactandoId] = useState(null);
   const [actualizandoId, setActualizandoId] = useState(null);
   const [resumenes, setResumenes] = useState({});      // { estudiante_id: { texto, cargando, abierto } }
+  const [rankingCargando, setRankingCargando] = useState(false);
+  const [rankingActivo, setRankingActivo] = useState(false);
+  const [compatibilidades, setCompatibilidades] = useState({}); // { estudiante_id: "Alta"|"Media"|"Baja" }
+
+  const PUNTAJE = { Alta: 3, Media: 2, Baja: 1 };
+
+  function parsearCompatibilidad(texto) {
+    if (!texto) return "Baja";
+    const match = texto.match(/COMPATIBILIDAD[^:\n]*[:\s]+(Alta|Media|Baja)/i);
+    return match ? match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase() : "Baja";
+  }
+
+  const handleRanking = async () => {
+    if (rankingActivo) { setRankingActivo(false); return; }
+    setRankingCargando(true);
+    const nuevos = {};
+    await Promise.allSettled(
+      postulantes.map(async (p) => {
+        try {
+          const cached = resumenes[p.estudiante_id]?.texto;
+          let texto = cached;
+          if (!texto) {
+            const res = await getResumenIA(p.estudiante_id, vacante.id);
+            texto = res.resumen;
+            setResumenes(prev => ({ ...prev, [p.estudiante_id]: { texto, cargando: false, abierto: false } }));
+          }
+          nuevos[p.estudiante_id] = parsearCompatibilidad(texto);
+        } catch {
+          nuevos[p.estudiante_id] = "Baja";
+        }
+      })
+    );
+    setCompatibilidades(nuevos);
+    setRankingActivo(true);
+    setRankingCargando(false);
+  };
+
+  const postulantesOrdenados = rankingActivo
+    ? [...postulantes].sort((a, b) =>
+        (PUNTAJE[compatibilidades[b.estudiante_id]] || 0) -
+        (PUNTAJE[compatibilidades[a.estudiante_id]] || 0)
+      )
+    : postulantes;
 
 
   useEffect(() => {
@@ -140,12 +183,35 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
               )}
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className={`p-1.5 rounded-lg ${HV} transition-colors ${M} flex-shrink-0`}
-          >
-            <Icon icon="mdi:close" width={18} />
-          </button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {postulantes.length > 0 && (
+              <button
+                onClick={handleRanking}
+                disabled={rankingCargando}
+                title="Ordenar postulantes por compatibilidad con la vacante usando IA"
+                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
+                  rankingActivo
+                    ? "bg-purple-500 text-white"
+                    : isDark
+                    ? "bg-purple-500/15 text-purple-400 hover:bg-purple-500/25"
+                    : "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                }`}
+              >
+                <Icon
+                  icon={rankingCargando ? "mdi:loading" : "mdi:trophy-outline"}
+                  width={14}
+                  className={rankingCargando ? "animate-spin" : ""}
+                />
+                {rankingCargando ? "Analizando..." : rankingActivo ? "Ranking activo" : "Ranking IA"}
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className={`p-1.5 rounded-lg ${HV} transition-colors ${M}`}
+            >
+              <Icon icon="mdi:close" width={18} />
+            </button>
+          </div>
         </div>
 
         {/* Lista */}
@@ -162,9 +228,18 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {postulantes.map((p) => {
+              {postulantesOrdenados.map((p, idx) => {
                 const cfg = estadoConfig(isDark)[p.estado] || estadoConfig(isDark).pendiente;
                 const actualizando = actualizandoId === p.id;
+                const compat = rankingActivo ? compatibilidades[p.estudiante_id] : null;
+                const compatColor = compat === "Alta"
+                  ? isDark ? "bg-green-500/15 text-green-400" : "bg-green-100 text-green-700"
+                  : compat === "Media"
+                  ? isDark ? "bg-yellow-500/15 text-yellow-400" : "bg-yellow-100 text-yellow-700"
+                  : compat === "Baja"
+                  ? isDark ? "bg-red-500/15 text-red-400" : "bg-red-100 text-red-700"
+                  : "";
+                const medallaIcon = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`;
                 return (
                   <div
                     key={p.id}
@@ -183,10 +258,18 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
                       {/* Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
+                          {rankingActivo && (
+                            <span className="text-sm font-bold text-purple-500 flex-shrink-0">{medallaIcon}</span>
+                          )}
                           <p className={`text-sm font-medium ${T} truncate`}>{p.nombre_completo}</p>
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${cfg.color}`}>
                             {cfg.label}
                           </span>
+                          {compat && (
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0 ${compatColor}`}>
+                              {compat}
+                            </span>
+                          )}
                         </div>
                         <p className={`text-xs ${M}`}>
                           {p.carrera}
