@@ -6,6 +6,7 @@ import { Badge, Card, StatCard, PageHeader, Paginacion } from "../../components/
 import {
   getTalleres, crearTaller, actualizarTaller, toggleTaller, eliminarTaller,
   getInscritosTaller, getInscritosPendientesTalleres, actualizarEstadoInscripcion,
+  moderarContenido,
 } from "../../services/api";
 
 const MODALIDADES = ["presencial", "remoto", "hibrido"];
@@ -158,6 +159,14 @@ function TallerForm({ taller, onGuardar, onCancelar, isDark }) {
     if (!form.titulo.trim()) { setError("El título es requerido"); return; }
     setGuardando(true); setError("");
     try {
+      const textoARevisar = [form.titulo, form.descripcion, form.requisitos].filter(Boolean).join(" ").trim();
+      const mod = await moderarContenido(textoARevisar);
+      if (!mod.aprobado) {
+        setError(mod.razon || "El taller contiene contenido inapropiado.");
+        setGuardando(false);
+        return;
+      }
+
       await onGuardar({
         ...form,
         costo:        form.costo !== "" ? Number(form.costo) : 0,

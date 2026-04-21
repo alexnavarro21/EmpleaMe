@@ -866,6 +866,17 @@ export async function getSeguidores(usuarioId) {
   return data;
 }
 
+// Moderar contenido con IA antes de publicar
+export async function moderarContenido(contenido) {
+  const res = await fetch(`${BASE_URL}/ia/moderar`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ contenido }),
+  });
+  if (!res.ok) return { aprobado: true };
+  return res.json();
+}
+
 // Lista de usuarios que sigue el usuario :id
 export async function getSiguiendo(usuarioId) {
   const res = await fetch(`${BASE_URL}/seguidores/${usuarioId}/siguiendo`, {

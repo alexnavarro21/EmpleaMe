@@ -122,6 +122,14 @@ router.post("/:id/mensajes", verificarToken, async (req, res) => {
     if (parseInt(conv[0].usuario1_id) !== userId && parseInt(conv[0].usuario2_id) !== userId)
       return res.status(403).json({ error: "Sin permisos" });
 
+    // Verificar palabras prohibidas
+    const [palabras] = await db.query("SELECT palabra FROM palabras_prohibidas");
+    const textoLower = contenido.trim().toLowerCase();
+    const palabraEncontrada = palabras.find((p) => textoLower.includes(p.palabra.toLowerCase()));
+    if (palabraEncontrada) {
+      return res.status(400).json({ error: "Tu mensaje contiene contenido inapropiado y no pudo ser enviado." });
+    }
+
     const [result] = await db.query(
       "INSERT INTO mensajes_directos (conversacion_id, remitente_id, contenido) VALUES (?, ?, ?)",
       [convId, userId, contenido.trim()]

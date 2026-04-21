@@ -159,6 +159,14 @@ router.post("/:id/mensajes", verificarToken, async (req, res) => {
     if (rol !== "centro" && conv[0].empresa_id !== id && conv[0].estudiante_id !== id)
       return res.status(403).json({ error: "Sin permisos" });
 
+    // Verificar palabras prohibidas
+    const [palabras] = await db.query("SELECT palabra FROM palabras_prohibidas");
+    const textoLower = contenido.trim().toLowerCase();
+    const palabraEncontrada = palabras.find((p) => textoLower.includes(p.palabra.toLowerCase()));
+    if (palabraEncontrada) {
+      return res.status(400).json({ error: "Tu mensaje contiene contenido inapropiado y no pudo ser enviado." });
+    }
+
     const [result] = await db.query(
       "INSERT INTO mensajes (conversacion_id, remitente_id, contenido) VALUES (?, ?, ?)",
       [req.params.id, id, contenido.trim()]
