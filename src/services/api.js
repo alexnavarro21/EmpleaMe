@@ -94,8 +94,13 @@ export async function eliminarHabilidad(id) {
 
 // ── Vacantes ──────────────────────────────────────────────────────────────────
 
-export async function getVacantes() {
-  const res = await fetch(`${BASE_URL}/vacantes`, { headers: authHeaders() });
+export async function getVacantes(filtros = {}) {
+  const params = new URLSearchParams();
+  if (filtros.area) params.set("area", filtros.area);
+  if (filtros.modalidad) params.set("modalidad", filtros.modalidad);
+  if (filtros.tipo) params.set("tipo", filtros.tipo);
+  const qs = params.toString();
+  const res = await fetch(`${BASE_URL}/vacantes${qs ? `?${qs}` : ""}`, { headers: authHeaders() });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al obtener vacantes");
   return data;
@@ -256,13 +261,18 @@ export async function getPostulacionesEstudiante() {
   return data; // [{ id, estado, fecha_creacion, vacante_id, titulo, area, modalidad, nombre_empresa }]
 }
 
-export async function getPostulantesEmpresa() {
-  const res = await fetch(`${BASE_URL}/postulaciones/empresa`, {
-    headers: authHeaders(),
-  });
+export async function getPostulantesEmpresa(estado = null) {
+  const url = estado
+    ? `${BASE_URL}/postulaciones/empresa?estado=${estado}`
+    : `${BASE_URL}/postulaciones/empresa?estado=pendiente`;
+  const res = await fetch(url, { headers: authHeaders() });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al obtener postulantes");
   return data;
+}
+
+export async function getPostulantesRechazados() {
+  return getPostulantesEmpresa("rechazado");
 }
 
 export async function getPostulantesPorVacante(vacanteId) {

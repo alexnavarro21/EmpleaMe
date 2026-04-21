@@ -917,6 +917,8 @@ export default function EstudianteDashboard() {
   const [talleres, setTalleres] = useState([]);
   const [siguiendoIds, setSiguiendoIds] = useState(new Set());
   const [tabFeed, setTabFeed] = useState("principal"); // "principal" | "siguiendo"
+  const [filtroModalidad, setFiltroModalidad] = useState(null);
+  const [filtroTipo, setFiltroTipo] = useState(null);
 
   // Estado estudiante extra
   const [estudiantePostulaciones, setEstudiantePostulaciones] = useState([]);
@@ -1229,6 +1231,62 @@ export default function EstudianteDashboard() {
           </div>
         )}
 
+        {/* Chips de filtro (solo en tab principal, para estudiantes) */}
+        {isEstudiante && tabFeed === "principal" && (
+          <div className="flex gap-2 flex-wrap">
+            {[
+              { key: "modalidad", val: "presencial",    label: "Presencial" },
+              { key: "modalidad", val: "remoto",        label: "Remoto" },
+              { key: "modalidad", val: "hibrido",       label: "Híbrido" },
+            ].map(({ key, val, label }) => {
+              const activo = key === "modalidad" ? filtroModalidad === val : filtroTipo === val;
+              return (
+                <button
+                  key={`${key}-${val}`}
+                  onClick={() => {
+                    if (key === "modalidad") setFiltroModalidad(activo ? null : val);
+                    else setFiltroTipo(activo ? null : val);
+                  }}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                    activo
+                      ? "bg-[#0F4D8A] text-white border-[#0F4D8A]"
+                      : `${B} ${M} hover:border-[#378ADD] hover:text-[#378ADD]`
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+            {[
+              { key: "tipo", val: "practica",      label: "Práctica" },
+              { key: "tipo", val: "puesto_laboral", label: "Puesto laboral" },
+            ].map(({ key, val, label }) => {
+              const activo = filtroTipo === val;
+              return (
+                <button
+                  key={`${key}-${val}`}
+                  onClick={() => setFiltroTipo(activo ? null : val)}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                    activo
+                      ? "bg-[#0F4D8A] text-white border-[#0F4D8A]"
+                      : `${B} ${M} hover:border-[#378ADD] hover:text-[#378ADD]`
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+            {(filtroModalidad || filtroTipo) && (
+              <button
+                onClick={() => { setFiltroModalidad(null); setFiltroTipo(null); }}
+                className={`text-xs px-3 py-1.5 rounded-full border border-red-400/50 text-red-400 hover:bg-red-400/10 transition-colors`}
+              >
+                Limpiar filtros
+              </button>
+            )}
+          </div>
+        )}
+
         {(() => {
           const todoElFeed = [
             ...publicaciones.map((p) => ({ ...p, _tipo: "publicacion", _fecha: new Date(p.publicado_en) })),
@@ -1236,9 +1294,19 @@ export default function EstudianteDashboard() {
           ].sort((a, b) => b._fecha - a._fecha);
 
           // Filtrar por tab
-          const feedUnificado = tabFeed === "siguiendo"
+          let feedUnificado = tabFeed === "siguiendo"
             ? todoElFeed.filter((item) => siguiendoIds.has(item.autor_id ?? item.creado_por))
             : todoElFeed;
+
+          // Filtrar por modalidad/tipo (solo aplica a posts de tipo vacante)
+          if (filtroModalidad || filtroTipo) {
+            feedUnificado = feedUnificado.filter((item) => {
+              if (item._tipo !== "publicacion" || item.tipo !== "vacante") return true;
+              if (filtroModalidad && item.modalidad !== filtroModalidad) return false;
+              if (filtroTipo && item.vacante_tipo !== filtroTipo) return false;
+              return true;
+            });
+          }
 
           if (feedUnificado.length === 0) {
             return (
@@ -1260,6 +1328,11 @@ export default function EstudianteDashboard() {
                         ? "Sigue a estudiantes o empresas para ver sus publicaciones aquí."
                         : "Cuando publiquen algo, aparecerá aquí."}
                     </p>
+                  </>
+                ) : (filtroModalidad || filtroTipo) ? (
+                  <>
+                    <p className={`text-sm font-medium ${T}`}>Sin vacantes con ese filtro</p>
+                    <p className="text-xs mt-1">Prueba con otros filtros o limpia la selección.</p>
                   </>
                 ) : (
                   <>

@@ -77,8 +77,12 @@ router.get("/empresa/aceptados", verificarToken, soloRol("empresa"), async (req,
   }
 });
 
-// GET /api/postulaciones/empresa  — empresa ve postulantes pendientes de todas sus vacantes
+// GET /api/postulaciones/empresa  — empresa ve postulantes de todas sus vacantes
+// Query param opcional: ?estado=pendiente|aceptado|rechazado|completado
 router.get("/empresa", verificarToken, soloRol("empresa"), async (req, res) => {
+  const { estado } = req.query;
+  const estadosValidos = ["pendiente", "aceptado", "rechazado", "completado"];
+  const filtroEstado = estadosValidos.includes(estado) ? estado : null;
   try {
     const [rows] = await db.query(
       `SELECT p.id, p.estado, p.fecha_creacion,
@@ -88,10 +92,10 @@ router.get("/empresa", verificarToken, soloRol("empresa"), async (req, res) => {
        FROM postulaciones p
        JOIN perfiles_estudiantes pe ON pe.usuario_id = p.estudiante_id
        JOIN vacantes v ON v.id = p.vacante_id
-       WHERE v.empresa_id = ? AND p.estado = 'pendiente'
-       ORDER BY p.fecha_creacion DESC
-       LIMIT 20`,
-      [req.usuario.id]
+       WHERE v.empresa_id = ?
+       ${filtroEstado ? "AND p.estado = ?" : ""}
+       ORDER BY p.fecha_creacion DESC`,
+      filtroEstado ? [req.usuario.id, filtroEstado] : [req.usuario.id]
     );
     res.json(rows);
   } catch (err) {

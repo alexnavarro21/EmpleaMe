@@ -4,14 +4,27 @@ const { verificarToken, soloRol } = require("../middleware/auth");
 const upload = require("../middleware/multerConfig");
 
 // GET /api/vacantes  — vacantes activas (para estudiantes)
+// Query params opcionales: ?area=&modalidad=&tipo=
 router.get("/", verificarToken, async (req, res) => {
+  const { area, modalidad, tipo } = req.query;
+  const tiposValidos = ["practica", "puesto_laboral"];
+  const modalidadesValidas = ["presencial", "remoto", "hibrido"];
+
+  const condiciones = ["v.esta_activa = TRUE"];
+  const params = [];
+
+  if (area) { condiciones.push("v.area = ?"); params.push(area); }
+  if (modalidadesValidas.includes(modalidad)) { condiciones.push("v.modalidad = ?"); params.push(modalidad); }
+  if (tiposValidos.includes(tipo)) { condiciones.push("v.tipo = ?"); params.push(tipo); }
+
   try {
     const [rows] = await db.query(
       `SELECT v.*, pe.nombre_empresa
        FROM vacantes v
        JOIN perfiles_empresas pe ON pe.usuario_id = v.empresa_id
-       WHERE v.esta_activa = TRUE
-       ORDER BY v.fecha_creacion DESC`
+       WHERE ${condiciones.join(" AND ")}
+       ORDER BY v.fecha_creacion DESC`,
+      params
     );
 
     // Adjuntar habilidades a cada vacante

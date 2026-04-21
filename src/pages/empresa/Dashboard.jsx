@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, StatCard, PageHeader, PrimaryButton, Paginacion } from "../../components/ui";
-import { getVacantesEmpresa, getPostulantesEmpresa, getPostulantesAceptados, actualizarEstadoPostulacion, iniciarConversacion, enviarMensaje, activarVacante, desactivarVacante, completarPractica, getMediaUrl } from "../../services/api";
+import { getVacantesEmpresa, getPostulantesEmpresa, getPostulantesAceptados, getPostulantesRechazados, actualizarEstadoPostulacion, iniciarConversacion, enviarMensaje, activarVacante, desactivarVacante, completarPractica, getMediaUrl } from "../../services/api";
 import PostulantesVacanteModal from "../../components/PostulantesVacanteModal";
 
 const postColor = { pendiente: "blue", aceptado: "green", rechazado: "gray" };
@@ -62,6 +62,8 @@ export default function EmpresaDashboard() {
   const [loading, setLoading] = useState(true);
   const [contactandoId, setContactandoId] = useState(null);
   const [vacanteSeleccionada, setVacanteSeleccionada] = useState(null);
+  const [rechazados, setRechazados] = useState([]);
+  const [mostrarRechazados, setMostrarRechazados] = useState(false);
   const [toggling, setToggling] = useState(null);
   const [completando, setCompletando] = useState(null);
   const [modalRechazar, setModalRechazar] = useState(null);   // postulante object
@@ -75,14 +77,16 @@ export default function EmpresaDashboard() {
   useEffect(() => {
     async function cargarDatos() {
       try {
-        const [vacs, posts, acepts] = await Promise.all([
+        const [vacs, posts, acepts, rechaz] = await Promise.all([
           getVacantesEmpresa(usuario.id),
           getPostulantesEmpresa(),
           getPostulantesAceptados(),
+          getPostulantesRechazados(),
         ]);
         setVacantes(vacs);
         setPostulantes(posts);
         setAceptados(acepts);
+        setRechazados(rechaz);
       } catch (err) {
         console.error("Error cargando dashboard:", err);
       } finally {
@@ -475,6 +479,59 @@ export default function EmpresaDashboard() {
               </div>
             ))}
           </div>
+        </Card>
+      )}
+
+      {/* Sección: Postulantes rechazados */}
+      {rechazados.length > 0 && (
+        <Card className="mt-6">
+          <button
+            onClick={() => setMostrarRechazados((v) => !v)}
+            className="flex items-center gap-2 w-full mb-1"
+          >
+            <Icon icon="mdi:account-remove-outline" width={16} className="text-red-400" />
+            <h2 className={`text-sm font-semibold ${T} flex-1 text-left`}>
+              Postulantes no seleccionados
+            </h2>
+            <span className={`text-xs ${M} mr-1`}>{rechazados.length}</span>
+            <Icon icon={mostrarRechazados ? "mdi:chevron-up" : "mdi:chevron-down"} width={16} className={M} />
+          </button>
+
+          {mostrarRechazados && (
+            <div className="flex flex-col gap-3 mt-3">
+              {rechazados.map((p) => (
+                <div key={p.id} className={`flex items-center gap-3 p-3 rounded-lg border ${B} opacity-70`}>
+                  {p.foto_perfil ? (
+                    <img src={getMediaUrl(p.foto_perfil)} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
+                  ) : (
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
+                      <Icon icon="mynaui:user-solid" width={20} className="text-[#378ADD]" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <Link to={`/empresa/candidato/${p.estudiante_id}`} className={`text-sm font-medium ${T} truncate hover:text-[#378ADD] transition-colors block`}>
+                      {p.nombre_completo}
+                    </Link>
+                    <p className={`text-xs ${M}`}>{p.carrera}</p>
+                    {p.vacante_titulo && (
+                      <p className={`text-xs ${M} truncate`}>
+                        <Icon icon="mdi:briefcase-outline" width={11} className="inline mr-0.5 mb-0.5" />
+                        {p.vacante_titulo}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleContactar(p.estudiante_id)}
+                    disabled={contactandoId === p.estudiante_id}
+                    title="Enviar mensaje"
+                    className={`${M} hover:text-[#378ADD] transition-colors disabled:opacity-50`}
+                  >
+                    <Icon icon={contactandoId === p.estudiante_id ? "mdi:loading" : "mdi:message-outline"} width={18} className={contactandoId === p.estudiante_id ? "animate-spin" : ""} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </Card>
       )}
 
