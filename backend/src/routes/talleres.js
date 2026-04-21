@@ -72,6 +72,7 @@ const uploadMulti = (req, res, next) => {
 
 // POST /api/talleres — crear taller (solo admin)
 router.post("/", verificarToken, soloRol("centro"), uploadMulti, async (req, res) => {
+  console.log("[TALLERES POST] body keys:", Object.keys(req.body), "file?:", !!req.file, req.file ? { key: req.file.key, size: req.file.size } : null);
   const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, costo, direccion, fecha_inicio, fecha_limite, cupos, permite_inscripcion } = req.body;
   if (!titulo) return res.status(400).json({ error: "El título es requerido" });
   const url_multimedia = req.file ? `/api/media/${req.file.key}` : null;
@@ -98,7 +99,9 @@ router.post("/", verificarToken, soloRol("centro"), uploadMulti, async (req, res
     );
     res.status(201).json({ id: result.insertId, mensaje: "Taller creado", url_multimedia });
   } catch (err) {
-    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+    console.error("[TALLERES POST ERR]", err.code, err.message, err.sqlMessage);
+    console.error(err.stack);
+    res.status(500).json({ error: "Error del servidor", detalle: err.message, code: err.code, sql: err.sqlMessage });
   }
 });
 
