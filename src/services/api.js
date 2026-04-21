@@ -424,8 +424,8 @@ export async function marcarNotificacionesLeidas() {
 
 // ── Publicaciones (Soporta Archivos Multimedia) ───────────────────────────────
 
-export async function getPublicaciones() {
-  const res = await fetch(`${BASE_URL}/publicaciones`, {
+export async function getPublicaciones(pagina = 1, limite = 20) {
+  const res = await fetch(`${BASE_URL}/publicaciones?pagina=${pagina}&limite=${limite}`, {
     headers: authHeaders(),
   });
   const data = await res.json();
@@ -695,6 +695,35 @@ export async function toggleLike(publicacionId) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al procesar me gusta");
   return data; // { liked: bool, total: number }
+}
+
+export async function crearReporte({ tipo, referencia_id, motivo, descripcion }) {
+  const res = await fetch(`${BASE_URL}/reportes`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ tipo, referencia_id, motivo, descripcion }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al enviar reporte");
+  return data;
+}
+
+export async function getReportes(estado = "pendiente") {
+  const res = await fetch(`${BASE_URL}/reportes?estado=${estado}`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener reportes");
+  return data;
+}
+
+export async function actualizarReporte(id, estado) {
+  const res = await fetch(`${BASE_URL}/reportes/${id}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify({ estado }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al actualizar reporte");
+  return data;
 }
 
 export async function eliminarPublicacion(publicacionId) {

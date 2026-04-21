@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge } from "../../components/ui";
-import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante, toggleLike, getTalleres, getAdminStats, inscribirseEnTaller, eliminarPublicacion, eliminarTaller, getSiguiendo, toggleSeguir } from "../../services/api";
+import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante, toggleLike, getTalleres, getAdminStats, inscribirseEnTaller, eliminarPublicacion, eliminarTaller, getSiguiendo, toggleSeguir, crearReporte } from "../../services/api";
 import { calcularCompletitud } from "../../utils/perfilCompletitud";
 import CrearPublicacion from "../../components/CrearPublicacion";
 import VerMasModal from "../../components/VerMasModal";
@@ -176,6 +176,8 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [confirmarEliminar, setConfirmarEliminar] = useState(false);
   const [eliminando, setEliminando] = useState(false);
+  const [reportando, setReportando] = useState(false);
+  const [reporteEnviado, setReporteEnviado] = useState(false);
   const [siguiendo, setSiguiendo] = useState(false);
   const [toggleandoSeguir, setToggleandoSeguir] = useState(false);
 
@@ -283,13 +285,38 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
               {menuAbierto && (
                 <div className={`absolute right-0 top-full mt-1 z-20 rounded-xl border shadow-lg min-w-[160px] ${BG} ${B}`}>
                   {!confirmarEliminar ? (
-                    <button
-                      onClick={() => setConfirmarEliminar(true)}
-                      className="flex items-center gap-2 w-full px-4 py-2.5 text-xs text-red-500 hover:bg-red-500/10 rounded-xl transition-colors"
-                    >
-                      <Icon icon="mdi:trash-can-outline" width={14} />
-                      Eliminar publicación
-                    </button>
+                    <>
+                      {pub.autor_id !== usuario.id && (
+                        <button
+                          onClick={async () => {
+                            if (reporteEnviado || reportando) return;
+                            setReportando(true);
+                            try {
+                              await crearReporte({ tipo: "publicacion", referencia_id: pub.id, motivo: "contenido_inapropiado" });
+                              setReporteEnviado(true);
+                            } catch (e) {
+                              if (e.message?.includes("Ya reportaste")) setReporteEnviado(true);
+                            } finally {
+                              setReportando(false);
+                              setMenuAbierto(false);
+                            }
+                          }}
+                          className={`flex items-center gap-2 w-full px-4 py-2.5 text-xs rounded-xl transition-colors ${reporteEnviado ? "text-green-500" : "text-amber-500 hover:bg-amber-500/10"}`}
+                        >
+                          <Icon icon={reporteEnviado ? "mdi:check-circle-outline" : "mdi:flag-outline"} width={14} />
+                          {reporteEnviado ? "Reporte enviado" : "Reportar publicación"}
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          onClick={() => setConfirmarEliminar(true)}
+                          className="flex items-center gap-2 w-full px-4 py-2.5 text-xs text-red-500 hover:bg-red-500/10 rounded-xl transition-colors"
+                        >
+                          <Icon icon="mdi:trash-can-outline" width={14} />
+                          Eliminar publicación
+                        </button>
+                      )}
+                    </>
                   ) : (
                     <div className="px-4 py-3">
                       <p className={`text-xs ${T} font-medium mb-1`}>¿Eliminar publicación?</p>
@@ -914,11 +941,15 @@ export default function EstudianteDashboard() {
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
   const [perfil, setPerfil] = useState(null);
   const [publicaciones, setPublicaciones] = useState([]);
+  const [paginaPubs, setPaginaPubs] = useState(1);
+  const [hayMasPubs, setHayMasPubs] = useState(true);
+  const [cargandoMas, setCargandoMas] = useState(false);
   const [talleres, setTalleres] = useState([]);
   const [siguiendoIds, setSiguiendoIds] = useState(new Set());
   const [tabFeed, setTabFeed] = useState("principal"); // "principal" | "siguiendo"
   const [filtroModalidad, setFiltroModalidad] = useState(null);
   const [filtroTipo, setFiltroTipo] = useState(null);
+  const [filtroFecha, setFiltroFecha] = useState(null); // null | "hoy" | "semana" | "mes"
 
   // Estado estudiante extra
   const [estudiantePostulaciones, setEstudiantePostulaciones] = useState([]);
@@ -933,8 +964,31 @@ export default function EstudianteDashboard() {
   // Estado admin
   const [adminStats, setAdminStats] = useState(null);
 
+  const LIMITE_PUBS = 20;
+
   const cargarPublicaciones = () => {
-    getPublicaciones().then(setPublicaciones).catch(console.error);
+    setPaginaPubs(1);
+    setHayMasPubs(true);
+    getPublicaciones(1, LIMITE_PUBS).then((data) => {
+      setPublicaciones(data);
+      if (data.length < LIMITE_PUBS) setHayMasPubs(false);
+    }).catch(console.error);
+  };
+
+  const cargarMasPublicaciones = async () => {
+    if (cargandoMas || !hayMasPubs) return;
+    setCargandoMas(true);
+    const siguientePagina = paginaPubs + 1;
+    try {
+      const data = await getPublicaciones(siguientePagina, LIMITE_PUBS);
+      setPublicaciones((prev) => [...prev, ...data]);
+      setPaginaPubs(siguientePagina);
+      if (data.length < LIMITE_PUBS) setHayMasPubs(false);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setCargandoMas(false);
+    }
   };
 
   useEffect(() => {
@@ -1234,6 +1288,24 @@ export default function EstudianteDashboard() {
         {/* Chips de filtro (solo en tab principal, para estudiantes) */}
         {isEstudiante && tabFeed === "principal" && (
           <div className="flex gap-2 flex-wrap">
+            {/* Filtro de fechas */}
+            {[
+              { val: "hoy",    label: "Hoy" },
+              { val: "semana", label: "Esta semana" },
+              { val: "mes",    label: "Este mes" },
+            ].map(({ val, label }) => (
+              <button
+                key={val}
+                onClick={() => setFiltroFecha(filtroFecha === val ? null : val)}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                  filtroFecha === val
+                    ? "bg-[#378ADD] text-white border-[#378ADD]"
+                    : `${B} ${M} hover:border-[#378ADD] hover:text-[#378ADD]`
+                }`}
+              >
+                {label}
+              </button>
+            ))}
             {[
               { key: "modalidad", val: "presencial",    label: "Presencial" },
               { key: "modalidad", val: "remoto",        label: "Remoto" },
@@ -1276,9 +1348,9 @@ export default function EstudianteDashboard() {
                 </button>
               );
             })}
-            {(filtroModalidad || filtroTipo) && (
+            {(filtroModalidad || filtroTipo || filtroFecha) && (
               <button
-                onClick={() => { setFiltroModalidad(null); setFiltroTipo(null); }}
+                onClick={() => { setFiltroModalidad(null); setFiltroTipo(null); setFiltroFecha(null); }}
                 className={`text-xs px-3 py-1.5 rounded-full border border-red-400/50 text-red-400 hover:bg-red-400/10 transition-colors`}
               >
                 Limpiar filtros
@@ -1297,6 +1369,16 @@ export default function EstudianteDashboard() {
           let feedUnificado = tabFeed === "siguiendo"
             ? todoElFeed.filter((item) => siguiendoIds.has(item.autor_id ?? item.creado_por))
             : todoElFeed;
+
+          // Filtrar por fecha
+          if (filtroFecha) {
+            const ahora = new Date();
+            const inicio = new Date();
+            if (filtroFecha === "hoy") inicio.setHours(0, 0, 0, 0);
+            else if (filtroFecha === "semana") inicio.setDate(ahora.getDate() - 7);
+            else if (filtroFecha === "mes") inicio.setMonth(ahora.getMonth() - 1);
+            feedUnificado = feedUnificado.filter((item) => item._fecha >= inicio);
+          }
 
           // Filtrar por modalidad/tipo (solo aplica a posts de tipo vacante)
           if (filtroModalidad || filtroTipo) {
@@ -1344,24 +1426,40 @@ export default function EstudianteDashboard() {
             );
           }
 
-          return feedUnificado.map((item) =>
-            item._tipo === "taller"
-              ? <TallerCard key={`taller-${item.id}`} taller={item} isDark={isDark} perfilCompleto={perfilCompleto} onDeleted={(id) => setTalleres((prev) => prev.filter((t) => t.id !== id))} />
-              : <FeedCard
-                  key={`pub-${item.id}`}
-                  pub={item}
-                  isDark={isDark}
-                  perfilCompleto={perfilCompleto}
-                  onDeleted={(id) => setPublicaciones((prev) => prev.filter((p) => p.id !== id))}
-                  siguiendoIds={siguiendoIds}
-                  onSeguirToggled={(autorId, nuevoEstado) => {
-                    setSiguiendoIds((prev) => {
-                      const next = new Set(prev);
-                      if (nuevoEstado) next.add(autorId); else next.delete(autorId);
-                      return next;
-                    });
-                  }}
-                />
+          return (
+            <>
+              {feedUnificado.map((item) =>
+                item._tipo === "taller"
+                  ? <TallerCard key={`taller-${item.id}`} taller={item} isDark={isDark} perfilCompleto={perfilCompleto} onDeleted={(id) => setTalleres((prev) => prev.filter((t) => t.id !== id))} />
+                  : <FeedCard
+                      key={`pub-${item.id}`}
+                      pub={item}
+                      isDark={isDark}
+                      perfilCompleto={perfilCompleto}
+                      onDeleted={(id) => setPublicaciones((prev) => prev.filter((p) => p.id !== id))}
+                      siguiendoIds={siguiendoIds}
+                      onSeguirToggled={(autorId, nuevoEstado) => {
+                        setSiguiendoIds((prev) => {
+                          const next = new Set(prev);
+                          if (nuevoEstado) next.add(autorId); else next.delete(autorId);
+                          return next;
+                        });
+                      }}
+                    />
+              )}
+              {hayMasPubs && !filtroFecha && !filtroModalidad && !filtroTipo && tabFeed === "principal" && (
+                <button
+                  onClick={cargarMasPublicaciones}
+                  disabled={cargandoMas}
+                  className={`w-full py-3 rounded-xl border text-sm font-medium transition-colors disabled:opacity-50 ${B} ${M} hover:border-[#378ADD] hover:text-[#378ADD]`}
+                >
+                  {cargandoMas
+                    ? <><Icon icon="mdi:loading" width={16} className="inline animate-spin mr-2" />Cargando...</>
+                    : "Cargar más publicaciones"}
+                </button>
+              )}
+            </>
+          );
           );
         })()}
       </div>

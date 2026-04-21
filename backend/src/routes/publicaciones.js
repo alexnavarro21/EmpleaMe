@@ -61,9 +61,10 @@ async function tieneLikes() {
   return likesDisponible;
 }
 
-// GET /api/publicaciones — feed de publicaciones activas (opcionalmente filtrado por autor_id)
+// GET /api/publicaciones — feed de publicaciones activas
+// Query params: ?autor_id= &pagina=1 &limite=20
 router.get("/", verificarToken, async (req, res) => {
-  const { autor_id } = req.query;
+  const { autor_id, pagina, limite } = req.query;
   const usuarioId = req.usuario.id;
   try {
     const conTipo  = await tieneColumnaTipo();
@@ -78,8 +79,12 @@ router.get("/", verificarToken, async (req, res) => {
          (SELECT COUNT(*) FROM publicacion_likes pl WHERE pl.publicacion_id = p.id AND pl.usuario_id = ?) AS liked_by_me,`
       : "0 AS likes_count, 0 AS liked_by_me,";
 
+    const limitNum  = Math.min(parseInt(limite)  || 20, 50);
+    const offsetNum = (Math.max(parseInt(pagina) || 1, 1) - 1) * limitNum;
+
     const params = conLikes ? [usuarioId] : [];
     if (autor_id) params.push(autor_id);
+    params.push(limitNum, offsetNum);
 
     const [rows] = await db.query(
       `SELECT p.id, p.titulo, p.contenido, p.publicado_en, p.vacante_id, p.url_multimedia,
@@ -107,7 +112,7 @@ router.get("/", verificarToken, async (req, res) => {
        WHERE p.esta_activa = TRUE
        ${autor_id ? "AND p.autor_id = ?" : ""}
        ORDER BY p.publicado_en DESC
-       LIMIT 50`,
+       LIMIT ? OFFSET ?`,
       params
     );
 
