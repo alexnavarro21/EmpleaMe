@@ -150,4 +150,38 @@ router.get("/resumen/:estudiante_id/:vacante_id", verificarToken, soloRol("empre
   }
 });
 
+// POST /api/ia/moderar — verifica si un contenido es apropiado para la plataforma
+router.post("/moderar", verificarToken, async (req, res) => {
+  const { contenido } = req.body;
+  if (!contenido || !contenido.trim())
+    return res.status(400).json({ error: "contenido es requerido" });
+
+  if (!process.env.GEMINI_API_KEY)
+    return res.json({ aprobado: true });
+
+  try {
+    const prompt = `Eres un moderador de contenido para EmpleaMe, una plataforma educativa de prácticas profesionales en Chile.
+Analiza el siguiente texto y determina si es apropiado para publicarse en la plataforma.
+
+Texto: "${contenido.trim().substring(0, 1000)}"
+
+Responde ÚNICAMENTE con JSON válido (sin markdown): {"aprobado": true o false, "razon": "explicación breve en español"}
+Considera INAPROPIADO: groserías, insultos, discriminación, contenido sexual, amenazas, spam, datos de contacto personal para evadir la plataforma.
+Considera APROPIADO: ofertas de trabajo, descripciones de talleres, publicaciones profesionales, preguntas técnicas.`;
+
+    const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+    const result = await model.generateContent(prompt);
+    const text = result.response.text().trim();
+
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.json({ aprobado: true });
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    res.json({ aprobado: Boolean(parsed.aprobado), razon: parsed.razon || "" });
+  } catch (err) {
+    console.error("Error moderando contenido:", err.message);
+    res.json({ aprobado: true });
+  }
+});
+
 module.exports = router;

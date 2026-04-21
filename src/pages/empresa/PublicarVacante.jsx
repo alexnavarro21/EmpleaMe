@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, PrimaryButton, SecondaryButton, FormField, TextAreaField, SelectField, PageHeader } from "../../components/ui";
-import { crearVacante, getHabilidades } from "../../services/api";
+import { crearVacante, getHabilidades, moderarContenido } from "../../services/api";
 import FileUploader from "../../components/FileUploader";
 
 const modalidades = [
@@ -62,6 +62,13 @@ export default function EmpresaPublicarVacante() {
     setError("");
     setLoading(true);
     try {
+      const textoARevisar = [titulo, descripcion, requisitos].filter(Boolean).join(" ").trim();
+      const mod = await moderarContenido(textoARevisar);
+      if (!mod.aprobado) {
+        setError(mod.razon || "La vacante contiene contenido inapropiado.");
+        return;
+      }
+
       await crearVacante({
         tipo, titulo, descripcion, requisitos, area, modalidad,
         duracion, horario, remuneracion, direccion, beneficios,

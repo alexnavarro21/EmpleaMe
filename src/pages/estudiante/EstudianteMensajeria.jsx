@@ -61,6 +61,7 @@ export default function EstudianteMensajeria() {
   const [loadingConvs, setLoadingConvs] = useState(true);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [sending, setSending] = useState(false);
+  const [errorEnvio, setErrorEnvio] = useState("");
   const bottomRef = useRef(null);
   const lastMsgIdRef = useRef(null);
 
@@ -158,6 +159,7 @@ export default function EstudianteMensajeria() {
     if (!selected) return;
 
     setSending(true);
+    setErrorEnvio("");
     try {
       if (tab === "empresas") {
         await enviarMensaje(selected, newMessage.trim());
@@ -184,7 +186,7 @@ export default function EstudianteMensajeria() {
       }
       setNewMessage("");
     } catch (err) {
-      console.error("Error enviando mensaje:", err);
+      setErrorEnvio(err.message || "Error al enviar mensaje");
     } finally {
       setSending(false);
     }
@@ -352,6 +354,9 @@ export default function EstudianteMensajeria() {
                 <div ref={bottomRef} />
               </div>
 
+              {errorEnvio && (
+                <p className="px-5 py-1 text-xs text-red-500 bg-red-50 dark:bg-red-900/20">{errorEnvio}</p>
+              )}
               <form onSubmit={handleSend} className={`px-5 py-3 border-t ${B} ${cardBg} flex gap-2 flex-shrink-0`}>
                 <input
                   type="text"

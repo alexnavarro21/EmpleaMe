@@ -3,7 +3,7 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 import { PrimaryButton } from "./ui";
 import FileUploader from "./FileUploader";
-import { crearPublicacion } from "../services/api";
+import { crearPublicacion, moderarContenido } from "../services/api";
 
 export default function CrearPublicacion({ onPublicado }) {
   const { isDark } = useDark();
@@ -16,18 +16,30 @@ export default function CrearPublicacion({ onPublicado }) {
   const [archivo, setArchivo] = useState(null);
   const [mostrarUploader, setMostrarUploader] = useState(false);
   const [cargando, setCargando] = useState(false);
+  const [errorMod, setErrorMod] = useState("");
 
   const handleSubmit = async () => {
     if (!contenido.trim() && !archivo) return;
 
+    setErrorMod("");
     setCargando(true);
-    const formData = new FormData();
-    formData.append("titulo", titulo.trim() || "Actualización de estado");
-    formData.append("contenido", contenido);
-    formData.append("tipo_nombre", "general");
-    if (archivo) formData.append("archivo_multimedia", archivo);
 
     try {
+      const textoARevisar = [titulo, contenido].filter(Boolean).join(" ").trim();
+      if (textoARevisar) {
+        const mod = await moderarContenido(textoARevisar);
+        if (!mod.aprobado) {
+          setErrorMod(mod.razon || "Tu publicación contiene contenido inapropiado.");
+          return;
+        }
+      }
+
+      const formData = new FormData();
+      formData.append("titulo", titulo.trim() || "Actualización de estado");
+      formData.append("contenido", contenido);
+      formData.append("tipo_nombre", "general");
+      if (archivo) formData.append("archivo_multimedia", archivo);
+
       await crearPublicacion(formData);
       setTitulo("");
       setContenido("");
@@ -79,6 +91,10 @@ export default function CrearPublicacion({ onPublicado }) {
                 onFileSelect={(file) => setArchivo(file)}
               />
             </div>
+          )}
+
+          {errorMod && (
+            <p className="text-xs text-red-500 mt-2">{errorMod}</p>
           )}
 
           <div className={`flex items-center justify-between mt-3 pt-3 border-t border-dashed ${B}`}>
