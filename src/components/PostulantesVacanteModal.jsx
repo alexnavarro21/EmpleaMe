@@ -198,6 +198,14 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
           </div>
         </div>
 
+        {/* Disclaimer ranking */}
+        {rankingActivo && (
+          <div className={`px-5 py-2.5 flex items-start gap-2 text-xs border-b ${B} ${isDark ? "bg-purple-500/10 text-purple-300" : "bg-purple-50 text-purple-700"}`}>
+            <Icon icon="mdi:information-outline" width={14} className="flex-shrink-0 mt-0.5" />
+            <span>Este ranking es generado por IA y se ofrece solo como referencia. No reemplaza el juicio profesional de un reclutador ni debe ser el único criterio de selección.</span>
+          </div>
+        )}
+
         {/* Lista */}
         <div className="overflow-y-auto flex-1 px-5 py-4">
           {loading ? (
@@ -223,7 +231,7 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
                   : compat === "Baja"
                   ? isDark ? "bg-red-500/15 text-red-400" : "bg-red-100 text-red-700"
                   : "";
-                const medallaIcon = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`;
+                const posicionLabel = `#${idx + 1}`;
                 return (
                   <div
                     key={p.id}
@@ -243,7 +251,7 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           {rankingActivo && (
-                            <span className="text-sm font-bold text-purple-500 flex-shrink-0">{medallaIcon}</span>
+                            <span className={`text-xs font-bold flex-shrink-0 ${isDark ? "text-purple-400" : "text-purple-600"}`}>{posicionLabel}</span>
                           )}
                           <p className={`text-sm font-medium ${T} truncate`}>{p.nombre_completo}</p>
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${cfg.color}`}>
