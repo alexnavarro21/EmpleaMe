@@ -1,10 +1,7 @@
-- filtro de palabras en muro
-- ia en los chats para filtrar palabras
-- filtro de palabras prohibidas en chat
+
+
+
 - cambiar barra de busqueda
 - sistema de reporte
-
-- ia q haga top de alumnos para postulaciones
-
 - fotos/videos a talleres
 - paginas o filtro de fechas de publiaciones en el muro
