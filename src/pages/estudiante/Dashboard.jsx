@@ -404,7 +404,7 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
               <img
                 src={src}
                 alt="Multimedia"
-                className="rounded-lg max-h-72 w-full object-cover border"
+                className="rounded-lg max-h-72 w-full object-cover"
                 onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
               />
             )}
@@ -755,9 +755,9 @@ function TallerCard({ taller, isDark, perfilCompleto, onDeleted }) {
         const src = resolverMedia(taller.url_multimedia);
         const esVideo = /\.(mp4|webm|ogg|mov|avi)(\?|$)/i.test(taller.url_multimedia);
         return esVideo ? (
-          <video src={src} controls className="w-full max-h-52 object-cover mb-3" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+          <video src={src} controls className="w-full rounded-lg max-h-72 object-cover mb-3" onError={(e) => { e.currentTarget.style.display = "none"; }} />
         ) : (
-          <img src={src} alt="" className="w-full max-h-52 object-cover mb-3" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+          <img src={src} alt="" className="w-full rounded-lg max-h-72 object-cover mb-3" onError={(e) => { e.currentTarget.style.display = "none"; }} />
         );
       })()}
 

@@ -187,7 +187,7 @@ export default function VerMasModal({ pub, onClose }) {
               <img
                 src={src}
                 alt="Multimedia"
-                className="rounded-xl w-full object-contain max-h-[70vh] mb-4 border"
+                className="rounded-xl w-full object-contain max-h-[70vh] mb-4"
                 onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
               />
             );
