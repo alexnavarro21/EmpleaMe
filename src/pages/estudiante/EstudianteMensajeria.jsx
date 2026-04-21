@@ -39,9 +39,8 @@ function formatTime(ts) {
   return d.toLocaleDateString([], { day: "2-digit", month: "short" });
 }
 
-const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
-
 export default function EstudianteMensajeria() {
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
   const { isDark } = useDark();
   const location = useLocation();
 
