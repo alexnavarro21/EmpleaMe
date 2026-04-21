@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge, Card, StatCard, PageHeader, Paginacion } from "../../components/ui";
+import FileUploader from "../../components/FileUploader";
 import {
   getTalleres, crearTaller, actualizarTaller, toggleTaller, eliminarTaller,
   getInscritosTaller, getInscritosPendientesTalleres, actualizarEstadoInscripcion,
@@ -10,6 +11,14 @@ import {
 } from "../../services/api";
 
 const MODALIDADES = ["presencial", "remoto", "hibrido"];
+
+const BASE_URL_GLOBAL = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
+function resolverMedia(url) {
+  if (!url) return null;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  if (url.startsWith("/")) return `${BASE_URL_GLOBAL}${url}`;
+  return `${BASE_URL_GLOBAL}/uploads/${url}`;
+}
 
 const FORM_VACÍO = {
   titulo: "", descripcion: "", requisitos: "", area: "", modalidad: "presencial",
@@ -58,6 +67,14 @@ function TallerPreview({ form, isDark }) {
           <p className={`text-sm leading-relaxed ${T}`}>{form.descripcion}</p>
         </div>
       )}
+      {form.previewMedia && (() => {
+        const esVideo = /\.(mp4|webm|ogg|mov|avi)(\?|$)/i.test(form.previewMedia);
+        return esVideo ? (
+          <video src={form.previewMedia} controls className="w-full max-h-52 object-cover mb-3" />
+        ) : (
+          <img src={form.previewMedia} alt="" className="w-full max-h-52 object-cover mb-3" />
+        );
+      })()}
       <div className={`mx-4 mb-3 p-3 rounded-lg border ${B} ${isDark ? "bg-[#1e1e1c]" : "bg-[#F7F6F3]"}`}>
         <div className="flex flex-wrap gap-3">
           <div className="flex items-center gap-1.5">
@@ -147,6 +164,9 @@ function TallerForm({ taller, onGuardar, onCancelar, isDark }) {
   } : FORM_VACÍO);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
+  const [archivo, setArchivo] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(taller?.url_multimedia ? resolverMedia(taller.url_multimedia) : null);
+  const [quitarMedia, setQuitarMedia] = useState(false);
 
   const inputCls = `w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-purple-500 ${
     isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
@@ -167,13 +187,17 @@ function TallerForm({ taller, onGuardar, onCancelar, isDark }) {
         return;
       }
 
-      await onGuardar({
-        ...form,
-        costo:        form.costo !== "" ? Number(form.costo) : 0,
-        cupos:        form.cupos !== "" ? Number(form.cupos) : null,
-        fecha_inicio: form.fecha_inicio || null,
-        fecha_limite: form.fecha_limite || null,
-      });
+      await onGuardar(
+        {
+          ...form,
+          costo:        form.costo !== "" ? Number(form.costo) : 0,
+          cupos:        form.cupos !== "" ? Number(form.cupos) : null,
+          fecha_inicio: form.fecha_inicio || null,
+          fecha_limite: form.fecha_limite || null,
+        },
+        archivo,
+        quitarMedia,
+      );
     } catch (e) {
       setError(e.message || "Error al guardar");
       setGuardando(false);
@@ -248,6 +272,38 @@ function TallerForm({ taller, onGuardar, onCancelar, isDark }) {
               <input value={form.direccion} onChange={F("direccion")} placeholder="Ej: Av. Matta 123, Lo Espejo" className={inputCls} />
             </div>
 
+            {/* ── Multimedia ── */}
+            <div className="mb-4">
+              <label className={labelCls}>Imagen o video adjunto (opcional)</label>
+              {previewUrl && !quitarMedia ? (
+                <div className="relative mb-2">
+                  {/\.(mp4|webm|ogg|mov|avi)(\?|$)/i.test(previewUrl) ? (
+                    <video src={previewUrl} controls className="w-full rounded-lg max-h-48 object-cover" />
+                  ) : (
+                    <img src={previewUrl} alt="" className="w-full rounded-lg max-h-48 object-cover" />
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => { setQuitarMedia(true); setArchivo(null); setPreviewUrl(null); }}
+                    className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-1 transition-colors"
+                  >
+                    <Icon icon="mdi:close" width={14} />
+                  </button>
+                </div>
+              ) : (
+                <FileUploader
+                  title="Sube una imagen o video"
+                  accept="image/*,video/*"
+                  icon="mdi:image-plus-outline"
+                  onFileSelect={(file) => {
+                    setArchivo(file);
+                    setQuitarMedia(false);
+                    setPreviewUrl(file ? URL.createObjectURL(file) : null);
+                  }}
+                />
+              )}
+            </div>
+
             {/* ── Sección inscripciones ── */}
             <div className={`mt-2 mb-4 rounded-lg border ${B} overflow-hidden`}>
               <div className={`px-4 py-3 ${isDark ? "bg-[#1e1e1c]" : "bg-[#F7F6F3]"}`}>
@@ -314,7 +370,7 @@ function TallerForm({ taller, onGuardar, onCancelar, isDark }) {
           <Card>
             <p className={`text-sm font-semibold ${T} mb-1`}>Vista previa del post</p>
             <p className={`text-xs ${M} mb-3`}>Así verán los estudiantes el taller en el muro</p>
-            <TallerPreview form={form} isDark={isDark} />
+            <TallerPreview form={{ ...form, previewMedia: previewUrl && !quitarMedia ? previewUrl : null }} isDark={isDark} />
           </Card>
           <Card>
             <p className={`text-sm font-medium ${T} mb-2`}>Consejos</p>
@@ -498,11 +554,11 @@ export default function AdminTalleres() {
 
   useEffect(() => { cargar(); }, []);
 
-  const handleGuardar = async (datos) => {
+  const handleGuardar = async (datos, archivo, quitarMedia) => {
     if (vista && vista !== "nuevo" && vista !== "panel") {
-      await actualizarTaller(vista.id, datos);
+      await actualizarTaller(vista.id, datos, archivo, quitarMedia);
     } else {
-      await crearTaller(datos);
+      await crearTaller(datos, archivo);
     }
     await cargar();
     setVista("panel");

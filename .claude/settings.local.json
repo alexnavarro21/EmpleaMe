@@ -5,7 +5,12 @@
       "Bash(git checkout:*)",
       "Bash(grep -E \"\\\\.js$\")",
       "Bash(grep -A 20 \"CREATE TABLE publicaciones\" /c/Users/rikis/OneDrive/Escritorio/Proyecto_IS/EmpleaMe/sql/*.sql)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(railway status *)",
+      "Bash(python3 -c ' *)",
+      "Bash(railway logs *)",
+      "Bash(python3 -c \"import json; print\\(json.load\\(open\\('/Users/alex/.railway/config.json'\\)\\)['user']['accessToken']\\)\")",
+      "Bash(curl -s https://backboard.railway.com/graphql/v2 -H 'Authorization: Bearer __TRACKED_VAR__' -H 'Content-Type: application/json' -d '{\"query\":\"query\\($id: String!\\) { deploymentLogs\\(deploymentId: $id, limit: 500\\) { message timestamp severity } }\",\"variables\":{\"id\":\"eef4d222-e560-4bd3-aabb-d7898edd536c\"}}')"
     ],
     "additionalDirectories": [
       "c:\\Users\\rikis\\.claude\\projects\\c--Users-rikis-Desktop-Proyecto-IS-EmpleaMe\\memory"

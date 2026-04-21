@@ -404,7 +404,7 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
               <img
                 src={src}
                 alt="Multimedia"
-                className="rounded-lg max-h-72 w-full object-cover border"
+                className="rounded-lg max-h-72 w-full object-cover"
                 onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
               />
             )}
@@ -554,6 +554,15 @@ function TallerVerMasModal({ taller, isDark, perfilCompleto, onClose }) {
 
         {/* Body */}
         <div className="overflow-y-auto flex-1 px-5 py-4 flex flex-col gap-4">
+          {taller.url_multimedia && (() => {
+            const src = resolverMedia(taller.url_multimedia);
+            const esVideo = /\.(mp4|webm|ogg|mov|avi)(\?|$)/i.test(taller.url_multimedia);
+            return esVideo ? (
+              <video src={src} controls className="w-full rounded-lg max-h-80 object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+            ) : (
+              <img src={src} alt="" className="w-full rounded-lg max-h-80 object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+            );
+          })()}
           <div className={`flex flex-wrap gap-3 p-3 rounded-xl border ${B} ${S}`}>
             {infoItems.map((item, i) => (
               <div key={i} className="flex items-center gap-1.5">
@@ -741,6 +750,20 @@ function TallerCard({ taller, isDark, perfilCompleto, onDeleted }) {
           <p className={`text-sm leading-relaxed ${T}`}>{taller.descripcion}</p>
         </div>
       )}
+
+      {taller.url_multimedia && (() => {
+        const src = resolverMedia(taller.url_multimedia);
+        const esVideo = /\.(mp4|webm|ogg|mov|avi)(\?|$)/i.test(taller.url_multimedia);
+        return (
+          <div className="px-4 pb-3">
+            {esVideo ? (
+              <video src={src} controls className="w-full rounded-lg max-h-72 object-cover" onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }} />
+            ) : (
+              <img src={src} alt="" className="w-full rounded-lg max-h-72 object-cover" onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }} />
+            )}
+          </div>
+        );
+      })()}
 
       {/* Info box igual que vacante */}
       <div className={`mx-4 mb-3 p-3 rounded-lg border ${B} ${isDark ? "bg-[#1e1e1c]" : "bg-[#F7F6F3]"}`}>
