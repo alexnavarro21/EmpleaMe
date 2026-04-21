@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const db = require("../db");
 const { verificarToken, soloRol } = require("../middleware/auth");
+const upload = require("../middleware/multerConfig");
 
 // GET /api/talleres/inscritos/pendientes — admin ve todos los inscritos pendientes
 router.get("/inscritos/pendientes", verificarToken, soloRol("centro"), async (req, res) => {
@@ -59,13 +60,14 @@ router.get("/", verificarToken, async (req, res) => {
 });
 
 // POST /api/talleres — crear taller (solo admin)
-router.post("/", verificarToken, soloRol("centro"), async (req, res) => {
+router.post("/", verificarToken, soloRol("centro"), upload.single("archivo_multimedia"), async (req, res) => {
   const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, costo, direccion, fecha_inicio, fecha_limite, cupos, permite_inscripcion } = req.body;
   if (!titulo) return res.status(400).json({ error: "El título es requerido" });
+  const url_multimedia = req.file ? `/api/media/${req.file.key}` : null;
   try {
     const [result] = await db.query(
-      `INSERT INTO talleres (titulo, descripcion, requisitos, area, modalidad, duracion, horario, costo, direccion, fecha_inicio, fecha_limite, cupos, permite_inscripcion)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO talleres (titulo, descripcion, requisitos, area, modalidad, duracion, horario, costo, direccion, fecha_inicio, fecha_limite, cupos, permite_inscripcion, url_multimedia)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         titulo,
         descripcion || null,
@@ -80,20 +82,32 @@ router.post("/", verificarToken, soloRol("centro"), async (req, res) => {
         fecha_limite || null,
         cupos != null ? cupos : null,
         permite_inscripcion != null ? permite_inscripcion : true,
+        url_multimedia,
       ]
     );
-    res.status(201).json({ id: result.insertId, mensaje: "Taller creado" });
+    res.status(201).json({ id: result.insertId, mensaje: "Taller creado", url_multimedia });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }
 });
 
 // PUT /api/talleres/:id — editar taller (solo admin)
-router.put("/:id", verificarToken, soloRol("centro"), async (req, res) => {
-  const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, costo, direccion, fecha_inicio, fecha_limite, cupos, permite_inscripcion } = req.body;
+router.put("/:id", verificarToken, soloRol("centro"), upload.single("archivo_multimedia"), async (req, res) => {
+  const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, costo, direccion, fecha_inicio, fecha_limite, cupos, permite_inscripcion, quitar_multimedia } = req.body;
   try {
+    // Si sube archivo nuevo → usar ese; si pide quitar → null; si no → mantener el actual
+    let url_multimedia;
+    if (req.file) {
+      url_multimedia = `/api/media/${req.file.key}`;
+    } else if (quitar_multimedia === "1") {
+      url_multimedia = null;
+    } else {
+      const [[actual]] = await db.query("SELECT url_multimedia FROM talleres WHERE id = ?", [req.params.id]);
+      url_multimedia = actual?.url_multimedia ?? null;
+    }
+
     const [result] = await db.query(
-      `UPDATE talleres SET titulo=?, descripcion=?, requisitos=?, area=?, modalidad=?, duracion=?, horario=?, costo=?, direccion=?, fecha_inicio=?, fecha_limite=?, cupos=?, permite_inscripcion=?
+      `UPDATE talleres SET titulo=?, descripcion=?, requisitos=?, area=?, modalidad=?, duracion=?, horario=?, costo=?, direccion=?, fecha_inicio=?, fecha_limite=?, cupos=?, permite_inscripcion=?, url_multimedia=?
        WHERE id = ?`,
       [
         titulo,
@@ -109,11 +123,12 @@ router.put("/:id", verificarToken, soloRol("centro"), async (req, res) => {
         fecha_limite || null,
         cupos != null ? cupos : null,
         permite_inscripcion != null ? permite_inscripcion : true,
+        url_multimedia,
         req.params.id,
       ]
     );
     if (result.affectedRows === 0) return res.status(404).json({ error: "Taller no encontrado" });
-    res.json({ mensaje: "Taller actualizado" });
+    res.json({ mensaje: "Taller actualizado", url_multimedia });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }

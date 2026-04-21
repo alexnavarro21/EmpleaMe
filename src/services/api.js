@@ -706,22 +706,29 @@ export async function getTalleres(todos = false) {
   return data;
 }
 
-export async function crearTaller(datos) {
+export async function crearTaller(datos, archivo) {
+  const formData = new FormData();
+  Object.entries(datos).forEach(([k, v]) => { if (v != null) formData.append(k, v); });
+  if (archivo) formData.append("archivo_multimedia", archivo);
   const res = await fetch(`${BASE_URL}/talleres`, {
     method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify(datos),
+    headers: { Authorization: `Bearer ${getToken()}` },
+    body: formData,
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al crear taller");
   return data;
 }
 
-export async function actualizarTaller(id, datos) {
+export async function actualizarTaller(id, datos, archivo, quitarMultimedia) {
+  const formData = new FormData();
+  Object.entries(datos).forEach(([k, v]) => { if (v != null) formData.append(k, v); });
+  if (archivo) formData.append("archivo_multimedia", archivo);
+  if (quitarMultimedia) formData.append("quitar_multimedia", "1");
   const res = await fetch(`${BASE_URL}/talleres/${id}`, {
     method: "PUT",
-    headers: authHeaders(),
-    body: JSON.stringify(datos),
+    headers: { Authorization: `Bearer ${getToken()}` },
+    body: formData,
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al actualizar taller");
