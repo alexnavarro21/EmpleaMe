@@ -742,6 +742,16 @@ function TallerCard({ taller, isDark, perfilCompleto, onDeleted }) {
         </div>
       )}
 
+      {taller.url_multimedia && (() => {
+        const src = resolverMedia(taller.url_multimedia);
+        const esVideo = /\.(mp4|webm|ogg|mov|avi)(\?|$)/i.test(taller.url_multimedia);
+        return esVideo ? (
+          <video src={src} controls className="w-full max-h-52 object-cover mb-3" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+        ) : (
+          <img src={src} alt="" className="w-full max-h-52 object-cover mb-3" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+        );
+      })()}
+
       {/* Info box igual que vacante */}
       <div className={`mx-4 mb-3 p-3 rounded-lg border ${B} ${isDark ? "bg-[#1e1e1c]" : "bg-[#F7F6F3]"}`}>
         <div className="flex flex-wrap gap-3">
