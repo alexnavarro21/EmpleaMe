@@ -866,6 +866,16 @@ export async function getSeguidores(usuarioId) {
   return data;
 }
 
+// Ranking IA de postulantes por compatibilidad con una vacante (con caché)
+export async function getRankingIA(vacanteId) {
+  const res = await fetch(`${BASE_URL}/ia/ranking/${vacanteId}`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al generar ranking");
+  return data;
+}
+
 // Moderar contenido con IA antes de publicar
 export async function moderarContenido(contenido) {
   const res = await fetch(`${BASE_URL}/ia/moderar`, {
