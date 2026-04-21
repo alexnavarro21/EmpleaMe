@@ -1,0 +1,10 @@
+- filtro de palabras en muro
+- ia q haga top de alumnos para postulaciones
+- ia en los chats para filtrar palabras
+- filtro de palabras prohibidas en chat
+- cambiar barra de busqueda
+- paginas o filtro de fechas de publiaciones en el muro
+- fotos/videos a talleres
+- fix asignar habilidades
+- fix recarga del chat
+- sistema de reporte
