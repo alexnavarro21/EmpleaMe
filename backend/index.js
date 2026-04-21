@@ -45,5 +45,10 @@ app.use("/api/seguidores",    seguidoresRoutes);
 
 app.get("/", (req, res) => res.json({ status: "EmpleaMe API corriendo" }));
 
+app.use((err, req, res, next) => {
+  console.error("[ERROR]", req.method, req.path, err.message, err.stack);
+  res.status(err.status || 500).json({ error: "Error del servidor", detalle: err.message });
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));
