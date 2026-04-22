@@ -1,10 +1,39 @@
 const leoProfanity = require("leo-profanity");
 
-// Palabras locales adicionales (reemplazan la tabla palabras_prohibidas en BD)
+// Diccionarios adicionales
+leoProfanity.loadDictionary("fr");
+leoProfanity.loadDictionary("de");
+leoProfanity.loadDictionary("pt");
+
+// Chilenismos, español general y abreviaciones
 const palabrasLocales = [
-  "ctm", "conchetumare", "conchatumadre", "weon", "weón", "weonas",
-  "culiao", "culiado", "maricon", "maricón", "puta", "puto", "aweonao",
-  "aweonada", "huevon", "huevón", "mierda", "hdp", "hijodeputas",
+  // Insultos directos
+  "ctm", "conchetumare", "conchatumadre", "conchatumadre",
+  "hdp", "hijodeputa", "hijodeputas", "hijaputa",
+  "chucha", "lachucha", "rechucha",
+  "puta", "puto", "putear", "puteado",
+  "mierda", "mierdas",
+  "culiao", "culiado", "culiar", "culia",
+  "maricon", "maricón", "marica",
+  "aweonao", "aweonada", "aweonado",
+
+  // Weon y variantes
+  "weon", "weón", "weonas", "weonazo", "weonaza",
+  "huevon", "huevón", "huevonazo",
+
+  // Insultos generales español
+  "idiota", "imbecil", "imbécil", "estupido", "estúpido",
+  "pendejo", "pendeja", "pelotudo", "pelotuda",
+  "cabrón", "cabron", "perra", "perro",
+  "mogolico", "mogólico", "retrasado", "retrasada",
+  "subnormal", "tarado", "tarada",
+
+  // Amenazas / acoso
+  "matate", "muérete", "muerate", "andate a la mierda",
+  "anda a la mierda", "vayase a la mierda",
+
+  // Abreviaciones comunes
+  "stfu", "wtf", "kys",
 ];
 
 leoProfanity.add(palabrasLocales);
