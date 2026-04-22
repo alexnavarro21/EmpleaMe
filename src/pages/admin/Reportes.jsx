@@ -6,6 +6,32 @@ import { PageHeader } from "../../components/ui";
 import { getReportes, actualizarReporte, eliminarContenidoReporte } from "../../services/api";
 import { MOTIVO_LABEL } from "../../utils/reportes";
 
+const BASE_URL = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
+function resolverMedia(url) {
+  if (!url) return null;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  if (url.startsWith("/")) return `${BASE_URL}${url}`;
+  return `${BASE_URL}/uploads/${url}`;
+}
+function MediaThumbnail({ url }) {
+  const src = resolverMedia(url);
+  const esVideo = /\.(mp4|webm|ogg|mov|avi)(\?|$)/i.test(url);
+  return (
+    <div className="relative w-14 h-14 rounded-lg overflow-hidden border border-[#3a3a38] flex-shrink-0 bg-black">
+      {esVideo ? (
+        <>
+          <video src={src} className="w-full h-full object-cover" muted />
+          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+            <Icon icon="mdi:play-circle" width={20} className="text-white" />
+          </div>
+        </>
+      ) : (
+        <img src={src} alt="" className="w-full h-full object-cover" />
+      )}
+    </div>
+  );
+}
+
 const TIPO_LABEL = {
   publicacion: "Publicación",
   comentario:  "Comentario",
@@ -158,20 +184,25 @@ export default function AdminReportes() {
                   )}
 
                   {/* Vista previa del contenido reportado */}
-                  {r.contenido_preview && (
-                    <div className={`mt-2 px-3 py-2 rounded-lg border text-xs ${PV} ${T} line-clamp-3`}>
-                      {r.tipo === "perfil" ? (
-                        <span className={M}>
-                          <Icon icon="mdi:account-outline" width={12} className="inline mr-1" />
-                          Perfil: <strong className={T}>{r.contenido_preview}</strong>
-                          {enlacePerfil && (
-                            <Link to={enlacePerfil} className="ml-2 text-[#378ADD] hover:underline">
-                              Ver perfil →
-                            </Link>
-                          )}
-                        </span>
-                      ) : (
-                        <span>"{r.contenido_preview}"</span>
+                  {(r.contenido_preview || r.url_multimedia) && (
+                    <div className={`mt-2 px-3 py-2 rounded-lg border text-xs ${PV} flex items-start gap-2`}>
+                      <div className={`flex-1 min-w-0 ${T}`}>
+                        {r.tipo === "perfil" ? (
+                          <span className={M}>
+                            <Icon icon="mdi:account-outline" width={12} className="inline mr-1" />
+                            Perfil: <strong className={T}>{r.contenido_preview}</strong>
+                            {enlacePerfil && (
+                              <Link to={enlacePerfil} className="ml-2 text-[#378ADD] hover:underline">
+                                Ver perfil →
+                              </Link>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="line-clamp-3">"{r.contenido_preview}"</span>
+                        )}
+                      </div>
+                      {r.url_multimedia && r.tipo === "publicacion" && (
+                        <MediaThumbnail url={r.url_multimedia} />
                       )}
                     </div>
                   )}

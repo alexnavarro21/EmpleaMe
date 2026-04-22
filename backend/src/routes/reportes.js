@@ -40,6 +40,7 @@ router.get("/", verificarToken, soloRol("centro"), async (req, res) => {
                 WHEN 'comentario'  THEN SUBSTRING(com.contenido, 1, 250)
                 WHEN 'perfil'      THEN COALESCE(pe_ref.nombre_completo, emp_ref.nombre_empresa)
               END AS contenido_preview,
+              pub.url_multimedia AS url_multimedia,
               com.publicacion_id AS comentario_pub_id,
               u_ref.rol AS referencia_rol
        FROM reportes r
