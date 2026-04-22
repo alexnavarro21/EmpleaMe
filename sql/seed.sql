@@ -144,9 +144,9 @@ INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES
 INSERT INTO perfiles_colegios (usuario_id, nombre_institucion, telefono_contacto, descripcion) VALUES
   (3, 'C.E. Cardenal J.M. Caro', '+56222334455', 'Centro educacional técnico profesional.');
 
-INSERT INTO perfiles_estudiantes (usuario_id, nombre_completo, carrera_id, telefono, biografia) VALUES
+INSERT INTO perfiles_estudiantes (usuario_id, nombre_completo, carrera_id, telefono, biografia, colegio_id) VALUES
   (1, 'Juan Pérez', (SELECT id FROM carreras WHERE nombre = 'Mecanica Automotriz'),
-   '+56912345678', 'Estudiante de tercer año apasionado por la mecánica moderna y los vehículos eléctricos.');
+   '+56912345678', 'Estudiante de tercer año apasionado por la mecánica moderna y los vehículos eléctricos.', 3);
 
 INSERT INTO perfiles_empresas (usuario_id, nombre_empresa, telefono_contacto, descripcion) VALUES
   (2, 'Taller Automotriz del Sur', '+56922334455', 'Empresa dedicada al mantenimiento y reparación de vehículos livianos y pesados.');
@@ -170,12 +170,12 @@ SET @u1 = LAST_INSERT_ID();
 
 INSERT INTO perfiles_estudiantes
   (usuario_id, nombre_completo, rut, carrera_id, semestre, promedio, calificacion_docente,
-   telefono, biografia, estado_civil, region, comuna)
+   telefono, biografia, estado_civil, region, comuna, colegio_id)
 VALUES (@u1, 'Camila Torres Ríos', '20.111.222-3',
   (SELECT id FROM carreras WHERE nombre = 'Administracion'),
   6, 6.2, 6.5, '+56 9 1234 5001',
   'Estudiante de Administración con enfoque en gestión documental y contabilidad. Proactiva, organizada y con experiencia en atención al cliente durante prácticas voluntarias.',
-  'soltero', 'Región Metropolitana de Santiago', 'Santiago');
+  'soltero', 'Región Metropolitana de Santiago', 'Santiago', 3);
 
 INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES
   (@u1, 'Español', 'Nativo'), (@u1, 'Inglés', 'Intermedio');
@@ -220,12 +220,12 @@ SET @u2 = LAST_INSERT_ID();
 
 INSERT INTO perfiles_estudiantes
   (usuario_id, nombre_completo, rut, carrera_id, semestre, promedio, calificacion_docente,
-   telefono, biografia, estado_civil, region, comuna)
+   telefono, biografia, estado_civil, region, comuna, colegio_id)
 VALUES (@u2, 'Matías Sepúlveda Vera', '20.222.333-4',
   (SELECT id FROM carreras WHERE nombre = 'Mecanica Automotriz'),
   5, 5.8, 6.1, '+56 9 1234 5002',
   'Apasionado por la mecánica moderna y los sistemas eléctricos vehiculares. Experiencia en diagnóstico OBD-II y mantenimiento preventivo en taller escolar.',
-  'soltero', 'Región de Valparaíso', 'Viña del Mar');
+  'soltero', 'Región de Valparaíso', 'Viña del Mar', 3);
 
 INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES
   (@u2, 'Español', 'Nativo'), (@u2, 'Inglés', 'Básico');
@@ -270,12 +270,12 @@ SET @u3 = LAST_INSERT_ID();
 
 INSERT INTO perfiles_estudiantes
   (usuario_id, nombre_completo, rut, carrera_id, semestre, promedio, calificacion_docente,
-   telefono, biografia, estado_civil, region, comuna)
+   telefono, biografia, estado_civil, region, comuna, colegio_id)
 VALUES (@u3, 'Valentina Rojas Mena', '20.333.444-5',
   (SELECT id FROM carreras WHERE nombre = 'Administracion'),
   4, 6.5, 6.7, '+56 9 1234 5003',
   'Estudiante con sólido manejo de herramientas contables y ERP. Orientada al detalle y con habilidades de liderazgo demostradas en proyectos de aula.',
-  'soltero', 'Región del Biobío', 'Concepción');
+  'soltero', 'Región del Biobío', 'Concepción', 3);
 
 INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES
   (@u3, 'Español', 'Nativo'), (@u3, 'Inglés', 'Avanzado'), (@u3, 'Portugués', 'Básico');
@@ -320,12 +320,12 @@ SET @u4 = LAST_INSERT_ID();
 
 INSERT INTO perfiles_estudiantes
   (usuario_id, nombre_completo, rut, carrera_id, semestre, promedio, calificacion_docente,
-   telefono, biografia, estado_civil, region, comuna)
+   telefono, biografia, estado_civil, region, comuna, colegio_id)
 VALUES (@u4, 'Diego Castillo Parra', '20.444.555-6',
   (SELECT id FROM carreras WHERE nombre = 'Mecanica Automotriz'),
   6, 5.5, 5.9, '+56 9 1234 5004',
   'Técnico en formación con especialización en sistemas de frenos y suspensión. Participó en competencia regional de diagnóstico automotriz 2023.',
-  'soltero', 'Región de La Araucanía', 'Temuco');
+  'soltero', 'Región de La Araucanía', 'Temuco', 3);
 
 INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES
   (@u4, 'Español', 'Nativo'), (@u4, 'Inglés', 'Básico');
@@ -370,12 +370,12 @@ SET @u5 = LAST_INSERT_ID();
 
 INSERT INTO perfiles_estudiantes
   (usuario_id, nombre_completo, rut, carrera_id, semestre, promedio, calificacion_docente,
-   telefono, biografia, estado_civil, region, comuna)
+   telefono, biografia, estado_civil, region, comuna, colegio_id)
 VALUES (@u5, 'Fernanda Muñoz Lagos', '20.555.666-7',
   (SELECT id FROM carreras WHERE nombre = 'Administracion'),
   5, 6.8, 6.9, '+56 9 1234 5005',
   'Top de su generación en Administración. Maneja software contable Conta+, Excel avanzado y tiene certificación SII en facturación electrónica.',
-  'soltero', 'Región de Los Lagos', 'Puerto Montt');
+  'soltero', 'Región de Los Lagos', 'Puerto Montt', 3);
 
 INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES
   (@u5, 'Español', 'Nativo'), (@u5, 'Inglés', 'Intermedio');
