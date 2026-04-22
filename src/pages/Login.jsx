@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDark } from "../context/DarkModeContext";
-import { loginUsuario, registrarUsuario } from "../services/api";
+import { loginUsuario, registrarUsuario, listarColegios } from "../services/api";
 
 const RUTAS_ROL = {
   estudiante: "/estudiante/dashboard",
@@ -21,6 +21,8 @@ export default function Login() {
 
   // Register state
   const [activeRole, setActiveRole] = useState("estudiante");
+  const [colegios, setColegios] = useState([]);
+  const [regColegioId, setRegColegioId] = useState("");
   const [regNombreCompleto, setRegNombreCompleto] = useState("");
   const [regCarrera, setRegCarrera] = useState("");
   const [regSemestre, setRegSemestre] = useState("");
@@ -34,6 +36,10 @@ export default function Login() {
   const [regLoading, setRegLoading] = useState(false);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    listarColegios().then(setColegios).catch(() => {});
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -85,6 +91,7 @@ export default function Login() {
         telefono: regTelefono || undefined,
         nombre_empresa: regNombreEmpresa || undefined,
         telefono_contacto: regTelefonoEmpresa || undefined,
+        colegio_id: activeRole === "estudiante" && regColegioId ? Number(regColegioId) : undefined,
       });
       const { token, usuario } = await loginUsuario(regCorreo, regContrasena);
       localStorage.setItem("token", token);
@@ -255,6 +262,17 @@ export default function Login() {
                       onChange={(e) => setRegTelefono(e.target.value)}
                       isDark={isDark}
                     />
+                    <SelectField
+                      label="Centro educacional (opcional)"
+                      value={regColegioId}
+                      onChange={(e) => setRegColegioId(e.target.value)}
+                      isDark={isDark}
+                    >
+                      <option value="">Sin institución asociada</option>
+                      {colegios.map((c) => (
+                        <option key={c.id} value={c.id}>{c.nombre_institucion}</option>
+                      ))}
+                    </SelectField>
                   </>
                 )}
 

@@ -3,6 +3,18 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const db = require("../db");
 
+// GET /api/auth/colegios — lista pública para el selector de registro
+router.get("/colegios", async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      "SELECT usuario_id AS id, nombre_institucion FROM perfiles_colegios ORDER BY nombre_institucion"
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
 // POST /api/auth/login
 router.post("/login", async (req, res) => {
   const { correo, contrasena } = req.body;
@@ -48,7 +60,7 @@ router.post("/register", async (req, res) => {
   const {
     correo, contrasena, rol,
     // estudiante
-    nombre_completo, carrera, semestre, telefono,
+    nombre_completo, carrera, semestre, telefono, colegio_id,
     // empresa
     nombre_empresa, telefono_contacto,
   } = req.body;
@@ -78,9 +90,12 @@ router.post("/register", async (req, res) => {
       );
       if (!carreraRow)
         return res.status(400).json({ error: "Carrera no válida" });
+      const colegioValido = colegio_id ? (await conn.query(
+        "SELECT usuario_id FROM perfiles_colegios WHERE usuario_id = ?", [colegio_id]
+      ))[0][0] : null;
       await conn.query(
-        "INSERT INTO perfiles_estudiantes (usuario_id, nombre_completo, carrera_id, semestre, telefono) VALUES (?, ?, ?, ?, ?)",
-        [usuarioId, nombre_completo, carreraRow.id, semestre || null, telefono || null]
+        "INSERT INTO perfiles_estudiantes (usuario_id, nombre_completo, carrera_id, semestre, telefono, colegio_id) VALUES (?, ?, ?, ?, ?, ?)",
+        [usuarioId, nombre_completo, carreraRow.id, semestre || null, telefono || null, colegioValido ? colegio_id : null]
       );
     } else if (rol === "empresa") {
       if (!nombre_empresa)

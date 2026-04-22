@@ -7,17 +7,30 @@ const { verificarToken, soloRol } = require("../middleware/auth");
 const auth    = [verificarToken, soloRol("colegio")];
 const upload  = multer({ storage: multer.memoryStorage() });
 
+async function esMiEstudiante(estudianteId, colegioId) {
+  const [[row]] = await db.query(
+    "SELECT 1 FROM perfiles_estudiantes WHERE usuario_id = ? AND colegio_id = ?",
+    [estudianteId, colegioId]
+  );
+  return !!row;
+}
+
 // ── Stats ─────────────────────────────────────────────────────────────────────
 
 router.get("/stats", ...auth, async (req, res) => {
+  const colegioId = req.usuario.id;
   try {
-    const [[{ total_estudiantes }]]         = await db.query("SELECT COUNT(*) AS total_estudiantes FROM perfiles_estudiantes");
-    const [[{ total_empresas }]]            = await db.query("SELECT COUNT(*) AS total_empresas FROM perfiles_empresas");
-    const [[{ total_vacantes_activas }]]    = await db.query("SELECT COUNT(*) AS total_vacantes_activas FROM vacantes WHERE esta_activa = TRUE");
-    const [[{ total_postulaciones }]]       = await db.query("SELECT COUNT(*) AS total_postulaciones FROM postulaciones WHERE estado = 'pendiente'");
-    const [[{ total_conversaciones }]]      = await db.query("SELECT COUNT(*) AS total_conversaciones FROM conversaciones");
-    const [[{ total_evaluaciones }]]        = await db.query("SELECT COUNT(*) AS total_evaluaciones FROM evaluaciones");
-    const [[{ estudiantes_evaluados }]]     = await db.query("SELECT COUNT(DISTINCT estudiante_id) AS estudiantes_evaluados FROM evaluaciones");
+    const [[{ total_estudiantes }]]      = await db.query("SELECT COUNT(*) AS total_estudiantes FROM perfiles_estudiantes WHERE colegio_id = ?", [colegioId]);
+    const [[{ total_empresas }]]         = await db.query("SELECT COUNT(*) AS total_empresas FROM perfiles_empresas");
+    const [[{ total_vacantes_activas }]] = await db.query("SELECT COUNT(*) AS total_vacantes_activas FROM vacantes WHERE esta_activa = TRUE");
+    const [[{ total_postulaciones }]]    = await db.query("SELECT COUNT(*) AS total_postulaciones FROM postulaciones WHERE estado = 'pendiente'");
+    const [[{ total_conversaciones }]]   = await db.query("SELECT COUNT(*) AS total_conversaciones FROM conversaciones");
+    const [[{ total_evaluaciones }]]     = await db.query(
+      "SELECT COUNT(*) AS total_evaluaciones FROM evaluaciones e JOIN perfiles_estudiantes pe ON pe.usuario_id = e.estudiante_id WHERE pe.colegio_id = ?", [colegioId]
+    );
+    const [[{ estudiantes_evaluados }]]  = await db.query(
+      "SELECT COUNT(DISTINCT e.estudiante_id) AS estudiantes_evaluados FROM evaluaciones e JOIN perfiles_estudiantes pe ON pe.usuario_id = e.estudiante_id WHERE pe.colegio_id = ?", [colegioId]
+    );
 
     res.json({ total_estudiantes, total_empresas, total_vacantes_activas,
                total_postulaciones, total_conversaciones, total_evaluaciones, estudiantes_evaluados });
@@ -29,17 +42,18 @@ router.get("/stats", ...auth, async (req, res) => {
 // ── Usuarios ──────────────────────────────────────────────────────────────────
 
 router.get("/usuarios", ...auth, async (req, res) => {
+  const colegioId = req.usuario.id;
   try {
     const [rows] = await db.query(`
       SELECT u.id, u.correo, u.rol, u.fecha_creacion,
-             COALESCE(pe.nombre_completo, emp.nombre_empresa) AS nombre,
+             pe.nombre_completo AS nombre,
              c.nombre AS carrera
       FROM usuarios u
-      LEFT JOIN perfiles_estudiantes pe  ON pe.usuario_id  = u.id
-      LEFT JOIN carreras c               ON c.id           = pe.carrera_id
-      LEFT JOIN perfiles_empresas    emp ON emp.usuario_id = u.id
+      JOIN perfiles_estudiantes pe ON pe.usuario_id = u.id
+      LEFT JOIN carreras c         ON c.id = pe.carrera_id
+      WHERE pe.colegio_id = ?
       ORDER BY u.fecha_creacion DESC
-    `);
+    `, [colegioId]);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
@@ -49,6 +63,7 @@ router.get("/usuarios", ...auth, async (req, res) => {
 // ── Evaluaciones docentes ─────────────────────────────────────────────────────
 
 router.get("/evaluaciones", ...auth, async (req, res) => {
+  const colegioId = req.usuario.id;
   try {
     const [rows] = await db.query(`
       SELECT e.id, e.periodo, e.observaciones, e.creada_en,
@@ -60,10 +75,11 @@ router.get("/evaluaciones", ...auth, async (req, res) => {
       LEFT JOIN carreras c ON c.id = pe.carrera_id
       LEFT JOIN evaluacion_habilidades eh ON eh.evaluacion_id = e.id
       LEFT JOIN habilidades h ON h.id = eh.habilidad_id
+      WHERE pe.colegio_id = ?
       GROUP BY e.id
       ORDER BY e.creada_en DESC
       LIMIT 50
-    `);
+    `, [colegioId]);
     res.json(rows.map((r) => ({
       ...r,
       promedio_tecnico: r.avg_tecnica != null ? (1 + (r.avg_tecnica / 5) * 6).toFixed(1) : null,
@@ -79,6 +95,8 @@ router.post("/evaluaciones", ...auth, async (req, res) => {
   if (!estudiante_id || !periodo)
     return res.status(400).json({ error: "estudiante_id y periodo son requeridos" });
   try {
+    if (!await esMiEstudiante(estudiante_id, req.usuario.id))
+      return res.status(403).json({ error: "Estudiante no pertenece a tu institución" });
     const [evalResult] = await db.query(
       "INSERT INTO evaluaciones (estudiante_id, evaluador_id, periodo, observaciones) VALUES (?, ?, ?, ?)",
       [estudiante_id, req.usuario.id, periodo, observaciones || null]
@@ -117,6 +135,9 @@ router.post("/habilidades/asignar", ...auth, async (req, res) => {
   const { estudiante_id, habilidades, modo } = req.body;
   if (!estudiante_id || !Array.isArray(habilidades))
     return res.status(400).json({ error: "estudiante_id y habilidades son requeridos" });
+
+  if (!await esMiEstudiante(estudiante_id, req.usuario.id))
+    return res.status(403).json({ error: "Estudiante no pertenece a tu institución" });
 
   // modo "blandas": reemplaza TODAS las blandas del estudiante (permite dejar en 0)
   if (modo === "blandas") {
@@ -169,6 +190,8 @@ router.delete("/habilidades/quitar", ...auth, async (req, res) => {
   if (!estudiante_id || !habilidad_id)
     return res.status(400).json({ error: "estudiante_id y habilidad_id son requeridos" });
   try {
+    if (!await esMiEstudiante(estudiante_id, req.usuario.id))
+      return res.status(403).json({ error: "Estudiante no pertenece a tu institución" });
     await db.query(
       "DELETE FROM habilidades_estudiantes WHERE estudiante_id = ? AND habilidad_id = ?",
       [estudiante_id, habilidad_id]
@@ -185,13 +208,15 @@ router.delete("/habilidades/quitar", ...auth, async (req, res) => {
 // Formato: fila de encabezados (Correo, Nombre, [habilidad1], [habilidad2], ...)
 //          una fila por estudiante, celdas vacías para rellenar con porcentaje 0-100
 router.get("/tests/template", ...auth, async (req, res) => {
+  const colegioId = req.usuario.id;
   try {
     const [estudiantes] = await db.query(`
       SELECT pe.nombre_completo, u.correo
       FROM perfiles_estudiantes pe
       JOIN usuarios u ON u.id = pe.usuario_id
+      WHERE pe.colegio_id = ?
       ORDER BY pe.nombre_completo
-    `);
+    `, [colegioId]);
     const [habilidades] = await db.query(
       "SELECT nombre FROM habilidades WHERE categoria = 'blanda' ORDER BY nombre"
     );
@@ -254,9 +279,12 @@ router.post("/tests/excel", ...auth, upload.single("archivo"), async (req, res) 
       if (!correo) continue; // fila vacía
 
       const [[usuario]] = await db.query(
-        "SELECT id FROM usuarios WHERE correo = ? AND rol = 'estudiante'", [correo]
+        `SELECT u.id FROM usuarios u
+         JOIN perfiles_estudiantes pe ON pe.usuario_id = u.id
+         WHERE u.correo = ? AND u.rol = 'estudiante' AND pe.colegio_id = ?`,
+        [correo, req.usuario.id]
       );
-      if (!usuario) { errores.push(`Estudiante no encontrado: ${correo}`); continue; }
+      if (!usuario) { errores.push(`Estudiante no encontrado o no pertenece a tu institución: ${correo}`); continue; }
 
       for (let col = 0; col < nombresHabilidades.length; col++) {
         const habilidadNombre = nombresHabilidades[col];
@@ -297,13 +325,15 @@ router.post("/tests/excel", ...auth, upload.single("archivo"), async (req, res) 
 
 // GET /api/admin/promedios/template  — descarga plantilla Excel
 router.get("/promedios/template", ...auth, async (req, res) => {
+  const colegioId = req.usuario.id;
   try {
     const [estudiantes] = await db.query(`
       SELECT pe.nombre_completo, u.correo
       FROM perfiles_estudiantes pe
       JOIN usuarios u ON u.id = pe.usuario_id
+      WHERE pe.colegio_id = ?
       ORDER BY pe.nombre_completo
-    `);
+    `, [colegioId]);
 
     const data = [["Estudiante", "Correo", "Periodo", "Promedio (1.0-7.0)"]];
     estudiantes.forEach((e) => data.push([e.nombre_completo, e.correo, "2025-I", ""]));
@@ -351,9 +381,12 @@ router.post("/promedios/excel", ...auth, upload.single("archivo"), async (req, r
       }
 
       const [[usuario]] = await db.query(
-        "SELECT id FROM usuarios WHERE correo = ? AND rol = 'estudiante'", [String(correo).trim()]
+        `SELECT u.id FROM usuarios u
+         JOIN perfiles_estudiantes pe ON pe.usuario_id = u.id
+         WHERE u.correo = ? AND u.rol = 'estudiante' AND pe.colegio_id = ?`,
+        [String(correo).trim(), req.usuario.id]
       );
-      if (!usuario) { errores.push(`Estudiante no encontrado: ${correo}`); continue; }
+      if (!usuario) { errores.push(`Estudiante no encontrado o no pertenece a tu institución: ${correo}`); continue; }
 
       await db.query(
         "UPDATE perfiles_estudiantes SET promedio = ? WHERE usuario_id = ?",
@@ -375,6 +408,8 @@ router.post("/tests/resultados", ...auth, async (req, res) => {
   if (!estudiante_id || !test_nombre)
     return res.status(400).json({ error: "estudiante_id y test_nombre son requeridos" });
   try {
+    if (!await esMiEstudiante(estudiante_id, req.usuario.id))
+      return res.status(403).json({ error: "Estudiante no pertenece a tu institución" });
     const [result] = await db.query(
       "INSERT INTO test_resultados (test_nombre, estudiante_id, evaluador_id, nota_observaciones) VALUES (?, ?, ?, ?)",
       [test_nombre, estudiante_id, req.usuario.id, nota_observaciones || null]
@@ -394,6 +429,8 @@ router.post("/tests/resultados", ...auth, async (req, res) => {
 
 router.get("/tests/resultados/:estudianteId", ...auth, async (req, res) => {
   try {
+    if (!await esMiEstudiante(req.params.estudianteId, req.usuario.id))
+      return res.status(403).json({ error: "Estudiante no pertenece a tu institución" });
     const [rows] = await db.query(
       `SELECT tr.id, tr.test_nombre, tr.nota_observaciones, tr.registrado_en,
               pe.nombre_completo AS nombre_estudiante
@@ -420,6 +457,8 @@ router.get("/tests/resultados/:estudianteId", ...auth, async (req, res) => {
 // GET /api/admin/idiomas/:estudiante_id
 router.get("/idiomas/:estudiante_id", ...auth, async (req, res) => {
   try {
+    if (!await esMiEstudiante(req.params.estudiante_id, req.usuario.id))
+      return res.status(403).json({ error: "Estudiante no pertenece a tu institución" });
     const [rows] = await db.query(
       "SELECT * FROM idiomas_estudiantes WHERE estudiante_id = ? ORDER BY idioma",
       [req.params.estudiante_id]
@@ -437,6 +476,8 @@ router.post("/idiomas", ...auth, async (req, res) => {
   if (!estudiante_id || !idioma || !nivel)
     return res.status(400).json({ error: "estudiante_id, idioma y nivel son requeridos" });
   try {
+    if (!await esMiEstudiante(estudiante_id, req.usuario.id))
+      return res.status(403).json({ error: "Estudiante no pertenece a tu institución" });
     await db.query(
       `INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel)
        VALUES (?, ?, ?)
@@ -456,6 +497,10 @@ router.post("/idiomas", ...auth, async (req, res) => {
 // DELETE /api/admin/idiomas/:id
 router.delete("/idiomas/:id", ...auth, async (req, res) => {
   try {
+    const [[rec]] = await db.query("SELECT estudiante_id FROM idiomas_estudiantes WHERE id = ?", [req.params.id]);
+    if (!rec) return res.status(404).json({ error: "Registro no encontrado" });
+    if (!await esMiEstudiante(rec.estudiante_id, req.usuario.id))
+      return res.status(403).json({ error: "Estudiante no pertenece a tu institución" });
     await db.query("DELETE FROM idiomas_estudiantes WHERE id = ?", [req.params.id]);
     res.json({ mensaje: "Idioma eliminado" });
   } catch (err) {
@@ -468,6 +513,8 @@ router.delete("/idiomas/:id", ...auth, async (req, res) => {
 // GET /api/admin/historial-academico/:estudiante_id
 router.get("/historial-academico/:estudiante_id", ...auth, async (req, res) => {
   try {
+    if (!await esMiEstudiante(req.params.estudiante_id, req.usuario.id))
+      return res.status(403).json({ error: "Estudiante no pertenece a tu institución" });
     const [rows] = await db.query(
       "SELECT * FROM historial_academico WHERE estudiante_id = ? ORDER BY fecha_inicio DESC",
       [req.params.estudiante_id]
@@ -485,6 +532,8 @@ router.post("/historial-academico", ...auth, async (req, res) => {
   if (!estudiante_id || !institucion || !titulo)
     return res.status(400).json({ error: "estudiante_id, institucion y titulo son requeridos" });
   try {
+    if (!await esMiEstudiante(estudiante_id, req.usuario.id))
+      return res.status(403).json({ error: "Estudiante no pertenece a tu institución" });
     const [result] = await db.query(
       `INSERT INTO historial_academico (estudiante_id, institucion, titulo, area, fecha_inicio, fecha_fin)
        VALUES (?, ?, ?, ?, ?, ?)`,
@@ -500,6 +549,10 @@ router.post("/historial-academico", ...auth, async (req, res) => {
 // DELETE /api/admin/historial-academico/:id
 router.delete("/historial-academico/:id", ...auth, async (req, res) => {
   try {
+    const [[rec]] = await db.query("SELECT estudiante_id FROM historial_academico WHERE id = ?", [req.params.id]);
+    if (!rec) return res.status(404).json({ error: "Registro no encontrado" });
+    if (!await esMiEstudiante(rec.estudiante_id, req.usuario.id))
+      return res.status(403).json({ error: "Estudiante no pertenece a tu institución" });
     await db.query("DELETE FROM historial_academico WHERE id = ?", [req.params.id]);
     res.json({ mensaje: "Registro eliminado" });
   } catch (err) {
@@ -512,6 +565,8 @@ router.delete("/historial-academico/:id", ...auth, async (req, res) => {
 // GET /api/admin/historial-laboral/:estudiante_id
 router.get("/historial-laboral/:estudiante_id", ...auth, async (req, res) => {
   try {
+    if (!await esMiEstudiante(req.params.estudiante_id, req.usuario.id))
+      return res.status(403).json({ error: "Estudiante no pertenece a tu institución" });
     const [rows] = await db.query(
       `SELECT hl.*,
               v.titulo AS vacante_titulo,
@@ -536,6 +591,8 @@ router.post("/historial-laboral", ...auth, async (req, res) => {
   if (!estudiante_id || !empresa_nombre || !cargo)
     return res.status(400).json({ error: "estudiante_id, empresa_nombre y cargo son requeridos" });
   try {
+    if (!await esMiEstudiante(estudiante_id, req.usuario.id))
+      return res.status(403).json({ error: "Estudiante no pertenece a tu institución" });
     const [result] = await db.query(
       `INSERT INTO historial_laboral
          (estudiante_id, empresa_nombre, cargo, fecha_inicio, fecha_fin, descripcion, tipo)
@@ -553,6 +610,10 @@ router.post("/historial-laboral", ...auth, async (req, res) => {
 // DELETE /api/admin/historial-laboral/:id
 router.delete("/historial-laboral/:id", ...auth, async (req, res) => {
   try {
+    const [[rec]] = await db.query("SELECT estudiante_id FROM historial_laboral WHERE id = ?", [req.params.id]);
+    if (!rec) return res.status(404).json({ error: "Registro no encontrado" });
+    if (!await esMiEstudiante(rec.estudiante_id, req.usuario.id))
+      return res.status(403).json({ error: "Estudiante no pertenece a tu institución" });
     await db.query("DELETE FROM historial_laboral WHERE id = ?", [req.params.id]);
     res.json({ mensaje: "Registro eliminado" });
   } catch (err) {
@@ -627,8 +688,8 @@ router.post("/alumnos/excel", ...auth, upload.single("archivo"), async (req, res
           [correo, hash]
         );
         await conn.query(
-          "INSERT INTO perfiles_estudiantes (usuario_id, nombre_completo, telefono) VALUES (?, ?, ?)",
-          [result.insertId, nombre, telefono]
+          "INSERT INTO perfiles_estudiantes (usuario_id, nombre_completo, telefono, colegio_id) VALUES (?, ?, ?, ?)",
+          [result.insertId, nombre, telefono, req.usuario.id]
         );
         await conn.commit();
         creados.push({ correo, nombre });
