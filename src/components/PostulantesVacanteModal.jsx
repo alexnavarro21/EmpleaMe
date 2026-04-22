@@ -175,10 +175,10 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
                 title="Ordenar postulantes por compatibilidad con la vacante usando IA"
                 className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
                   rankingActivo
-                    ? "bg-purple-500 text-white"
+                    ? "bg-[#0F4D8A] text-white"
                     : isDark
-                    ? "bg-purple-500/15 text-purple-400 hover:bg-purple-500/25"
-                    : "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                    ? "bg-[#0F4D8A]/15 text-[#378ADD] hover:bg-[#0F4D8A]/25"
+                    : "bg-[#E6F1FB] text-[#0F4D8A] hover:bg-[#D0E8FA]"
                 }`}
               >
                 <Icon
@@ -200,7 +200,7 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
 
         {/* Disclaimer ranking */}
         {rankingActivo && (
-          <div className={`px-5 py-2.5 flex items-start gap-2 text-xs border-b ${B} ${isDark ? "bg-purple-500/10 text-purple-300" : "bg-purple-50 text-purple-700"}`}>
+          <div className={`px-5 py-2.5 flex items-start gap-2 text-xs border-b ${B} ${isDark ? "bg-[#0F4D8A]/10 text-[#378ADD]" : "bg-[#E6F1FB] text-[#0F4D8A]"}`}>
             <Icon icon="mdi:information-outline" width={14} className="flex-shrink-0 mt-0.5" />
             <span>Este ranking es generado por IA y se ofrece solo como referencia. No reemplaza el juicio profesional de un reclutador ni debe ser el único criterio de selección.</span>
           </div>
@@ -251,7 +251,7 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           {rankingActivo && (
-                            <span className={`text-xs font-bold flex-shrink-0 ${isDark ? "text-purple-400" : "text-purple-600"}`}>{posicionLabel}</span>
+                            <span className={`text-xs font-bold flex-shrink-0 ${isDark ? "text-[#378ADD]" : "text-[#0F4D8A]"}`}>{posicionLabel}</span>
                           )}
                           <p className={`text-sm font-medium ${T} truncate`}>{p.nombre_completo}</p>
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${cfg.color}`}>
@@ -279,8 +279,8 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
                           title="Resumen IA"
                           className={`p-2 rounded-lg ${HV} transition-colors ${
                             resumenes[p.estudiante_id]?.abierto
-                              ? "text-purple-500"
-                              : `${M} hover:text-purple-500`
+                              ? "text-[#0F4D8A]"
+                              : `${M} hover:text-[#0F4D8A]`
                           }`}
                         >
                           {resumenes[p.estudiante_id]?.cargando
@@ -348,8 +348,8 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
                     {resumenes[p.estudiante_id]?.abierto && (
                       <div className={`px-4 pb-4 pt-1 border-t ${B} ${isDark ? "bg-[#1e1e1c]" : "bg-[#F7F6F3]"}`}>
                         <div className="flex items-center gap-1.5 mb-2">
-                          <Icon icon="mdi:robot-excited-outline" width={14} className="text-purple-500" />
-                          <span className="text-xs font-semibold text-purple-500">Resumen IA</span>
+                          <Icon icon="mdi:robot-excited-outline" width={14} className="text-[#0F4D8A]" />
+                          <span className="text-xs font-semibold text-[#0F4D8A]">Resumen IA</span>
                         </div>
                         {resumenes[p.estudiante_id]?.cargando ? (
                           <div className={`flex items-center gap-2 text-xs ${M}`}>

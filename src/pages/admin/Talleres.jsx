@@ -49,7 +49,7 @@ function TallerPreview({ form, isDark }) {
     <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
       <div className="flex items-start justify-between px-4 pt-4 pb-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center flex-shrink-0">
             <Icon icon="mdi:school-outline" width={20} className="text-white" />
           </div>
           <div>
@@ -57,7 +57,7 @@ function TallerPreview({ form, isDark }) {
             <p className={`text-xs ${M}`}>Ahora mismo</p>
           </div>
         </div>
-        <Badge color="purple">Taller</Badge>
+        <Badge color="blue">Taller</Badge>
       </div>
       <div className="px-4 pb-1">
         <p className={`text-sm font-semibold ${T}`}>{form.titulo || "Título del taller"}</p>
@@ -83,7 +83,7 @@ function TallerPreview({ form, isDark }) {
           </div>
           {form.area && (
             <div className="flex items-center gap-1.5">
-              <Icon icon="mdi:tag-outline" width={14} className="text-purple-500" />
+              <Icon icon="mdi:tag-outline" width={14} className="text-[#0F4D8A]" />
               <span className={`text-xs ${T}`}>{form.area}</span>
             </div>
           )}
@@ -126,7 +126,7 @@ function TallerPreview({ form, isDark }) {
           <Icon icon="mdi:information-outline" width={16} /> Ver más
         </div>
         {form.permite_inscripcion && (
-          <div className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium flex-1 justify-center text-purple-600`}>
+          <div className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium flex-1 justify-center text-[#0F4D8A]`}>
             <Icon icon="mdi:clipboard-plus-outline" width={16} /> Inscribirse
           </div>
         )}
@@ -168,7 +168,7 @@ function TallerForm({ taller, onGuardar, onCancelar, isDark }) {
   const [previewUrl, setPreviewUrl] = useState(taller?.url_multimedia ? resolverMedia(taller.url_multimedia) : null);
   const [quitarMedia, setQuitarMedia] = useState(false);
 
-  const inputCls = `w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-purple-500 ${
+  const inputCls = `w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#0F4D8A] ${
     isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
            : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
   }`;
@@ -210,7 +210,7 @@ function TallerForm({ taller, onGuardar, onCancelar, isDark }) {
         title={taller ? "Editar taller" : "Nuevo taller"}
         subtitle={taller ? "Modifica los datos del taller" : "Completa los datos para publicar el taller en el muro"}
         action={
-          <button onClick={onCancelar} className={`flex items-center gap-2 text-sm px-4 py-2 rounded-lg border ${B} ${M} hover:border-purple-500 transition-colors`}>
+          <button onClick={onCancelar} className={`flex items-center gap-2 text-sm px-4 py-2 rounded-lg border ${B} ${M} hover:border-[#0F4D8A] transition-colors`}>
             <Icon icon="mdi:arrow-left" width={16} />
             Volver al panel
           </button>
@@ -247,8 +247,8 @@ function TallerForm({ taller, onGuardar, onCancelar, isDark }) {
                     <button key={m} type="button" onClick={() => setForm((f) => ({ ...f, modalidad: m }))}
                       className={`py-2 rounded-lg border text-center text-xs font-medium transition-all capitalize ${
                         form.modalidad === m
-                          ? "border-2 border-purple-500 bg-purple-50 text-purple-700"
-                          : `border ${B} ${M} hover:border-purple-400`
+                          ? "border-2 border-[#0F4D8A] bg-[#E6F1FB] text-[#0F4D8A]"
+                          : `border ${B} ${M} hover:border-[#378ADD]`
                       }`}>{m}</button>
                   ))}
                 </div>
@@ -332,17 +332,17 @@ function TallerForm({ taller, onGuardar, onCancelar, isDark }) {
                       onClick={() => setForm((f) => ({ ...f, permite_inscripcion: value }))}
                       className={`flex items-start gap-3 text-left p-3 rounded-lg border-2 transition-all ${
                         active
-                          ? "border-purple-500 bg-purple-50 dark:bg-purple-950/20"
+                          ? "border-[#0F4D8A] bg-[#E6F1FB] dark:bg-[#0F4D8A]/10"
                           : `${B} ${isDark ? "hover:border-[#555]" : "hover:border-[#B4B2A9]"}`
                       }`}
                     >
                       <div className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        active ? "bg-purple-600 text-white" : isDark ? "bg-[#313130] text-[#888780]" : "bg-[#E8E6E1] text-[#5F5E5A]"
+                        active ? "bg-[#0F4D8A] text-white" : isDark ? "bg-[#313130] text-[#888780]" : "bg-[#E8E6E1] text-[#5F5E5A]"
                       }`}>
                         <Icon icon={icon} width={16} />
                       </div>
                       <div>
-                        <p className={`text-sm font-medium ${active ? "text-purple-700" : T}`}>{label}</p>
+                        <p className={`text-sm font-medium ${active ? "text-[#0F4D8A]" : T}`}>{label}</p>
                         <p className={`text-xs mt-0.5 ${M}`}>{desc}</p>
                       </div>
                     </button>
@@ -355,11 +355,11 @@ function TallerForm({ taller, onGuardar, onCancelar, isDark }) {
 
             <div className="flex gap-3 mt-2">
               <button onClick={handleSubmit} disabled={guardando}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm rounded-lg font-medium bg-purple-600 hover:bg-purple-700 text-white transition-colors disabled:opacity-50">
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm rounded-lg font-medium bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white transition-colors disabled:opacity-50">
                 <Icon icon={guardando ? "mdi:loading" : "mdi:check"} width={16} className={guardando ? "animate-spin" : ""} />
                 {guardando ? "Guardando..." : taller ? "Guardar cambios" : "Publicar taller"}
               </button>
-              <button onClick={onCancelar} className={`flex-1 py-2.5 text-sm rounded-lg border ${B} ${M} hover:border-purple-500 transition-colors`}>
+              <button onClick={onCancelar} className={`flex-1 py-2.5 text-sm rounded-lg border ${B} ${M} hover:border-[#0F4D8A] transition-colors`}>
                 Cancelar
               </button>
             </div>
@@ -429,7 +429,7 @@ function InscritosView({ taller, onVolver, isDark }) {
         title={`Inscritos — ${taller.titulo}`}
         subtitle={`${inscritos.length} inscripción${inscritos.length !== 1 ? "es" : ""} · ${taller.area || ""} · ${taller.modalidad || ""}`}
         action={
-          <button onClick={onVolver} className={`flex items-center gap-2 text-sm px-4 py-2 rounded-lg border ${B} ${M} hover:border-purple-500 transition-colors`}>
+          <button onClick={onVolver} className={`flex items-center gap-2 text-sm px-4 py-2 rounded-lg border ${B} ${M} hover:border-[#0F4D8A] transition-colors`}>
             <Icon icon="mdi:arrow-left" width={16} /> Volver al panel
           </button>
         }
@@ -444,7 +444,7 @@ function InscritosView({ taller, onVolver, isDark }) {
         ].map(({ key, label }) => (
           <button key={key} onClick={() => setFiltro(key)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-              filtro === key ? "bg-purple-600 text-white border-purple-600" : `${B} ${M} hover:border-purple-500 hover:text-purple-500`
+              filtro === key ? "bg-[#0F4D8A] text-white border-[#0F4D8A]" : `${B} ${M} hover:border-[#0F4D8A] hover:text-[#0F4D8A]`
             }`}>
             {label}
             <span className={`px-1.5 py-0.5 rounded-full text-xs font-semibold ${
@@ -473,12 +473,12 @@ function InscritosView({ taller, onVolver, isDark }) {
             }[ins.estado] || { label: ins.estado, color: isDark ? "bg-[#3a3a38] text-[#888780]" : "bg-gray-100 text-gray-600" };
             return (
               <div key={ins.id} className={`flex items-center gap-4 px-5 py-4 ${i < filtrados.length - 1 ? `border-b ${B}` : ""}`}>
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 ${isDark ? "bg-purple-500/15 text-purple-400" : "bg-purple-100 text-purple-700"}`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 ${isDark ? "bg-[#0F4D8A]/15 text-[#378ADD]" : "bg-[#E6F1FB] text-[#0F4D8A]"}`}>
                   {ins.nombre_completo?.[0]?.toUpperCase() || "?"}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <Link to={`/admin/candidato/${ins.estudiante_id}`} className={`text-sm font-semibold ${T} hover:text-purple-600 transition-colors`}>
+                    <Link to={`/admin/candidato/${ins.estudiante_id}`} className={`text-sm font-semibold ${T} hover:text-[#0F4D8A] transition-colors`}>
                       {ins.nombre_completo}
                     </Link>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cfg.color}`}>{cfg.label}</span>
@@ -507,7 +507,7 @@ function InscritosView({ taller, onVolver, isDark }) {
                       <Icon icon="mdi:refresh" width={14} />
                     </button>
                   )}
-                  <Link to={`/admin/candidato/${ins.estudiante_id}`} className={`${M} hover:text-purple-600 transition-colors`}>
+                  <Link to={`/admin/candidato/${ins.estudiante_id}`} className={`${M} hover:text-[#0F4D8A] transition-colors`}>
                     <Icon icon="mdi:chevron-right" width={20} />
                   </Link>
                 </div>
@@ -633,7 +633,7 @@ export default function AdminTalleres() {
         action={
           <button
             onClick={() => setVista("nuevo")}
-            className="flex items-center gap-2 text-base font-semibold bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg transition-colors"
+            className="flex items-center gap-2 text-base font-semibold bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white px-6 py-3 rounded-lg transition-colors"
           >
             <Icon icon="mdi:plus" width={20} />
             Nuevo taller
@@ -643,7 +643,7 @@ export default function AdminTalleres() {
 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4 mb-6">
-        <StatCard label="Talleres activos"    value={String(tallActivos)}            sub={`${talleres.length} en total`}    subColor="text-purple-600" />
+        <StatCard label="Talleres activos"    value={String(tallActivos)}            sub={`${talleres.length} en total`}    subColor="text-[#0F4D8A]" />
         <StatCard label="Talleres inactivos"  value={String(tallInactivos)}          sub="Cerrados o pausados"              subColor="text-[#888780]" />
         <StatCard label="Total inscritos"     value={String(totalInscritos)}         sub="Acumulado"                        subColor="text-[#378ADD]" />
         <StatCard label="Inscritos pendientes" value={String(inscritosPendientes.length)} sub="Sin revisar"                subColor="text-amber-500" />
@@ -656,7 +656,7 @@ export default function AdminTalleres() {
         <Card>
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             <h2 className={`text-sm font-semibold ${T} flex items-center gap-2 flex-1`}>
-              <Icon icon="mdi:school-outline" width={16} className="text-purple-600" />
+              <Icon icon="mdi:school-outline" width={16} className="text-[#0F4D8A]" />
               Mis talleres
             </h2>
             {talleres.length > 0 && (
@@ -667,14 +667,14 @@ export default function AdminTalleres() {
                   placeholder="Buscar..."
                   value={busqueda}
                   onChange={(e) => { setBusqueda(e.target.value); setPagina(1); }}
-                  className={`pl-7 pr-2 py-1.5 rounded-lg text-xs outline-none border transition-all focus:border-purple-500 w-32 ${
+                  className={`pl-7 pr-2 py-1.5 rounded-lg text-xs outline-none border transition-all focus:border-[#0F4D8A] w-32 ${
                     isDark ? "bg-[#262624] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
                            : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
                   }`}
                 />
               </div>
             )}
-            <button onClick={() => setVista("nuevo")} className="text-xs text-purple-600 hover:underline">+ Nuevo</button>
+            <button onClick={() => setVista("nuevo")} className="text-xs text-[#0F4D8A] hover:underline">+ Nuevo</button>
           </div>
 
           {talleres.length === 0 ? (
@@ -705,14 +705,14 @@ export default function AdminTalleres() {
                           className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors ${
                             t.esta_activo
                               ? isDark ? "bg-red-500/15 text-red-400 hover:bg-red-500/25" : "bg-red-50 text-red-600 hover:bg-red-100"
-                              : isDark ? "bg-purple-500/15 text-purple-400 hover:bg-purple-500/25" : "bg-purple-50 text-purple-700 hover:bg-purple-100"
+                              : isDark ? "bg-[#0F4D8A]/15 text-[#378ADD] hover:bg-[#0F4D8A]/25" : "bg-[#E6F1FB] text-[#0F4D8A] hover:bg-[#D0E8FA]"
                           } disabled:opacity-50`}
                         >
                           <Icon icon={toggling === t.id ? "mdi:loading" : t.esta_activo ? "mdi:pause-circle-outline" : "mdi:play-circle-outline"}
                             width={14} className={toggling === t.id ? "animate-spin" : ""} />
                           {t.esta_activo ? "Desactivar" : "Activar"}
                         </button>
-                        <button onClick={() => setVista(t)} className={`${M} hover:text-purple-600 transition-colors`} title="Editar">
+                        <button onClick={() => setVista(t)} className={`${M} hover:text-[#0F4D8A] transition-colors`} title="Editar">
                           <Icon icon="mdi:pencil-outline" width={15} />
                         </button>
                         <button onClick={() => handleEliminar(t)} className={`${M} hover:text-red-500 transition-colors`} title="Eliminar">
@@ -720,7 +720,7 @@ export default function AdminTalleres() {
                         </button>
                         <button
                           onClick={() => setVista({ tipo: "inscritos", taller: t })}
-                          className="text-xs text-purple-600 hover:underline"
+                          className="text-xs text-[#0F4D8A] hover:underline"
                         >
                           Ver inscritos →
                         </button>
@@ -745,7 +745,7 @@ export default function AdminTalleres() {
         <Card>
           <div className="flex items-center justify-between mb-4">
             <h2 className={`text-sm font-semibold ${T} flex items-center gap-2`}>
-              <Icon icon="mdi:account-group-outline" width={16} className="text-purple-600" />
+              <Icon icon="mdi:account-group-outline" width={16} className="text-[#0F4D8A]" />
               Inscritos pendientes
             </h2>
           </div>
@@ -756,19 +756,19 @@ export default function AdminTalleres() {
             <div className="flex flex-col gap-3">
               {inscritosPendientes.slice(0, 6).map((ins) => (
                 <div key={ins.id} className={`flex items-center gap-3 p-3 rounded-lg border ${B}`}>
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? "bg-purple-500/15" : "bg-purple-100"}`}>
-                    <Icon icon="mynaui:user-solid" width={20} className={isDark ? "text-purple-400" : "text-purple-600"} />
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? "bg-[#0F4D8A]/15" : "bg-[#E6F1FB]"}`}>
+                    <Icon icon="mynaui:user-solid" width={20} className={isDark ? "text-[#378ADD]" : "text-[#0F4D8A]"} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className={`text-sm font-medium ${T} truncate`}>{ins.nombre_completo}</p>
-                      <Badge color="purple">pendiente</Badge>
+                      <Badge color="blue">pendiente</Badge>
                     </div>
                     <p className={`text-xs ${M}`}>
                       {ins.carrera} {ins.promedio ? `· Nota: ${parseFloat(ins.promedio).toFixed(1)}` : ""}
                     </p>
                     {ins.taller_titulo && (
-                      <p className="text-xs text-purple-600 truncate">
+                      <p className="text-xs text-[#0F4D8A] truncate">
                         <Icon icon="mdi:school-outline" width={11} className="inline mr-0.5 mb-0.5" />
                         {ins.taller_titulo}
                       </p>
@@ -789,7 +789,7 @@ export default function AdminTalleres() {
                     >
                       Rechazar
                     </button>
-                    <Link to={`/admin/candidato/${ins.estudiante_id}`} className={`${M} hover:text-purple-600 transition-colors`}>
+                    <Link to={`/admin/candidato/${ins.estudiante_id}`} className={`${M} hover:text-[#0F4D8A] transition-colors`}>
                       <Icon icon="mdi:chevron-right" width={20} />
                     </Link>
                   </div>
