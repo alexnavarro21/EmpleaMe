@@ -25,11 +25,6 @@ router.get("/estudiante/:id", verificarToken, async (req, res) => {
       [req.params.id]
     );
 
-    const [portafolio] = await db.query(
-      "SELECT * FROM items_portafolio WHERE estudiante_id = ? ORDER BY fecha_creacion DESC",
-      [req.params.id]
-    );
-
     const [idiomas] = await db.query(
       "SELECT * FROM idiomas_estudiantes WHERE estudiante_id = ? ORDER BY idioma",
       [req.params.id]
@@ -58,7 +53,7 @@ router.get("/estudiante/:id", verificarToken, async (req, res) => {
     );
     const cv_experiencias = cv_seleccion.map((r) => r.experiencia_id);
 
-    res.json({ ...perfil[0], habilidades, portafolio, idiomas, historial_academico, historial_laboral, cv_experiencias });
+    res.json({ ...perfil[0], habilidades, idiomas, historial_academico, historial_laboral, cv_experiencias });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }

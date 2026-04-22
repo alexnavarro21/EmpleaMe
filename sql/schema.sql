@@ -80,17 +80,7 @@ CREATE TABLE IF NOT EXISTS habilidades_estudiantes (
   FOREIGN KEY (habilidad_id)  REFERENCES habilidades(id)                  ON DELETE CASCADE
 );
 
--- 7. Portafolio visual del estudiante
-CREATE TABLE IF NOT EXISTS items_portafolio (
-  id             INT AUTO_INCREMENT PRIMARY KEY,
-  estudiante_id  INT NOT NULL,
-  url_multimedia VARCHAR(255) NOT NULL,
-  descripcion    VARCHAR(255),
-  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (estudiante_id) REFERENCES perfiles_estudiantes(usuario_id) ON DELETE CASCADE
-);
-
--- 8. Vacantes
+-- 7. Vacantes
 CREATE TABLE IF NOT EXISTS vacantes (
   id             INT AUTO_INCREMENT PRIMARY KEY,
   empresa_id     INT NOT NULL,
