@@ -60,7 +60,7 @@ function getNotifLink(tipo, role, referenciaId) {
 
 const TIPO_CFG = {
   mensaje:               { icon: "mdi:message-outline",          color: "text-blue-500",   colorDark: "text-blue-400",   bg: "bg-blue-100",    bgDark: "bg-blue-500/15",    label: "Mensaje"     },
-  comentario:            { icon: "mdi:comment-account-outline",  color: "text-purple-500", colorDark: "text-purple-400", bg: "bg-purple-100",  bgDark: "bg-purple-500/15",  label: "Comentario"  },
+  comentario:            { icon: "mdi:comment-account-outline",  color: "text-[#0F4D8A]",  colorDark: "text-[#378ADD]",  bg: "bg-[#E6F1FB]",   bgDark: "bg-[#0F4D8A]/15",   label: "Comentario"  },
   postulacion_nueva:     { icon: "mdi:briefcase-plus-outline",   color: "text-teal-600",   colorDark: "text-teal-400",   bg: "bg-teal-100",    bgDark: "bg-teal-500/15",    label: "Postulación" },
   postulacion_aceptada:  { icon: "mdi:briefcase-check-outline",  color: "text-green-600",  colorDark: "text-green-400",  bg: "bg-green-100",   bgDark: "bg-green-500/15",   label: "Aceptado"    },
   postulacion_rechazada: { icon: "mdi:briefcase-remove-outline", color: "text-red-500",    colorDark: "text-red-400",    bg: "bg-red-100",     bgDark: "bg-red-500/15",     label: "Rechazado"   },

@@ -107,7 +107,7 @@ export function Badge({ children, color = "blue" }) {
     red:    "bg-red-50 text-red-700",
     gray:   "bg-[#F7F6F3] text-[#5F5E5A]",
     orange: "bg-orange-50 text-orange-700",
-    purple: "bg-purple-50 text-purple-700",
+    purple: "bg-purple-50 text-purple-800",
   };
 
   const darkVariants = {

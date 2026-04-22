@@ -84,15 +84,12 @@ export default function EstudiantePerfil() {
         setHistorialAcademico(data.historial_academico || []);
         setHistorialLaboral(data.historial_laboral || []);
         // Sincronizar favoritos desde DB si localStorage está vacío
-        if (data.cv_experiencias) {
-          try {
-            const idsDb = JSON.parse(data.cv_experiencias);
-            const lsRaw = localStorage.getItem(`favoritos_laborales_${usuario.id}`);
-            if (!lsRaw) {
-              setFavoritosLaboral(idsDb);
-              localStorage.setItem(`favoritos_laborales_${usuario.id}`, JSON.stringify(idsDb));
-            }
-          } catch {}
+        if (Array.isArray(data.cv_experiencias) && data.cv_experiencias.length > 0) {
+          const lsRaw = localStorage.getItem(`favoritos_laborales_${usuario.id}`);
+          if (!lsRaw) {
+            setFavoritosLaboral(data.cv_experiencias);
+            localStorage.setItem(`favoritos_laborales_${usuario.id}`, JSON.stringify(data.cv_experiencias));
+          }
         }
       }
       if (posts.status === "fulfilled") setPostulaciones(posts.value);

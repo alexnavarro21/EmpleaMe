@@ -8,8 +8,8 @@ import FileUploader from "../../components/FileUploader";
 
 const modalidades = [
   { id: "presencial", label: "Presencial", icon: "streamline:city-hall-remix" },
-  { id: "remoto", label: "Remoto", icon: "mdi:monitor-outline" },
-  { id: "hibrido", label: "Híbrido", icon: "mdi:home-work-outline" },
+  { id: "remoto", label: "Remoto", icon: "mdi:laptop" },
+  { id: "hibrido", label: "Híbrido", icon: "mdi:home-city-outline" },
 ];
 
 const tiposVacante = [
@@ -336,11 +336,15 @@ export default function EmpresaPublicarVacante() {
               </p>
               <p className={`text-xs ${M} mt-1`}>{duracion || "Duración"} · {horario || "Horario"}</p>
               <div className="flex gap-1.5 mt-2 flex-wrap">
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tipo === "practica" ? "bg-[#FEF3C7] text-[#92400E]" : "bg-[#D1FAE5] text-[#065F46]"}`}>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                  tipo === "practica"
+                    ? isDark ? "bg-amber-500/20 text-amber-300" : "bg-[#FEF3C7] text-[#92400E]"
+                    : isDark ? "bg-green-500/20 text-green-300" : "bg-[#D1FAE5] text-[#065F46]"
+                }`}>
                   {tipo === "practica" ? "Práctica" : "Puesto laboral"}
                 </span>
-                {area && <span className="text-xs bg-[#E6F1FB] text-[#0F4D8A] px-2 py-0.5 rounded-full">{area}</span>}
-                <span className="text-xs bg-[#E6F1FB] text-[#0F4D8A] px-2 py-0.5 rounded-full capitalize">{modalidad}</span>
+                {area && <span className={`text-xs px-2 py-0.5 rounded-full ${isDark ? "bg-[#0F4D8A]/20 text-[#378ADD]" : "bg-[#E6F1FB] text-[#0F4D8A]"}`}>{area}</span>}
+                <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${isDark ? "bg-[#0F4D8A]/20 text-[#378ADD]" : "bg-[#E6F1FB] text-[#0F4D8A]"}`}>{modalidad}</span>
               </div>
               {habilidadesSeleccionadas.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
