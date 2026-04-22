@@ -4,7 +4,7 @@ const XLSX    = require("xlsx");
 const db      = require("../db");
 const { verificarToken, soloRol } = require("../middleware/auth");
 
-const auth    = [verificarToken, soloRol("centro")];
+const auth    = [verificarToken, soloRol("colegio")];
 const upload  = multer({ storage: multer.memoryStorage() });
 
 // ── Stats ─────────────────────────────────────────────────────────────────────

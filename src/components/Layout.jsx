@@ -29,24 +29,30 @@ const navLinks = {
     { to: "/admin/buscar", label: "Búsqueda" },
     { to: "/admin/reportes", label: "Reportes" },
   ],
+  slep: [
+    { to: "/slep/inicio", label: "Inicio" },
+  ],
 };
 
 const homePaths = {
   estudiante: "/estudiante/dashboard",
   empresa: "/empresa/inicio",
   admin: "/admin/inicio",
+  slep: "/slep/inicio",
 };
 
 const messagingPaths = {
   estudiante: "/estudiante/mensajeria",
   empresa: "/empresa/mensajeria",
   admin: "/admin/mensajeria",
+  slep: "/slep/mensajeria",
 };
 
 const notifPaths = {
   estudiante: "/estudiante/notificaciones",
   empresa: "/empresa/notificaciones",
   admin: "/admin/notificaciones",
+  slep: "/slep/notificaciones",
 };
 
 const seguidoresPaths = {
@@ -64,8 +70,10 @@ export default function Layout() {
   const BASE_API = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
-  const role = usuario.rol === "centro"
+  const role = usuario.rol === "colegio"
     ? "admin"
+    : usuario.rol === "slep"
+    ? "slep"
     : usuario.rol === "empresa"
     ? "empresa"
     : "estudiante";
@@ -77,7 +85,7 @@ export default function Layout() {
   });
 
   useEffect(() => {
-    if (!usuarioId || role === "admin") return;
+    if (!usuarioId || role === "admin" || role === "slep") return;
     const endpoint = role === "empresa"
       ? `${BASE_API}/perfiles/empresa/${usuarioId}`
       : `${BASE_API}/perfiles/estudiante/${usuarioId}`;

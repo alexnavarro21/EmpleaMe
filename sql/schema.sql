@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
   id               INT AUTO_INCREMENT PRIMARY KEY,
   correo           VARCHAR(150) UNIQUE NOT NULL,
   contrasena_hash  VARCHAR(255) NOT NULL,
-  rol              ENUM('estudiante', 'empresa', 'centro') NOT NULL,
+  rol              ENUM('estudiante', 'empresa', 'colegio', 'slep') NOT NULL,
   fecha_creacion   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -29,12 +29,25 @@ CREATE TABLE IF NOT EXISTS carreras (
   nombre VARCHAR(150) NOT NULL UNIQUE
 );
 
+-- 3a. Perfiles de colegios (debe definirse antes de perfiles_estudiantes para FK)
+CREATE TABLE IF NOT EXISTS perfiles_colegios (
+  usuario_id          INT PRIMARY KEY,
+  nombre_institucion  VARCHAR(150) NOT NULL,
+  telefono_contacto   VARCHAR(20)  DEFAULT NULL,
+  descripcion         TEXT,
+  region              VARCHAR(80)  DEFAULT NULL,
+  comuna              VARCHAR(80)  DEFAULT NULL,
+  foto_perfil         VARCHAR(500) DEFAULT NULL,
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+);
+
 -- 3. Perfiles de estudiantes
 CREATE TABLE IF NOT EXISTS perfiles_estudiantes (
   usuario_id           INT PRIMARY KEY,
   nombre_completo      VARCHAR(150) NOT NULL,
   rut                  VARCHAR(12)  DEFAULT NULL,
   carrera_id           INT          DEFAULT NULL,
+  colegio_id           INT          DEFAULT NULL,
   semestre             SMALLINT     DEFAULT NULL,
   promedio             DECIMAL(3,1) DEFAULT NULL,
   calificacion_docente DECIMAL(3,1) DEFAULT NULL,
@@ -44,8 +57,9 @@ CREATE TABLE IF NOT EXISTS perfiles_estudiantes (
   region               VARCHAR(80)  DEFAULT NULL,
   comuna               VARCHAR(80)  DEFAULT NULL,
   foto_perfil          VARCHAR(500) DEFAULT NULL,
-  FOREIGN KEY (usuario_id)  REFERENCES usuarios(id)  ON DELETE CASCADE,
-  FOREIGN KEY (carrera_id)  REFERENCES carreras(id)  ON DELETE SET NULL
+  FOREIGN KEY (usuario_id)  REFERENCES usuarios(id)           ON DELETE CASCADE,
+  FOREIGN KEY (carrera_id)  REFERENCES carreras(id)           ON DELETE SET NULL,
+  FOREIGN KEY (colegio_id)  REFERENCES perfiles_colegios(usuario_id) ON DELETE SET NULL
 );
 
 -- 4. Perfiles de empresas

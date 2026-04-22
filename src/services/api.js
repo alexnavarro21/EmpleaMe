@@ -32,7 +32,7 @@ export async function loginUsuario(correo, contrasena) {
   return data; // { token, usuario: { id, correo, rol } }
 }
 
-// rol: "estudiante" | "empresa" | "centro"
+// rol: "estudiante" | "empresa" | "colegio" | "slep"
 export async function registrarUsuario({ correo, contrasena, rol, nombre_completo, carrera, nombre_empresa }) {
   const res = await fetch(`${BASE_URL}/auth/register`, {
     method: "POST",

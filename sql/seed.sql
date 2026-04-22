@@ -138,7 +138,11 @@ INSERT IGNORE INTO palabras_prohibidas (palabra) VALUES
 INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES
   ('estudiante@empleame.cl', 'estudiante123', 'estudiante'),
   ('empresa@empleame.cl',    'empresa123',    'empresa'),
-  ('admin@empleame.cl',      'admin123',      'centro');
+  ('colegio@empleame.cl',    'colegio123',    'colegio'),
+  ('slep@empleame.cl',       'slep123',       'slep');
+
+INSERT INTO perfiles_colegios (usuario_id, nombre_institucion, telefono_contacto, descripcion) VALUES
+  (3, 'C.E. Cardenal J.M. Caro', '+56222334455', 'Centro educacional técnico profesional.');
 
 INSERT INTO perfiles_estudiantes (usuario_id, nombre_completo, carrera_id, telefono, biografia) VALUES
   (1, 'Juan Pérez', (SELECT id FROM carreras WHERE nombre = 'Mecanica Automotriz'),

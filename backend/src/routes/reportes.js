@@ -29,7 +29,7 @@ router.post("/", verificarToken, async (req, res) => {
 });
 
 // GET /api/reportes — admin ve todos los reportes pendientes
-router.get("/", verificarToken, soloRol("centro"), async (req, res) => {
+router.get("/", verificarToken, soloRol("colegio"), async (req, res) => {
   const { estado = "pendiente" } = req.query;
   try {
     const [rows] = await db.query(
@@ -62,7 +62,7 @@ router.get("/", verificarToken, soloRol("centro"), async (req, res) => {
 });
 
 // DELETE /api/reportes/:id/contenido — admin elimina el contenido referenciado y resuelve el reporte
-router.delete("/:id/contenido", verificarToken, soloRol("centro"), async (req, res) => {
+router.delete("/:id/contenido", verificarToken, soloRol("colegio"), async (req, res) => {
   try {
     const [[reporte]] = await db.query("SELECT tipo, referencia_id FROM reportes WHERE id = ?", [req.params.id]);
     if (!reporte) return res.status(404).json({ error: "Reporte no encontrado" });
@@ -85,7 +85,7 @@ router.delete("/:id/contenido", verificarToken, soloRol("centro"), async (req, r
 });
 
 // PUT /api/reportes/:id — admin actualiza estado del reporte
-router.put("/:id", verificarToken, soloRol("centro"), async (req, res) => {
+router.put("/:id", verificarToken, soloRol("colegio"), async (req, res) => {
   const { estado } = req.body;
   const estadosValidos = ["resuelto", "descartado"];
   if (!estadosValidos.includes(estado))

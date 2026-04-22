@@ -13,7 +13,7 @@ router.get("/", verificarToken, async (req, res) => {
 });
 
 // POST /api/habilidades  — agregar al catálogo (solo centro)
-router.post("/", verificarToken, soloRol("centro"), async (req, res) => {
+router.post("/", verificarToken, soloRol("colegio"), async (req, res) => {
   const { nombre, categoria } = req.body;
   if (!nombre || !categoria)
     return res.status(400).json({ error: "nombre y categoria son requeridos" });
@@ -29,7 +29,7 @@ router.post("/", verificarToken, soloRol("centro"), async (req, res) => {
 });
 
 // GET /api/habilidades/:id/estudiantes  — estudiantes que tienen esta habilidad asignada
-router.get("/:id/estudiantes", verificarToken, soloRol("centro"), async (req, res) => {
+router.get("/:id/estudiantes", verificarToken, soloRol("colegio"), async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT pe.nombre_completo, pe.usuario_id
@@ -46,7 +46,7 @@ router.get("/:id/estudiantes", verificarToken, soloRol("centro"), async (req, re
 });
 
 // PUT /api/habilidades/:id  — editar nombre/categoría (solo centro)
-router.put("/:id", verificarToken, soloRol("centro"), async (req, res) => {
+router.put("/:id", verificarToken, soloRol("colegio"), async (req, res) => {
   const { nombre, categoria } = req.body;
   if (!nombre || !categoria)
     return res.status(400).json({ error: "nombre y categoria son requeridos" });
@@ -62,7 +62,7 @@ router.put("/:id", verificarToken, soloRol("centro"), async (req, res) => {
 });
 
 // DELETE /api/habilidades/:id  — eliminar del catálogo (solo centro)
-router.delete("/:id", verificarToken, soloRol("centro"), async (req, res) => {
+router.delete("/:id", verificarToken, soloRol("colegio"), async (req, res) => {
   try {
     const [result] = await db.query("DELETE FROM habilidades WHERE id = ?", [req.params.id]);
     if (result.affectedRows === 0)
@@ -105,7 +105,7 @@ router.delete("/estudiante/:id", verificarToken, async (req, res) => {
 });
 
 // PUT /api/habilidades/estudiante/:id/validar  — validar habilidad (solo centro)
-router.put("/estudiante/:id/validar", verificarToken, soloRol("centro"), async (req, res) => {
+router.put("/estudiante/:id/validar", verificarToken, soloRol("colegio"), async (req, res) => {
   try {
     await db.query(
       "UPDATE habilidades_estudiantes SET esta_validada = TRUE WHERE id = ?",

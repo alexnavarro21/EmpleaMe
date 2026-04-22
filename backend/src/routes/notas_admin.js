@@ -3,7 +3,7 @@ const db = require("../db");
 const { verificarToken, soloRol } = require("../middleware/auth");
 
 // GET /api/notas-admin/:conversacion_id — todas las notas de la conversación + la del admin actual
-router.get("/:conversacion_id", verificarToken, soloRol("centro"), async (req, res) => {
+router.get("/:conversacion_id", verificarToken, soloRol("colegio"), async (req, res) => {
   try {
     const [todas] = await db.query(
       `SELECT n.id, n.admin_id, n.contenido, n.actualizado_en,
@@ -22,7 +22,7 @@ router.get("/:conversacion_id", verificarToken, soloRol("centro"), async (req, r
 });
 
 // POST /api/notas-admin/:conversacion_id — agrega una nueva nota al historial
-router.post("/:conversacion_id", verificarToken, soloRol("centro"), async (req, res) => {
+router.post("/:conversacion_id", verificarToken, soloRol("colegio"), async (req, res) => {
   const { contenido } = req.body;
   if (!contenido?.trim()) return res.status(400).json({ error: "La nota no puede estar vacía" });
   try {

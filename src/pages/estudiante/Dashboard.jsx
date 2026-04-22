@@ -198,7 +198,7 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
     ? { label: pub.vacante_tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica", color: pub.vacante_tipo === "puesto_laboral" ? "green" : "orange" }
     : (TIPO_BADGE[pub.tipo] || { label: pub.tipo, color: "blue" });
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
-  const canDelete = usuario.rol === "centro" || pub.autor_id === usuario.id;
+  const canDelete = usuario.rol === "colegio" || pub.autor_id === usuario.id;
 
   const handleEliminar = async () => {
     setEliminando(true);
@@ -244,7 +244,7 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
         <Link
           to={pub.autor_rol === "empresa"
             ? `/empresa-publica/${pub.autor_id}`
-            : `/${usuario.rol === "centro" ? "admin" : usuario.rol}/candidato/${pub.autor_id}`}
+            : `/${usuario.rol === "colegio" ? "admin" : usuario.rol}/candidato/${pub.autor_id}`}
           className="flex items-center gap-3 hover:opacity-80 transition-opacity"
           onClick={(e) => e.stopPropagation()}
         >
@@ -256,7 +256,7 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
         </Link>
         <div className="flex items-center gap-2">
           {/* Botón Seguir (no se muestra al propio autor ni al admin) */}
-          {pub.autor_id !== usuario.id && usuario.rol !== "centro" && (
+          {pub.autor_id !== usuario.id && usuario.rol !== "colegio" && (
             <button
               onClick={handleToggleSeguir}
               disabled={toggleandoSeguir}
@@ -719,7 +719,7 @@ function TallerCard({ taller, isDark, perfilCompleto, onDeleted }) {
         </div>
         <div className="flex items-center gap-2">
           <Badge color="purple">Taller</Badge>
-          {usuario.rol === "centro" && (
+          {usuario.rol === "colegio" && (
             <div className="relative">
               <button
                 onClick={() => { setMenuAbierto((v) => !v); setConfirmarEliminar(false); }}
@@ -1002,7 +1002,7 @@ export default function EstudianteDashboard() {
       getPostulantesEmpresa().then(setEmpresaPostulantes).catch(console.error);
       getConversaciones().then(setEmpresaConversaciones).catch(console.error);
     }
-    if (usuario.id && usuario.rol === "centro") {
+    if (usuario.id && usuario.rol === "colegio") {
       getAdminStats().then(setAdminStats).catch(console.error);
     }
     cargarPublicaciones();
