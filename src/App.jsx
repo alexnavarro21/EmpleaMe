@@ -16,6 +16,7 @@ import EmpresaCandidato from "./pages/empresa/PerfilCandidato";
 import EmpresaMensajeria from "./pages/empresa/EmpresaMensajeria";
 
 import AdminPanel from "./pages/admin/Panel";
+import AdminPerfil from "./pages/admin/Perfil";
 import AdminUsuarios from "./pages/admin/Usuarios";
 import AdminEvaluaciones from "./pages/admin/Evaluaciones";
 import AdminTalleres from "./pages/admin/Talleres";
@@ -64,6 +65,7 @@ export default function App() {
 
             {/* Colegio (ex Admin) */}
             <Route path="/admin/inicio" element={<EstudianteDashboard />} />
+            <Route path="/admin/perfil" element={<AdminPerfil />} />
             <Route path="/admin/panel" element={<AdminPanel />} />
             <Route path="/admin/usuarios" element={<AdminUsuarios />} />
             <Route path="/admin/evaluaciones" element={<AdminEvaluaciones />} />

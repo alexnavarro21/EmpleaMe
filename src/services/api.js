@@ -213,6 +213,26 @@ export async function actualizarPerfilEmpresa(id, datos) {
   return data;
 }
 
+export async function getColegioById(id) {
+  const res = await fetch(`${BASE_URL}/perfiles/colegio/${id}`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener perfil");
+  return data;
+}
+
+export async function actualizarPerfilColegio(id, datos) {
+  const res = await fetch(`${BASE_URL}/perfiles/colegio/${id}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al actualizar perfil");
+  return data;
+}
+
 export async function actualizarPerfilEstudiante(id, datos) {
   const res = await fetch(`${BASE_URL}/perfiles/estudiante/${id}`, {
     method: "PUT",

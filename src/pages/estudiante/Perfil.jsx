@@ -4,7 +4,7 @@ import { generarCV } from "../../utils/generarCV";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PrimaryButton, SecondaryButton, FormField, PageHeader, TextAreaField, SoftSkillBar, Paginacion } from "../../components/ui";
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
-import { getEstudianteById, actualizarPerfilEstudiante, getPostulacionesEstudiante, subirFotoPerfil, getMediaUrl, guardarCvExperiencias } from "../../services/api";
+import { getEstudianteById, actualizarPerfilEstudiante, getPostulacionesEstudiante, subirFotoPerfil, getMediaUrl, guardarCvExperiencias, listarColegios } from "../../services/api";
 import { REGIONES_COMUNAS, REGIONES } from "../../data/regionesComunas";
 import { validarRut, formatearRut } from "../../utils/validarRut";
 import { calcularCompletitud } from "../../utils/perfilCompletitud";
@@ -40,6 +40,9 @@ export default function EstudiantePerfil() {
   const [historialAcademico, setHistorialAcademico] = useState([]);
   const [historialLaboral, setHistorialLaboral] = useState([]);
   const [postulaciones, setPostulaciones] = useState([]);
+  const [colegioId, setColegioId] = useState("");
+  const [colegioNombre, setColegioNombre] = useState("");
+  const [colegios, setColegios] = useState([]);
   const [fotoPerfil, setFotoPerfil] = useState(null);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [paginaLaboral, setPaginaLaboral]     = useState(1);
@@ -61,6 +64,8 @@ export default function EstudiantePerfil() {
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
   useEffect(() => {
+    listarColegios().then(setColegios).catch(() => {});
+
     Promise.allSettled([
       getEstudianteById(usuario.id),
       getPostulacionesEstudiante(),
@@ -77,6 +82,8 @@ export default function EstudiantePerfil() {
         setRut(data.rut || "");
         setRegion(data.region || "");
         setComuna(data.comuna || "");
+        setColegioId(data.colegio_id ? String(data.colegio_id) : "");
+        setColegioNombre(data.colegio_nombre || "");
         setFotoPerfil(data.foto_perfil || null);
         localStorage.setItem(`foto_perfil_${usuario.id}`, data.foto_perfil || "");
         setHabilidades(data.habilidades || []);
@@ -115,7 +122,10 @@ export default function EstudiantePerfil() {
         rut: rut || null,
         region: region || null,
         comuna: comuna || null,
+        colegio_id: colegioId ? parseInt(colegioId) : null,
       });
+      const seleccionado = colegios.find((c) => String(c.id) === colegioId);
+      setColegioNombre(seleccionado?.nombre_institucion || "");
       setSaveMsg("Cambios guardados");
       setEditMode(false);
       setTimeout(() => setSaveMsg(""), 3000);
@@ -415,6 +425,32 @@ export default function EstudiantePerfil() {
                       ))}
                     </select>
                   </div>
+                  <div className="col-span-2 mb-4">
+                    <label className={`block text-xs mb-1.5 ${M}`}>Centro educacional</label>
+                    {editMode ? (
+                      <select
+                        value={colegioId}
+                        onChange={(e) => setColegioId(e.target.value)}
+                        className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
+                          isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
+                                 : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
+                        }`}
+                      >
+                        <option value="">Sin centro asignado</option>
+                        {colegios.map((c) => (
+                          <option key={c.id} value={c.id}>{c.nombre_institucion}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border ${B} ${S}`}>
+                        <Icon icon="mdi:school-outline" width={16} className="text-[#378ADD] flex-shrink-0" />
+                        <span className={`text-sm ${colegioNombre ? T : M}`}>
+                          {colegioNombre || "Sin centro asignado"}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="col-span-2 mb-4">
                     <div className="flex items-center justify-between mb-1.5">
                       <label className={`block text-xs ${M}`}>Sobre mí / Presentación</label>

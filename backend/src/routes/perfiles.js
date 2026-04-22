@@ -7,10 +7,12 @@ const upload = require("../middleware/multerConfig");
 router.get("/estudiante/:id", verificarToken, async (req, res) => {
   try {
     const [perfil] = await db.query(
-      `SELECT pe.*, c.nombre AS carrera, u.correo
+      `SELECT pe.*, c.nombre AS carrera, u.correo,
+              pc.nombre_institucion AS colegio_nombre
        FROM perfiles_estudiantes pe
        JOIN usuarios u ON u.id = pe.usuario_id
        LEFT JOIN carreras c ON c.id = pe.carrera_id
+       LEFT JOIN perfiles_colegios pc ON pc.usuario_id = pe.colegio_id
        WHERE pe.usuario_id = ?`,
       [req.params.id]
     );
@@ -84,7 +86,22 @@ router.patch("/estudiante/:id/cv-experiencias", verificarToken, async (req, res)
 
 // PUT /api/perfiles/estudiante/:id
 router.put("/estudiante/:id", verificarToken, async (req, res) => {
-  const { nombre_completo, carrera, telefono, biografia, semestre, promedio, estado_civil, rut, region, comuna } = req.body;
+  const { id: callerId, rol } = req.usuario;
+  const targetId = parseInt(req.params.id);
+
+  if (rol === "estudiante" && callerId !== targetId)
+    return res.status(403).json({ error: "No puedes modificar el perfil de otro estudiante" });
+
+  if (rol === "colegio") {
+    const [[row]] = await db.query(
+      "SELECT 1 FROM perfiles_estudiantes WHERE usuario_id = ? AND colegio_id = ?",
+      [targetId, callerId]
+    );
+    if (!row)
+      return res.status(403).json({ error: "Este estudiante no pertenece a tu institución" });
+  }
+
+  const { nombre_completo, carrera, telefono, biografia, semestre, promedio, estado_civil, rut, region, comuna, colegio_id } = req.body;
   try {
     const [[carreraRow]] = await db.query(
       "SELECT id FROM carreras WHERE nombre = ?", [carrera]
@@ -95,11 +112,11 @@ router.put("/estudiante/:id", verificarToken, async (req, res) => {
     await db.query(
       `UPDATE perfiles_estudiantes
        SET nombre_completo=?, carrera_id=?, telefono=?, biografia=?, semestre=?, promedio=?,
-           estado_civil=?, rut=?, region=?, comuna=?
+           estado_civil=?, rut=?, region=?, comuna=?, colegio_id=?
        WHERE usuario_id=?`,
       [nombre_completo, carreraRow.id, telefono || null, biografia || null,
        semestre || null, promedio || null, estado_civil || null,
-       rut || null, region || null, comuna || null, req.params.id]
+       rut || null, region || null, comuna || null, colegio_id || null, req.params.id]
     );
     res.json({ mensaje: "Perfil actualizado" });
   } catch (err) {
@@ -129,6 +146,44 @@ router.put("/empresa/:id", verificarToken, async (req, res) => {
     await db.query(
       "UPDATE perfiles_empresas SET nombre_empresa=?, telefono_contacto=?, descripcion=?, region=?, comuna=? WHERE usuario_id=?",
       [nombre_empresa, telefono_contacto, descripcion, region || null, comuna || null, req.params.id]
+    );
+    res.json({ mensaje: "Perfil actualizado" });
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// GET /api/perfiles/colegio/:id
+router.get("/colegio/:id", verificarToken, async (req, res) => {
+  try {
+    const [perfil] = await db.query(
+      `SELECT pc.*, u.correo
+       FROM perfiles_colegios pc
+       JOIN usuarios u ON u.id = pc.usuario_id
+       WHERE pc.usuario_id = ?`,
+      [req.params.id]
+    );
+    if (perfil.length === 0)
+      return res.status(404).json({ error: "Perfil no encontrado" });
+
+    const [[stats]] = await db.query(
+      `SELECT COUNT(*) AS total_estudiantes FROM perfiles_estudiantes WHERE colegio_id = ?`,
+      [req.params.id]
+    );
+
+    res.json({ ...perfil[0], total_estudiantes: stats.total_estudiantes });
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// PUT /api/perfiles/colegio/:id
+router.put("/colegio/:id", verificarToken, async (req, res) => {
+  const { nombre_institucion, telefono_contacto, descripcion, region, comuna } = req.body;
+  try {
+    await db.query(
+      "UPDATE perfiles_colegios SET nombre_institucion=?, telefono_contacto=?, descripcion=?, region=?, comuna=? WHERE usuario_id=?",
+      [nombre_institucion, telefono_contacto, descripcion, region || null, comuna || null, req.params.id]
     );
     res.json({ mensaje: "Perfil actualizado" });
   } catch (err) {
@@ -194,6 +249,11 @@ router.put("/foto", verificarToken, upload.single("foto"), async (req, res) => {
     } else if (rol === "empresa") {
       await db.query(
         "UPDATE perfiles_empresas SET foto_perfil = ? WHERE usuario_id = ?",
+        [url, id]
+      );
+    } else if (rol === "colegio") {
+      await db.query(
+        "UPDATE perfiles_colegios SET foto_perfil = ? WHERE usuario_id = ?",
         [url, id]
       );
     } else {

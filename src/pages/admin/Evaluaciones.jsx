@@ -6,7 +6,7 @@ import {
   PageHeader, TextAreaField,
 } from "../../components/ui";
 import {
-  getEstudiantes, getHabilidades, getEstudianteById,
+  getUsuariosAdmin, getHabilidades, getEstudianteById,
   guardarEvaluacion, getEvaluaciones,
   asignarHabilidadesTecnicas,
   subirExcelTests, subirExcelPromedios, subirExcelAlumnos,
@@ -1456,8 +1456,17 @@ export default function GestionEstudiantes() {
   const cargarHabilidades = () => getHabilidades().then(setHabilidades).catch(() => {});
 
   useEffect(() => {
-    Promise.all([getEstudiantes(), getHabilidades()])
-      .then(([ests, habs]) => { setEstudiantes(ests); setHabilidades(habs); })
+    Promise.all([getUsuariosAdmin(), getHabilidades()])
+      .then(([ests, habs]) => {
+        // Normalizar al formato que espera StudentSearch: usuario_id + nombre_completo
+        const normalizados = ests.map((e) => ({
+          usuario_id: e.id,
+          nombre_completo: e.nombre,
+          carrera: e.carrera,
+        }));
+        setEstudiantes(normalizados);
+        setHabilidades(habs);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);

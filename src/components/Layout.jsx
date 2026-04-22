@@ -7,6 +7,7 @@ import NotificacionesBell from "./NotificacionesBell";
 const profilePaths = {
   estudiante: "/estudiante/perfil",
   empresa: "/empresa/perfil",
+  admin: "/admin/perfil",
 };
 
 const navLinks = {
@@ -85,9 +86,11 @@ export default function Layout() {
   });
 
   useEffect(() => {
-    if (!usuarioId || role === "admin" || role === "slep") return;
+    if (!usuarioId || role === "slep") return;
     const endpoint = role === "empresa"
       ? `${BASE_API}/perfiles/empresa/${usuarioId}`
+      : role === "admin"
+      ? `${BASE_API}/perfiles/colegio/${usuarioId}`
       : `${BASE_API}/perfiles/estudiante/${usuarioId}`;
     fetch(endpoint, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } })
       .then((r) => r.json())
