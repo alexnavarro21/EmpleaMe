@@ -116,7 +116,7 @@ router.get("/:id/mensajes", verificarToken, async (req, res) => {
       return res.status(404).json({ error: "Conversación no encontrada" });
 
     const { id, rol } = req.usuario;
-    if (rol !== "centro" && conv[0].empresa_id !== id && conv[0].estudiante_id !== id)
+    if (rol !== "colegio" && conv[0].empresa_id !== id && conv[0].estudiante_id !== id)
       return res.status(403).json({ error: "Sin permisos" });
 
     const [rows] = await db.query(
@@ -156,7 +156,7 @@ router.post("/:id/mensajes", verificarToken, async (req, res) => {
       return res.status(404).json({ error: "Conversación no encontrada" });
 
     const { id, rol } = req.usuario;
-    if (rol !== "centro" && conv[0].empresa_id !== id && conv[0].estudiante_id !== id)
+    if (rol !== "colegio" && conv[0].empresa_id !== id && conv[0].estudiante_id !== id)
       return res.status(403).json({ error: "Sin permisos" });
 
     // Verificar palabras prohibidas

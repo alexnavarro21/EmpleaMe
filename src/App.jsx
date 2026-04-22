@@ -62,7 +62,7 @@ export default function App() {
             <Route path="/empresa/notificaciones" element={<Notificaciones />} />
             <Route path="/empresa/seguidores" element={<Seguidores />} />
 
-            {/* Admin / Profesor */}
+            {/* Colegio (ex Admin) */}
             <Route path="/admin/inicio" element={<EstudianteDashboard />} />
             <Route path="/admin/panel" element={<AdminPanel />} />
             <Route path="/admin/usuarios" element={<AdminUsuarios />} />
@@ -75,6 +75,10 @@ export default function App() {
             <Route path="/admin/buscar" element={<BuscarPerfiles />} />
             <Route path="/admin/candidato/:id" element={<EmpresaCandidato />} />
             <Route path="/admin/notificaciones" element={<Notificaciones />} />
+
+            {/* SLEP */}
+            <Route path="/slep/inicio" element={<EstudianteDashboard />} />
+            <Route path="/slep/notificaciones" element={<Notificaciones />} />
           </Route>
         </Routes>
       </DarkModeProvider>

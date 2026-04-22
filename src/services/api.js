@@ -21,27 +21,34 @@ function authHeaders() {
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
-export async function loginUsuario(correo, contrasena) {
+export async function loginUsuario(identifier, contrasena) {
   const res = await fetch(`${BASE_URL}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ correo, contrasena }),
+    body: JSON.stringify({ identifier, contrasena }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al iniciar sesión");
   return data; // { token, usuario: { id, correo, rol } }
 }
 
-// rol: "estudiante" | "empresa" | "centro"
-export async function registrarUsuario({ correo, contrasena, rol, nombre_completo, carrera, nombre_empresa }) {
+// rol: "estudiante" | "empresa" | "colegio" | "slep"
+export async function registrarUsuario({ correo, contrasena, rol, nombre_completo, carrera, semestre, telefono, nombre_empresa, telefono_contacto, colegio_id }) {
   const res = await fetch(`${BASE_URL}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ correo, contrasena, rol, nombre_completo, carrera, nombre_empresa }),
+    body: JSON.stringify({ correo, contrasena, rol, nombre_completo, carrera, semestre, telefono, nombre_empresa, telefono_contacto, colegio_id }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al crear la cuenta");
   return data; // { mensaje, id }
+}
+
+export async function listarColegios() {
+  const res = await fetch(`${BASE_URL}/auth/colegios`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al cargar colegios");
+  return data; // [{ id, nombre_institucion }]
 }
 
 // ── Habilidades ───────────────────────────────────────────────────────────────

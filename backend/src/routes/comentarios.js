@@ -73,7 +73,7 @@ router.delete("/:comentarioId", verificarToken, async (req, res) => {
     const { id: usuarioId, rol } = req.usuario;
     const [[com]] = await db.query("SELECT autor_id FROM comentarios WHERE id = ?", [req.params.comentarioId]);
     if (!com) return res.status(404).json({ error: "Comentario no encontrado" });
-    if (rol !== "centro" && com.autor_id !== usuarioId)
+    if (rol !== "colegio" && com.autor_id !== usuarioId)
       return res.status(403).json({ error: "Sin permisos para eliminar este comentario" });
     await db.query("DELETE FROM comentarios WHERE id = ?", [req.params.comentarioId]);
     res.json({ mensaje: "Comentario eliminado" });

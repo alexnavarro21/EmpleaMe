@@ -33,7 +33,7 @@ function MiniPostCard({ pub, isDark, onDeleted }) {
   const HV = isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]";
 
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
-  const canDelete = usuario.rol === "centro" || pub.autor_id === usuario.id;
+  const canDelete = usuario.rol === "colegio" || pub.autor_id === usuario.id;
 
   const handleEliminar = async () => {
     setEliminando(true);

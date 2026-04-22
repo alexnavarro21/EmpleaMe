@@ -4,7 +4,7 @@ const { verificarToken, soloRol } = require("../middleware/auth");
 const upload = require("../middleware/multerConfig");
 
 // GET /api/talleres/inscritos/pendientes — admin ve todos los inscritos pendientes
-router.get("/inscritos/pendientes", verificarToken, soloRol("centro"), async (req, res) => {
+router.get("/inscritos/pendientes", verificarToken, soloRol("colegio"), async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT i.id, i.estado, i.fecha_creacion,
@@ -67,7 +67,7 @@ const toIntOrNull = (v) => (v == null || v === "" ? null : parseInt(v, 10));
 const toNumOrZero = (v) => (v == null || v === "" ? 0 : Number(v));
 
 // POST /api/talleres — crear taller (solo admin)
-router.post("/", verificarToken, soloRol("centro"), uploadMulti, async (req, res) => {
+router.post("/", verificarToken, soloRol("colegio"), uploadMulti, async (req, res) => {
   const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, costo, direccion, fecha_inicio, fecha_limite, cupos, permite_inscripcion } = req.body;
   if (!titulo) return res.status(400).json({ error: "El título es requerido" });
   const url_multimedia = req.file ? `/api/media/${req.file.key}` : null;
@@ -99,7 +99,7 @@ router.post("/", verificarToken, soloRol("centro"), uploadMulti, async (req, res
 });
 
 // PUT /api/talleres/:id — editar taller (solo admin)
-router.put("/:id", verificarToken, soloRol("centro"), uploadMulti, async (req, res) => {
+router.put("/:id", verificarToken, soloRol("colegio"), uploadMulti, async (req, res) => {
   const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, costo, direccion, fecha_inicio, fecha_limite, cupos, permite_inscripcion, quitar_multimedia } = req.body;
   try {
     // Si sube archivo nuevo → usar ese; si pide quitar → null; si no → mantener el actual
@@ -142,7 +142,7 @@ router.put("/:id", verificarToken, soloRol("centro"), uploadMulti, async (req, r
 });
 
 // PUT /api/talleres/:id/toggle — activar/desactivar taller (solo admin)
-router.put("/:id/toggle", verificarToken, soloRol("centro"), async (req, res) => {
+router.put("/:id/toggle", verificarToken, soloRol("colegio"), async (req, res) => {
   try {
     const [[taller]] = await db.query("SELECT esta_activo FROM talleres WHERE id = ?", [req.params.id]);
     if (!taller) return res.status(404).json({ error: "Taller no encontrado" });
@@ -154,7 +154,7 @@ router.put("/:id/toggle", verificarToken, soloRol("centro"), async (req, res) =>
 });
 
 // DELETE /api/talleres/:id — eliminar taller (solo admin)
-router.delete("/:id", verificarToken, soloRol("centro"), async (req, res) => {
+router.delete("/:id", verificarToken, soloRol("colegio"), async (req, res) => {
   try {
     const [result] = await db.query("DELETE FROM talleres WHERE id = ?", [req.params.id]);
     if (result.affectedRows === 0) return res.status(404).json({ error: "Taller no encontrado" });
@@ -209,7 +209,7 @@ router.post("/:id/inscribir", verificarToken, soloRol("estudiante"), async (req,
 });
 
 // GET /api/talleres/:id/inscritos — admin ve inscritos de un taller
-router.get("/:id/inscritos", verificarToken, soloRol("centro"), async (req, res) => {
+router.get("/:id/inscritos", verificarToken, soloRol("colegio"), async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT i.id, i.estado, i.fecha_creacion,
@@ -229,7 +229,7 @@ router.get("/:id/inscritos", verificarToken, soloRol("centro"), async (req, res)
 });
 
 // PUT /api/talleres/inscripciones/:id/estado — admin actualiza estado de inscripción
-router.put("/inscripciones/:id/estado", verificarToken, soloRol("centro"), async (req, res) => {
+router.put("/inscripciones/:id/estado", verificarToken, soloRol("colegio"), async (req, res) => {
   const { estado } = req.body;
   if (!["pendiente", "aceptado", "rechazado"].includes(estado))
     return res.status(400).json({ error: "Estado inválido" });

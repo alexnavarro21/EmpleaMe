@@ -171,7 +171,7 @@ router.delete("/:id", verificarToken, async (req, res) => {
     // Verificar permisos
     const [[pub]] = await db.query("SELECT autor_id FROM publicaciones WHERE id = ?", [pubId]);
     if (!pub) return res.status(404).json({ error: "Publicación no encontrada" });
-    if (rol !== "centro" && pub.autor_id !== id)
+    if (rol !== "colegio" && pub.autor_id !== id)
       return res.status(403).json({ error: "Sin permisos para eliminar esta publicación" });
 
     // Borrar registros asociados y luego la publicación
