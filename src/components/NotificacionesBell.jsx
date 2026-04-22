@@ -47,7 +47,7 @@ function getNotifLink(tipo, role, referenciaId) {
 
 const TIPO_CFG = {
   mensaje:               { icon: "mdi:message-outline",          color: "text-blue-400",   bg: "bg-blue-500/15"    },
-  comentario:            { icon: "mdi:comment-account-outline",  color: "text-purple-400", bg: "bg-purple-500/15"  },
+  comentario:            { icon: "mdi:comment-account-outline",  color: "text-[#378ADD]",  bg: "bg-[#0F4D8A]/15"   },
   postulacion_nueva:     { icon: "mdi:briefcase-plus-outline",   color: "text-teal-400",   bg: "bg-teal-500/15"    },
   postulacion_aceptada:  { icon: "mdi:briefcase-check-outline",  color: "text-green-400",  bg: "bg-green-500/15"   },
   postulacion_rechazada: { icon: "mdi:briefcase-remove-outline", color: "text-red-400",    bg: "bg-red-500/15"     },

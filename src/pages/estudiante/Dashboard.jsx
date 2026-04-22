@@ -9,7 +9,7 @@ import CrearPublicacion from "../../components/CrearPublicacion";
 import VerMasModal from "../../components/VerMasModal";
 import ModalReporteShared from "../../components/ModalReporte";
 
-const AVATAR_COLORS = ["bg-[#0F4D8A]", "bg-red-500", "bg-green-600", "bg-purple-600", "bg-amber-500"];
+const AVATAR_COLORS = ["bg-[#0F4D8A]", "bg-red-500", "bg-green-600", "bg-teal-600", "bg-amber-500"];
 
 const BASE_URL_GLOBAL = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
 function resolverMedia(url) {
@@ -545,7 +545,7 @@ function TallerVerMasModal({ taller, isDark, perfilCompleto, onClose }) {
   };
 
   const infoItems = [
-    taller.area      && { icon: "mdi:tag-outline",            label: taller.area,     color: "text-purple-500" },
+    taller.area      && { icon: "mdi:tag-outline",            label: taller.area,     color: "text-[#0F4D8A]" },
     taller.modalidad && { icon: "mdi:map-marker-outline",     label: taller.modalidad },
     taller.duracion  && { icon: "mdi:clock-outline",          label: taller.duracion  },
     taller.horario   && { icon: "mdi:calendar-clock-outline", label: taller.horario   },
@@ -560,7 +560,7 @@ function TallerVerMasModal({ taller, isDark, perfilCompleto, onClose }) {
         {/* Header */}
         <div className={`px-5 py-4 border-b ${B} flex items-start justify-between gap-3`}>
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center flex-shrink-0">
               <Icon icon="mdi:school-outline" width={20} className="text-white" />
             </div>
             <div className="flex-1 min-w-0">
@@ -630,8 +630,8 @@ function TallerVerMasModal({ taller, isDark, perfilCompleto, onClose }) {
                 : estadoInscripcion === "sin_cupos"  ? (isDark ? "bg-red-500/15 text-red-400"      : "bg-red-100 text-red-700")
                 : estadoInscripcion === "incompleto" ? (isDark ? "bg-orange-500/15 text-orange-400" : "bg-orange-100 text-orange-700")
                 : estadoInscripcion === "error"      ? (isDark ? "bg-red-500/15 text-red-400"      : "bg-red-100 text-red-700")
-                : estadoInscripcion === "loading"    ? (isDark ? "bg-purple-500/20 text-purple-300" : "bg-purple-100 text-purple-700")
-                : "bg-purple-600 hover:bg-purple-700 text-white"
+                : estadoInscripcion === "loading"    ? (isDark ? "bg-[#0F4D8A]/20 text-[#378ADD]" : "bg-[#E6F1FB] text-[#0F4D8A]")
+                : "bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white"
               }`}
             >
               <Icon
@@ -709,7 +709,7 @@ function TallerCard({ taller, isDark, perfilCompleto, onDeleted }) {
       {/* Header igual que FeedCard */}
       <div className="flex items-start justify-between px-4 pt-4 pb-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center flex-shrink-0">
             <Icon icon="mdi:school-outline" width={20} className="text-white" />
           </div>
           <div>
@@ -807,7 +807,7 @@ function TallerCard({ taller, isDark, perfilCompleto, onDeleted }) {
           )}
           {taller.area && (
             <div className="flex items-center gap-1.5">
-              <Icon icon="mdi:tag-outline" width={14} className="text-purple-500" />
+              <Icon icon="mdi:tag-outline" width={14} className="text-[#0F4D8A]" />
               <span className={`text-xs ${T}`}>{taller.area}</span>
             </div>
           )}
@@ -949,6 +949,7 @@ export default function EstudianteDashboard() {
   const [filtroModalidad, setFiltroModalidad] = useState(null);
   const [filtroTipo, setFiltroTipo] = useState(null);
   const [filtroFecha, setFiltroFecha] = useState(null); // null | "hoy" | "semana" | "mes"
+  const [filtrosAbierto, setFiltrosAbierto] = useState(false);
 
   // Estado estudiante extra
   const [estudiantePostulaciones, setEstudiantePostulaciones] = useState([]);
@@ -1118,10 +1119,10 @@ export default function EstudianteDashboard() {
         <div className="flex flex-col gap-4 sticky top-20">
           {/* Tarjeta perfil admin */}
           <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
-            <div className="h-16 bg-gradient-to-r from-purple-900 to-purple-600" />
+            <div className="h-16 bg-gradient-to-r from-[#0A3A6A] to-[#0F4D8A]" />
             <div className="px-4 pb-4">
               <div className="-mt-7 mb-3">
-                <div className="w-14 h-14 rounded-full bg-purple-600 flex items-center justify-center text-white text-xl font-bold border-2 border-white">
+                <div className="w-14 h-14 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xl font-bold border-2 border-white">
                   <Icon icon="mdi:shield-account-outline" width={28} />
                 </div>
               </div>
@@ -1149,7 +1150,7 @@ export default function EstudianteDashboard() {
 
               <Link
                 to="/admin/panel"
-                className="block text-center mt-3 text-xs font-medium text-purple-600 hover:text-purple-700 border border-purple-500 hover:bg-purple-50 py-1.5 rounded-lg transition-colors"
+                className="block text-center mt-3 text-xs font-medium text-[#0F4D8A] hover:text-[#0A3A6A] border border-[#0F4D8A] hover:bg-[#E6F1FB] py-1.5 rounded-lg transition-colors"
               >
                 Ir al panel
               </Link>
@@ -1248,9 +1249,9 @@ export default function EstudianteDashboard() {
       <div className="flex flex-col gap-4">
         {(isEstudiante || isEmpresa || isAdmin) && <CrearPublicacion onPublicado={cargarPublicaciones} />}
 
-        {/* Tabs del feed */}
+        {/* Tabs del feed + botón filtros */}
         {(isEstudiante || isEmpresa) && (
-          <div className={`flex border-b ${B}`}>
+          <div className={`flex items-center border-b ${B}`}>
             <button
               onClick={() => setTabFeed("principal")}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
@@ -1282,79 +1283,89 @@ export default function EstudianteDashboard() {
                 </span>
               )}
             </button>
-          </div>
-        )}
-
-        {/* Chips de filtro (solo en tab principal, para estudiantes) */}
-        {isEstudiante && tabFeed === "principal" && (
-          <div className="flex gap-2 flex-wrap">
-            {/* Filtro de fechas */}
-            {[
-              { val: "hoy",    label: "Hoy" },
-              { val: "semana", label: "Esta semana" },
-              { val: "mes",    label: "Este mes" },
-            ].map(({ val, label }) => (
+            {isEstudiante && tabFeed === "principal" && (
               <button
-                key={val}
-                onClick={() => setFiltroFecha(filtroFecha === val ? null : val)}
-                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                  filtroFecha === val
-                    ? "bg-[#378ADD] text-white border-[#378ADD]"
+                onClick={() => setFiltrosAbierto((v) => !v)}
+                className={`ml-auto flex items-center gap-1.5 text-xs px-3 py-1.5 mb-1 rounded-lg border transition-colors ${
+                  filtrosAbierto || filtroFecha || filtroTipo || filtroModalidad
+                    ? "border-[#0F4D8A] text-[#0F4D8A] bg-[#0F4D8A]/10"
                     : `${B} ${M} hover:border-[#378ADD] hover:text-[#378ADD]`
                 }`}
               >
-                {label}
+                <Icon icon="mdi:filter-outline" width={14} />
+                Filtros
+                {(filtroFecha || filtroTipo || filtroModalidad) && (
+                  <span className="w-4 h-4 rounded-full bg-[#0F4D8A] text-white text-xs flex items-center justify-center font-semibold">
+                    {[filtroFecha, filtroTipo, filtroModalidad].filter(Boolean).length}
+                  </span>
+                )}
               </button>
-            ))}
-            {[
-              { key: "modalidad", val: "presencial",    label: "Presencial" },
-              { key: "modalidad", val: "remoto",        label: "Remoto" },
-              { key: "modalidad", val: "hibrido",       label: "Híbrido" },
-            ].map(({ key, val, label }) => {
-              const activo = key === "modalidad" ? filtroModalidad === val : filtroTipo === val;
-              return (
-                <button
-                  key={`${key}-${val}`}
-                  onClick={() => {
-                    if (key === "modalidad") setFiltroModalidad(activo ? null : val);
-                    else setFiltroTipo(activo ? null : val);
-                  }}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                    activo
-                      ? "bg-[#0F4D8A] text-white border-[#0F4D8A]"
-                      : `${B} ${M} hover:border-[#378ADD] hover:text-[#378ADD]`
-                  }`}
-                >
-                  {label}
-                </button>
-              );
-            })}
-            {[
-              { key: "tipo", val: "practica",      label: "Práctica" },
-              { key: "tipo", val: "puesto_laboral", label: "Puesto laboral" },
-            ].map(({ key, val, label }) => {
-              const activo = filtroTipo === val;
-              return (
-                <button
-                  key={`${key}-${val}`}
-                  onClick={() => setFiltroTipo(activo ? null : val)}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                    activo
-                      ? "bg-[#0F4D8A] text-white border-[#0F4D8A]"
-                      : `${B} ${M} hover:border-[#378ADD] hover:text-[#378ADD]`
-                  }`}
-                >
-                  {label}
-                </button>
-              );
-            })}
-            {(filtroModalidad || filtroTipo || filtroFecha) && (
-              <button
-                onClick={() => { setFiltroModalidad(null); setFiltroTipo(null); setFiltroFecha(null); }}
-                className={`text-xs px-3 py-1.5 rounded-full border border-red-400/50 text-red-400 hover:bg-red-400/10 transition-colors`}
+            )}
+          </div>
+        )}
+
+        {/* Panel de filtros (solo en tab principal, para estudiantes) */}
+        {isEstudiante && tabFeed === "principal" && filtrosAbierto && (
+          <div className={`p-3 rounded-lg border ${B} ${isDark ? "bg-[#1e1e1c]" : "bg-[#F7F6F3]"} flex flex-wrap gap-4`}>
+            {/* Fecha de publicación */}
+            <div className="flex flex-col gap-1 min-w-[150px]">
+              <label className={`text-xs font-medium ${M}`}>Fecha de publicación</label>
+              <select
+                value={filtroFecha || ""}
+                onChange={(e) => setFiltroFecha(e.target.value || null)}
+                className={`text-xs px-2.5 py-1.5 rounded-lg border outline-none transition-colors ${B} ${
+                  isDark ? "bg-[#262624] text-[#D3D1C7]" : "bg-white text-[#2C2C2A]"
+                } ${filtroFecha ? "border-[#0F4D8A]" : ""}`}
               >
-                Limpiar filtros
-              </button>
+                <option value="">Cualquier fecha</option>
+                <option value="hoy">Hoy</option>
+                <option value="semana">Esta semana</option>
+                <option value="mes">Este mes</option>
+              </select>
+            </div>
+
+            {/* Tipo de publicación */}
+            <div className="flex flex-col gap-1 min-w-[150px]">
+              <label className={`text-xs font-medium ${M}`}>Tipo de publicación</label>
+              <select
+                value={filtroTipo || ""}
+                onChange={(e) => setFiltroTipo(e.target.value || null)}
+                className={`text-xs px-2.5 py-1.5 rounded-lg border outline-none transition-colors ${B} ${
+                  isDark ? "bg-[#262624] text-[#D3D1C7]" : "bg-white text-[#2C2C2A]"
+                } ${filtroTipo ? "border-[#0F4D8A]" : ""}`}
+              >
+                <option value="">Todos los tipos</option>
+                <option value="practica">Práctica profesional</option>
+                <option value="puesto_laboral">Puesto laboral</option>
+              </select>
+            </div>
+
+            {/* Modalidad */}
+            <div className="flex flex-col gap-1 min-w-[140px]">
+              <label className={`text-xs font-medium ${M}`}>Modalidad</label>
+              <select
+                value={filtroModalidad || ""}
+                onChange={(e) => setFiltroModalidad(e.target.value || null)}
+                className={`text-xs px-2.5 py-1.5 rounded-lg border outline-none transition-colors ${B} ${
+                  isDark ? "bg-[#262624] text-[#D3D1C7]" : "bg-white text-[#2C2C2A]"
+                } ${filtroModalidad ? "border-[#0F4D8A]" : ""}`}
+              >
+                <option value="">Todas las modalidades</option>
+                <option value="presencial">Presencial</option>
+                <option value="remoto">Remoto</option>
+                <option value="hibrido">Híbrido</option>
+              </select>
+            </div>
+
+            {(filtroFecha || filtroTipo || filtroModalidad) && (
+              <div className="flex items-end">
+                <button
+                  onClick={() => { setFiltroFecha(null); setFiltroTipo(null); setFiltroModalidad(null); }}
+                  className="text-xs px-3 py-1.5 rounded-lg border border-red-400/50 text-red-400 hover:bg-red-400/10 transition-colors"
+                >
+                  Limpiar filtros
+                </button>
+              </div>
             )}
           </div>
         )}
@@ -1584,7 +1595,7 @@ export default function EstudianteDashboard() {
             <p className={`text-xs font-semibold ${T} mb-3`}>Estado del sistema</p>
             {[
               { label: "Estudiantes registrados", value: adminStats?.total_estudiantes, icon: "mdi:account-school-outline",  color: "text-[#378ADD]"  },
-              { label: "Empresas registradas",    value: adminStats?.total_empresas,    icon: "mdi:domain",                  color: "text-purple-600" },
+              { label: "Empresas registradas",    value: adminStats?.total_empresas,    icon: "mdi:domain",                  color: "text-[#0F4D8A]"  },
               { label: "Vacantes activas",        value: adminStats?.total_vacantes_activas, icon: "mdi:briefcase-check-outline", color: "text-green-600"  },
               { label: "Postulaciones pendientes",value: adminStats?.total_postulaciones,icon: "mdi:clock-outline",           color: "text-amber-500"  },
               { label: "Conversaciones totales",  value: adminStats?.total_conversaciones,icon: "mdi:message-outline",        color: "text-[#378ADD]"  },
@@ -1605,12 +1616,12 @@ export default function EstudianteDashboard() {
             <div className={`rounded-xl border ${B} ${BG} p-4`}>
               <div className="flex items-center justify-between mb-3">
                 <p className={`text-xs font-semibold ${T}`}>Talleres activos</p>
-                <span className={`text-xs font-semibold text-purple-600`}>{talleres.filter(t => t.esta_activo).length}</span>
+                <span className={`text-xs font-semibold text-[#0F4D8A]`}>{talleres.filter(t => t.esta_activo).length}</span>
               </div>
               {talleres.filter(t => t.esta_activo).slice(0, 3).map((t, i, arr) => (
                 <div key={t.id} className={`flex items-center gap-2.5 ${i < arr.length - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}>
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? "bg-purple-500/15" : "bg-purple-100"}`}>
-                    <Icon icon="mdi:school-outline" width={14} className={isDark ? "text-purple-400" : "text-purple-600"} />
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? "bg-[#0F4D8A]/15" : "bg-[#E6F1FB]"}`}>
+                    <Icon icon="mdi:school-outline" width={14} className={isDark ? "text-[#378ADD]" : "text-[#0F4D8A]"} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className={`text-xs font-medium ${T} truncate`}>{t.titulo}</p>
@@ -1618,7 +1629,7 @@ export default function EstudianteDashboard() {
                   </div>
                 </div>
               ))}
-              <Link to="/admin/talleres" className="block text-center mt-2 text-xs text-purple-600 hover:underline">
+              <Link to="/admin/talleres" className="block text-center mt-2 text-xs text-[#0F4D8A] hover:underline">
                 Gestionar talleres →
               </Link>
             </div>
@@ -1631,7 +1642,7 @@ export default function EstudianteDashboard() {
               <div className="flex items-center gap-2 mb-2">
                 <div className={`flex-1 h-2 rounded-full overflow-hidden ${isDark ? "bg-[#3a3a38]" : "bg-gray-200"}`}>
                   <div
-                    className="h-2 rounded-full bg-purple-500 transition-all"
+                    className="h-2 rounded-full bg-[#0F4D8A] transition-all"
                     style={{ width: `${adminStats.total_estudiantes > 0 ? Math.round((adminStats.estudiantes_evaluados / adminStats.total_estudiantes) * 100) : 0}%` }}
                   />
                 </div>
@@ -1642,7 +1653,7 @@ export default function EstudianteDashboard() {
                 </span>
               </div>
               <p className={`text-xs ${M}`}>{adminStats.estudiantes_evaluados} de {adminStats.total_estudiantes} estudiantes evaluados</p>
-              <Link to="/admin/evaluaciones" className="block text-center mt-2 text-xs text-purple-600 hover:underline">
+              <Link to="/admin/evaluaciones" className="block text-center mt-2 text-xs text-[#0F4D8A] hover:underline">
                 Ver evaluaciones →
               </Link>
             </div>

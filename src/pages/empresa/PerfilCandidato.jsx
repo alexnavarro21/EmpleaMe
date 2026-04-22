@@ -125,10 +125,8 @@ export default function EmpresaPerfilCandidato() {
         habilidadesTecnicas: habilidadesTecnicas,
         experiencia: (() => {
           const todos = student.historial_laboral || [];
-          try {
-            const ids = student.cv_experiencias ? JSON.parse(student.cv_experiencias) : null;
-            if (ids && ids.length > 0) return todos.filter(e => ids.includes(e.id));
-          } catch {}
+          const ids = Array.isArray(student.cv_experiencias) ? student.cv_experiencias : null;
+          if (ids && ids.length > 0) return todos.filter(e => ids.includes(e.id));
           return todos;
         })(),
         formacion:   student.historial_academico || [],

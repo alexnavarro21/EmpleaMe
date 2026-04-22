@@ -101,7 +101,7 @@ function VacanteModal({ vacante, role, onClose }) {
               <p className={`text-xs font-semibold uppercase tracking-wide ${M} mb-2`}>Habilidades requeridas</p>
               <div className="flex flex-wrap gap-1.5">
                 {vacante.habilidades.map((h) => (
-                  <Badge key={h.id} color={h.categoria === "blanda" ? "purple" : "blue"}>{h.nombre}</Badge>
+                  <Badge key={h.id} color="blue">{h.nombre}</Badge>
                 ))}
               </div>
             </div>
@@ -179,7 +179,7 @@ function TallerModal({ taller, role, onClose }) {
   const costoStr = gratuito ? "Gratuito" : `$${Number(taller.costo).toLocaleString("es-CL")}`;
 
   const infoItems = [
-    taller.area      && { icon: "mdi:tag-outline",            label: taller.area,      color: "text-purple-500" },
+    taller.area      && { icon: "mdi:tag-outline",            label: taller.area,      color: "text-[#0F4D8A]" },
     taller.modalidad && { icon: "mdi:map-marker-outline",     label: taller.modalidad  },
     taller.duracion  && { icon: "mdi:clock-outline",          label: taller.duracion   },
     taller.horario   && { icon: "mdi:calendar-clock-outline", label: taller.horario    },
@@ -194,7 +194,7 @@ function TallerModal({ taller, role, onClose }) {
         {/* Header */}
         <div className={`px-5 py-4 border-b ${B} flex items-start justify-between gap-3`}>
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center flex-shrink-0">
               <Icon icon="mdi:school-outline" width={20} className="text-white" />
             </div>
             <div className="flex-1 min-w-0">
@@ -248,8 +248,8 @@ function TallerModal({ taller, role, onClose }) {
                 : estado === "duplicado" ? (isDark ? "bg-amber-500/15 text-amber-400" : "bg-amber-100 text-amber-700")
                 : estado === "sin_cupos" ? (isDark ? "bg-red-500/15 text-red-400"    : "bg-red-100 text-red-700")
                 : estado === "error"     ? (isDark ? "bg-red-500/15 text-red-400"    : "bg-red-100 text-red-700")
-                : estado === "loading"   ? (isDark ? "bg-purple-500/20 text-purple-300" : "bg-purple-100 text-purple-700")
-                : "bg-purple-600 hover:bg-purple-700 text-white"
+                : estado === "loading"   ? (isDark ? "bg-[#0F4D8A]/20 text-[#378ADD]" : "bg-[#E6F1FB] text-[#0F4D8A]")
+                : "bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white"
               }`}
             >
               <Icon
@@ -864,7 +864,7 @@ export default function BuscarPerfiles() {
                         Ver más
                       </button>
                       {role === "estudiante" && puedeInscribirse && (
-                        <button onClick={() => setModalTaller(t)} className="flex-1 py-2 rounded-lg text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white transition-colors">
+                        <button onClick={() => setModalTaller(t)} className="flex-1 py-2 rounded-lg text-xs font-semibold bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white transition-colors">
                           Inscribirse
                         </button>
                       )}
