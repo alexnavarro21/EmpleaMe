@@ -95,7 +95,10 @@ router.get("/resumen/:estudiante_id/:vacante_id", verificarToken, soloRol("empre
   try {
     // 1. Obtener todos los datos del estudiante
     const [[perfil]] = await db.query(
-      "SELECT * FROM perfiles_estudiantes WHERE usuario_id = ?",
+      `SELECT pe.*, c.nombre AS carrera
+       FROM perfiles_estudiantes pe
+       LEFT JOIN carreras c ON c.id = pe.carrera_id
+       WHERE pe.usuario_id = ?`,
       [estudiante_id]
     );
     if (!perfil) return res.status(404).json({ error: "Estudiante no encontrado" });
@@ -203,7 +206,7 @@ router.get("/ranking/:vacante_id", verificarToken, soloRol("empresa"), async (re
 
     for (const estudianteId of estudianteIds) {
       try {
-        const [[perfil]]              = await db.query("SELECT * FROM perfiles_estudiantes WHERE usuario_id = ?", [estudianteId]);
+        const [[perfil]]              = await db.query(`SELECT pe.*, c.nombre AS carrera FROM perfiles_estudiantes pe LEFT JOIN carreras c ON c.id = pe.carrera_id WHERE pe.usuario_id = ?`, [estudianteId]);
         if (!perfil) { resultados.push({ estudiante_id: estudianteId, compatibilidad: "Baja" }); continue; }
 
         const [habilidades]           = await db.query(`SELECT h.nombre, h.categoria, he.nivel_dominio FROM habilidades_estudiantes he JOIN habilidades h ON h.id = he.habilidad_id WHERE he.estudiante_id = ?`, [estudianteId]);

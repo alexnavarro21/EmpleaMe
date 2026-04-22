@@ -33,9 +33,10 @@ router.get("/usuarios", ...auth, async (req, res) => {
     const [rows] = await db.query(`
       SELECT u.id, u.correo, u.rol, u.fecha_creacion,
              COALESCE(pe.nombre_completo, emp.nombre_empresa) AS nombre,
-             pe.carrera
+             c.nombre AS carrera
       FROM usuarios u
       LEFT JOIN perfiles_estudiantes pe  ON pe.usuario_id  = u.id
+      LEFT JOIN carreras c               ON c.id           = pe.carrera_id
       LEFT JOIN perfiles_empresas    emp ON emp.usuario_id = u.id
       ORDER BY u.fecha_creacion DESC
     `);
@@ -51,11 +52,12 @@ router.get("/evaluaciones", ...auth, async (req, res) => {
   try {
     const [rows] = await db.query(`
       SELECT e.id, e.periodo, e.observaciones, e.creada_en,
-             pe.nombre_completo AS nombre_estudiante, pe.carrera,
+             pe.nombre_completo AS nombre_estudiante, c.nombre AS carrera,
              AVG(CASE WHEN h.categoria = 'tecnica' THEN eh.puntaje END) AS avg_tecnica,
              AVG(CASE WHEN h.categoria = 'blanda'  THEN eh.puntaje END) AS avg_blanda
       FROM evaluaciones e
       JOIN perfiles_estudiantes pe ON pe.usuario_id = e.estudiante_id
+      LEFT JOIN carreras c ON c.id = pe.carrera_id
       LEFT JOIN evaluacion_habilidades eh ON eh.evaluacion_id = e.id
       LEFT JOIN habilidades h ON h.id = eh.habilidad_id
       GROUP BY e.id

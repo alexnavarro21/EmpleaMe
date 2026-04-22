@@ -9,10 +9,11 @@ router.get("/inscritos/pendientes", verificarToken, soloRol("centro"), async (re
     const [rows] = await db.query(
       `SELECT i.id, i.estado, i.fecha_creacion,
               t.id AS taller_id, t.titulo AS taller_titulo,
-              pe.usuario_id AS estudiante_id, pe.nombre_completo, pe.carrera, pe.promedio
+              pe.usuario_id AS estudiante_id, pe.nombre_completo, c.nombre AS carrera, pe.promedio
        FROM inscripciones_talleres i
        JOIN talleres t ON t.id = i.taller_id
        JOIN perfiles_estudiantes pe ON pe.usuario_id = i.estudiante_id
+       LEFT JOIN carreras c ON c.id = pe.carrera_id
        WHERE i.estado = 'pendiente'
        ORDER BY i.fecha_creacion ASC`
     );
@@ -212,10 +213,11 @@ router.get("/:id/inscritos", verificarToken, soloRol("centro"), async (req, res)
   try {
     const [rows] = await db.query(
       `SELECT i.id, i.estado, i.fecha_creacion,
-              pe.usuario_id AS estudiante_id, pe.nombre_completo, pe.carrera,
+              pe.usuario_id AS estudiante_id, pe.nombre_completo, c.nombre AS carrera,
               pe.promedio, pe.calificacion_docente
        FROM inscripciones_talleres i
        JOIN perfiles_estudiantes pe ON pe.usuario_id = i.estudiante_id
+       LEFT JOIN carreras c ON c.id = pe.carrera_id
        WHERE i.taller_id = ?
        ORDER BY i.fecha_creacion ASC`,
       [req.params.id]
