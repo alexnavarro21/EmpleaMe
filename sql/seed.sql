@@ -552,3 +552,295 @@ INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, url_multimedia,
    'Última reunión antes de entregar el informe de cierre. Todos alineados, todo cuadrado. Cuando el trabajo previo está bien hecho, el cierre no da miedo.',
    '/api/media/uploads/fernanda_reunion.jpg',
    DATE_SUB(NOW(), INTERVAL 14 MINUTE));
+
+-- ── 10. Colegios adicionales y sus estudiantes ────────────────
+-- Contraseña de todos los usuarios nuevos: Demo1234
+-- Idempotente: borra registros anteriores antes de insertar.
+
+DELETE FROM usuarios WHERE correo IN (
+  'colegio2@empleame.cl',
+  'colegio3@empleame.cl',
+  'andres.fuentes@demo.cl',
+  'catalina.medina@demo.cl',
+  'nicolas.vargas@demo.cl',
+  'isidora.lagos@demo.cl',
+  'benjamin.soto@demo.cl',
+  'renata.espinoza@demo.cl'
+);
+
+-- ── Colegio 2: Liceo Técnico Arturo Prat ─────────────────────
+INSERT INTO usuarios (correo, contrasena_hash, rol)
+  VALUES ('colegio2@empleame.cl', 'Demo1234', 'colegio');
+SET @c2 = LAST_INSERT_ID();
+
+INSERT INTO perfiles_colegios (usuario_id, nombre_institucion, telefono_contacto, descripcion, region, comuna)
+VALUES (@c2, 'Liceo Técnico Arturo Prat', '+56332201890',
+  'Liceo técnico profesional con especialidades en administración y mecánica automotriz. Más de 30 años formando técnicos para la región.',
+  'Región de Valparaíso', 'Valparaíso');
+
+-- ── Colegio 3: Centro Educacional Gabriela Mistral ────────────
+INSERT INTO usuarios (correo, contrasena_hash, rol)
+  VALUES ('colegio3@empleame.cl', 'Demo1234', 'colegio');
+SET @c3 = LAST_INSERT_ID();
+
+INSERT INTO perfiles_colegios (usuario_id, nombre_institucion, telefono_contacto, descripcion, region, comuna)
+VALUES (@c3, 'C.E. Gabriela Mistral', '+56412345678',
+  'Centro educacional con fuerte énfasis en formación técnica y vinculación con el mundo laboral regional.',
+  'Región del Biobío', 'Concepción');
+
+-- ── Estudiante 6: Andrés Fuentes — Mecánica (Liceo Arturo Prat)
+INSERT INTO usuarios (correo, contrasena_hash, rol)
+  VALUES ('andres.fuentes@demo.cl', 'Demo1234', 'estudiante');
+SET @u6 = LAST_INSERT_ID();
+
+INSERT INTO perfiles_estudiantes
+  (usuario_id, nombre_completo, rut, carrera_id, semestre, promedio, calificacion_docente,
+   telefono, biografia, estado_civil, region, comuna, colegio_id)
+VALUES (@u6, 'Andrés Fuentes Tapia', '21.111.222-3',
+  (SELECT id FROM carreras WHERE nombre = 'Mecanica Automotriz'),
+  4, 5.6, 5.8, '+56 9 1234 5006',
+  'Técnico en formación con interés en sistemas de climatización y diagnóstico electrónico. Participó en ferias técnicas regionales representando al Liceo Arturo Prat.',
+  'soltero', 'Región de Valparaíso', 'Valparaíso', @c2);
+
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES
+  (@u6, 'Español', 'Nativo'), (@u6, 'Inglés', 'Básico');
+
+INSERT INTO historial_academico (estudiante_id, institucion, titulo, area, fecha_inicio, fecha_fin) VALUES
+  (@u6, 'Liceo Técnico Arturo Prat', 'Técnico en Mecánica Automotriz', 'Automotriz', 2023, NULL);
+
+INSERT INTO historial_laboral (estudiante_id, empresa_nombre, cargo, fecha_inicio, fecha_fin, descripcion, tipo) VALUES
+  (@u6, 'Taller Automotriz Prat', 'Ayudante diagnóstico', '2024-07-01', '2024-09-30',
+   'Apoyo en diagnóstico electrónico y mantenimiento preventivo de vehículos livianos.', 'practica_completada');
+
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+SELECT @u6, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Diagnóstico electrónico OBD-II'       UNION ALL
+SELECT @u6, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Sistemas de climatización automotriz'  UNION ALL
+SELECT @u6, id, 'Intermedio', NULL, FALSE FROM habilidades WHERE nombre = 'Cambio de aceite y filtros'            UNION ALL
+SELECT @u6, id, 'Basico',     NULL, FALSE FROM habilidades WHERE nombre = 'Mantenimiento preventivo'              UNION ALL
+SELECT @u6, id, 'Basico',      74,  TRUE  FROM habilidades WHERE nombre = 'Resolución de problemas'               UNION ALL
+SELECT @u6, id, 'Basico',      70,  TRUE  FROM habilidades WHERE nombre = 'Trabajo en equipo'                     UNION ALL
+SELECT @u6, id, 'Basico',      78,  TRUE  FROM habilidades WHERE nombre = 'Responsabilidad y puntualidad';
+
+INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, publicado_en) VALUES
+  (@u6, (SELECT id FROM tipos_publicacion WHERE nombre='logro'),
+   'Práctica completada en Taller Prat',
+   'Tres meses trabajando en diagnóstico real. Aprendí a leer parámetros en vivo y a identificar fallas en sistemas de climatización. Gran experiencia para mi primer año en terreno.',
+   DATE_SUB(NOW(), INTERVAL 9 DAY)),
+  (@u6, (SELECT id FROM tipos_publicacion WHERE nombre='general'),
+   'Feria técnica regional 2024',
+   'Representé al Liceo Arturo Prat en la feria técnica regional. Expusimos el proyecto de diagnóstico de fallas en vehículos eléctricos. Mucho aprendizaje y buenas conexiones con otros liceos.',
+   DATE_SUB(NOW(), INTERVAL 28 DAY));
+
+-- ── Estudiante 7: Catalina Medina — Administración (Liceo Arturo Prat)
+INSERT INTO usuarios (correo, contrasena_hash, rol)
+  VALUES ('catalina.medina@demo.cl', 'Demo1234', 'estudiante');
+SET @u7 = LAST_INSERT_ID();
+
+INSERT INTO perfiles_estudiantes
+  (usuario_id, nombre_completo, rut, carrera_id, semestre, promedio, calificacion_docente,
+   telefono, biografia, estado_civil, region, comuna, colegio_id)
+VALUES (@u7, 'Catalina Medina Reyes', '21.222.333-4',
+  (SELECT id FROM carreras WHERE nombre = 'Administracion'),
+  5, 6.3, 6.4, '+56 9 1234 5007',
+  'Estudiante de Administración con sólido manejo de contabilidad y atención al cliente. Trabajó en práctica en empresa retail de Valparaíso y destacó por su organización.',
+  'soltero', 'Región de Valparaíso', 'Viña del Mar', @c2);
+
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES
+  (@u7, 'Español', 'Nativo'), (@u7, 'Inglés', 'Intermedio');
+
+INSERT INTO historial_academico (estudiante_id, institucion, titulo, area, fecha_inicio, fecha_fin) VALUES
+  (@u7, 'Liceo Técnico Arturo Prat', 'Técnico en Administración', 'Administración de Empresas', 2022, NULL),
+  (@u7, 'SENCE', 'Atención al Cliente y Ventas', 'Comercial', 2024, 2024);
+
+INSERT INTO historial_laboral (estudiante_id, empresa_nombre, cargo, fecha_inicio, fecha_fin, descripcion, tipo) VALUES
+  (@u7, 'Ripley Viña del Mar', 'Asistente administrativa', '2024-01-15', '2024-04-15',
+   'Gestión de caja, facturación y atención al cliente en temporada alta.', 'verificado');
+
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+SELECT @u7, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Atención al cliente'             UNION ALL
+SELECT @u7, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Gestión documental y archivo'    UNION ALL
+SELECT @u7, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Facturación electrónica SII'     UNION ALL
+SELECT @u7, id, 'Intermedio', NULL, FALSE FROM habilidades WHERE nombre = 'Planillas Excel avanzadas'       UNION ALL
+SELECT @u7, id, 'Basico',     NULL, FALSE FROM habilidades WHERE nombre = 'Contabilidad general'            UNION ALL
+SELECT @u7, id, 'Basico',      86,  TRUE  FROM habilidades WHERE nombre = 'Comunicación efectiva'           UNION ALL
+SELECT @u7, id, 'Basico',      83,  TRUE  FROM habilidades WHERE nombre = 'Organización y planificación'    UNION ALL
+SELECT @u7, id, 'Basico',      88,  TRUE  FROM habilidades WHERE nombre = 'Responsabilidad y puntualidad';
+
+INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, publicado_en) VALUES
+  (@u7, (SELECT id FROM tipos_publicacion WHERE nombre='logro'),
+   'Promedio 6.3 — mejor semestre hasta ahora',
+   'Cerré el semestre con 6.3. Fue el más exigente hasta ahora pero también el más completo. Contabilidad, ERP y un módulo de ventas que no esperaba que me gustara tanto.',
+   DATE_SUB(NOW(), INTERVAL 6 DAY)),
+  (@u7, (SELECT id FROM tipos_publicacion WHERE nombre='general'),
+   'Temporada alta en Ripley: lo que aprendí',
+   'Tres meses en caja durante temporada alta son un máster acelerado en atención al cliente. Velocidad, precisión y calma bajo presión. Cosas que no te enseñan en el aula pero que la empresa valora desde el primer día.',
+   DATE_SUB(NOW(), INTERVAL 32 DAY));
+
+-- ── Estudiante 8: Nicolás Vargas — Mecánica (C.E. Gabriela Mistral)
+INSERT INTO usuarios (correo, contrasena_hash, rol)
+  VALUES ('nicolas.vargas@demo.cl', 'Demo1234', 'estudiante');
+SET @u8 = LAST_INSERT_ID();
+
+INSERT INTO perfiles_estudiantes
+  (usuario_id, nombre_completo, rut, carrera_id, semestre, promedio, calificacion_docente,
+   telefono, biografia, estado_civil, region, comuna, colegio_id)
+VALUES (@u8, 'Nicolás Vargas Ojeda', '21.333.444-5',
+  (SELECT id FROM carreras WHERE nombre = 'Mecanica Automotriz'),
+  6, 6.0, 6.2, '+56 9 1234 5008',
+  'Técnico en formación especializado en reparación de motores diesel y sistemas eléctricos. Trabaja en el taller escolar del C.E. Gabriela Mistral como monitor de pares.',
+  'soltero', 'Región del Biobío', 'Concepción', @c3);
+
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES
+  (@u8, 'Español', 'Nativo'), (@u8, 'Inglés', 'Básico');
+
+INSERT INTO historial_academico (estudiante_id, institucion, titulo, area, fecha_inicio, fecha_fin) VALUES
+  (@u8, 'C.E. Gabriela Mistral', 'Técnico en Mecánica Automotriz', 'Automotriz', 2022, NULL),
+  (@u8, 'CECAP Concepción', 'Motores Diesel Avanzado', 'Automotriz', 2024, 2024);
+
+INSERT INTO historial_laboral (estudiante_id, empresa_nombre, cargo, fecha_inicio, fecha_fin, descripcion, tipo) VALUES
+  (@u8, 'Transportes del Biobío Ltda.', 'Practicante mecánica diesel', '2024-07-10', '2024-09-10',
+   'Mantenimiento preventivo y correctivo de camiones y buses. Diagnóstico de motores diesel Cummins e Isuzu.', 'practica_completada');
+
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+SELECT @u8, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Reparación de motor diesel'               UNION ALL
+SELECT @u8, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Sistemas eléctricos y electrónicos'       UNION ALL
+SELECT @u8, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Diagnóstico electrónico OBD-II'           UNION ALL
+SELECT @u8, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Mantenimiento preventivo'                 UNION ALL
+SELECT @u8, id, 'Basico',     NULL, FALSE FROM habilidades WHERE nombre = 'Lectura de planos y manuales técnicos'    UNION ALL
+SELECT @u8, id, 'Basico',      85,  TRUE  FROM habilidades WHERE nombre = 'Resolución de problemas'                  UNION ALL
+SELECT @u8, id, 'Basico',      79,  TRUE  FROM habilidades WHERE nombre = 'Iniciativa y proactividad'                UNION ALL
+SELECT @u8, id, 'Basico',      82,  TRUE  FROM habilidades WHERE nombre = 'Responsabilidad y puntualidad';
+
+INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, publicado_en) VALUES
+  (@u8, (SELECT id FROM tipos_publicacion WHERE nombre='logro'),
+   'Certificación en motores diesel completada',
+   'Aprobé el curso de Motores Diesel Avanzado en CECAP Concepción. Ahora manejo con confianza diagnóstico y reparación de sistemas de inyección common rail. Siguiente paso: turboalimentación.',
+   DATE_SUB(NOW(), INTERVAL 11 DAY)),
+  (@u8, (SELECT id FROM tipos_publicacion WHERE nombre='general'),
+   'Monitor de taller escolar — lo que nadie te dice',
+   'Ser monitor de pares implica saber explicar lo que sabes de formas distintas hasta que el otro entienda. Me ha obligado a dominar los fundamentos de verdad, no solo a repetirlos.',
+   DATE_SUB(NOW(), INTERVAL 42 DAY));
+
+-- ── Estudiante 9: Isidora Lagos — Administración (C.E. Gabriela Mistral)
+INSERT INTO usuarios (correo, contrasena_hash, rol)
+  VALUES ('isidora.lagos@demo.cl', 'Demo1234', 'estudiante');
+SET @u9 = LAST_INSERT_ID();
+
+INSERT INTO perfiles_estudiantes
+  (usuario_id, nombre_completo, rut, carrera_id, semestre, promedio, calificacion_docente,
+   telefono, biografia, estado_civil, region, comuna, colegio_id)
+VALUES (@u9, 'Isidora Lagos Bravo', '21.444.555-6',
+  (SELECT id FROM carreras WHERE nombre = 'Administracion'),
+  4, 6.1, 6.3, '+56 9 1234 5009',
+  'Estudiante con enfoque en recursos humanos y gestión documental. Participó en proyecto de digitalización de archivos en práctica voluntaria en municipio de Concepción.',
+  'soltero', 'Región del Biobío', 'Concepción', @c3);
+
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES
+  (@u9, 'Español', 'Nativo'), (@u9, 'Inglés', 'Intermedio'), (@u9, 'Portugués', 'Básico');
+
+INSERT INTO historial_academico (estudiante_id, institucion, titulo, area, fecha_inicio, fecha_fin) VALUES
+  (@u9, 'C.E. Gabriela Mistral', 'Técnico en Administración', 'Administración de Empresas', 2023, NULL),
+  (@u9, 'SENCE', 'Gestión de Recursos Humanos', 'RRHH', 2024, 2024);
+
+INSERT INTO historial_laboral (estudiante_id, empresa_nombre, cargo, fecha_inicio, fecha_fin, descripcion, tipo) VALUES
+  (@u9, 'Municipalidad de Concepción', 'Asistente RRHH voluntaria', '2024-03-01', '2024-05-31',
+   'Digitalización de expedientes de personal, actualización de registros y apoyo en proceso de selección interna.', 'verificado');
+
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+SELECT @u9, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Gestión documental y archivo'        UNION ALL
+SELECT @u9, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Gestión de recursos humanos básica'  UNION ALL
+SELECT @u9, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Redacción de informes y actas'       UNION ALL
+SELECT @u9, id, 'Intermedio', NULL, FALSE FROM habilidades WHERE nombre = 'Planillas Excel avanzadas'           UNION ALL
+SELECT @u9, id, 'Basico',     NULL, FALSE FROM habilidades WHERE nombre = 'Manejo de ERP (SAP básico)'          UNION ALL
+SELECT @u9, id, 'Basico',      87,  TRUE  FROM habilidades WHERE nombre = 'Empatía y relaciones interpersonales' UNION ALL
+SELECT @u9, id, 'Basico',      84,  TRUE  FROM habilidades WHERE nombre = 'Comunicación efectiva'               UNION ALL
+SELECT @u9, id, 'Basico',      80,  TRUE  FROM habilidades WHERE nombre = 'Organización y planificación';
+
+INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, publicado_en) VALUES
+  (@u9, (SELECT id FROM tipos_publicacion WHERE nombre='logro'),
+   'Proyecto de digitalización completado',
+   'Terminamos la digitalización de 1.200 expedientes físicos de personal en la Municipalidad de Concepción. Tres meses de trabajo ordenado y sistemático. El resultado: un archivo completamente consultable en línea.',
+   DATE_SUB(NOW(), INTERVAL 7 DAY)),
+  (@u9, (SELECT id FROM tipos_publicacion WHERE nombre='general'),
+   'Por qué elegí recursos humanos',
+   'Desde pequeña me llamó más la atención la gente que los números. RRHH me permite combinar administración con un propósito real: que las personas trabajen bien y en buenos ambientes. No hay mejor razón.',
+   DATE_SUB(NOW(), INTERVAL 38 DAY));
+
+-- ── Estudiante 10: Benjamín Soto — Mecánica (C.E. Cardenal J.M. Caro)
+INSERT INTO usuarios (correo, contrasena_hash, rol)
+  VALUES ('benjamin.soto@demo.cl', 'Demo1234', 'estudiante');
+SET @u10 = LAST_INSERT_ID();
+
+INSERT INTO perfiles_estudiantes
+  (usuario_id, nombre_completo, rut, carrera_id, semestre, promedio, calificacion_docente,
+   telefono, biografia, estado_civil, region, comuna, colegio_id)
+VALUES (@u10, 'Benjamín Soto Araya', '21.555.666-7',
+  (SELECT id FROM carreras WHERE nombre = 'Mecanica Automotriz'),
+  3, 5.4, 5.7, '+56 9 1234 5010',
+  'Primer año en el taller escolar del C.E. Cardenal J.M. Caro. Aprendiendo rápido y con mucha curiosidad por los sistemas eléctricos modernos.',
+  'soltero', 'Región Metropolitana de Santiago', 'San Bernardo', 3);
+
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES
+  (@u10, 'Español', 'Nativo');
+
+INSERT INTO historial_academico (estudiante_id, institucion, titulo, area, fecha_inicio, fecha_fin) VALUES
+  (@u10, 'C.E. Cardenal J.M. Caro', 'Técnico en Mecánica Automotriz', 'Automotriz', 2024, NULL);
+
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+SELECT @u10, id, 'Intermedio', NULL, FALSE FROM habilidades WHERE nombre = 'Cambio de aceite y filtros'          UNION ALL
+SELECT @u10, id, 'Basico',     NULL, FALSE FROM habilidades WHERE nombre = 'Mantenimiento preventivo'            UNION ALL
+SELECT @u10, id, 'Basico',     NULL, FALSE FROM habilidades WHERE nombre = 'Sistemas eléctricos y electrónicos'  UNION ALL
+SELECT @u10, id, 'Basico',      68,  TRUE  FROM habilidades WHERE nombre = 'Responsabilidad y puntualidad'       UNION ALL
+SELECT @u10, id, 'Basico',      65,  TRUE  FROM habilidades WHERE nombre = 'Trabajo en equipo';
+
+INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, publicado_en) VALUES
+  (@u10, (SELECT id FROM tipos_publicacion WHERE nombre='general'),
+   'Mi primer cambio de aceite en taller escolar',
+   'Suena básico pero hacerlo por primera vez en un vehículo real es otra cosa. Torque, tipo de aceite correcto, revisión del filtro. Pequeño logro, gran comienzo.',
+   DATE_SUB(NOW(), INTERVAL 16 DAY));
+
+-- ── Estudiante 11: Renata Espinoza — Administración (C.E. Gabriela Mistral)
+INSERT INTO usuarios (correo, contrasena_hash, rol)
+  VALUES ('renata.espinoza@demo.cl', 'Demo1234', 'estudiante');
+SET @u11 = LAST_INSERT_ID();
+
+INSERT INTO perfiles_estudiantes
+  (usuario_id, nombre_completo, rut, carrera_id, semestre, promedio, calificacion_docente,
+   telefono, biografia, estado_civil, region, comuna, colegio_id)
+VALUES (@u11, 'Renata Espinoza Cid', '21.666.777-8',
+  (SELECT id FROM carreras WHERE nombre = 'Administracion'),
+  6, 6.6, 6.8, '+56 9 1234 5011',
+  'Estudiante destacada con manejo avanzado de herramientas contables y tributarias. Orientada a finanzas empresariales y con experiencia real en asistencia contable.',
+  'casado', 'Región del Biobío', 'Talcahuano', @c3);
+
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES
+  (@u11, 'Español', 'Nativo'), (@u11, 'Inglés', 'Avanzado');
+
+INSERT INTO historial_academico (estudiante_id, institucion, titulo, area, fecha_inicio, fecha_fin) VALUES
+  (@u11, 'C.E. Gabriela Mistral', 'Técnico en Administración', 'Administración de Empresas', 2022, NULL),
+  (@u11, 'AIEP', 'Finanzas para no financieros', 'Finanzas', 2024, 2024);
+
+INSERT INTO historial_laboral (estudiante_id, empresa_nombre, cargo, fecha_inicio, fecha_fin, descripcion, tipo) VALUES
+  (@u11, 'Contadores Asociados del Sur', 'Asistente contable', '2024-03-10', '2024-06-10',
+   'Registro de operaciones diarias, conciliaciones y preparación de declaraciones de IVA mensual.', 'verificado');
+
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+SELECT @u11, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Contabilidad general'                   UNION ALL
+SELECT @u11, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Manejo de software contable (Conta+)'   UNION ALL
+SELECT @u11, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Facturación electrónica SII'            UNION ALL
+SELECT @u11, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Elaboración de presupuestos'            UNION ALL
+SELECT @u11, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Manejo de ERP (SAP básico)'             UNION ALL
+SELECT @u11, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Control de inventario'                  UNION ALL
+SELECT @u11, id, 'Basico',      94,  TRUE  FROM habilidades WHERE nombre = 'Pensamiento crítico'                    UNION ALL
+SELECT @u11, id, 'Basico',      91,  TRUE  FROM habilidades WHERE nombre = 'Orientación al detalle'                 UNION ALL
+SELECT @u11, id, 'Basico',      89,  TRUE  FROM habilidades WHERE nombre = 'Organización y planificación';
+
+INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, publicado_en) VALUES
+  (@u11, (SELECT id FROM tipos_publicacion WHERE nombre='logro'),
+   'Promedio 6.6 y lista para titularme',
+   'Último semestre antes de la titulación. Promedio 6.6 acumulado y con experiencia real en contabilidad. Lo que viene ahora es el mundo laboral de verdad.',
+   DATE_SUB(NOW(), INTERVAL 4 DAY)),
+  (@u11, (SELECT id FROM tipos_publicacion WHERE nombre='general'),
+   'Declaración de IVA: mi primera vez sola',
+   'En Contadores Asociados me dejaron preparar la declaración de IVA de un cliente de forma independiente. Revisé facturas, cuadré débito y crédito fiscal, y la envié al SII sin errores. La confianza que te da eso no tiene precio.',
+   DATE_SUB(NOW(), INTERVAL 22 DAY));
