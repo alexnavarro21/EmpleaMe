@@ -1283,7 +1283,7 @@ export default function EstudianteDashboard() {
                 </span>
               )}
             </button>
-            {isEstudiante && tabFeed === "principal" && (
+            {tabFeed === "principal" && (
               <button
                 onClick={() => setFiltrosAbierto((v) => !v)}
                 className={`ml-auto flex items-center gap-1.5 text-xs px-3 py-1.5 mb-1 rounded-lg border transition-colors ${
@@ -1305,7 +1305,7 @@ export default function EstudianteDashboard() {
         )}
 
         {/* Panel de filtros (solo en tab principal, para estudiantes) */}
-        {isEstudiante && tabFeed === "principal" && filtrosAbierto && (
+        {tabFeed === "principal" && filtrosAbierto && (
           <div className={`p-3 rounded-lg border ${B} ${isDark ? "bg-[#1e1e1c]" : "bg-[#F7F6F3]"} flex flex-wrap gap-4`}>
             {/* Fecha de publicación */}
             <div className="flex flex-col gap-1 min-w-[150px]">
