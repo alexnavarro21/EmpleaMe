@@ -6,6 +6,7 @@ import { Card, Badge, SecondaryButton, PrimaryButton, PageHeader, Paginacion } f
 import PublicacionesUsuario from "../components/PublicacionesUsuario";
 import { getEmpresaById, getVacantesEmpresa, postularAVacante, iniciarConversacionConEmpresa, getEstudianteById, getMediaUrl, toggleSeguir, getEstadoSeguimiento } from "../services/api";
 import { calcularCompletitud } from "../utils/perfilCompletitud";
+import ModalReporte from "../components/ModalReporte";
 
 export default function PerfilEmpresaPublico() {
   const { isDark } = useDark();
@@ -26,6 +27,7 @@ export default function PerfilEmpresaPublico() {
   const [siguiendo, setSiguiendo] = useState(false);
   const [seguidoresCount, setSeguidoresCount] = useState(0);
   const [toggleandoSeguir, setToggleandoSeguir] = useState(false);
+  const [modalReporte, setModalReporte] = useState(false);
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -195,6 +197,19 @@ export default function PerfilEmpresaPublico() {
               </button>
             )}
 
+            {/* Reportar perfil (cualquier usuario autenticado excepto el mismo) */}
+            {usuario.id && parseInt(id) !== usuario.id && (
+              <button
+                onClick={() => setModalReporte(true)}
+                className={`mt-2 w-full flex items-center justify-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors ${
+                  isDark ? "text-[#888780] hover:text-red-400 hover:bg-red-500/10" : "text-[#5F5E5A] hover:text-red-500 hover:bg-red-50"
+                }`}
+              >
+                <Icon icon="mdi:flag-outline" width={14} />
+                Reportar perfil
+              </button>
+            )}
+
             <div className={`mt-4 pt-4 border-t ${B} flex flex-col gap-2.5 text-left`}>
               {empresa.telefono_contacto && (
                 <p className={`flex items-center gap-2 text-xs ${M}`}>
@@ -346,6 +361,15 @@ export default function PerfilEmpresaPublico() {
       </div>
 
       <PublicacionesUsuario usuarioId={id} />
+
+      {modalReporte && (
+        <ModalReporte
+          tipo="perfil"
+          referenciaId={parseInt(id)}
+          titulo="¿Por qué reportas este perfil de empresa?"
+          onCerrar={() => setModalReporte(false)}
+        />
+      )}
     </div>
   );
 }

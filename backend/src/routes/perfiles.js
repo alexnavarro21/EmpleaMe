@@ -7,9 +7,10 @@ const upload = require("../middleware/multerConfig");
 router.get("/estudiante/:id", verificarToken, async (req, res) => {
   try {
     const [perfil] = await db.query(
-      `SELECT pe.*, u.correo
+      `SELECT pe.*, c.nombre AS carrera, u.correo
        FROM perfiles_estudiantes pe
        JOIN usuarios u ON u.id = pe.usuario_id
+       LEFT JOIN carreras c ON c.id = pe.carrera_id
        WHERE pe.usuario_id = ?`,
       [req.params.id]
     );
@@ -21,11 +22,6 @@ router.get("/estudiante/:id", verificarToken, async (req, res) => {
        FROM habilidades_estudiantes he
        JOIN habilidades h ON h.id = he.habilidad_id
        WHERE he.estudiante_id = ?`,
-      [req.params.id]
-    );
-
-    const [portafolio] = await db.query(
-      "SELECT * FROM items_portafolio WHERE estudiante_id = ? ORDER BY fecha_creacion DESC",
       [req.params.id]
     );
 
@@ -51,7 +47,13 @@ router.get("/estudiante/:id", verificarToken, async (req, res) => {
       [req.params.id]
     );
 
-    res.json({ ...perfil[0], habilidades, portafolio, idiomas, historial_academico, historial_laboral });
+    const [cv_seleccion] = await db.query(
+      "SELECT experiencia_id FROM cv_seleccion_experiencias WHERE estudiante_id = ?",
+      [req.params.id]
+    );
+    const cv_experiencias = cv_seleccion.map((r) => r.experiencia_id);
+
+    res.json({ ...perfil[0], habilidades, idiomas, historial_academico, historial_laboral, cv_experiencias });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }
@@ -59,16 +61,24 @@ router.get("/estudiante/:id", verificarToken, async (req, res) => {
 
 // PATCH /api/perfiles/estudiante/:id/cv-experiencias — guarda IDs favoritos para el CV
 router.patch("/estudiante/:id/cv-experiencias", verificarToken, async (req, res) => {
-  const { ids } = req.body; // array de IDs
+  const { ids } = req.body;
   if (!Array.isArray(ids)) return res.status(400).json({ error: "ids debe ser un array" });
+  const estudianteId = req.params.id;
+  const conn = await db.getConnection();
   try {
-    await db.query(
-      "UPDATE perfiles_estudiantes SET cv_experiencias = ? WHERE usuario_id = ?",
-      [JSON.stringify(ids), req.params.id]
-    );
+    await conn.beginTransaction();
+    await conn.query("DELETE FROM cv_seleccion_experiencias WHERE estudiante_id = ?", [estudianteId]);
+    if (ids.length > 0) {
+      const valores = ids.map((expId) => [estudianteId, expId]);
+      await conn.query("INSERT INTO cv_seleccion_experiencias (estudiante_id, experiencia_id) VALUES ?", [valores]);
+    }
+    await conn.commit();
     res.json({ ok: true });
   } catch (err) {
+    await conn.rollback();
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  } finally {
+    conn.release();
   }
 });
 
@@ -76,12 +86,18 @@ router.patch("/estudiante/:id/cv-experiencias", verificarToken, async (req, res)
 router.put("/estudiante/:id", verificarToken, async (req, res) => {
   const { nombre_completo, carrera, telefono, biografia, semestre, promedio, estado_civil, rut, region, comuna } = req.body;
   try {
+    const [[carreraRow]] = await db.query(
+      "SELECT id FROM carreras WHERE nombre = ?", [carrera]
+    );
+    if (!carreraRow)
+      return res.status(400).json({ error: "Carrera no válida" });
+
     await db.query(
       `UPDATE perfiles_estudiantes
-       SET nombre_completo=?, carrera=?, telefono=?, biografia=?, semestre=?, promedio=?,
+       SET nombre_completo=?, carrera_id=?, telefono=?, biografia=?, semestre=?, promedio=?,
            estado_civil=?, rut=?, region=?, comuna=?
        WHERE usuario_id=?`,
-      [nombre_completo, carrera, telefono || null, biografia || null,
+      [nombre_completo, carreraRow.id, telefono || null, biografia || null,
        semestre || null, promedio || null, estado_civil || null,
        rut || null, region || null, comuna || null, req.params.id]
     );
@@ -141,11 +157,12 @@ router.get("/empresas", verificarToken, async (req, res) => {
 router.get("/estudiantes", verificarToken, async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT pe.usuario_id, pe.nombre_completo, pe.carrera, pe.semestre,
+      `SELECT pe.usuario_id, pe.nombre_completo, c.nombre AS carrera, pe.semestre,
               pe.promedio, pe.calificacion_docente, pe.biografia,
               pe.region, pe.comuna, pe.foto_perfil,
               GROUP_CONCAT(h.nombre SEPARATOR '||') AS habilidades_raw
        FROM perfiles_estudiantes pe
+       LEFT JOIN carreras c ON c.id = pe.carrera_id
        LEFT JOIN habilidades_estudiantes he ON he.estudiante_id = pe.usuario_id
        LEFT JOIN habilidades h ON h.id = he.habilidad_id
        GROUP BY pe.usuario_id`

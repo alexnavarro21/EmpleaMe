@@ -21,6 +21,7 @@ import AdminEvaluaciones from "./pages/admin/Evaluaciones";
 import AdminTalleres from "./pages/admin/Talleres";
 import { Navigate } from "react-router-dom";
 import AdminMensajeria from "./pages/admin/Mensajeria";
+import AdminReportes from "./pages/admin/Reportes";
 
 import BuscarPerfiles from "./pages/BuscarPerfiles";
 import PerfilEmpresaPublico from "./pages/PerfilEmpresaPublico";
@@ -70,6 +71,7 @@ export default function App() {
             <Route path="/admin/tests" element={<Navigate to="/admin/evaluaciones" replace />} />
             <Route path="/admin/talleres" element={<AdminTalleres />} />
             <Route path="/admin/mensajeria" element={<AdminMensajeria />} />
+            <Route path="/admin/reportes" element={<AdminReportes />} />
             <Route path="/admin/buscar" element={<BuscarPerfiles />} />
             <Route path="/admin/candidato/:id" element={<EmpresaCandidato />} />
             <Route path="/admin/notificaciones" element={<Notificaciones />} />

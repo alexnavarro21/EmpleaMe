@@ -62,10 +62,11 @@ router.get("/empresa/aceptados", verificarToken, soloRol("empresa"), async (req,
   try {
     const [rows] = await db.query(
       `SELECT p.id, p.estado, p.fecha_creacion,
-              pe.usuario_id AS estudiante_id, pe.nombre_completo, pe.carrera, pe.foto_perfil,
+              pe.usuario_id AS estudiante_id, pe.nombre_completo, c.nombre AS carrera, pe.foto_perfil,
               v.titulo AS vacante_titulo, v.id AS vacante_id, v.tipo AS vacante_tipo
        FROM postulaciones p
        JOIN perfiles_estudiantes pe ON pe.usuario_id = p.estudiante_id
+       LEFT JOIN carreras c ON c.id = pe.carrera_id
        JOIN vacantes v ON v.id = p.vacante_id
        WHERE v.empresa_id = ? AND p.estado = 'aceptado'
        ORDER BY p.fecha_creacion DESC`,
@@ -77,21 +78,26 @@ router.get("/empresa/aceptados", verificarToken, soloRol("empresa"), async (req,
   }
 });
 
-// GET /api/postulaciones/empresa  — empresa ve postulantes pendientes de todas sus vacantes
+// GET /api/postulaciones/empresa  — empresa ve postulantes de todas sus vacantes
+// Query param opcional: ?estado=pendiente|aceptado|rechazado|completado
 router.get("/empresa", verificarToken, soloRol("empresa"), async (req, res) => {
+  const { estado } = req.query;
+  const estadosValidos = ["pendiente", "aceptado", "rechazado", "completado"];
+  const filtroEstado = estadosValidos.includes(estado) ? estado : null;
   try {
     const [rows] = await db.query(
       `SELECT p.id, p.estado, p.fecha_creacion,
-              pe.usuario_id AS estudiante_id, pe.nombre_completo, pe.carrera,
+              pe.usuario_id AS estudiante_id, pe.nombre_completo, c.nombre AS carrera,
               pe.promedio, pe.calificacion_docente, pe.foto_perfil,
               v.titulo AS vacante_titulo, v.id AS vacante_id
        FROM postulaciones p
        JOIN perfiles_estudiantes pe ON pe.usuario_id = p.estudiante_id
+       LEFT JOIN carreras c ON c.id = pe.carrera_id
        JOIN vacantes v ON v.id = p.vacante_id
-       WHERE v.empresa_id = ? AND p.estado = 'pendiente'
-       ORDER BY p.fecha_creacion DESC
-       LIMIT 20`,
-      [req.usuario.id]
+       WHERE v.empresa_id = ?
+       ${filtroEstado ? "AND p.estado = ?" : ""}
+       ORDER BY p.fecha_creacion DESC`,
+      filtroEstado ? [req.usuario.id, filtroEstado] : [req.usuario.id]
     );
     res.json(rows);
   } catch (err) {
@@ -104,10 +110,11 @@ router.get("/vacante/:id", verificarToken, soloRol("empresa"), async (req, res) 
   try {
     const [rows] = await db.query(
       `SELECT p.id, p.estado, p.fecha_creacion,
-              pe.usuario_id AS estudiante_id, pe.nombre_completo, pe.carrera,
+              pe.usuario_id AS estudiante_id, pe.nombre_completo, c.nombre AS carrera,
               pe.promedio, pe.calificacion_docente, pe.biografia, pe.foto_perfil
        FROM postulaciones p
        JOIN perfiles_estudiantes pe ON pe.usuario_id = p.estudiante_id
+       LEFT JOIN carreras c ON c.id = pe.carrera_id
        WHERE p.vacante_id = ?
        ORDER BY p.fecha_creacion DESC`,
       [req.params.id]

@@ -73,9 +73,14 @@ router.post("/register", async (req, res) => {
     if (rol === "estudiante") {
       if (!nombre_completo || !carrera)
         return res.status(400).json({ error: "nombre_completo y carrera son requeridos para estudiante" });
+      const [[carreraRow]] = await conn.query(
+        "SELECT id FROM carreras WHERE nombre = ?", [carrera]
+      );
+      if (!carreraRow)
+        return res.status(400).json({ error: "Carrera no válida" });
       await conn.query(
-        "INSERT INTO perfiles_estudiantes (usuario_id, nombre_completo, carrera, semestre, telefono) VALUES (?, ?, ?, ?, ?)",
-        [usuarioId, nombre_completo, carrera, semestre || null, telefono || null]
+        "INSERT INTO perfiles_estudiantes (usuario_id, nombre_completo, carrera_id, semestre, telefono) VALUES (?, ?, ?, ?, ?)",
+        [usuarioId, nombre_completo, carreraRow.id, semestre || null, telefono || null]
       );
     } else if (rol === "empresa") {
       if (!nombre_empresa)

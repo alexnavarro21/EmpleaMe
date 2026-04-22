@@ -67,4 +67,19 @@ router.post("/", verificarToken, async (req, res) => {
   }
 });
 
+// DELETE /api/publicaciones/:id/comentarios/:comentarioId — admin o autor elimina comentario
+router.delete("/:comentarioId", verificarToken, async (req, res) => {
+  try {
+    const { id: usuarioId, rol } = req.usuario;
+    const [[com]] = await db.query("SELECT autor_id FROM comentarios WHERE id = ?", [req.params.comentarioId]);
+    if (!com) return res.status(404).json({ error: "Comentario no encontrado" });
+    if (rol !== "centro" && com.autor_id !== usuarioId)
+      return res.status(403).json({ error: "Sin permisos para eliminar este comentario" });
+    await db.query("DELETE FROM comentarios WHERE id = ?", [req.params.comentarioId]);
+    res.json({ mensaje: "Comentario eliminado" });
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
 module.exports = router;

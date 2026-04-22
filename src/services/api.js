@@ -94,8 +94,13 @@ export async function eliminarHabilidad(id) {
 
 // ── Vacantes ──────────────────────────────────────────────────────────────────
 
-export async function getVacantes() {
-  const res = await fetch(`${BASE_URL}/vacantes`, { headers: authHeaders() });
+export async function getVacantes(filtros = {}) {
+  const params = new URLSearchParams();
+  if (filtros.area) params.set("area", filtros.area);
+  if (filtros.modalidad) params.set("modalidad", filtros.modalidad);
+  if (filtros.tipo) params.set("tipo", filtros.tipo);
+  const qs = params.toString();
+  const res = await fetch(`${BASE_URL}/vacantes${qs ? `?${qs}` : ""}`, { headers: authHeaders() });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al obtener vacantes");
   return data;
@@ -256,13 +261,18 @@ export async function getPostulacionesEstudiante() {
   return data; // [{ id, estado, fecha_creacion, vacante_id, titulo, area, modalidad, nombre_empresa }]
 }
 
-export async function getPostulantesEmpresa() {
-  const res = await fetch(`${BASE_URL}/postulaciones/empresa`, {
-    headers: authHeaders(),
-  });
+export async function getPostulantesEmpresa(estado = null) {
+  const url = estado
+    ? `${BASE_URL}/postulaciones/empresa?estado=${estado}`
+    : `${BASE_URL}/postulaciones/empresa?estado=pendiente`;
+  const res = await fetch(url, { headers: authHeaders() });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al obtener postulantes");
   return data;
+}
+
+export async function getPostulantesRechazados() {
+  return getPostulantesEmpresa("rechazado");
 }
 
 export async function getPostulantesPorVacante(vacanteId) {
@@ -414,8 +424,8 @@ export async function marcarNotificacionesLeidas() {
 
 // ── Publicaciones (Soporta Archivos Multimedia) ───────────────────────────────
 
-export async function getPublicaciones() {
-  const res = await fetch(`${BASE_URL}/publicaciones`, {
+export async function getPublicaciones(pagina = 1, limite = 20) {
+  const res = await fetch(`${BASE_URL}/publicaciones?pagina=${pagina}&limite=${limite}`, {
     headers: authHeaders(),
   });
   const data = await res.json();
@@ -687,12 +697,59 @@ export async function toggleLike(publicacionId) {
   return data; // { liked: bool, total: number }
 }
 
+export async function crearReporte({ tipo, referencia_id, motivo, descripcion }) {
+  const res = await fetch(`${BASE_URL}/reportes`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ tipo, referencia_id, motivo, descripcion }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al enviar reporte");
+  return data;
+}
+
+export async function getReportes(estado = "pendiente") {
+  const res = await fetch(`${BASE_URL}/reportes?estado=${estado}`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener reportes");
+  return data;
+}
+
+export async function eliminarContenidoReporte(id) {
+  const res = await fetch(`${BASE_URL}/reportes/${id}/contenido`, {
+    method: "DELETE", headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al eliminar contenido");
+  return data;
+}
+
+export async function actualizarReporte(id, estado) {
+  const res = await fetch(`${BASE_URL}/reportes/${id}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify({ estado }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al actualizar reporte");
+  return data;
+}
+
 export async function eliminarPublicacion(publicacionId) {
   const res = await fetch(`${BASE_URL}/publicaciones/${publicacionId}`, {
     method: "DELETE", headers: authHeaders(),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al eliminar publicación");
+  return data;
+}
+
+export async function eliminarComentario(publicacionId, comentarioId) {
+  const res = await fetch(`${BASE_URL}/publicaciones/${publicacionId}/comentarios/${comentarioId}`, {
+    method: "DELETE", headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al eliminar comentario");
   return data;
 }
 
