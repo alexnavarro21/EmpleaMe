@@ -16,6 +16,8 @@ const palabrasLocales = [
   "culiao", "culiado", "culiar", "culia",
   "maricon", "maricón", "marica",
   "aweonao", "aweonada", "aweonado",
+  "ql", "qlo", "qliao", "qliaa", "qliaoo",
+
 
   // Weon y variantes
   "weon", "weón", "weonas", "weonazo", "weonaza",
@@ -25,7 +27,7 @@ const palabrasLocales = [
   "idiota", "imbecil", "imbécil", "estupido", "estúpido",
   "pendejo", "pendeja", "pelotudo", "pelotuda",
   "cabrón", "cabron", "perra", "perro",
-  "mogolico", "mogólico", "retrasado", "retrasada",
+  "mogolico", "mogólico", "retrasado","retrasada", "mongolico", "mongólico",
   "subnormal", "tarado", "tarada",
 
   // Amenazas / acoso
