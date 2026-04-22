@@ -49,6 +49,29 @@ router.get("/", verificarToken, soloRol("centro"), async (req, res) => {
   }
 });
 
+// DELETE /api/reportes/:id/contenido — admin elimina el contenido referenciado y resuelve el reporte
+router.delete("/:id/contenido", verificarToken, soloRol("centro"), async (req, res) => {
+  try {
+    const [[reporte]] = await db.query("SELECT tipo, referencia_id FROM reportes WHERE id = ?", [req.params.id]);
+    if (!reporte) return res.status(404).json({ error: "Reporte no encontrado" });
+
+    if (reporte.tipo === "publicacion") {
+      await db.query("DELETE FROM publicaciones WHERE id = ?", [reporte.referencia_id]);
+    } else if (reporte.tipo === "comentario") {
+      await db.query("DELETE FROM comentarios WHERE id = ?", [reporte.referencia_id]);
+    }
+    // tipo === "perfil": no eliminamos perfiles automáticamente por seguridad
+
+    await db.query(
+      "UPDATE reportes SET estado = 'resuelto', revisado_en = NOW(), revisado_por = ? WHERE id = ?",
+      [req.usuario.id, req.params.id]
+    );
+    res.json({ mensaje: "Contenido eliminado y reporte resuelto" });
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
 // PUT /api/reportes/:id — admin actualiza estado del reporte
 router.put("/:id", verificarToken, soloRol("centro"), async (req, res) => {
   const { estado } = req.body;

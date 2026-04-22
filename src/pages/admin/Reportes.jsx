@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { PageHeader } from "../../components/ui";
-import { getReportes, actualizarReporte } from "../../services/api";
+import { getReportes, actualizarReporte, eliminarContenidoReporte } from "../../services/api";
 import { MOTIVO_LABEL } from "../../utils/reportes";
 
 const TIPO_LABEL = {
@@ -38,6 +38,7 @@ export default function AdminReportes() {
   const [loading, setLoading] = useState(true);
   const [filtroEstado, setFiltroEstado] = useState("pendiente");
   const [actualizando, setActualizando] = useState(null);
+  const [eliminando, setEliminando] = useState(null);
 
   const cargar = (estado) => {
     setLoading(true);
@@ -58,6 +59,20 @@ export default function AdminReportes() {
       console.error(e);
     } finally {
       setActualizando(null);
+    }
+  };
+
+  const handleEliminarYResolver = async (id, tipo) => {
+    const labelTipo = tipo === "publicacion" ? "publicación" : tipo === "comentario" ? "comentario" : "perfil";
+    if (!window.confirm(`¿Eliminar esta ${labelTipo} y marcar el reporte como resuelto?`)) return;
+    setEliminando(id);
+    try {
+      await eliminarContenidoReporte(id);
+      setReportes((prev) => prev.filter((r) => r.id !== id));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setEliminando(null);
     }
   };
 
@@ -139,19 +154,32 @@ export default function AdminReportes() {
 
                 {/* Acciones */}
                 {r.estado === "pendiente" && (
-                  <div className="flex gap-2 flex-shrink-0">
+                  <div className="flex flex-col gap-1.5 flex-shrink-0">
+                    {r.tipo !== "perfil" && (
+                      <button
+                        onClick={() => handleEliminarYResolver(r.id, r.tipo)}
+                        disabled={eliminando === r.id || actualizando === r.id}
+                        className={`text-xs px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
+                          isDark ? "bg-red-500/15 text-red-400 hover:bg-red-500/25" : "bg-red-100 text-red-700 hover:bg-red-200"
+                        }`}
+                      >
+                        {eliminando === r.id
+                          ? <Icon icon="mdi:loading" width={14} className="animate-spin" />
+                          : "Eliminar y resolver"}
+                      </button>
+                    )}
                     <button
                       onClick={() => handleAccion(r.id, "resuelto")}
-                      disabled={actualizando === r.id}
+                      disabled={actualizando === r.id || eliminando === r.id}
                       className={`text-xs px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
                         isDark ? "bg-green-500/15 text-green-400 hover:bg-green-500/25" : "bg-green-100 text-green-700 hover:bg-green-200"
                       }`}
                     >
-                      {actualizando === r.id ? <Icon icon="mdi:loading" width={14} className="animate-spin" /> : "Resolver"}
+                      {actualizando === r.id ? <Icon icon="mdi:loading" width={14} className="animate-spin" /> : "Conservar y resolver"}
                     </button>
                     <button
                       onClick={() => handleAccion(r.id, "descartado")}
-                      disabled={actualizando === r.id}
+                      disabled={actualizando === r.id || eliminando === r.id}
                       className={`text-xs px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
                         isDark ? "bg-[#3a3a38] text-[#888780] hover:bg-[#444442]" : "bg-[#F0F0EE] text-[#5F5E5A] hover:bg-[#E0DFDC]"
                       }`}

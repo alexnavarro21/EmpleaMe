@@ -715,6 +715,15 @@ export async function getReportes(estado = "pendiente") {
   return data;
 }
 
+export async function eliminarContenidoReporte(id) {
+  const res = await fetch(`${BASE_URL}/reportes/${id}/contenido`, {
+    method: "DELETE", headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al eliminar contenido");
+  return data;
+}
+
 export async function actualizarReporte(id, estado) {
   const res = await fetch(`${BASE_URL}/reportes/${id}`, {
     method: "PUT",
@@ -732,6 +741,15 @@ export async function eliminarPublicacion(publicacionId) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al eliminar publicación");
+  return data;
+}
+
+export async function eliminarComentario(publicacionId, comentarioId) {
+  const res = await fetch(`${BASE_URL}/publicaciones/${publicacionId}/comentarios/${comentarioId}`, {
+    method: "DELETE", headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al eliminar comentario");
   return data;
 }
 
