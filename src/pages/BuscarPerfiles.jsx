@@ -9,6 +9,7 @@ import {
   postularAVacante, inscribirseEnTaller, getMediaUrl,
 } from "../services/api";
 import { REGIONES_COMUNAS, REGIONES } from "../data/regionesComunas";
+import ModalReporte from "../components/ModalReporte";
 
 const careerDisplay = {
   Administracion: "Administración",
@@ -303,6 +304,7 @@ export default function BuscarPerfiles() {
   const [filtroPrecio,        setFiltroPrecio]        = useState("todas"); // todas | gratuito | pago
   const [filtroRemuneracion,  setFiltroRemuneracion]  = useState("todas"); // todas | con_paga | sin_paga
   const [minEvalDocente,      setMinEvalDocente]      = useState(1);
+  const [reportarPerfil,     setReportarPerfil]     = useState(null); // { id, tipo }
 
   const T  = isDark ? "text-[#D3D1C7]"   : "text-[#2C2C2A]";
   const M  = isDark ? "text-[#888780]"   : "text-[#5F5E5A]";
@@ -734,6 +736,17 @@ export default function BuscarPerfiles() {
                           <Icon icon={contactandoId === s.usuario_id ? "mdi:loading" : "mdi:message-outline"} width={16} className={contactandoId === s.usuario_id ? "animate-spin" : ""} />
                         </button>
                       )}
+                      {s.usuario_id !== usuarioActual.id && (
+                        <button
+                          onClick={() => setReportarPerfil({ id: s.usuario_id, tipo: "perfil", titulo: "¿Por qué reportas este perfil?" })}
+                          title="Reportar"
+                          className={`px-3 py-2 rounded-lg border transition-colors flex items-center ${
+                            isDark ? "border-[#3a3a38] text-[#888780] hover:text-red-400 hover:border-red-500/40" : "border-[#D3D1C7] text-[#5F5E5A] hover:text-red-500 hover:border-red-300"
+                          }`}
+                        >
+                          <Icon icon="mdi:flag-outline" width={15} />
+                        </button>
+                      )}
                     </div>
                   </Card>
                 );
@@ -774,6 +787,15 @@ export default function BuscarPerfiles() {
                         <Icon icon={contactandoId === c.usuario_id ? "mdi:loading" : "mdi:message-outline"} width={16} className={contactandoId === c.usuario_id ? "animate-spin" : ""} />
                       </button>
                     )}
+                    <button
+                      onClick={() => setReportarPerfil({ id: c.usuario_id, tipo: "perfil", titulo: "¿Por qué reportas este perfil de empresa?" })}
+                      title="Reportar"
+                      className={`px-3 py-2 rounded-lg border transition-colors flex items-center ${
+                        isDark ? "border-[#3a3a38] text-[#888780] hover:text-red-400 hover:border-red-500/40" : "border-[#D3D1C7] text-[#5F5E5A] hover:text-red-500 hover:border-red-300"
+                      }`}
+                    >
+                      <Icon icon="mdi:flag-outline" width={15} />
+                    </button>
                   </div>
                 </Card>
               ))}
@@ -855,6 +877,15 @@ export default function BuscarPerfiles() {
           )}
         </div>
       </div>
+
+      {reportarPerfil && (
+        <ModalReporte
+          tipo={reportarPerfil.tipo}
+          referenciaId={reportarPerfil.id}
+          titulo={reportarPerfil.titulo}
+          onCerrar={() => setReportarPerfil(null)}
+        />
+      )}
     </div>
   );
 }

@@ -3,10 +3,11 @@ import { Link, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge } from "../../components/ui";
-import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante, toggleLike, getTalleres, getAdminStats, inscribirseEnTaller, eliminarPublicacion, eliminarTaller, getSiguiendo, toggleSeguir, crearReporte } from "../../services/api";
+import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante, toggleLike, getTalleres, getAdminStats, inscribirseEnTaller, eliminarPublicacion, eliminarTaller, getSiguiendo, toggleSeguir } from "../../services/api";
 import { calcularCompletitud } from "../../utils/perfilCompletitud";
 import CrearPublicacion from "../../components/CrearPublicacion";
 import VerMasModal from "../../components/VerMasModal";
+import ModalReporteShared from "../../components/ModalReporte";
 
 const AVATAR_COLORS = ["bg-[#0F4D8A]", "bg-red-500", "bg-green-600", "bg-purple-600", "bg-amber-500"];
 
@@ -168,45 +169,7 @@ function tiempoRelativo(fecha) {
   return `Hace ${Math.floor(diff / 86400)} días`;
 }
 
-import { MOTIVOS_REPORTE } from "../../utils/reportes";
 
-function ModalReporte({ onEnviar, onCerrar, enviando, isDark, T, M, B, BG }) {
-  const [motivo, setMotivo] = useState(null);
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={onCerrar}>
-      <div className={`w-full max-w-sm rounded-2xl p-5 shadow-xl border ${B} ${BG}`} onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-4">
-          <p className={`text-sm font-semibold ${T}`}>¿Por qué reportas esta publicación?</p>
-          <button onClick={onCerrar} className={`${M} hover:text-red-400 transition-colors`}>
-            <Icon icon="mdi:close" width={18} />
-          </button>
-        </div>
-        <div className="flex flex-col gap-2 mb-5">
-          {MOTIVOS_REPORTE.map(({ val, label }) => (
-            <button
-              key={val}
-              onClick={() => setMotivo(val)}
-              className={`text-left text-xs px-3 py-2.5 rounded-lg border transition-colors ${
-                motivo === val
-                  ? "border-amber-500 bg-amber-500/10 text-amber-500"
-                  : `${B} ${M} hover:border-amber-400/50 hover:text-amber-400`
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        <button
-          onClick={() => motivo && onEnviar(motivo)}
-          disabled={!motivo || enviando}
-          className="w-full py-2.5 rounded-lg text-sm font-medium bg-amber-500 hover:bg-amber-600 text-white transition-colors disabled:opacity-50"
-        >
-          {enviando ? "Enviando..." : "Enviar reporte"}
-        </button>
-      </div>
-    </div>
-  );
-}
 
 function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSeguirToggled }) {
   const [liked, setLiked] = useState(!!pub.liked_by_me);
@@ -216,8 +179,6 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [confirmarEliminar, setConfirmarEliminar] = useState(false);
   const [eliminando, setEliminando] = useState(false);
-  const [reportando, setReportando] = useState(false);
-  const [reporteEnviado, setReporteEnviado] = useState(false);
   const [modalReporte, setModalReporte] = useState(false);
   const [siguiendo, setSiguiendo] = useState(false);
   const [toggleandoSeguir, setToggleandoSeguir] = useState(false);
@@ -330,10 +291,10 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
                       {pub.autor_id !== usuario.id && (
                         <button
                           onClick={() => { setMenuAbierto(false); setModalReporte(true); }}
-                          className={`flex items-center gap-2 w-full px-4 py-2.5 text-xs rounded-xl transition-colors ${reporteEnviado ? "text-green-500" : "text-amber-500 hover:bg-amber-500/10"}`}
+                          className="flex items-center gap-2 w-full px-4 py-2.5 text-xs rounded-xl transition-colors text-amber-500 hover:bg-amber-500/10"
                         >
-                          <Icon icon={reporteEnviado ? "mdi:check-circle-outline" : "mdi:flag-outline"} width={14} />
-                          {reporteEnviado ? "Reporte enviado" : "Reportar publicación"}
+                          <Icon icon="mdi:flag-outline" width={14} />
+                          Reportar publicación
                         </button>
                       )}
                       {canDelete && (
@@ -542,22 +503,11 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
       {verMas && <VerMasModal pub={pub} onClose={() => setVerMas(false)} />}
 
       {modalReporte && (
-        <ModalReporte
-          onEnviar={async (motivo) => {
-            setReportando(true);
-            try {
-              await crearReporte({ tipo: "publicacion", referencia_id: pub.id, motivo });
-              setReporteEnviado(true);
-            } catch (e) {
-              if (e.message?.includes("Ya reportaste")) setReporteEnviado(true);
-            } finally {
-              setReportando(false);
-              setModalReporte(false);
-            }
-          }}
+        <ModalReporteShared
+          tipo="publicacion"
+          referenciaId={pub.id}
+          titulo="¿Por qué reportas esta publicación?"
           onCerrar={() => setModalReporte(false)}
-          enviando={reportando}
-          isDark={isDark} T={T} M={M} B={B} BG={BG}
         />
       )}
     </div>

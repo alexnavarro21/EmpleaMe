@@ -34,11 +34,23 @@ router.get("/", verificarToken, soloRol("centro"), async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT r.id, r.tipo, r.referencia_id, r.motivo, r.descripcion, r.estado, r.creado_en,
-              COALESCE(pe.nombre_completo, emp.nombre_empresa, 'Usuario') AS reportado_por_nombre
+              COALESCE(pe_rep.nombre_completo, emp_rep.nombre_empresa, 'Usuario') AS reportado_por_nombre,
+              CASE r.tipo
+                WHEN 'publicacion' THEN SUBSTRING(pub.contenido, 1, 250)
+                WHEN 'comentario'  THEN SUBSTRING(com.contenido, 1, 250)
+                WHEN 'perfil'      THEN COALESCE(pe_ref.nombre_completo, emp_ref.nombre_empresa)
+              END AS contenido_preview,
+              com.publicacion_id AS comentario_pub_id,
+              u_ref.rol AS referencia_rol
        FROM reportes r
        JOIN usuarios u ON u.id = r.reportado_por
-       LEFT JOIN perfiles_estudiantes pe  ON pe.usuario_id  = u.id
-       LEFT JOIN perfiles_empresas   emp  ON emp.usuario_id = u.id
+       LEFT JOIN perfiles_estudiantes pe_rep  ON pe_rep.usuario_id  = u.id
+       LEFT JOIN perfiles_empresas    emp_rep ON emp_rep.usuario_id = u.id
+       LEFT JOIN publicaciones pub ON pub.id = r.referencia_id AND r.tipo = 'publicacion'
+       LEFT JOIN comentarios   com ON com.id = r.referencia_id AND r.tipo = 'comentario'
+       LEFT JOIN usuarios      u_ref   ON u_ref.id = r.referencia_id AND r.tipo = 'perfil'
+       LEFT JOIN perfiles_estudiantes pe_ref  ON pe_ref.usuario_id  = u_ref.id
+       LEFT JOIN perfiles_empresas    emp_ref ON emp_ref.usuario_id = u_ref.id
        WHERE r.estado = ?
        ORDER BY r.creado_en DESC`,
       [estado]
@@ -75,7 +87,7 @@ router.delete("/:id/contenido", verificarToken, soloRol("centro"), async (req, r
 // PUT /api/reportes/:id — admin actualiza estado del reporte
 router.put("/:id", verificarToken, soloRol("centro"), async (req, res) => {
   const { estado } = req.body;
-  const estadosValidos = ["revisado", "resuelto", "descartado"];
+  const estadosValidos = ["resuelto", "descartado"];
   if (!estadosValidos.includes(estado))
     return res.status(400).json({ error: "Estado inválido" });
   try {

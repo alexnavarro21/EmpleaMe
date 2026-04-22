@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
+import { Link } from "react-router-dom";
 import { useDark } from "../../context/DarkModeContext";
 import { PageHeader } from "../../components/ui";
 import { getReportes, actualizarReporte, eliminarContenidoReporte } from "../../services/api";
@@ -12,10 +13,9 @@ const TIPO_LABEL = {
 };
 
 const ESTADO_CFG = {
-  pendiente: { label: "Pendiente", color: "text-amber-500",  bg: "bg-amber-500/10"  },
-  revisado:  { label: "Revisado",  color: "text-blue-500",   bg: "bg-blue-500/10"   },
-  resuelto:  { label: "Resuelto",  color: "text-green-500",  bg: "bg-green-500/10"  },
-  descartado:{ label: "Descartado",color: "text-[#888780]",  bg: "bg-[#888780]/10"  },
+  pendiente:  { label: "Pendiente",  color: "text-amber-500", bg: "bg-amber-500/10" },
+  resuelto:   { label: "Resuelto",   color: "text-green-500", bg: "bg-green-500/10" },
+  descartado: { label: "Descartado", color: "text-[#888780]", bg: "bg-[#888780]/10" },
 };
 
 function tiempoRelativo(fecha) {
@@ -26,6 +26,12 @@ function tiempoRelativo(fecha) {
   return `Hace ${Math.floor(diff / 86400)} día(s)`;
 }
 
+function perfilLink(r) {
+  if (r.tipo !== "perfil") return null;
+  if (r.referencia_rol === "empresa") return `/buscar?empresa=${r.referencia_id}`;
+  return `/buscar?estudiante=${r.referencia_id}`;
+}
+
 export default function AdminReportes() {
   const { isDark } = useDark();
   const T  = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
@@ -33,6 +39,7 @@ export default function AdminReportes() {
   const B  = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
   const BG = isDark ? "bg-[#262624]" : "bg-white";
   const S  = isDark ? "bg-[#313130]" : "bg-[#F7F6F3]";
+  const PV = isDark ? "bg-[#1e1e1c] border-[#3a3a38]" : "bg-[#F7F6F3] border-[#E8E6E1]";
 
   const [reportes, setReportes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -63,7 +70,7 @@ export default function AdminReportes() {
   };
 
   const handleEliminarYResolver = async (id, tipo) => {
-    const labelTipo = tipo === "publicacion" ? "publicación" : tipo === "comentario" ? "comentario" : "perfil";
+    const labelTipo = tipo === "publicacion" ? "publicación" : "comentario";
     if (!window.confirm(`¿Eliminar esta ${labelTipo} y marcar el reporte como resuelto?`)) return;
     setEliminando(id);
     try {
@@ -85,7 +92,7 @@ export default function AdminReportes() {
 
       {/* Tabs de estado */}
       <div className={`flex gap-1 mb-5 p-1 rounded-xl w-fit border ${B} ${BG}`}>
-        {["pendiente", "revisado", "resuelto", "descartado"].map((e) => (
+        {["pendiente", "resuelto", "descartado"].map((e) => (
           <button
             key={e}
             onClick={() => setFiltroEstado(e)}
@@ -108,12 +115,13 @@ export default function AdminReportes() {
       ) : reportes.length === 0 ? (
         <div className={`rounded-xl border ${B} ${BG} p-16 text-center`}>
           <Icon icon="mdi:flag-off-outline" width={44} className={`mx-auto mb-3 ${M}`} />
-          <p className={`text-sm font-medium ${T}`}>No hay reportes {ESTADO_CFG[filtroEstado].label.toLowerCase()}s</p>
+          <p className={`text-sm font-medium ${T}`}>No hay reportes {ESTADO_CFG[filtroEstado]?.label.toLowerCase()}</p>
         </div>
       ) : (
         <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
           {reportes.map((r, i) => {
             const cfg = ESTADO_CFG[r.estado] || ESTADO_CFG.pendiente;
+            const enlacePerfil = perfilLink(r);
             return (
               <div
                 key={r.id}
@@ -141,14 +149,35 @@ export default function AdminReportes() {
                       {MOTIVO_LABEL[r.motivo] || r.motivo}
                     </span>
                   </div>
+
                   <p className={`text-sm font-medium ${T}`}>
                     Reportado por: {r.reportado_por_nombre}
                   </p>
                   {r.descripcion && (
                     <p className={`text-xs ${M} mt-0.5`}>"{r.descripcion}"</p>
                   )}
-                  <p className={`text-xs ${M} mt-1`}>
-                    ID referencia: #{r.referencia_id} · {tiempoRelativo(r.creado_en)}
+
+                  {/* Vista previa del contenido reportado */}
+                  {r.contenido_preview && (
+                    <div className={`mt-2 px-3 py-2 rounded-lg border text-xs ${PV} ${T} line-clamp-3`}>
+                      {r.tipo === "perfil" ? (
+                        <span className={M}>
+                          <Icon icon="mdi:account-outline" width={12} className="inline mr-1" />
+                          Perfil: <strong className={T}>{r.contenido_preview}</strong>
+                          {enlacePerfil && (
+                            <Link to={enlacePerfil} className="ml-2 text-[#378ADD] hover:underline">
+                              Ver perfil →
+                            </Link>
+                          )}
+                        </span>
+                      ) : (
+                        <span>"{r.contenido_preview}"</span>
+                      )}
+                    </div>
+                  )}
+
+                  <p className={`text-xs ${M} mt-1.5`}>
+                    {tiempoRelativo(r.creado_en)}
                   </p>
                 </div>
 
