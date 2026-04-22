@@ -624,14 +624,18 @@ router.delete("/historial-laboral/:id", ...auth, async (req, res) => {
 // ── Creación masiva de alumnos — plantilla y subida ──────────────────────────
 
 // GET /api/admin/alumnos/template
+// Formato: Nombre Completo | Correo (opcional) | RUT (opcional) | Telefono | Contrasena
+// Al menos uno de correo o RUT es obligatorio por fila
 router.get("/alumnos/template", ...auth, (req, res) => {
   const data = [
-    ["Nombre Completo", "Correo", "Telefono", "Contrasena"],
+    ["Nombre Completo", "Correo (opcional)", "RUT (opcional)", "Telefono", "Contrasena"],
+    ["Juan Pérez",      "juan@ejemplo.cl",   "",               "+56912345678", "clave123"],
+    ["María López",     "",                  "12.345.678-9",   "+56987654321", "clave456"],
   ];
 
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(data);
-  ws["!cols"] = [{ wch: 30 }, { wch: 30 }, { wch: 18 }, { wch: 18 }];
+  ws["!cols"] = [{ wch: 28 }, { wch: 28 }, { wch: 16 }, { wch: 16 }, { wch: 14 }];
   XLSX.utils.book_append_sheet(wb, ws, "Alumnos");
 
   const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
@@ -641,7 +645,7 @@ router.get("/alumnos/template", ...auth, (req, res) => {
 });
 
 // POST /api/admin/alumnos/excel
-// Formato (hoja 1): Nombre Completo | Correo | Telefono | Contrasena
+// Formato (hoja 1): Nombre Completo | Correo (opcional) | RUT (opcional) | Telefono | Contrasena
 router.post("/alumnos/excel", ...auth, upload.single("archivo"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "Se requiere un archivo Excel" });
 
@@ -661,41 +665,48 @@ router.post("/alumnos/excel", ...auth, upload.single("archivo"), async (req, res
     for (let i = 1; i < rows.length; i++) {
       const fila          = rows[i];
       const nombre        = String(fila[0] ?? "").trim();
-      const correo        = String(fila[1] ?? "").trim().toLowerCase();
-      const telefono      = String(fila[2] ?? "").trim() || null;
-      const contrasenaRaw = String(fila[3] ?? "").trim();
+      const correoRaw     = String(fila[1] ?? "").trim().toLowerCase() || null;
+      const rutRaw        = String(fila[2] ?? "").trim() || null;
+      const telefono      = String(fila[3] ?? "").trim() || null;
+      const contrasenaRaw = String(fila[4] ?? "").trim();
 
-      if (!nombre && !correo) continue; // fila vacía
+      // fila vacía
+      if (!nombre && !correoRaw && !rutRaw) continue;
 
-      if (!nombre)        { errores.push(`Fila ${i + 1}: nombre vacío`);            continue; }
-      if (!correo)        { errores.push(`Fila ${i + 1}: correo vacío`);            continue; }
-      if (!contrasenaRaw) { errores.push(`Fila ${i + 1} (${correo}): contraseña vacía`); continue; }
+      const identificador = correoRaw || rutRaw;
 
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
-        errores.push(`Fila ${i + 1}: correo inválido "${correo}"`);
+      if (!nombre)        { errores.push(`Fila ${i + 1}: nombre vacío`);                    continue; }
+      if (!correoRaw && !rutRaw) { errores.push(`Fila ${i + 1}: debe tener correo o RUT`); continue; }
+      if (!contrasenaRaw) { errores.push(`Fila ${i + 1} (${identificador}): contraseña vacía`); continue; }
+
+      if (correoRaw && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoRaw)) {
+        errores.push(`Fila ${i + 1}: correo inválido "${correoRaw}"`);
         continue;
       }
 
-      const [[existente]] = await db.query("SELECT id FROM usuarios WHERE correo = ?", [correo]);
-      if (existente) { omitidos.push(correo); continue; }
+      const [[existente]] = await db.query(
+        "SELECT id FROM usuarios WHERE (correo IS NOT NULL AND correo = ?) OR (rut IS NOT NULL AND rut = ?)",
+        [correoRaw ?? "", rutRaw ?? ""]
+      );
+      if (existente) { omitidos.push(identificador); continue; }
 
       const conn = await db.getConnection();
       try {
         await conn.beginTransaction();
         const hash = await bcrypt.hash(contrasenaRaw, 10);
         const [result] = await conn.query(
-          "INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES (?, ?, 'estudiante')",
-          [correo, hash]
+          "INSERT INTO usuarios (correo, rut, contrasena_hash, rol) VALUES (?, ?, ?, 'estudiante')",
+          [correoRaw, rutRaw, hash]
         );
         await conn.query(
-          "INSERT INTO perfiles_estudiantes (usuario_id, nombre_completo, telefono, colegio_id) VALUES (?, ?, ?, ?)",
-          [result.insertId, nombre, telefono, req.usuario.id]
+          "INSERT INTO perfiles_estudiantes (usuario_id, nombre_completo, rut, telefono, colegio_id) VALUES (?, ?, ?, ?, ?)",
+          [result.insertId, nombre, rutRaw, telefono, req.usuario.id]
         );
         await conn.commit();
-        creados.push({ correo, nombre });
+        creados.push({ identificador, nombre });
       } catch (e) {
         await conn.rollback();
-        errores.push(`Fila ${i + 1} (${correo}): ${e.message}`);
+        errores.push(`Fila ${i + 1} (${identificador}): ${e.message}`);
       } finally {
         conn.release();
       }

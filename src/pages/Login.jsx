@@ -15,7 +15,7 @@ export default function Login() {
   const [activeTab, setActiveTab] = useState("login");
 
   // Login state
-  const [correo, setCorreo] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [loginError, setLoginError] = useState("");
 
@@ -23,6 +23,7 @@ export default function Login() {
   const [activeRole, setActiveRole] = useState("estudiante");
   const [colegios, setColegios] = useState([]);
   const [regColegioId, setRegColegioId] = useState("");
+  const [regRut, setRegRut] = useState("");
   const [regNombreCompleto, setRegNombreCompleto] = useState("");
   const [regCarrera, setRegCarrera] = useState("");
   const [regSemestre, setRegSemestre] = useState("");
@@ -45,7 +46,7 @@ export default function Login() {
     e.preventDefault();
     setLoginError("");
     try {
-      const { token, usuario } = await loginUsuario(correo, contrasena);
+      const { token, usuario } = await loginUsuario(identifier, contrasena);
       localStorage.setItem("token", token);
       localStorage.setItem("usuario", JSON.stringify(usuario));
       navigate(RUTAS_ROL[usuario.rol]);
@@ -58,8 +59,16 @@ export default function Login() {
     e.preventDefault();
     setRegError("");
 
-    if (!regCorreo || !regContrasena) {
+    if (!regContrasena) {
       setRegError("Completa todos los campos obligatorios.");
+      return;
+    }
+    if (activeRole === "estudiante" && !regCorreo && !regRut) {
+      setRegError("Debes ingresar correo o RUT.");
+      return;
+    }
+    if (activeRole === "empresa" && !regCorreo) {
+      setRegError("Las empresas deben registrarse con correo.");
       return;
     }
     if (activeRole === "estudiante" && (!regNombreCompleto || !regCarrera)) {
@@ -82,7 +91,8 @@ export default function Login() {
     setRegLoading(true);
     try {
       await registrarUsuario({
-        correo: regCorreo,
+        correo: regCorreo || undefined,
+        rut: activeRole === "estudiante" && regRut ? regRut : undefined,
         contrasena: regContrasena,
         rol: activeRole,
         nombre_completo: regNombreCompleto || undefined,
@@ -172,11 +182,11 @@ export default function Login() {
             {activeTab === "login" && (
               <form className="flex flex-col gap-1" onSubmit={handleLogin}>
                 <FormField
-                  label="Correo electrónico"
-                  type="email"
-                  placeholder="tucorreo@email.com"
-                  value={correo}
-                  onChange={(e) => setCorreo(e.target.value)}
+                  label="Correo o RUT"
+                  type="text"
+                  placeholder="tucorreo@email.com o 12.345.678-9"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   isDark={isDark}
                 />
                 <FormField
@@ -254,6 +264,27 @@ export default function Login() {
                         ))}
                       </SelectField>
                     </div>
+                    <div className={`text-xs mb-1 ${isDark ? "text-[#B4B2A9]" : "text-[#5F5E5A]"}`}>
+                      Ingresa al menos uno: correo o RUT
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField
+                        label="Correo (opcional)"
+                        type="email"
+                        placeholder="tucorreo@email.com"
+                        value={regCorreo}
+                        onChange={(e) => setRegCorreo(e.target.value)}
+                        isDark={isDark}
+                      />
+                      <FormField
+                        label="RUT (opcional)"
+                        type="text"
+                        placeholder="12.345.678-9"
+                        value={regRut}
+                        onChange={(e) => setRegRut(e.target.value)}
+                        isDark={isDark}
+                      />
+                    </div>
                     <FormField
                       label="Teléfono (opcional)"
                       type="tel"
@@ -298,8 +329,10 @@ export default function Login() {
                   </>
                 )}
 
-                {/* Campos comunes */}
-                <FormField label="Correo electrónico *" type="email" placeholder="tucorreo@email.com" value={regCorreo} onChange={(e) => setRegCorreo(e.target.value)} isDark={isDark} />
+                {/* Campos comunes — correo solo obligatorio para empresa */}
+                {activeRole === "empresa" && (
+                  <FormField label="Correo electrónico *" type="email" placeholder="tucorreo@email.com" value={regCorreo} onChange={(e) => setRegCorreo(e.target.value)} isDark={isDark} />
+                )}
                 <FormField label="Contraseña *" type="password" placeholder="Mínimo 8 caracteres" value={regContrasena} onChange={(e) => setRegContrasena(e.target.value)} isDark={isDark} />
                 <FormField label="Confirmar contraseña *" type="password" placeholder="Repite tu contraseña" value={regConfirm} onChange={(e) => setRegConfirm(e.target.value)} isDark={isDark} />
 

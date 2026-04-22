@@ -17,7 +17,8 @@
 -- 1. Usuarios (raíz de todo)
 CREATE TABLE IF NOT EXISTS usuarios (
   id               INT AUTO_INCREMENT PRIMARY KEY,
-  correo           VARCHAR(150) UNIQUE NOT NULL,
+  correo           VARCHAR(150) UNIQUE NULL,
+  rut              VARCHAR(12)  UNIQUE NULL,
   contrasena_hash  VARCHAR(255) NOT NULL,
   rol              ENUM('estudiante', 'empresa', 'colegio', 'slep') NOT NULL,
   fecha_creacion   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
