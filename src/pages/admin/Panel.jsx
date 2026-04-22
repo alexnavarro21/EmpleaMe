@@ -12,6 +12,7 @@ const quickLinks = [
   { to: "/admin/tests", icon: "hugeicons:brain-02", label: "Tests socioemocionales", desc: "Cargar y asignar tests" },
   { to: "/admin/talleres", icon: "mdi:school-outline", label: "Gestión de talleres", desc: "Crear y administrar talleres" },
   { to: "/admin/mensajeria", icon: "flowbite:messages-solid", label: "Bandeja de mensajería", desc: "Supervisión de comunicaciones" },
+  { to: "/admin/reportes",  icon: "mdi:flag-outline",        label: "Reportes de contenido", desc: "Revisar contenido reportado por usuarios" },
 ];
 
 export default function AdminPanel() {
