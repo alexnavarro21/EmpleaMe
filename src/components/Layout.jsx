@@ -27,6 +27,7 @@ const navLinks = {
     { to: "/admin/evaluaciones", label: "Gestión de Estudiantes" },
     { to: "/admin/talleres", label: "Talleres" },
     { to: "/admin/buscar", label: "Búsqueda" },
+    { to: "/admin/reportes", label: "Reportes" },
   ],
 };
 

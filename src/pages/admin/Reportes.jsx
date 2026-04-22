@@ -3,14 +3,7 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { PageHeader } from "../../components/ui";
 import { getReportes, actualizarReporte } from "../../services/api";
-
-const MOTIVO_LABEL = {
-  spam:                  "Spam",
-  contenido_inapropiado: "Contenido inapropiado",
-  acoso:                 "Acoso",
-  informacion_falsa:     "Información falsa",
-  otro:                  "Otro",
-};
+import { MOTIVO_LABEL } from "../../utils/reportes";
 
 const TIPO_LABEL = {
   publicacion: "Publicación",

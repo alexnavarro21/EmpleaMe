@@ -168,13 +168,7 @@ function tiempoRelativo(fecha) {
   return `Hace ${Math.floor(diff / 86400)} días`;
 }
 
-const MOTIVOS_REPORTE = [
-  { val: "spam",                  label: "Spam o publicidad no deseada" },
-  { val: "contenido_inapropiado", label: "Contenido inapropiado" },
-  { val: "acoso",                 label: "Acoso o intimidación" },
-  { val: "informacion_falsa",     label: "Información falsa" },
-  { val: "otro",                  label: "Otro motivo" },
-];
+import { MOTIVOS_REPORTE } from "../../utils/reportes";
 
 function ModalReporte({ onEnviar, onCerrar, enviando, isDark, T, M, B, BG }) {
   const [motivo, setMotivo] = useState(null);
