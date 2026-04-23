@@ -199,7 +199,7 @@ function TallerModal({ taller, role, onClose }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className={`text-base font-semibold ${T} leading-snug`}>{taller.titulo}</p>
-              <p className={`text-xs ${M}`}>C.E. Cardenal J.M. Caro</p>
+              <p className={`text-xs ${M}`}>{taller.nombre_institucion || "Centro educacional"}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">

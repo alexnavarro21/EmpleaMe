@@ -120,6 +120,7 @@ export default function EmpresaPerfilCandidato() {
         biografia: student.biografia || "",
         promedio:  student.promedio  || "",
         fotoUrl:   student.foto_perfil ? getMediaUrl(student.foto_perfil) : null,
+        colegio_nombre: student.colegio_nombre || "",
         idiomas:   student.idiomas   || [],
         habilidadesBlandas:  habilidadesBlandas,
         habilidadesTecnicas: habilidadesTecnicas,
@@ -175,10 +176,12 @@ export default function EmpresaPerfilCandidato() {
                   {student.telefono}
                 </p>
               )}
-              <p className={`flex items-center gap-2 text-xs ${M}`}>
-                <Icon icon="fa6-solid:school" width={14} className="flex-shrink-0 text-[#378ADD]" />
-                C.E. Cardenal J.M. Caro
-              </p>
+              {student.colegio_nombre && (
+                <p className={`flex items-center gap-2 text-xs ${M}`}>
+                  <Icon icon="fa6-solid:school" width={14} className="flex-shrink-0 text-[#378ADD]" />
+                  {student.colegio_nombre}
+                </p>
+              )}
             </div>
 
             {/* Contador de seguidores */}

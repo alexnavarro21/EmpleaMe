@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, StatCard, PageHeader } from "../../components/ui";
-import { getAdminStats } from "../../services/api";
+import { getAdminStats, getColegioById } from "../../services/api";
 
 const quickLinks = [
   { to: "/admin/usuarios", icon: "mdi:account-group-outline", label: "Gestión de usuarios", desc: "Ver y administrar cuentas" },
@@ -19,17 +19,23 @@ export default function AdminPanel() {
   const { isDark } = useDark();
   const [stats, setStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
+  const [colegio, setColegio] = useState(null);
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
   const S = isDark ? "bg-[#313130]" : "bg-[#F7F6F3]";
 
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+
   useEffect(() => {
     getAdminStats()
       .then(setStats)
       .catch(() => {})
       .finally(() => setLoadingStats(false));
+    if (usuario.id) {
+      getColegioById(usuario.id).then(setColegio).catch(() => {});
+    }
   }, []);
 
   const v = (key) => {
@@ -41,7 +47,7 @@ export default function AdminPanel() {
     <div>
       <PageHeader
         title="Panel Administrativo"
-        subtitle="C.E. Cardenal José María Caro · Lo Espejo, Santiago"
+        subtitle={colegio ? [colegio.nombre_institucion, colegio.region, colegio.comuna].filter(Boolean).join(" · ") : ""}
       />
 
       <div className="grid grid-cols-4 gap-4 mb-6">

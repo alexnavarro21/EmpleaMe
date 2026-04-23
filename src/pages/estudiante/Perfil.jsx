@@ -152,6 +152,7 @@ export default function EstudiantePerfil() {
         biografia,
         promedio,
         fotoUrl: fotoPerfil ? getMediaUrl(fotoPerfil) : null,
+        colegio_nombre: colegioNombre,
         idiomas,
         habilidadesBlandas:  habilidades.filter(h => h.categoria === "blanda"),
         habilidadesTecnicas: habilidades.filter(h => h.categoria === "tecnica"),

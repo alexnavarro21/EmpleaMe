@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge } from "../../components/ui";
-import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante, toggleLike, getTalleres, getAdminStats, inscribirseEnTaller, eliminarPublicacion, eliminarTaller, getSiguiendo, toggleSeguir } from "../../services/api";
+import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante, toggleLike, getTalleres, getAdminStats, inscribirseEnTaller, eliminarPublicacion, eliminarTaller, getSiguiendo, toggleSeguir, getColegioById } from "../../services/api";
 import { calcularCompletitud } from "../../utils/perfilCompletitud";
 import CrearPublicacion from "../../components/CrearPublicacion";
 import VerMasModal from "../../components/VerMasModal";
@@ -565,7 +565,7 @@ function TallerVerMasModal({ taller, isDark, perfilCompleto, onClose }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className={`text-base font-semibold ${T} leading-snug`}>{taller.titulo}</p>
-              <p className={`text-xs ${M}`}>C.f. Cardenal J.M. Caro</p>
+              <p className={`text-xs ${M}`}>{taller.nombre_institucion || "Centro educacional"}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -713,7 +713,7 @@ function TallerCard({ taller, isDark, perfilCompleto, onDeleted }) {
             <Icon icon="mdi:school-outline" width={20} className="text-white" />
           </div>
           <div>
-            <p className={`text-sm font-semibold leading-tight ${T}`}>C.E. Cardenal J.M. Caro</p>
+            <p className={`text-sm font-semibold leading-tight ${T}`}>{taller.nombre_institucion || "Centro educacional"}</p>
             <p className={`text-xs ${M}`}>{tiempoRelativo(taller.creado_en)}</p>
           </div>
         </div>
@@ -963,6 +963,7 @@ export default function EstudianteDashboard() {
 
   // Estado admin
   const [adminStats, setAdminStats] = useState(null);
+  const [adminColegio, setAdminColegio] = useState(null);
 
   const LIMITE_PUBS = 20;
 
@@ -1005,6 +1006,7 @@ export default function EstudianteDashboard() {
     }
     if (usuario.id && usuario.rol === "colegio") {
       getAdminStats().then(setAdminStats).catch(console.error);
+      getColegioById(usuario.id).then(setAdminColegio).catch(console.error);
     }
     cargarPublicaciones();
     getTalleres().then(setTalleres).catch(console.error);
@@ -1126,7 +1128,7 @@ export default function EstudianteDashboard() {
                   <Icon icon="mdi:shield-account-outline" width={28} />
                 </div>
               </div>
-              <p className={`text-sm font-semibold ${T}`}>C.E. Cardenal J.M. Caro</p>
+              <p className={`text-sm font-semibold ${T}`}>{adminColegio?.nombre_institucion || "Centro educacional"}</p>
               <p className={`text-xs ${M} mt-0.5`}>Administrador del sistema</p>
 
               <div className={`grid grid-cols-2 gap-2 mt-3 pt-3 border-t ${B}`}>
@@ -1193,7 +1195,7 @@ export default function EstudianteDashboard() {
             </div>
             <p className={`text-sm font-semibold ${T}`}>{nombre || "Sin nombre"}</p>
             <p className={`text-xs ${M} mt-0.5`}>{subtitleParts.join(" · ") || "Sin carrera"}</p>
-            <p className={`text-xs ${M}`}>C.E. Cardenal J.M. Caro</p>
+            {perfil?.colegio_nombre && <p className={`text-xs ${M}`}>{perfil.colegio_nombre}</p>}
 
             <div className={`flex gap-4 mt-3 pt-3 border-t ${B} justify-center`}>
               <div className="text-center">
