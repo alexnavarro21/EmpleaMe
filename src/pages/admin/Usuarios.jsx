@@ -153,7 +153,7 @@ export default function AdminUsuarios() {
             />
           </div>
           <div className="flex gap-1">
-            {["todos", "estudiante", "empresa"].map((r) => (
+            {["todos", "estudiante"].map((r) => (
               <button
                 key={r}
                 onClick={() => setRoleFilter(r)}
