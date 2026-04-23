@@ -91,6 +91,7 @@ export default function App() {
             <Route path="/slep/colegios"       element={<SlepColegios />} />
             <Route path="/slep/reportes"       element={<SlepReportes />} />
             <Route path="/slep/candidato/:id"  element={<EmpresaCandidato />} />
+            <Route path="/slep/buscar"          element={<BuscarPerfiles />} />
             <Route path="/slep/mensajeria"     element={<SlepMensajeria />} />
             <Route path="/slep/notificaciones" element={<Notificaciones />} />
           </Route>

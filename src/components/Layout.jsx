@@ -278,7 +278,7 @@ export default function Layout() {
                     onChange={handleSearchChange}
                     onFocus={() => { if (searchQuery.trim() && suggestions.length > 0) setShowSuggestions(true); }}
                     placeholder="Buscar estudiantes, empresas..."
-                    className="w-64 pl-9 pr-4 py-1.5 rounded-full text-sm bg-[#0F4D8A]/50 border border-[#1a5fa8] text-[#E6F1FB] placeholder-[#85B7EB] outline-none focus:w-80 focus:bg-[#0F4D8A]/80 focus:border-[#378ADD] transition-all duration-200"
+                    className="w-120 pl-9 pr-4 py-1.5 rounded-full text-sm bg-[#0F4D8A]/50 border border-[#1a5fa8] text-[#E6F1FB] placeholder-[#85B7EB] outline-none focus:w-80 focus:bg-[#0F4D8A]/80 focus:border-[#378ADD] transition-all duration-200"
                   />
                 </div>
               </form>
