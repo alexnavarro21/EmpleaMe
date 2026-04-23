@@ -85,7 +85,7 @@ export default function AdminPerfil() {
   return (
     <div>
       <PageHeader
-        title="Perfil del Colegio"
+        title={nombreInstitucion || "Perfil del Colegio"}
         subtitle="Gestiona la información de tu institución"
         action={
           <div className="flex gap-2 items-center">
