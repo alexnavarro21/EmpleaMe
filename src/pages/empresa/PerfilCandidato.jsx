@@ -224,8 +224,8 @@ export default function EmpresaPerfilCandidato() {
                         const conv = await iniciarMensajeDirecto(id);
                         navigate("/estudiante/mensajeria", { state: { directaId: conv.id } });
                       } else if (viewer.rol === "colegio") {
-                        const conv = await iniciarConversacion(id);
-                        navigate("/admin/mensajeria", { state: { conversacionId: conv.id } });
+                        const conv = await iniciarMensajeDirecto(id);
+                        navigate("/admin/mensajeria", { state: { directaId: conv.id } });
                       } else {
                         const conv = await iniciarConversacion(id);
                         navigate("/empresa/mensajeria", { state: { conversacionId: conv.id } });

@@ -38,8 +38,8 @@ router.get("/", verificarToken, async (req, res) => {
          ORDER BY ultimo_tiempo DESC`,
         [id, id, id]
       );
-    } else {
-      // Centro/admin ve todas
+    } else if (rol === "colegio") {
+      // Admin ve solo conversaciones de sus propios estudiantes
       [rows] = await db.query(
         `SELECT c.id, c.creada_en, c.empresa_id, c.estudiante_id,
                 emp.nombre_empresa, pe.nombre_completo AS nombre_estudiante,
@@ -48,8 +48,12 @@ router.get("/", verificarToken, async (req, res) => {
          FROM conversaciones c
          JOIN perfiles_empresas emp ON emp.usuario_id = c.empresa_id
          JOIN perfiles_estudiantes pe ON pe.usuario_id = c.estudiante_id
-         ORDER BY ultimo_tiempo DESC`
+         WHERE pe.colegio_id = ?
+         ORDER BY ultimo_tiempo DESC`,
+        [id]
       );
+    } else {
+      rows = [];
     }
 
     res.json(rows);

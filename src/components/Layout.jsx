@@ -32,11 +32,12 @@ const navLinks = {
     { to: "/admin/reportes", label: "Reportes" },
   ],
   slep: [
-    { to: "/slep/inicio",    label: "Inicio" },
-    { to: "/slep/panel",     label: "Panel" },
-    { to: "/slep/empresas",  label: "Empresas" },
-    { to: "/slep/colegios",  label: "Colegios" },
-    { to: "/slep/reportes",  label: "Reportes" },
+    { to: "/slep/inicio",      label: "Inicio" },
+    { to: "/slep/panel",       label: "Panel" },
+    { to: "/slep/empresas",    label: "Empresas" },
+    { to: "/slep/colegios",    label: "Colegios" },
+    { to: "/slep/reportes",    label: "Reportes" },
+    { to: "/slep/mensajeria",  label: "Mensajería" },
   ],
 };
 
