@@ -20,20 +20,35 @@ async function esMiEstudiante(estudianteId, colegioId) {
 router.get("/stats", ...auth, async (req, res) => {
   const colegioId = req.usuario.id;
   try {
-    const [[{ total_estudiantes }]]      = await db.query("SELECT COUNT(*) AS total_estudiantes FROM perfiles_estudiantes WHERE colegio_id = ?", [colegioId]);
-    const [[{ total_empresas }]]         = await db.query("SELECT COUNT(*) AS total_empresas FROM perfiles_empresas");
-    const [[{ total_vacantes_activas }]] = await db.query("SELECT COUNT(*) AS total_vacantes_activas FROM vacantes WHERE esta_activa = TRUE");
-    const [[{ total_postulaciones }]]    = await db.query("SELECT COUNT(*) AS total_postulaciones FROM postulaciones WHERE estado = 'pendiente'");
-    const [[{ total_conversaciones }]]   = await db.query("SELECT COUNT(*) AS total_conversaciones FROM conversaciones");
+    const [[{ total_estudiantes }]]      = await db.query(
+      "SELECT COUNT(*) AS total_estudiantes FROM perfiles_estudiantes WHERE colegio_id = ?", [colegioId]);
+    const [[{ total_talleres_activos }]] = await db.query(
+      "SELECT COUNT(*) AS total_talleres_activos FROM talleres WHERE colegio_id = ? AND esta_activo = TRUE", [colegioId]);
+    const [[{ total_postulaciones }]]    = await db.query(
+      `SELECT COUNT(*) AS total_postulaciones
+       FROM postulaciones p
+       JOIN perfiles_estudiantes pe ON pe.usuario_id = p.estudiante_id
+       WHERE pe.colegio_id = ?`, [colegioId]);
+    const [[{ total_postulaciones_pendientes }]] = await db.query(
+      `SELECT COUNT(*) AS total_postulaciones_pendientes
+       FROM postulaciones p
+       JOIN perfiles_estudiantes pe ON pe.usuario_id = p.estudiante_id
+       WHERE pe.colegio_id = ? AND p.estado = 'pendiente'`, [colegioId]);
+    const [[{ total_conversaciones }]]   = await db.query(
+      `SELECT COUNT(*) AS total_conversaciones
+       FROM conversaciones c
+       JOIN perfiles_estudiantes pe ON pe.usuario_id = c.estudiante_id
+       WHERE pe.colegio_id = ?`, [colegioId]);
     const [[{ total_evaluaciones }]]     = await db.query(
-      "SELECT COUNT(*) AS total_evaluaciones FROM evaluaciones e JOIN perfiles_estudiantes pe ON pe.usuario_id = e.estudiante_id WHERE pe.colegio_id = ?", [colegioId]
-    );
+      "SELECT COUNT(*) AS total_evaluaciones FROM evaluaciones e JOIN perfiles_estudiantes pe ON pe.usuario_id = e.estudiante_id WHERE pe.colegio_id = ?", [colegioId]);
     const [[{ estudiantes_evaluados }]]  = await db.query(
-      "SELECT COUNT(DISTINCT e.estudiante_id) AS estudiantes_evaluados FROM evaluaciones e JOIN perfiles_estudiantes pe ON pe.usuario_id = e.estudiante_id WHERE pe.colegio_id = ?", [colegioId]
-    );
+      "SELECT COUNT(DISTINCT e.estudiante_id) AS estudiantes_evaluados FROM evaluaciones e JOIN perfiles_estudiantes pe ON pe.usuario_id = e.estudiante_id WHERE pe.colegio_id = ?", [colegioId]);
 
-    res.json({ total_estudiantes, total_empresas, total_vacantes_activas,
-               total_postulaciones, total_conversaciones, total_evaluaciones, estudiantes_evaluados });
+    res.json({
+      total_estudiantes, total_talleres_activos,
+      total_postulaciones, total_postulaciones_pendientes,
+      total_conversaciones, total_evaluaciones, estudiantes_evaluados,
+    });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }

@@ -197,10 +197,10 @@ export default function Layout() {
       }`}>
 
         {/* Navbar */}
-        <nav className="bg-[#0A3A6A] h-14 flex items-center justify-between px-6 sticky top-0 z-50 shadow-sm">
+        <nav className="bg-[#0A3A6A] h-14 flex items-center px-6 sticky top-0 z-50 shadow-sm gap-4">
 
           {/* Izquierda: Logo + links */}
-          <div className="flex items-center gap-6 flex-shrink-0">
+          <div className="flex items-center gap-6 flex-1 min-w-0">
             <Link to={homePaths[role]} className="flex items-center gap-2 flex-shrink-0">
               <img src="/empleame-icono.svg" alt="EmpleaMe" className="h-7 w-7" />
               <span className="text-lg font-semibold text-[#E6F1FB] tracking-tight">
@@ -224,17 +224,15 @@ export default function Layout() {
             </div>
           </div>
 
-          {/* Derecha: Buscador + íconos */}
-          <div className="flex items-center gap-2">
-
-            {/* Barra de búsqueda */}
-            <div className="relative" ref={searchRef}>
+          {/* Centro: Barra de búsqueda */}
+          <div className="flex-shrink-0" ref={searchRef}>
+            <div className="relative">
               <form onSubmit={handleSearchSubmit}>
                 <div className="relative">
                   <Icon
-                    icon={searchLoading ? "mdi:loading" : "mdi:search"}
-                    width={15}
-                    className={`absolute left-3 top-1/2 -translate-y-1/2 text-[#85B7EB] pointer-events-none ${searchLoading ? "animate-spin" : ""}`}
+                    icon={searchLoading ? "mdi:loading" : "mdi:magnify"}
+                    width={16}
+                    className={`absolute left-3.5 top-1/2 -translate-y-1/2 text-[#85B7EB] pointer-events-none ${searchLoading ? "animate-spin" : ""}`}
                   />
                   <input
                     type="text"
@@ -242,7 +240,7 @@ export default function Layout() {
                     onChange={handleSearchChange}
                     onFocus={() => { if (searchQuery.trim() && hasSuggestions) setShowSuggestions(true); }}
                     placeholder="Buscar estudiantes, empresas..."
-                    className="w-52 pl-8 pr-3 py-1.5 rounded-lg text-sm bg-[#0F4D8A]/50 border border-[#1a5fa8] text-[#E6F1FB] placeholder-[#85B7EB] outline-none focus:bg-[#0F4D8A]/80 focus:border-[#378ADD] transition-all"
+                    className="w-64 pl-9 pr-4 py-1.5 rounded-full text-sm bg-[#0F4D8A]/50 border border-[#1a5fa8] text-[#E6F1FB] placeholder-[#85B7EB] outline-none focus:w-80 focus:bg-[#0F4D8A]/80 focus:border-[#378ADD] transition-all duration-200"
                   />
                 </div>
               </form>
@@ -301,7 +299,10 @@ export default function Layout() {
               )}
             </div>
 
-            {/* Mensajes */}
+          </div>
+
+          {/* Derecha: íconos */}
+          <div className="flex items-center gap-1 flex-1 justify-end">
             <Link
               to={messagingPaths[role]}
               className="p-1.5 rounded-lg transition-colors text-[#B5D4F4] hover:text-[#E6F1FB] hover:bg-[#0F4D8A]/40"

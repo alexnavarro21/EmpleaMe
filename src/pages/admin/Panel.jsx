@@ -2,17 +2,18 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
-import { Card, Badge, StatCard, PageHeader } from "../../components/ui";
+import { Card, StatCard, PageHeader } from "../../components/ui";
 import { getAdminStats, getColegioById } from "../../services/api";
 
 const quickLinks = [
-  { to: "/admin/usuarios", icon: "mdi:account-group-outline", label: "Gestión de usuarios", desc: "Ver y administrar cuentas" },
-  { to: "/admin/evaluaciones", icon: "mdi:clipboard-list-outline", label: "Registrar evaluaciones", desc: "Competencias técnicas y socioemocionales" },
-  { to: "/admin/notas", icon: "icon-park-outline:excel", label: "Importar notas", desc: "Excel / CSV con calificaciones" },
-  { to: "/admin/tests", icon: "hugeicons:brain-02", label: "Tests socioemocionales", desc: "Cargar y asignar tests" },
-  { to: "/admin/talleres", icon: "mdi:school-outline", label: "Gestión de talleres", desc: "Crear y administrar talleres" },
-  { to: "/admin/mensajeria", icon: "flowbite:messages-solid", label: "Bandeja de mensajería", desc: "Supervisión de comunicaciones" },
-  { to: "/admin/reportes",  icon: "mdi:flag-outline",        label: "Reportes de contenido", desc: "Revisar contenido reportado por usuarios" },
+  { to: "/admin/usuarios",     icon: "mdi:account-group-outline",    label: "Gestión de usuarios",     desc: "Ver y administrar cuentas" },
+  { to: "/admin/evaluaciones", icon: "mdi:clipboard-list-outline",   label: "Registrar evaluaciones",  desc: "Competencias técnicas y socioemocionales" },
+  { to: "/admin/notas",        icon: "icon-park-outline:excel",      label: "Importar notas",          desc: "Excel / CSV con calificaciones" },
+  { to: "/admin/tests",        icon: "hugeicons:brain-02",           label: "Tests socioemocionales",  desc: "Cargar y asignar tests" },
+  { to: "/admin/talleres",     icon: "mdi:school-outline",           label: "Gestión de talleres",     desc: "Crear y administrar talleres" },
+  { to: "/admin/mensajeria",   icon: "flowbite:messages-solid",      label: "Bandeja de mensajería",   desc: "Supervisión de comunicaciones" },
+  { to: "/admin/reportes",     icon: "mdi:flag-outline",             label: "Reportes de contenido",   desc: "Revisar contenido reportado por usuarios" },
+  { to: "/admin/buscar",       icon: "mdi:magnify",                  label: "Buscar perfiles",         desc: "Explorar estudiantes, vacantes y talleres" },
 ];
 
 export default function AdminPanel() {
@@ -50,6 +51,7 @@ export default function AdminPanel() {
         subtitle={colegio ? [colegio.nombre_institucion, colegio.region, colegio.comuna].filter(Boolean).join(" · ") : ""}
       />
 
+      {/* Stats — todos relevantes al colegio */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         <StatCard
           label="Estudiantes registrados"
@@ -57,27 +59,27 @@ export default function AdminPanel() {
           sub={`${v("estudiantes_evaluados")} evaluados`}
         />
         <StatCard
-          label="Empresas activas"
-          value={v("total_empresas")}
-          sub="En plataforma"
+          label="Talleres activos"
+          value={v("total_talleres_activos")}
+          sub="De tu institución"
         />
         <StatCard
-          label="Vacantes activas"
-          value={v("total_vacantes_activas")}
-          sub={`${v("total_postulaciones")} postulaciones pendientes`}
+          label="Postulaciones de alumnos"
+          value={v("total_postulaciones")}
+          sub={`${v("total_postulaciones_pendientes")} pendientes`}
         />
         <StatCard
-          label="Conversaciones"
+          label="Conversaciones supervisadas"
           value={v("total_conversaciones")}
-          sub={`${v("total_evaluaciones")} evaluaciones registradas`}
-          subColor="text-orange-500"
+          sub="Entre alumnos y empresas"
         />
       </div>
 
       <div className="grid grid-cols-3 gap-6">
+        {/* Acceso rápido */}
         <div className="col-span-2">
           <h2 className={`text-sm font-semibold ${T} mb-3`}>Acceso rápido</h2>
-          <div className="grid grid-cols-2 gap-3 mb-6">
+          <div className="grid grid-cols-2 gap-3">
             {quickLinks.map((ql) => (
               <Link key={ql.to} to={ql.to}>
                 <Card className="hover:border-[#378ADD] transition-colors cursor-pointer">
@@ -96,29 +98,17 @@ export default function AdminPanel() {
           </div>
         </div>
 
+        {/* Lateral derecho */}
         <div className="flex flex-col gap-4">
-          <Card>
-            <p className={`text-sm font-semibold ${T} mb-3`}>Estado del sistema</p>
-            {[
-              { label: "Plataforma", status: "Operativo", color: "green" },
-              { label: "Base de datos", status: "Operativo", color: "green" },
-              { label: "API Railway", status: "Operativo", color: "green" },
-            ].map((item) => (
-              <div key={item.label} className="flex justify-between items-center mb-2 last:mb-0">
-                <span className={`text-xs ${M}`}>{item.label}</span>
-                <Badge color={item.color}>{item.status}</Badge>
-              </div>
-            ))}
-          </Card>
-
           <Card>
             <p className={`text-sm font-semibold ${T} mb-3`}>Resumen semestral</p>
             <div className={`flex flex-col gap-2 text-xs ${M}`}>
               {[
                 { label: "Estudiantes evaluados", value: `${v("estudiantes_evaluados")} / ${v("total_estudiantes")}` },
                 { label: "Evaluaciones registradas", value: v("total_evaluaciones") },
-                { label: "Conversaciones activas", value: v("total_conversaciones") },
-                { label: "Vacantes publicadas", value: v("total_vacantes_activas") },
+                { label: "Talleres activos",          value: v("total_talleres_activos") },
+                { label: "Postulaciones realizadas",  value: v("total_postulaciones") },
+                { label: "Conversaciones activas",    value: v("total_conversaciones") },
               ].map((row) => (
                 <div key={row.label} className={`flex justify-between pb-2 border-b ${B} last:border-0`}>
                   <span>{row.label}</span>
@@ -126,6 +116,39 @@ export default function AdminPanel() {
                 </div>
               ))}
             </div>
+          </Card>
+
+          <Card>
+            <p className={`text-sm font-semibold ${T} mb-3`}>Progreso de evaluaciones</p>
+            {loadingStats ? (
+              <div className={`flex items-center justify-center py-4 ${M}`}>
+                <Icon icon="mdi:loading" width={20} className="animate-spin" />
+              </div>
+            ) : (
+              <>
+                <div className="flex justify-between items-end mb-2">
+                  <span className={`text-xs ${M}`}>Estudiantes evaluados</span>
+                  <span className={`text-sm font-semibold ${T}`}>
+                    {v("estudiantes_evaluados")} / {v("total_estudiantes")}
+                  </span>
+                </div>
+                <div className={`w-full h-2 rounded-full ${S} overflow-hidden`}>
+                  <div
+                    className="h-full rounded-full bg-[#378ADD] transition-all"
+                    style={{
+                      width: stats?.total_estudiantes > 0
+                        ? `${Math.round((stats.estudiantes_evaluados / stats.total_estudiantes) * 100)}%`
+                        : "0%",
+                    }}
+                  />
+                </div>
+                <p className={`text-xs ${M} mt-2 text-right`}>
+                  {stats?.total_estudiantes > 0
+                    ? `${Math.round((stats.estudiantes_evaluados / stats.total_estudiantes) * 100)}% completado`
+                    : "Sin estudiantes aún"}
+                </p>
+              </>
+            )}
           </Card>
         </div>
       </div>
