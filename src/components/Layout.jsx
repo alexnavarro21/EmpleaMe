@@ -165,9 +165,9 @@ export default function Layout() {
 
   const handleSearchSubmit = (e) => {
     if (e && e.preventDefault) e.preventDefault();
-    if (!searchQuery.trim()) return;
     setShowSuggestions(false);
-    navigate(`${buscarPaths[role]}?q=${encodeURIComponent(searchQuery.trim())}`);
+    const q = searchQuery.trim();
+    navigate(q ? `${buscarPaths[role]}?q=${encodeURIComponent(q)}` : buscarPaths[role]);
     setSearchQuery("");
   };
 
