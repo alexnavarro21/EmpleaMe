@@ -70,18 +70,11 @@ const seguidoresPaths = {
   empresa: "/empresa/seguidores",
 };
 
-const SUGGEST_ICONS = {
-  estudiantes: "mynaui:user-solid",
-  empresas: "mdi:office-building-outline",
-  vacantes: "mdi:briefcase-outline",
-  talleres: "mdi:school-outline",
-};
-
-const SUGGEST_LABELS = {
-  estudiantes: "Estudiantes",
-  empresas: "Empresas",
-  vacantes: "Vacantes",
-  talleres: "Talleres",
+const TIPO_CONFIG = {
+  estudiante: { icon: "mynaui:user-solid",           label: "Estudiante", color: "bg-blue-500/20 text-blue-400" },
+  empresa:    { icon: "mdi:office-building-outline", label: "Empresa",    color: "bg-green-500/20 text-green-400" },
+  vacante:    { icon: "mdi:briefcase-outline",       label: "Vacante",    color: "bg-orange-500/20 text-orange-400" },
+  taller:     { icon: "mdi:school-outline",          label: "Taller",     color: "bg-purple-500/20 text-purple-400" },
 };
 
 export default function Layout() {
@@ -113,7 +106,7 @@ export default function Layout() {
 
   // Search bar state
   const [searchQuery, setSearchQuery] = useState("");
-  const [suggestions, setSuggestions] = useState({ estudiantes: [], empresas: [], vacantes: [], talleres: [] });
+  const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
 
@@ -148,7 +141,7 @@ export default function Layout() {
     setSearchQuery(val);
     clearTimeout(debounceRef.current);
     if (!val.trim()) {
-      setSuggestions({ estudiantes: [], empresas: [], vacantes: [], talleres: [] });
+      setSuggestions([]);
       setShowSuggestions(false);
       return;
     }
@@ -161,7 +154,7 @@ export default function Layout() {
           { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
         );
         const data = await res.json();
-        setSuggestions(data);
+        setSuggestions(Array.isArray(data) ? data : []);
       } catch {
         // silent
       } finally {
@@ -171,20 +164,19 @@ export default function Layout() {
   };
 
   const handleSearchSubmit = (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (!searchQuery.trim()) return;
     setShowSuggestions(false);
     navigate(`${buscarPaths[role]}?q=${encodeURIComponent(searchQuery.trim())}`);
     setSearchQuery("");
   };
 
-  const handleSuggestionClick = (categoria, item) => {
+  const handleSuggestionClick = (item) => {
     setShowSuggestions(false);
     setSearchQuery("");
-    navigate(`${buscarPaths[role]}?q=${encodeURIComponent(item.nombre)}&cat=${categoria}`);
+    const catMap = { estudiante: "estudiantes", empresa: "empresas", vacante: "vacantes", taller: "talleres" };
+    navigate(`${buscarPaths[role]}?q=${encodeURIComponent(item.nombre)}&cat=${catMap[item.tipo] || "estudiantes"}`);
   };
-
-  const hasSuggestions = Object.values(suggestions).some((arr) => arr.length > 0);
 
   const dropdownItemCls = `flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
     isDark ? "text-[#D3D1C7] hover:bg-[#0F4D8A]/30" : "text-[#2C2C2A] hover:bg-[#F0F4F8]"
@@ -238,7 +230,7 @@ export default function Layout() {
                     type="text"
                     value={searchQuery}
                     onChange={handleSearchChange}
-                    onFocus={() => { if (searchQuery.trim() && hasSuggestions) setShowSuggestions(true); }}
+                    onFocus={() => { if (searchQuery.trim() && suggestions.length > 0) setShowSuggestions(true); }}
                     placeholder="Buscar estudiantes, empresas..."
                     className="w-64 pl-9 pr-4 py-1.5 rounded-full text-sm bg-[#0F4D8A]/50 border border-[#1a5fa8] text-[#E6F1FB] placeholder-[#85B7EB] outline-none focus:w-80 focus:bg-[#0F4D8A]/80 focus:border-[#378ADD] transition-all duration-200"
                   />
@@ -247,48 +239,60 @@ export default function Layout() {
 
               {/* Dropdown sugerencias */}
               {showSuggestions && (
-                <div className={`absolute top-full mt-2 right-0 w-72 rounded-xl shadow-xl border overflow-hidden z-50 ${
+                <div className={`absolute top-full mt-2 left-1/2 -translate-x-1/2 w-80 rounded-2xl shadow-2xl border overflow-hidden z-50 ${
                   isDark ? "bg-[#262624] border-[#3a3a38]" : "bg-white border-[#D3D1C7]"
                 }`}>
-                  {!hasSuggestions && !searchLoading ? (
+                  {searchLoading ? (
+                    <div className={`flex items-center gap-2 px-4 py-3 text-xs ${isDark ? "text-[#888780]" : "text-[#5F5E5A]"}`}>
+                      <Icon icon="mdi:loading" width={14} className="animate-spin" />
+                      Buscando...
+                    </div>
+                  ) : suggestions.length === 0 ? (
                     <div className={`px-4 py-3 text-xs ${isDark ? "text-[#888780]" : "text-[#5F5E5A]"}`}>
                       Sin resultados para "{searchQuery}"
                     </div>
                   ) : (
                     <>
-                      {["estudiantes", "empresas", "vacantes", "talleres"].map((cat) => {
-                        const items = suggestions[cat] || [];
-                        if (items.length === 0) return null;
+                      {suggestions.map((item, i) => {
+                        const cfg = TIPO_CONFIG[item.tipo] || TIPO_CONFIG.estudiante;
                         return (
-                          <div key={cat}>
-                            <div className={`px-4 py-1.5 flex items-center gap-2 ${isDark ? "bg-[#313130]" : "bg-[#F7F6F3]"}`}>
-                              <Icon icon={SUGGEST_ICONS[cat]} width={12} className="text-[#378ADD]" />
-                              <span className={`text-xs font-medium ${isDark ? "text-[#888780]" : "text-[#5F5E5A]"}`}>
-                                {SUGGEST_LABELS[cat]}
-                              </span>
+                          <button
+                            key={`${item.tipo}-${item.id}-${i}`}
+                            onClick={() => handleSuggestionClick(item)}
+                            className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors border-b last:border-0 ${
+                              isDark
+                                ? "border-[#3a3a38] hover:bg-[#0F4D8A]/25 text-[#D3D1C7]"
+                                : "border-[#F0EDE8] hover:bg-[#EFF6FF] text-[#2C2C2A]"
+                            }`}
+                          >
+                            {/* Ícono tipo */}
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isDark ? "bg-[#313130]" : "bg-[#F7F6F3]"}`}>
+                              <Icon icon={cfg.icon} width={16} className="text-[#378ADD]" />
                             </div>
-                            {items.map((item) => (
-                              <button
-                                key={item.id}
-                                onClick={() => handleSuggestionClick(cat, item)}
-                                className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 transition-colors ${
-                                  isDark
-                                    ? "text-[#D3D1C7] hover:bg-[#0F4D8A]/30"
-                                    : "text-[#2C2C2A] hover:bg-[#EFF6FF]"
-                                }`}
-                              >
-                                <Icon icon={SUGGEST_ICONS[cat]} width={14} className={isDark ? "text-[#888780]" : "text-[#5F5E5A]"} />
-                                <span className="truncate flex-1">{item.nombre}</span>
-                                {item.carrera && <span className={`text-xs flex-shrink-0 ${isDark ? "text-[#888780]" : "text-[#5F5E5A]"}`}>{item.carrera}</span>}
-                                {item.empresa && <span className={`text-xs flex-shrink-0 ${isDark ? "text-[#888780]" : "text-[#5F5E5A]"}`}>{item.empresa}</span>}
-                              </button>
-                            ))}
-                          </div>
+                            {/* Nombre + sub */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{item.nombre}</p>
+                              {item.sub && (
+                                <p className={`text-xs truncate ${isDark ? "text-[#888780]" : "text-[#5F5E5A]"}`}>
+                                  {item.sub}
+                                </p>
+                              )}
+                            </div>
+                            {/* Badge tipo */}
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${cfg.color}`}>
+                              {cfg.label}
+                            </span>
+                          </button>
                         );
                       })}
+                      {/* Ver todos */}
                       <button
                         onClick={handleSearchSubmit}
-                        className="w-full text-left px-4 py-2.5 text-xs text-[#378ADD] hover:bg-[#0F4D8A]/10 transition-colors flex items-center gap-2 border-t border-[#3a3a38]/30"
+                        className={`w-full text-left px-4 py-2.5 text-xs flex items-center gap-2 transition-colors ${
+                          isDark
+                            ? "text-[#378ADD] hover:bg-[#0F4D8A]/20 border-t border-[#3a3a38]"
+                            : "text-[#378ADD] hover:bg-[#EFF6FF] border-t border-[#E8E6E1]"
+                        }`}
                       >
                         <Icon icon="mdi:magnify" width={14} />
                         Ver todos los resultados para "{searchQuery}"
