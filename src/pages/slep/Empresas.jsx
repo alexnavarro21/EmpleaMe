@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PageHeader } from "../../components/ui";
@@ -68,7 +69,7 @@ export default function SlepEmpresas() {
             <table className="w-full">
               <thead>
                 <tr className={`border-b ${B} ${S}`}>
-                  {["Empresa", "Email", "Ubicación", "Vacantes activas", "Registro"].map((h) => (
+                  {["Empresa", "Email", "Ubicación", "Vacantes activas", "Registro", ""].map((h) => (
                     <th key={h} className={`text-left text-xs font-medium ${M} px-5 py-3`}>{h}</th>
                   ))}
                 </tr>
@@ -104,6 +105,11 @@ export default function SlepEmpresas() {
                       </Badge>
                     </td>
                     <td className="px-5 py-3"><span className={`text-sm ${M}`}>{formatDate(e.fecha_creacion)}</span></td>
+                    <td className="px-5 py-3">
+                      <Link to={`/empresa-publica/${e.usuario_id}`} className="text-xs text-[#378ADD] hover:underline">
+                        Ver perfil
+                      </Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>

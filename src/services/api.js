@@ -1012,6 +1012,33 @@ export async function getSlepColegios() {
   return data;
 }
 
+export async function getSlepReportes(estado = "pendiente") {
+  const res = await fetch(`${BASE_URL}/slep/reportes?estado=${estado}`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener reportes");
+  return data;
+}
+
+export async function actualizarSlepReporte(id, estado) {
+  const res = await fetch(`${BASE_URL}/slep/reportes/${id}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify({ estado }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al actualizar reporte");
+  return data;
+}
+
+export async function eliminarContenidoSlepReporte(id) {
+  const res = await fetch(`${BASE_URL}/slep/reportes/${id}/contenido`, {
+    method: "DELETE", headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al eliminar contenido");
+  return data;
+}
+
 // Lista de usuarios que sigue el usuario :id
 export async function getSiguiendo(usuarioId) {
   const res = await fetch(`${BASE_URL}/seguidores/${usuarioId}/siguiendo`, {

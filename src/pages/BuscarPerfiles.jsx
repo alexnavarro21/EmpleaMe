@@ -316,16 +316,18 @@ export default function BuscarPerfiles() {
     ? "admin"
     : location.pathname.startsWith("/empresa")
     ? "empresa"
+    : location.pathname.startsWith("/slep")
+    ? "slep"
     : "estudiante";
 
   const candidatoBase =
     role === "empresa" ? "/empresa/candidato" :
-    role === "admin"   ? "/admin/candidato"   : "/estudiante/candidato";
+    role === "admin"   ? "/admin/candidato"   :
+    role === "slep"    ? "/slep/candidato"    : "/estudiante/candidato";
 
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
   useEffect(() => {
-    // Admin solo ve estudiantes de su propia institución
     const colegioFiltro = role === "admin" ? usuario.id : undefined;
     Promise.allSettled([getEstudiantes(colegioFiltro), getEmpresas(), getVacantes(), getTalleres(true)])
       .then(([sts, cos, vacs, tals]) => {
