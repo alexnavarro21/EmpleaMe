@@ -4,7 +4,7 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 import { Card, Badge, PrimaryButton } from "../components/ui";
 import {
-  getEstudiantes, getEmpresas, getVacantes, getTalleres,
+  getEstudiantes, getEmpresas, getVacantes, getTalleres, getColegios,
   iniciarMensajeDirecto, iniciarConversacionConEmpresa,
   postularAVacante, inscribirseEnTaller, getMediaUrl,
 } from "../services/api";
@@ -16,12 +16,15 @@ const careerDisplay = {
   "Mecanica Automotriz": "Mecánica Automotriz",
 };
 
-const CATEGORIAS = [
+const CATEGORIAS_BASE = [
   { id: "estudiantes", icon: "mynaui:user-solid",           label: "Estudiantes" },
   { id: "empresas",    icon: "mdi:office-building-outline", label: "Empresas"    },
   { id: "vacantes",    icon: "mdi:briefcase-outline",       label: "Vacantes"    },
   { id: "talleres",    icon: "mdi:school-outline",          label: "Talleres"    },
 ];
+const CAT_COLEGIOS = { id: "colegios", icon: "mdi:domain", label: "Colegios" };
+
+const VALID_CATS_BASE = ["estudiantes", "empresas", "vacantes", "talleres"];
 
 // ── Modal Vacante ─────────────────────────────────────────────────────────────
 function VacanteModal({ vacante, role, onClose }) {
@@ -288,12 +291,24 @@ export default function BuscarPerfiles() {
   const urlQ   = urlParams.get("q")   || "";
   const urlCat = urlParams.get("cat") || "";
 
-  const VALID_CATS = ["estudiantes", "empresas", "vacantes", "talleres"];
+  const role = location.pathname.startsWith("/admin")
+    ? "admin"
+    : location.pathname.startsWith("/empresa")
+    ? "empresa"
+    : location.pathname.startsWith("/slep")
+    ? "slep"
+    : "estudiante";
+
+  const canSeeColegios = role === "empresa" || role === "slep";
+  const VALID_CATS = canSeeColegios ? [...VALID_CATS_BASE, "colegios"] : VALID_CATS_BASE;
+  const CATEGORIAS = canSeeColegios ? [...CATEGORIAS_BASE, CAT_COLEGIOS] : CATEGORIAS_BASE;
+
   const [tab,            setTab]            = useState(VALID_CATS.includes(urlCat) ? urlCat : "estudiantes");
   const [students,       setStudents]       = useState([]);
   const [companies,      setCompanies]      = useState([]);
   const [vacantes,       setVacantes]       = useState([]);
   const [talleres,       setTalleres]       = useState([]);
+  const [colegios,       setColegios]       = useState([]);
   const [loading,        setLoading]        = useState(true);
   const [search,         setSearch]         = useState(urlQ);
   const [selectedCareer, setSelectedCareer] = useState("Todas");
@@ -317,14 +332,6 @@ export default function BuscarPerfiles() {
   const S  = isDark ? "bg-[#313130]"     : "bg-[#F7F6F3]";
   const BG = isDark ? "bg-[#262624]"     : "bg-white";
 
-  const role = location.pathname.startsWith("/admin")
-    ? "admin"
-    : location.pathname.startsWith("/empresa")
-    ? "empresa"
-    : location.pathname.startsWith("/slep")
-    ? "slep"
-    : "estudiante";
-
   const candidatoBase =
     role === "empresa" ? "/empresa/candidato" :
     role === "admin"   ? "/admin/candidato"   :
@@ -340,12 +347,14 @@ export default function BuscarPerfiles() {
 
   useEffect(() => {
     const colegioFiltro = role === "admin" ? usuario.id : undefined;
-    Promise.allSettled([getEstudiantes(colegioFiltro), getEmpresas(), getVacantes(), getTalleres(true)])
-      .then(([sts, cos, vacs, tals]) => {
+    const fetchColegios = canSeeColegios ? getColegios() : Promise.reject();
+    Promise.allSettled([getEstudiantes(colegioFiltro), getEmpresas(), getVacantes(), getTalleres(true), fetchColegios])
+      .then(([sts, cos, vacs, tals, cols]) => {
         if (sts.status  === "fulfilled") setStudents(sts.value);
         if (cos.status  === "fulfilled") setCompanies(cos.value);
         if (vacs.status === "fulfilled") setVacantes(vacs.value);
         if (tals.status === "fulfilled") setTalleres(tals.value);
+        if (cols.status === "fulfilled") setColegios(cols.value);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -401,6 +410,15 @@ export default function BuscarPerfiles() {
     return true;
   });
 
+  const filteredColegios = colegios.filter((c) => {
+    const q = search.toLowerCase();
+    return (
+      (c.nombre_institucion.toLowerCase().includes(q) || (c.descripcion || "").toLowerCase().includes(q)) &&
+      (!selectedRegion || c.region === selectedRegion) &&
+      (!selectedComuna || c.comuna === selectedComuna)
+    );
+  });
+
   const filteredTalleres = talleres.filter((t) => {
     const q = search.toLowerCase();
     if (!(t.titulo?.toLowerCase().includes(q) || t.area?.toLowerCase().includes(q) || t.descripcion?.toLowerCase().includes(q))) return false;
@@ -421,9 +439,10 @@ export default function BuscarPerfiles() {
     empresas:    filteredCompanies.length,
     vacantes:    filteredVacantes.length,
     talleres:    filteredTalleres.length,
+    colegios:    filteredColegios.length,
   };
   const count = countMap[tab] ?? 0;
-  const tabLabel = { estudiantes: "estudiante", empresas: "empresa", vacantes: "vacante", talleres: "taller" }[tab];
+  const tabLabel = { estudiantes: "estudiante", empresas: "empresa", vacantes: "vacante", talleres: "taller", colegios: "colegio" }[tab];
   const usuarioActual = JSON.parse(localStorage.getItem("usuario") || "{}");
 
   const limpiarFiltros = () => { setSearch(""); setSelectedCareer("Todas"); setMinGpa(1); setMinEvalDocente(1); setSelectedRegion(""); setSelectedComuna(""); setSelectedHabilidades([]); setHabBusqueda(""); setSelectedModalidad(""); setFiltroPrecio("todas"); setFiltroRemuneracion("todas"); };
@@ -438,6 +457,15 @@ export default function BuscarPerfiles() {
     setContactandoId(id);
     try { const c = await iniciarConversacionConEmpresa(id); navigate("/estudiante/mensajeria", { state: { conversacionId: c.id } }); }
     catch (e) { console.error(e); } finally { setContactandoId(null); }
+  };
+
+  const handleContactarColegio = async (id) => {
+    setContactandoId(id);
+    try {
+      const c = await iniciarMensajeDirecto(id);
+      const dest = role === "slep" ? "/slep/mensajeria" : "/empresa/mensajeria";
+      navigate(dest, { state: { directaId: c.id } });
+    } catch (e) { console.error(e); } finally { setContactandoId(null); }
   };
 
   const selectCls = `w-full px-2.5 py-2 rounded-lg text-xs outline-none border focus:border-[#378ADD] transition-colors ${
@@ -659,8 +687,8 @@ export default function BuscarPerfiles() {
               </div>
             )}
 
-            {/* Región/comuna (estudiantes y empresas) */}
-            {(tab === "estudiantes" || tab === "empresas") && (
+            {/* Región/comuna (estudiantes, empresas y colegios) */}
+            {(tab === "estudiantes" || tab === "empresas" || tab === "colegios") && (
               <div className={`${tab === "estudiantes" ? "" : `border-t ${B} pt-4`} mb-4`}>
                 <label className={`block text-xs mb-1.5 ${M}`}>Región</label>
                 <select value={selectedRegion} onChange={(e) => { setSelectedRegion(e.target.value); setSelectedComuna(""); }} className={selectCls}>
@@ -685,24 +713,25 @@ export default function BuscarPerfiles() {
 
         {/* ── Resultados ── */}
         <div className="col-span-3 flex flex-col gap-4">
-          {/* Barra de búsqueda principal — grande, reemplaza a la del navbar */}
+          {/* Barra de búsqueda principal — pill, tinte azul igual al navbar */}
           <div className="relative">
-            <Icon icon="mdi:magnify" width={20} className={`absolute left-4 top-1/2 -translate-y-1/2 ${M}`} />
+            <Icon icon="mdi:magnify" width={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#378ADD] pointer-events-none" />
             <input
               type="text"
               autoFocus
-              placeholder={{ estudiantes: "Buscar estudiantes por nombre, habilidad...", empresas: "Buscar empresas por nombre o descripción...", vacantes: "Buscar vacantes por título, empresa o área...", talleres: "Buscar talleres por título o área..." }[tab]}
+              placeholder={{ estudiantes: "Buscar estudiantes por nombre, habilidad...", empresas: "Buscar empresas por nombre o descripción...", vacantes: "Buscar vacantes por título, empresa o área...", talleres: "Buscar talleres por título o área...", colegios: "Buscar instituciones por nombre o región..." }[tab]}
               value={search}
               onChange={(e) => {
                 const val = e.target.value;
                 setSearch(val);
-                // Sincronizar con URL
                 const params = new URLSearchParams(location.search);
                 if (val.trim()) { params.set("q", val.trim()); } else { params.delete("q"); }
                 navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
               }}
-              className={`w-full pl-11 pr-10 py-3.5 rounded-2xl text-sm outline-none border-2 transition-all focus:border-[#378ADD] shadow-md ${
-                isDark ? "bg-[#262624] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]" : "bg-white border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
+              className={`w-full pl-10 pr-10 py-3 rounded-full text-sm outline-none border transition-all shadow-sm ${
+                isDark
+                  ? "bg-[#0F4D8A]/20 border-[#378ADD]/30 text-[#D3D1C7] placeholder-[#6B8FAF] focus:bg-[#0F4D8A]/35 focus:border-[#378ADD]"
+                  : "bg-[#EBF4FF] border-[#378ADD]/30 text-[#1a3a5c] placeholder-[#7AAFD4] focus:bg-[#DBEEFF] focus:border-[#378ADD]"
               }`}
             />
             {search && (
@@ -713,9 +742,9 @@ export default function BuscarPerfiles() {
                   params.delete("q");
                   navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
                 }}
-                className={`absolute right-4 top-1/2 -translate-y-1/2 ${M} hover:text-red-400 transition-colors`}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#378ADD]/60 hover:text-red-400 transition-colors"
               >
-                <Icon icon="mdi:close-circle" width={18} />
+                <Icon icon="mdi:close-circle" width={16} />
               </button>
             )}
           </div>
@@ -870,6 +899,60 @@ export default function BuscarPerfiles() {
                 </Card>
               ))}
               {filteredVacantes.length === 0 && <EmptyState T={T} M={M} />}
+            </div>
+          )}
+
+          {/* Colegios */}
+          {tab === "colegios" && canSeeColegios && (
+            <div className="grid grid-cols-2 gap-4">
+              {filteredColegios.map((c) => (
+                <Card key={c.usuario_id} className="hover:border-[#378ADD] transition-colors">
+                  <div className="flex items-start gap-3 mb-3">
+                    {c.foto_perfil ? (
+                      <img src={getMediaUrl(c.foto_perfil)} className="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center flex-shrink-0 text-white font-bold text-sm">
+                        {c.nombre_institucion?.[0]?.toUpperCase() ?? "C"}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-semibold ${T} truncate`}>{c.nombre_institucion}</p>
+                      <p className={`text-xs ${M} flex items-center gap-1`}>
+                        <Icon icon="mdi:account-group-outline" width={12} />
+                        {c.total_estudiantes || 0} estudiante{c.total_estudiantes !== 1 ? "s" : ""}
+                      </p>
+                      {(c.comuna || c.region) && (
+                        <p className={`text-xs ${M} flex items-center gap-1`}>
+                          <Icon icon="mdi:map-marker-outline" width={11} />
+                          {[c.comuna, c.region].filter(Boolean).join(", ")}
+                        </p>
+                      )}
+                    </div>
+                    <Badge color="blue">Institución</Badge>
+                  </div>
+                  {c.descripcion && <p className={`text-xs ${M} mb-3 line-clamp-2`}>{c.descripcion}</p>}
+                  {c.telefono_contacto && (
+                    <div className={`flex items-center gap-1.5 text-xs ${M} mb-3`}>
+                      <Icon icon="mdi:phone-outline" width={13} />{c.telefono_contacto}
+                    </div>
+                  )}
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={() => handleContactarColegio(c.usuario_id)}
+                      disabled={contactandoId === c.usuario_id}
+                      className="flex-1 py-2 rounded-lg text-xs font-semibold bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                    >
+                      <Icon
+                        icon={contactandoId === c.usuario_id ? "mdi:loading" : "mdi:message-outline"}
+                        width={14}
+                        className={contactandoId === c.usuario_id ? "animate-spin" : ""}
+                      />
+                      {contactandoId === c.usuario_id ? "Conectando..." : "Contactar"}
+                    </button>
+                  </div>
+                </Card>
+              ))}
+              {filteredColegios.length === 0 && <EmptyState T={T} M={M} />}
             </div>
           )}
 

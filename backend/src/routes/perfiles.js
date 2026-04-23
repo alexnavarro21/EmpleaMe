@@ -212,6 +212,25 @@ router.get("/empresas", verificarToken, async (req, res) => {
   }
 });
 
+// GET /api/perfiles/colegios — lista para buscador (empresa y slep)
+router.get("/colegios", verificarToken, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT pc.usuario_id, pc.nombre_institucion, pc.descripcion, pc.telefono_contacto,
+              pc.region, pc.comuna, pc.foto_perfil, u.correo,
+              COUNT(pe.usuario_id) AS total_estudiantes
+       FROM perfiles_colegios pc
+       JOIN usuarios u ON u.id = pc.usuario_id
+       LEFT JOIN perfiles_estudiantes pe ON pe.colegio_id = pc.usuario_id
+       GROUP BY pc.usuario_id
+       ORDER BY pc.nombre_institucion`
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
 // GET /api/perfiles/estudiantes  — lista para buscador (incluye habilidades)
 // Query param opcional: ?colegio_id=X  → filtra solo estudiantes de esa institución
 router.get("/estudiantes", verificarToken, async (req, res) => {

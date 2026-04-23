@@ -185,6 +185,13 @@ export async function getEstudiantes(colegioId) {
   return data;
 }
 
+export async function getColegios() {
+  const res = await fetch(`${BASE_URL}/perfiles/colegios`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener colegios");
+  return data;
+}
+
 export async function getEstudianteById(id) {
   const res = await fetch(`${BASE_URL}/perfiles/estudiante/${id}`, {
     headers: authHeaders(),

@@ -75,6 +75,7 @@ const TIPO_CONFIG = {
   empresa:    { icon: "mdi:office-building-outline", label: "Empresa",    color: "bg-green-500/20 text-green-400" },
   vacante:    { icon: "mdi:briefcase-outline",       label: "Vacante",    color: "bg-orange-500/20 text-orange-400" },
   taller:     { icon: "mdi:school-outline",          label: "Taller",     color: "bg-purple-500/20 text-purple-400" },
+  colegio:    { icon: "mdi:domain",                  label: "Colegio",    color: "bg-teal-500/20 text-teal-400" },
 };
 
 export default function Layout() {
@@ -218,6 +219,8 @@ export default function Layout() {
       navigate(`${buscarPaths[role]}?q=${encodeURIComponent(item.nombre)}&cat=vacantes`);
     } else if (item.tipo === "taller") {
       navigate(`${buscarPaths[role]}?q=${encodeURIComponent(item.nombre)}&cat=talleres`);
+    } else if (item.tipo === "colegio") {
+      navigate(`${buscarPaths[role]}?q=${encodeURIComponent(item.nombre)}&cat=colegios`);
     }
   };
 
