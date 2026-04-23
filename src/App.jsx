@@ -24,6 +24,10 @@ import { Navigate } from "react-router-dom";
 import AdminMensajeria from "./pages/admin/Mensajeria";
 import AdminReportes from "./pages/admin/Reportes";
 
+import SlepPanel    from "./pages/slep/Panel";
+import SlepEmpresas from "./pages/slep/Empresas";
+import SlepColegios from "./pages/slep/Colegios";
+
 import BuscarPerfiles from "./pages/BuscarPerfiles";
 import PerfilEmpresaPublico from "./pages/PerfilEmpresaPublico";
 import Notificaciones from "./pages/Notificaciones";
@@ -79,7 +83,10 @@ export default function App() {
             <Route path="/admin/notificaciones" element={<Notificaciones />} />
 
             {/* SLEP */}
-            <Route path="/slep/inicio" element={<EstudianteDashboard />} />
+            <Route path="/slep/inicio"         element={<EstudianteDashboard />} />
+            <Route path="/slep/panel"          element={<SlepPanel />} />
+            <Route path="/slep/empresas"       element={<SlepEmpresas />} />
+            <Route path="/slep/colegios"       element={<SlepColegios />} />
             <Route path="/slep/notificaciones" element={<Notificaciones />} />
           </Route>
         </Routes>

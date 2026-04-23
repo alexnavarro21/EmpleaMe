@@ -989,6 +989,29 @@ export async function moderarContenido(contenido) {
   return res.json();
 }
 
+// ── SLEP ──────────────────────────────────────────────────────────────────────
+
+export async function getSlepStats() {
+  const res = await fetch(`${BASE_URL}/slep/stats`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener estadísticas");
+  return data;
+}
+
+export async function getSlepEmpresas() {
+  const res = await fetch(`${BASE_URL}/slep/empresas`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener empresas");
+  return data;
+}
+
+export async function getSlepColegios() {
+  const res = await fetch(`${BASE_URL}/slep/colegios`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener colegios");
+  return data;
+}
+
 // Lista de usuarios que sigue el usuario :id
 export async function getSiguiendo(usuarioId) {
   const res = await fetch(`${BASE_URL}/seguidores/${usuarioId}/siguiendo`, {

@@ -8,6 +8,7 @@ const profilePaths = {
   estudiante: "/estudiante/perfil",
   empresa: "/empresa/perfil",
   admin: "/admin/perfil",
+  slep: null,
 };
 
 const navLinks = {
@@ -31,7 +32,10 @@ const navLinks = {
     { to: "/admin/reportes", label: "Reportes" },
   ],
   slep: [
-    { to: "/slep/inicio", label: "Inicio" },
+    { to: "/slep/inicio",    label: "Inicio" },
+    { to: "/slep/panel",     label: "Panel" },
+    { to: "/slep/empresas",  label: "Empresas" },
+    { to: "/slep/colegios",  label: "Colegios" },
   ],
 };
 
