@@ -19,6 +19,10 @@ router.get("/estudiante/:id", verificarToken, async (req, res) => {
     if (perfil.length === 0)
       return res.status(404).json({ error: "Perfil no encontrado" });
 
+    // Admin solo puede ver estudiantes de su propia institución
+    if (req.usuario.rol === "colegio" && perfil[0].colegio_id !== req.usuario.id)
+      return res.status(403).json({ error: "No tienes acceso a este perfil" });
+
     const [habilidades] = await db.query(
       `SELECT h.id, h.nombre, h.categoria, he.nivel_dominio, he.porcentaje, he.esta_validada
        FROM habilidades_estudiantes he
@@ -208,9 +212,13 @@ router.get("/empresas", verificarToken, async (req, res) => {
   }
 });
 
-// GET /api/perfiles/estudiantes  — lista para buscador de empresas (incluye habilidades)
+// GET /api/perfiles/estudiantes  — lista para buscador (incluye habilidades)
+// Query param opcional: ?colegio_id=X  → filtra solo estudiantes de esa institución
 router.get("/estudiantes", verificarToken, async (req, res) => {
+  const { colegio_id } = req.query;
   try {
+    const whereClause = colegio_id ? "WHERE pe.colegio_id = ?" : "";
+    const params      = colegio_id ? [Number(colegio_id)] : [];
     const [rows] = await db.query(
       `SELECT pe.usuario_id, pe.nombre_completo, c.nombre AS carrera, pe.semestre,
               pe.promedio, pe.calificacion_docente, pe.biografia,
@@ -220,7 +228,9 @@ router.get("/estudiantes", verificarToken, async (req, res) => {
        LEFT JOIN carreras c ON c.id = pe.carrera_id
        LEFT JOIN habilidades_estudiantes he ON he.estudiante_id = pe.usuario_id
        LEFT JOIN habilidades h ON h.id = he.habilidad_id
-       GROUP BY pe.usuario_id`
+       ${whereClause}
+       GROUP BY pe.usuario_id`,
+      params
     );
     const result = rows.map((r) => ({
       ...r,

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PageHeader } from "../../components/ui";
-import { getUsuariosAdmin } from "../../services/api";
+import { getUsuariosAdmin, marcarEgresado } from "../../services/api";
 
 const roleColor = { estudiante: "blue", empresa: "orange", admin: "green" };
 const statusColor = { activo: "green", inactivo: "gray", pendiente: "yellow" };
@@ -12,6 +12,78 @@ function formatDate(iso) {
   if (!iso) return "—";
   const d = new Date(iso);
   return d.toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function AccionesEstudiante({ userId, isDark }) {
+  const [confirmar, setConfirmar] = useState(false);
+  const [estado, setEstado] = useState("idle"); // idle | loading | ok | error | no_registro
+  const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
+  const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
+  const BG = isDark ? "bg-[#262624]" : "bg-white";
+
+  const handleEgresar = async () => {
+    setEstado("loading");
+    try {
+      await marcarEgresado(userId);
+      setEstado("ok");
+      setConfirmar(false);
+    } catch (err) {
+      setEstado(err.message?.includes("No hay registro") ? "no_registro" : "error");
+      setConfirmar(false);
+    }
+  };
+
+  if (estado === "ok") {
+    return (
+      <div className="flex items-center gap-2">
+        <a href={`/admin/candidato/${userId}`} className="text-xs text-[#378ADD] hover:underline">Ver perfil</a>
+        <span className="text-xs text-green-500 flex items-center gap-1">
+          <Icon icon="mdi:check-circle-outline" width={13} />
+          Egresado
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <a href={`/admin/candidato/${userId}`} className="text-xs text-[#378ADD] hover:underline">Ver perfil</a>
+
+      {!confirmar ? (
+        <button
+          onClick={() => { setEstado("idle"); setConfirmar(true); }}
+          className={`text-xs flex items-center gap-1 px-2 py-1 rounded-lg border transition-colors ${
+            isDark
+              ? "border-[#3a3a38] text-[#B4B2A9] hover:border-amber-500/50 hover:text-amber-400"
+              : "border-[#D3D1C7] text-[#5F5E5A] hover:border-amber-400 hover:text-amber-600"
+          }`}
+        >
+          <Icon icon="mdi:school-outline" width={12} />
+          Marcar egresado
+        </button>
+      ) : (
+        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs ${B} ${BG}`}>
+          <span className={M}>¿Confirmar?</span>
+          <button
+            onClick={handleEgresar}
+            disabled={estado === "loading"}
+            className="text-amber-500 hover:text-amber-600 font-medium disabled:opacity-50"
+          >
+            {estado === "loading" ? <Icon icon="mdi:loading" width={12} className="animate-spin" /> : "Sí"}
+          </button>
+          <span className={M}>·</span>
+          <button onClick={() => setConfirmar(false)} className={`${M} hover:text-red-400`}>No</button>
+        </div>
+      )}
+
+      {estado === "no_registro" && (
+        <span className={`text-xs ${M}`}>Sin registro en curso</span>
+      )}
+      {estado === "error" && (
+        <span className="text-xs text-red-400">Error al registrar</span>
+      )}
+    </div>
+  );
 }
 
 export default function AdminUsuarios() {
@@ -131,9 +203,7 @@ export default function AdminUsuarios() {
                     <td className="px-5 py-3"><span className={`text-sm ${M}`}>{u.date}</span></td>
                     <td className="px-5 py-3">
                       {u.role === "estudiante" ? (
-                        <a href={`/admin/candidato/${u.id}`} className="text-xs text-[#378ADD] hover:underline">
-                          Ver perfil
-                        </a>
+                        <AccionesEstudiante userId={u.id} isDark={isDark} />
                       ) : (
                         <span className="text-xs text-[#888780]">—</span>
                       )}

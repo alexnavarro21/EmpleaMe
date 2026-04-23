@@ -322,8 +322,12 @@ export default function BuscarPerfiles() {
     role === "empresa" ? "/empresa/candidato" :
     role === "admin"   ? "/admin/candidato"   : "/estudiante/candidato";
 
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+
   useEffect(() => {
-    Promise.allSettled([getEstudiantes(), getEmpresas(), getVacantes(), getTalleres(true)])
+    // Admin solo ve estudiantes de su propia institución
+    const colegioFiltro = role === "admin" ? usuario.id : undefined;
+    Promise.allSettled([getEstudiantes(colegioFiltro), getEmpresas(), getVacantes(), getTalleres(true)])
       .then(([sts, cos, vacs, tals]) => {
         if (sts.status  === "fulfilled") setStudents(sts.value);
         if (cos.status  === "fulfilled") setCompanies(cos.value);

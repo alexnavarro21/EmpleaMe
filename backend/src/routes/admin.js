@@ -560,6 +560,38 @@ router.delete("/historial-academico/:id", ...auth, async (req, res) => {
   }
 });
 
+// PATCH /api/admin/historial-academico/:estudiante_id/egreso
+// Marca como egresado: busca la entrada del colegio sin fecha_fin y la cierra con el año actual.
+router.patch("/historial-academico/:estudiante_id/egreso", ...auth, async (req, res) => {
+  const { estudiante_id } = req.params;
+  try {
+    if (!await esMiEstudiante(estudiante_id, req.usuario.id))
+      return res.status(403).json({ error: "Estudiante no pertenece a tu institución" });
+
+    const [[colegio]] = await db.query(
+      "SELECT nombre_institucion FROM perfiles_colegios WHERE usuario_id = ?",
+      [req.usuario.id]
+    );
+    if (!colegio) return res.status(404).json({ error: "Perfil de colegio no encontrado" });
+
+    const [rows] = await db.query(
+      "SELECT id FROM historial_academico WHERE estudiante_id = ? AND institucion = ? AND fecha_fin IS NULL",
+      [estudiante_id, colegio.nombre_institucion]
+    );
+    if (rows.length === 0)
+      return res.status(404).json({ error: "No hay registro en curso para este estudiante en tu institución" });
+
+    const anioEgreso = new Date().getFullYear();
+    await db.query(
+      "UPDATE historial_academico SET fecha_fin = ? WHERE id IN (?)",
+      [anioEgreso, rows.map(r => r.id)]
+    );
+    res.json({ mensaje: "Egreso registrado", anio_egreso: anioEgreso, actualizados: rows.length });
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
 // ── Historial laboral ─────────────────────────────────────────────────────────
 
 // GET /api/admin/historial-laboral/:estudiante_id
