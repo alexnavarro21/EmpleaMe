@@ -4,47 +4,54 @@ const { verificarToken } = require("../middleware/auth");
 
 // GET /api/buscar/sugerencias?q=texto
 router.get("/sugerencias", verificarToken, async (req, res) => {
-  const q = (req.query.q || "").trim();
+  const q = (req.query.q || "").trim().toLowerCase();
   if (!q) return res.json([]);
 
-  const lim = 5;
   const like = `%${q}%`;
 
   try {
     const results = await Promise.allSettled([
       db.query(
         `SELECT pe.usuario_id AS id, pe.nombre_completo AS nombre,
-                c.nombre AS sub, 'estudiante' AS tipo
+                c.nombre AS sub, 'estudiante' AS tipo,
+                CASE WHEN LOWER(pe.nombre_completo) LIKE ? THEN 0 ELSE 1 END AS starts_with
          FROM perfiles_estudiantes pe
          LEFT JOIN carreras c ON c.id = pe.carrera_id
-         WHERE pe.nombre_completo LIKE ?
-         LIMIT ?`,
-        [like, lim]
+         WHERE LOWER(pe.nombre_completo) LIKE ?
+         ORDER BY starts_with ASC, pe.nombre_completo ASC
+         LIMIT 4`,
+        [`${q}%`, like]
       ),
       db.query(
         `SELECT emp.usuario_id AS id, emp.nombre_empresa AS nombre,
-                NULL AS sub, 'empresa' AS tipo
+                NULL AS sub, 'empresa' AS tipo,
+                CASE WHEN LOWER(emp.nombre_empresa) LIKE ? THEN 0 ELSE 1 END AS starts_with
          FROM perfiles_empresas emp
-         WHERE emp.nombre_empresa LIKE ?
-         LIMIT ?`,
-        [like, lim]
+         WHERE LOWER(emp.nombre_empresa) LIKE ?
+         ORDER BY starts_with ASC, emp.nombre_empresa ASC
+         LIMIT 4`,
+        [`${q}%`, like]
       ),
       db.query(
         `SELECT v.id, v.titulo AS nombre,
-                pe.nombre_empresa AS sub, 'vacante' AS tipo
+                pe.nombre_empresa AS sub, 'vacante' AS tipo,
+                CASE WHEN LOWER(v.titulo) LIKE ? THEN 0 ELSE 1 END AS starts_with
          FROM vacantes v
          JOIN perfiles_empresas pe ON pe.usuario_id = v.empresa_id
-         WHERE v.esta_activa = TRUE AND v.titulo LIKE ?
-         LIMIT ?`,
-        [like, lim]
+         WHERE v.esta_activa = TRUE AND LOWER(v.titulo) LIKE ?
+         ORDER BY starts_with ASC
+         LIMIT 4`,
+        [`${q}%`, like]
       ),
       db.query(
         `SELECT t.id, t.titulo AS nombre,
-                t.area AS sub, 'taller' AS tipo
+                t.area AS sub, 'taller' AS tipo,
+                CASE WHEN LOWER(t.titulo) LIKE ? THEN 0 ELSE 1 END AS starts_with
          FROM talleres t
-         WHERE t.esta_activo = TRUE AND t.titulo LIKE ?
-         LIMIT ?`,
-        [like, lim]
+         WHERE t.esta_activo = TRUE AND LOWER(t.titulo) LIKE ?
+         ORDER BY starts_with ASC
+         LIMIT 4`,
+        [`${q}%`, like]
       ),
     ]);
 
@@ -53,7 +60,19 @@ router.get("/sugerencias", verificarToken, async (req, res) => {
     const vacantes    = results[2].status === "fulfilled" ? results[2].value[0] : [];
     const talleres    = results[3].status === "fulfilled" ? results[3].value[0] : [];
 
-    res.json([...estudiantes, ...empresas, ...vacantes, ...talleres]);
+    // Intercalar resultados: primero el mejor de cada categoría, luego el resto
+    // Así siempre aparece al menos 1 resultado de la categoría más relevante
+    const intercalados = [];
+    const maxLen = Math.max(estudiantes.length, empresas.length, vacantes.length, talleres.length);
+    for (let i = 0; i < maxLen; i++) {
+      if (estudiantes[i]) intercalados.push(estudiantes[i]);
+      if (empresas[i])    intercalados.push(empresas[i]);
+      if (vacantes[i])    intercalados.push(vacantes[i]);
+      if (talleres[i])    intercalados.push(talleres[i]);
+    }
+
+    // Quitar campo auxiliar starts_with antes de enviar
+    res.json(intercalados.map(({ starts_with, ...item }) => item).slice(0, 8));
   } catch (err) {
     console.error("Error en /buscar/sugerencias:", err.message);
     res.json([]);
