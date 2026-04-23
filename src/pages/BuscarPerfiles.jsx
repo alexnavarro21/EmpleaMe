@@ -685,21 +685,37 @@ export default function BuscarPerfiles() {
 
         {/* ── Resultados ── */}
         <div className="col-span-3 flex flex-col gap-4">
-          {/* Barra de búsqueda — oculta: el navbar la reemplaza */}
-          <div className="relative hidden">
-            <Icon icon="mdi:search" width={18} className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${M}`} />
+          {/* Barra de búsqueda principal — grande, reemplaza a la del navbar */}
+          <div className="relative">
+            <Icon icon="mdi:magnify" width={20} className={`absolute left-4 top-1/2 -translate-y-1/2 ${M}`} />
             <input
               type="text"
-              placeholder={{ estudiantes: "Buscar por nombre o habilidad...", empresas: "Buscar por nombre o descripción...", vacantes: "Buscar por título, empresa o área...", talleres: "Buscar por título o área..." }[tab]}
+              autoFocus
+              placeholder={{ estudiantes: "Buscar estudiantes por nombre, habilidad...", empresas: "Buscar empresas por nombre o descripción...", vacantes: "Buscar vacantes por título, empresa o área...", talleres: "Buscar talleres por título o área..." }[tab]}
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className={`w-full pl-10 pr-10 py-3 rounded-xl text-sm outline-none border-2 transition-all focus:border-[#378ADD] shadow-sm ${
+              onChange={(e) => {
+                const val = e.target.value;
+                setSearch(val);
+                // Sincronizar con URL
+                const params = new URLSearchParams(location.search);
+                if (val.trim()) { params.set("q", val.trim()); } else { params.delete("q"); }
+                navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
+              }}
+              className={`w-full pl-11 pr-10 py-3.5 rounded-2xl text-sm outline-none border-2 transition-all focus:border-[#378ADD] shadow-md ${
                 isDark ? "bg-[#262624] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]" : "bg-white border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
               }`}
             />
             {search && (
-              <button onClick={() => setSearch("")} className={`absolute right-3.5 top-1/2 -translate-y-1/2 ${M} hover:text-red-400 transition-colors`}>
-                <Icon icon="mdi:close-circle" width={16} />
+              <button
+                onClick={() => {
+                  setSearch("");
+                  const params = new URLSearchParams(location.search);
+                  params.delete("q");
+                  navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
+                }}
+                className={`absolute right-4 top-1/2 -translate-y-1/2 ${M} hover:text-red-400 transition-colors`}
+              >
+                <Icon icon="mdi:close-circle" width={18} />
               </button>
             )}
           </div>

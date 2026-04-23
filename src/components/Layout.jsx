@@ -259,8 +259,8 @@ export default function Layout() {
             </div>
           </div>
 
-          {/* Centro: Barra de búsqueda */}
-          <div className="flex-shrink-0" ref={searchRef}>
+          {/* Centro: Barra de búsqueda — oculta en /buscar (aparece grande en la página) */}
+          <div className={`flex-shrink-0 transition-all ${isOnBuscar ? "opacity-0 pointer-events-none w-0 overflow-hidden" : ""}`} ref={searchRef}>
             <div className="relative">
               <form onSubmit={handleSearchSubmit}>
                 <div className="relative">
