@@ -21,6 +21,7 @@ const iaRoutes              = require("./src/routes/ia");
 const seguidoresRoutes      = require("./src/routes/seguidores");
 const reportesRoutes        = require("./src/routes/reportes");
 const slepRoutes            = require("./src/routes/slep");
+const buscarRoutes          = require("./src/routes/buscar");
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use("/api/ia",             iaRoutes);
 app.use("/api/seguidores",    seguidoresRoutes);
 app.use("/api/reportes",     reportesRoutes);
 app.use("/api/slep",         slepRoutes);
+app.use("/api/buscar",       buscarRoutes);
 
 app.get("/", (req, res) => res.json({ status: "EmpleaMe API corriendo" }));
 

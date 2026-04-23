@@ -284,13 +284,18 @@ export default function BuscarPerfiles() {
   const location  = useLocation();
   const navigate  = useNavigate();
 
-  const [tab,            setTab]            = useState("estudiantes");
+  const urlParams = new URLSearchParams(location.search);
+  const urlQ   = urlParams.get("q")   || "";
+  const urlCat = urlParams.get("cat") || "";
+
+  const VALID_CATS = ["estudiantes", "empresas", "vacantes", "talleres"];
+  const [tab,            setTab]            = useState(VALID_CATS.includes(urlCat) ? urlCat : "estudiantes");
   const [students,       setStudents]       = useState([]);
   const [companies,      setCompanies]      = useState([]);
   const [vacantes,       setVacantes]       = useState([]);
   const [talleres,       setTalleres]       = useState([]);
   const [loading,        setLoading]        = useState(true);
-  const [search,         setSearch]         = useState("");
+  const [search,         setSearch]         = useState(urlQ);
   const [selectedCareer, setSelectedCareer] = useState("Todas");
   const [minGpa,         setMinGpa]         = useState(1);
   const [selectedRegion, setSelectedRegion] = useState("");
