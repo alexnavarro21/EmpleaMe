@@ -136,10 +136,39 @@ export default function Layout() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const isOnBuscar = location.pathname.includes("/buscar");
+
+  // Cuando entramos/salimos de la página buscar, sincronizar el input con ?q=
+  useEffect(() => {
+    if (isOnBuscar) {
+      const params = new URLSearchParams(location.search);
+      setSearchQuery(params.get("q") || "");
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  }, [location.pathname, location.search]);
+
   const handleSearchChange = (e) => {
     const val = e.target.value;
     setSearchQuery(val);
     clearTimeout(debounceRef.current);
+
+    if (isOnBuscar) {
+      // En la página buscar: actualizar URL en tiempo real (sin dropdown)
+      setShowSuggestions(false);
+      debounceRef.current = setTimeout(() => {
+        const params = new URLSearchParams(location.search);
+        if (val.trim()) {
+          params.set("q", val.trim());
+        } else {
+          params.delete("q");
+        }
+        navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
+      }, 250);
+      return;
+    }
+
+    // Fuera de la página buscar: mostrar dropdown de sugerencias
     if (!val.trim()) {
       setSuggestions([]);
       setShowSuggestions(false);
@@ -171,11 +200,25 @@ export default function Layout() {
     setSearchQuery("");
   };
 
+  const candidatoPaths = {
+    admin: "/admin/candidato",
+    empresa: "/empresa/candidato",
+    slep: "/slep/candidato",
+    estudiante: "/estudiante/candidato",
+  };
+
   const handleSuggestionClick = (item) => {
     setShowSuggestions(false);
     setSearchQuery("");
-    const catMap = { estudiante: "estudiantes", empresa: "empresas", vacante: "vacantes", taller: "talleres" };
-    navigate(`${buscarPaths[role]}?q=${encodeURIComponent(item.nombre)}&cat=${catMap[item.tipo] || "estudiantes"}`);
+    if (item.tipo === "estudiante") {
+      navigate(`${candidatoPaths[role] || "/estudiante/candidato"}/${item.id}`);
+    } else if (item.tipo === "empresa") {
+      navigate(`/empresa-publica/${item.id}`);
+    } else if (item.tipo === "vacante") {
+      navigate(`${buscarPaths[role]}?q=${encodeURIComponent(item.nombre)}&cat=vacantes`);
+    } else if (item.tipo === "taller") {
+      navigate(`${buscarPaths[role]}?q=${encodeURIComponent(item.nombre)}&cat=talleres`);
+    }
   };
 
   const dropdownItemCls = `flex items-center gap-3 px-4 py-3 text-sm transition-colors ${

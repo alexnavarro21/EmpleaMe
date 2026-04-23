@@ -332,6 +332,12 @@ export default function BuscarPerfiles() {
 
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
+  // Sincronizar search con cambios en ?q= de la URL (cuando el navbar escribe)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    setSearch(params.get("q") || "");
+  }, [location.search]);
+
   useEffect(() => {
     const colegioFiltro = role === "admin" ? usuario.id : undefined;
     Promise.allSettled([getEstudiantes(colegioFiltro), getEmpresas(), getVacantes(), getTalleres(true)])
@@ -679,8 +685,8 @@ export default function BuscarPerfiles() {
 
         {/* ── Resultados ── */}
         <div className="col-span-3 flex flex-col gap-4">
-          {/* Barra de búsqueda */}
-          <div className="relative">
+          {/* Barra de búsqueda — oculta: el navbar la reemplaza */}
+          <div className="relative hidden">
             <Icon icon="mdi:search" width={18} className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${M}`} />
             <input
               type="text"
