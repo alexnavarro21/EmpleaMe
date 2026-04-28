@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DarkModeProvider } from "./context/DarkModeContext";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
@@ -17,7 +17,6 @@ import EmpresaMensajeria from "./pages/empresa/EmpresaMensajeria";
 
 import AdminPanel from "./pages/admin/Panel";
 import AdminPerfil from "./pages/admin/Perfil";
-import AdminUsuarios from "./pages/admin/Usuarios";
 import AdminEvaluaciones from "./pages/admin/Evaluaciones";
 import AdminTalleres from "./pages/admin/Talleres";
 import { Navigate } from "react-router-dom";
@@ -75,7 +74,7 @@ export default function App() {
             <Route path="/admin/inicio" element={<EstudianteDashboard />} />
             <Route path="/admin/perfil" element={<AdminPerfil />} />
             <Route path="/admin/panel" element={<AdminPanel />} />
-            <Route path="/admin/usuarios" element={<AdminUsuarios />} />
+            <Route path="/admin/usuarios" element={<Navigate to="/admin/evaluaciones" replace />} />
             <Route path="/admin/evaluaciones" element={<AdminEvaluaciones />} />
             <Route path="/admin/notas" element={<Navigate to="/admin/evaluaciones" replace />} />
             <Route path="/admin/tests" element={<Navigate to="/admin/evaluaciones" replace />} />

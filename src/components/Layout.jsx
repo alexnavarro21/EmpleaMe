@@ -23,7 +23,6 @@ const navLinks = {
   admin: [
     { to: "/admin/inicio", label: "Inicio" },
     { to: "/admin/panel", label: "Panel" },
-    { to: "/admin/usuarios", label: "Usuarios" },
     { to: "/admin/evaluaciones", label: "Estudiantes" },
     { to: "/admin/talleres", label: "Talleres" },
   ],

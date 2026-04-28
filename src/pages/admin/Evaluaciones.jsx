@@ -7,6 +7,7 @@ import {
 } from "../../components/ui";
 import {
   getUsuariosAdmin, getHabilidades, getEstudianteById,
+  marcarEgresado,
   guardarEvaluacion, getEvaluaciones,
   asignarHabilidadesTecnicas,
   subirExcelTests, subirExcelPromedios, subirExcelAlumnos,
@@ -171,6 +172,131 @@ function StudentSearch({ estudiantes, selectedId, onSelect, isDark }) {
 }
 
 // ── Tab components ────────────────────────────────────────────────────────────
+
+// ── TAB 0: Usuarios ───────────────────────────────────────────────────────────
+const roleColor = { estudiante: "blue", empresa: "orange", colegio: "green" };
+const roleIcon  = { estudiante: "mynaui:user-solid", empresa: "cuida:building-outline", colegio: "mingcute:settings-2-line" };
+function formatDate(iso) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" });
+}
+function AccionesEstudiante({ userId, isDark }) {
+  const [confirmar, setConfirmar] = useState(false);
+  const [estado, setEstado] = useState("idle");
+  const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
+  const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
+  const BG = isDark ? "bg-[#262624]" : "bg-white";
+  const handleEgresar = async () => {
+    setEstado("loading");
+    try { await marcarEgresado(userId); setEstado("ok"); setConfirmar(false); }
+    catch (err) { setEstado(err.message?.includes("No hay registro") ? "no_registro" : "error"); setConfirmar(false); }
+  };
+  if (estado === "ok") return (
+    <div className="flex items-center gap-2">
+      <a href={`/admin/candidato/${userId}`} className="text-xs text-[#378ADD] hover:underline">Ver perfil</a>
+      <span className="text-xs text-green-500 flex items-center gap-1"><Icon icon="mdi:check-circle-outline" width={13} />Egresado</span>
+    </div>
+  );
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <a href={`/admin/candidato/${userId}`} className="text-xs text-[#378ADD] hover:underline">Ver perfil</a>
+      {!confirmar ? (
+        <button onClick={() => { setEstado("idle"); setConfirmar(true); }}
+          className={`text-xs flex items-center gap-1 px-2 py-1 rounded-lg border transition-colors ${isDark ? "border-[#3a3a38] text-[#B4B2A9] hover:border-amber-500/50 hover:text-amber-400" : "border-[#D3D1C7] text-[#5F5E5A] hover:border-amber-400 hover:text-amber-600"}`}>
+          <Icon icon="mdi:school-outline" width={12} />Marcar egresado
+        </button>
+      ) : (
+        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs ${B} ${BG}`}>
+          <span className={M}>¿Confirmar?</span>
+          <button onClick={handleEgresar} disabled={estado === "loading"} className="text-amber-500 hover:text-amber-600 font-medium disabled:opacity-50">
+            {estado === "loading" ? <Icon icon="mdi:loading" width={12} className="animate-spin" /> : "Sí"}
+          </button>
+          <span className={M}>·</span>
+          <button onClick={() => setConfirmar(false)} className={`${M} hover:text-red-400`}>No</button>
+        </div>
+      )}
+      {estado === "no_registro" && <span className={`text-xs ${M}`}>Sin registro en curso</span>}
+      {estado === "error"       && <span className="text-xs text-red-400">Error al registrar</span>}
+    </div>
+  );
+}
+function TabUsuarios({ rawUsers, isDark }) {
+  const [search, setSearch]         = useState("");
+  const [roleFilter, setRoleFilter] = useState("todos");
+  const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
+  const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
+  const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
+  const S = isDark ? "bg-[#313130]" : "bg-[#F7F6F3]";
+
+  const filtered = rawUsers.filter((u) => {
+    const name = u.nombre || u.correo || "";
+    const matchSearch = name.toLowerCase().includes(search.toLowerCase()) || u.correo.toLowerCase().includes(search.toLowerCase());
+    const matchRole   = roleFilter === "todos" || u.rol === roleFilter;
+    return matchSearch && matchRole;
+  });
+
+  return (
+    <Card className="p-0 overflow-hidden">
+      <div className={`flex items-center gap-3 p-4 border-b ${B} flex-wrap`}>
+        <div className="relative flex-1 min-w-48">
+          <Icon icon="mdi:search" width={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${M}`} />
+          <input type="text" placeholder="Buscar por nombre o email..." value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className={`w-full pl-8 pr-3 py-2 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"}`} />
+        </div>
+        <div className="flex gap-1">
+          {["todos", "estudiante"].map((r) => (
+            <button key={r} onClick={() => setRoleFilter(r)}
+              className={`text-xs px-3 py-1.5 rounded-lg capitalize transition-colors ${roleFilter === r ? "bg-[#0F4D8A] text-[#E6F1FB]" : `${S} ${M} hover:bg-[#0F4D8A]/10`}`}>
+              {r}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        {filtered.length === 0 ? (
+          <div className={`text-center py-12 ${M}`}>
+            <Icon icon="mdi:search" width={40} className="mx-auto mb-3" />
+            <p className={`text-sm ${T}`}>No se encontraron usuarios</p>
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className={`border-b ${B} ${S}`}>
+                {["Usuario", "Email", "Carrera", "Rol", "Registro", "Acciones"].map((h) => (
+                  <th key={h} className={`text-left text-xs font-medium ${M} px-5 py-3`}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((u) => (
+                <tr key={`${u.rol}-${u.id}`} className={`border-b ${B} last:border-0 transition-colors ${isDark ? "hover:bg-[#313130]/50" : "hover:bg-[#F7F6F3]"}`}>
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
+                        <Icon icon={roleIcon[u.rol] || "mdi:account-outline"} width={16} className="text-[#378ADD]" />
+                      </div>
+                      <span className={`text-sm font-medium ${T}`}>{u.nombre || u.correo}</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3"><span className={`text-sm ${M}`}>{u.correo}</span></td>
+                  <td className="px-5 py-3"><span className={`text-sm ${M}`}>{u.carrera || "—"}</span></td>
+                  <td className="px-5 py-3"><Badge color={roleColor[u.rol] || "gray"}>{u.rol}</Badge></td>
+                  <td className="px-5 py-3"><span className={`text-sm ${M}`}>{formatDate(u.fecha_creacion)}</span></td>
+                  <td className="px-5 py-3">
+                    {u.rol === "estudiante"
+                      ? <AccionesEstudiante userId={u.id} isDark={isDark} />
+                      : <span className="text-xs text-[#888780]">—</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </Card>
+  );
+}
 
 // TAB 1: Editar estudiante (técnicas, blandas, idiomas, historial)
 function TabEditarEstudiante({ estudiantes, habilidades, isDark }) {
@@ -1435,19 +1561,21 @@ function TabCrearAlumnos({ isDark }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 const TABS = [
+  { key: "usuarios",          label: "Usuarios",              icon: "mdi:account-group-outline" },
   { key: "editar_estudiante", label: "Editar estudiante",     icon: "mdi:account-edit-outline" },
   { key: "evaluacion",        label: "Evaluación estudiante", icon: "mdi:clipboard-list-outline" },
   { key: "tests",             label: "Tests socioemocionales",icon: "hugeicons:brain-02" },
   { key: "promedios",         label: "Promedios académicos",  icon: "mdi:school-outline" },
   { key: "habilidades",       label: "Habilidades",           icon: "mdi:tag-multiple-outline" },
-  { key: "crear_alumnos",    label: "Crear alumnos",         icon: "mdi:account-multiple-plus-outline" },
+  { key: "crear_alumnos",     label: "Crear alumnos",         icon: "mdi:account-multiple-plus-outline" },
 ];
 
 export default function GestionEstudiantes() {
   const { isDark } = useDark();
-  const [tab, setTab] = useState("editar_estudiante");
-  const [estudiantes, setEstudiantes] = useState([]);
-  const [habilidades, setHabilidades]  = useState([]);
+  const [tab, setTab] = useState("usuarios");
+  const [rawUsers, setRawUsers]         = useState([]);
+  const [estudiantes, setEstudiantes]   = useState([]);
+  const [habilidades, setHabilidades]   = useState([]);
   const [loading, setLoading] = useState(true);
 
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
@@ -1458,12 +1586,10 @@ export default function GestionEstudiantes() {
   useEffect(() => {
     Promise.all([getUsuariosAdmin(), getHabilidades()])
       .then(([ests, habs]) => {
-        // Normalizar al formato que espera StudentSearch: usuario_id + nombre_completo
-        const normalizados = ests.map((e) => ({
-          usuario_id: e.id,
-          nombre_completo: e.nombre,
-          carrera: e.carrera,
-        }));
+        setRawUsers(ests);
+        const normalizados = ests
+          .filter((e) => e.rol === "estudiante")
+          .map((e) => ({ usuario_id: e.id, nombre_completo: e.nombre, carrera: e.carrera }));
         setEstudiantes(normalizados);
         setHabilidades(habs);
       })
@@ -1502,6 +1628,7 @@ export default function GestionEstudiantes() {
         </div>
       ) : (
         <>
+          {tab === "usuarios"          && <TabUsuarios        rawUsers={rawUsers} isDark={isDark} />}
           {tab === "editar_estudiante" && <TabEditarEstudiante estudiantes={estudiantes} habilidades={habilidades} isDark={isDark} />}
           {tab === "evaluacion"        && <TabEvaluacion      estudiantes={estudiantes} habilidades={habilidades} isDark={isDark} />}
           {tab === "tests"             && <TabTests  isDark={isDark} />}
