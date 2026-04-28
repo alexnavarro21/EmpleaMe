@@ -7,7 +7,7 @@ import FileUploader from "../../components/FileUploader";
 import {
   getTalleres, crearTaller, actualizarTaller, toggleTaller, eliminarTaller,
   getInscritosTaller, getInscritosPendientesTalleres, actualizarEstadoInscripcion,
-  moderarContenido,
+  moderarContenido, getColegioById,
 } from "../../services/api";
 
 const MODALIDADES = ["presencial", "remoto", "hibrido"];
@@ -36,7 +36,7 @@ function tiempoRelativo(fecha) {
 }
 
 // ── Preview del post en el muro ───────────────────────────────────────────────
-function TallerPreview({ form, isDark }) {
+function TallerPreview({ form, isDark, colegioNombre }) {
   const T  = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M  = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B  = isDark ? "border-[#3a3a38]" : "border-[#E8E6E1]";
@@ -53,7 +53,7 @@ function TallerPreview({ form, isDark }) {
             <Icon icon="mdi:school-outline" width={20} className="text-white" />
           </div>
           <div>
-            <p className={`text-sm font-semibold leading-tight ${T}`}>C.E. Cardenal J.M. Caro</p>
+            <p className={`text-sm font-semibold leading-tight ${T}`}>{colegioNombre || "Mi centro educacional"}</p>
             <p className={`text-xs ${M}`}>Ahora mismo</p>
           </div>
         </div>
@@ -370,7 +370,7 @@ function TallerForm({ taller, onGuardar, onCancelar, isDark }) {
           <Card>
             <p className={`text-sm font-semibold ${T} mb-1`}>Vista previa del post</p>
             <p className={`text-xs ${M} mb-3`}>Así verán los estudiantes el taller en el muro</p>
-            <TallerPreview form={{ ...form, previewMedia: previewUrl && !quitarMedia ? previewUrl : null }} isDark={isDark} />
+            <TallerPreview form={{ ...form, previewMedia: previewUrl && !quitarMedia ? previewUrl : null }} isDark={isDark} colegioNombre={colegioNombre} />
           </Card>
           <Card>
             <p className={`text-sm font-medium ${T} mb-2`}>Consejos</p>
@@ -529,6 +529,8 @@ export default function AdminTalleres() {
   const S  = isDark ? "bg-[#313130]" : "bg-[#F7F6F3]";
   const BG = isDark ? "bg-[#262624]" : "bg-white";
 
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+  const [colegioNombre, setColegioNombre] = useState("");
   const [talleres, setTalleres] = useState([]);
   const [inscritosPendientes, setInscritosPendientes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -552,7 +554,12 @@ export default function AdminTalleres() {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { cargar(); }, []);
+  useEffect(() => {
+    cargar();
+    if (usuario.id) {
+      getColegioById(usuario.id).then((c) => setColegioNombre(c.nombre_institucion || "")).catch(() => {});
+    }
+  }, []);
 
   const handleGuardar = async (datos, archivo, quitarMedia) => {
     if (vista && vista !== "nuevo" && vista !== "panel") {
@@ -629,7 +636,7 @@ export default function AdminTalleres() {
     <div>
       <PageHeader
         title="Panel de Talleres"
-        subtitle="C.E. Cardenal J.M. Caro"
+        subtitle={colegioNombre}
         action={
           <button
             onClick={() => setVista("nuevo")}

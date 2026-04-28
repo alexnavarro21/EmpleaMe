@@ -5,6 +5,7 @@
  *
  * datos: {
  *   nombre, carrera, telefono, correo, region, comuna, rut, biografia, promedio, fotoUrl,
+ *   colegio_nombre,
  *   idiomas: [{ idioma, nivel }],
  *   habilidadesBlandas:  [{ nombre }],
  *   habilidadesTecnicas: [{ nombre }],
@@ -86,6 +87,7 @@ function buildCVHtml(datos) {
     biografia         = "",
     promedio          = "",
     fotoUrl           = null,
+    colegio_nombre    = "",
     idiomas           = [],
     habilidadesBlandas  = [],
     habilidadesTecnicas = [],
@@ -180,21 +182,36 @@ function buildCVHtml(datos) {
     expHtml = mainSection("Experiencia Profesional", items);
   }
 
-  const formItems = [`<div style="margin-bottom:11px;">
+  // Solo agrega la entrada del perfil si el historial académico no tiene ya
+  // una entrada del mismo colegio (para evitar duplicados).
+  const colegioYaEnHistorial = colegio_nombre &&
+    formacion.some(f => f.institucion?.toLowerCase().trim() === colegio_nombre.toLowerCase().trim());
+
+  const formItems = [];
+
+  if (!colegioYaEnHistorial && carreraDisplay) {
+    formItems.push(`<div style="margin-bottom:11px;">
     <div style="font-size:12.5px;font-weight:700;color:${C.textDark};">${carreraDisplay}</div>
     <div style="font-size:10.5px;font-style:italic;margin-top:2px;">
-      <strong style="color:${C.textDark};">C.E. Cardenal J.M. Caro</strong>
+      ${colegio_nombre ? `<strong style="color:${C.textDark};">${colegio_nombre}</strong>` : ""}
       ${promedio ? `<span style="color:${C.textGray};"> | Promedio: ${promedio}</span>` : ""}
     </div>
-  </div>`];
+  </div>`);
+  }
 
   formacion.forEach(f => {
     const periodo = f.fecha_inicio ? `${f.fecha_inicio}${f.fecha_fin ? ` – ${f.fecha_fin}` : ""}` : "";
+    // Si esta entrada es del colegio actual, agrega el promedio del perfil si el historial no lo tiene
+    const esColegioPrincipal = colegio_nombre &&
+      f.institucion?.toLowerCase().trim() === colegio_nombre.toLowerCase().trim();
+    const promedioExtra = esColegioPrincipal && promedio && !f.promedio
+      ? `<span style="color:${C.textGray};"> | Promedio: ${promedio}</span>`
+      : "";
     formItems.push(`<div style="margin-bottom:11px;">
       <div style="font-size:12.5px;font-weight:700;color:${C.textDark};">${f.titulo}</div>
       <div style="font-size:10.5px;font-style:italic;margin-top:2px;">
         <strong style="color:${C.textDark};">${f.institucion}</strong>
-        ${periodo ? `<span style="color:${C.textGray};"> | ${periodo}</span>` : ""}
+        ${periodo ? `<span style="color:${C.textGray};"> | ${periodo}</span>` : ""}${promedioExtra}
       </div>
     </div>`);
   });
@@ -258,7 +275,7 @@ function buildCVHtml(datos) {
       <!-- Footer -->
       <div style="font-size:7.5px;color:#bbb;text-align:center;padding:6px 0 8px;
                   background:#fff;letter-spacing:1px;border-top:1px solid #f0f0f0;">
-        GENERADO POR EMPLEAME · C.E. CARDENAL J.M. CARO
+        GENERADO POR EMPLEAME${colegio_nombre ? ` · ${colegio_nombre.toUpperCase()}` : ""}
       </div>
     </div>`;
 }

@@ -49,8 +49,10 @@ router.get("/", verificarToken, async (req, res) => {
     const soloActivos = todos !== "1" || req.usuario.rol !== "admin";
     const [rows] = await db.query(
       `SELECT t.*,
+              pc.nombre_institucion,
               (SELECT COUNT(*) FROM inscripciones_talleres i WHERE i.taller_id = t.id) AS total_inscritos
        FROM talleres t
+       LEFT JOIN perfiles_colegios pc ON pc.usuario_id = t.colegio_id
        ${soloActivos ? "WHERE t.esta_activo = TRUE" : ""}
        ORDER BY t.creado_en DESC`
     );
@@ -73,9 +75,10 @@ router.post("/", verificarToken, soloRol("colegio"), uploadMulti, async (req, re
   const url_multimedia = req.file ? `/api/media/${req.file.key}` : null;
   try {
     const [result] = await db.query(
-      `INSERT INTO talleres (titulo, descripcion, requisitos, area, modalidad, duracion, horario, costo, direccion, fecha_inicio, fecha_limite, cupos, permite_inscripcion, url_multimedia)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO talleres (colegio_id, titulo, descripcion, requisitos, area, modalidad, duracion, horario, costo, direccion, fecha_inicio, fecha_limite, cupos, permite_inscripcion, url_multimedia)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
+        req.usuario.id,
         titulo,
         descripcion || null,
         requisitos  || null,

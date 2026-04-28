@@ -16,12 +16,19 @@ import EmpresaCandidato from "./pages/empresa/PerfilCandidato";
 import EmpresaMensajeria from "./pages/empresa/EmpresaMensajeria";
 
 import AdminPanel from "./pages/admin/Panel";
+import AdminPerfil from "./pages/admin/Perfil";
 import AdminUsuarios from "./pages/admin/Usuarios";
 import AdminEvaluaciones from "./pages/admin/Evaluaciones";
 import AdminTalleres from "./pages/admin/Talleres";
 import { Navigate } from "react-router-dom";
 import AdminMensajeria from "./pages/admin/Mensajeria";
 import AdminReportes from "./pages/admin/Reportes";
+
+import SlepPanel      from "./pages/slep/Panel";
+import SlepEmpresas   from "./pages/slep/Empresas";
+import SlepColegios   from "./pages/slep/Colegios";
+import SlepReportes   from "./pages/slep/Reportes";
+import SlepMensajeria from "./pages/slep/Mensajeria";
 
 import BuscarPerfiles from "./pages/BuscarPerfiles";
 import PerfilEmpresaPublico from "./pages/PerfilEmpresaPublico";
@@ -64,6 +71,7 @@ export default function App() {
 
             {/* Colegio (ex Admin) */}
             <Route path="/admin/inicio" element={<EstudianteDashboard />} />
+            <Route path="/admin/perfil" element={<AdminPerfil />} />
             <Route path="/admin/panel" element={<AdminPanel />} />
             <Route path="/admin/usuarios" element={<AdminUsuarios />} />
             <Route path="/admin/evaluaciones" element={<AdminEvaluaciones />} />
@@ -77,7 +85,14 @@ export default function App() {
             <Route path="/admin/notificaciones" element={<Notificaciones />} />
 
             {/* SLEP */}
-            <Route path="/slep/inicio" element={<EstudianteDashboard />} />
+            <Route path="/slep/inicio"         element={<EstudianteDashboard />} />
+            <Route path="/slep/panel"          element={<SlepPanel />} />
+            <Route path="/slep/empresas"       element={<SlepEmpresas />} />
+            <Route path="/slep/colegios"       element={<SlepColegios />} />
+            <Route path="/slep/reportes"       element={<SlepReportes />} />
+            <Route path="/slep/candidato/:id"  element={<EmpresaCandidato />} />
+            <Route path="/slep/buscar"          element={<BuscarPerfiles />} />
+            <Route path="/slep/mensajeria"     element={<SlepMensajeria />} />
             <Route path="/slep/notificaciones" element={<Notificaciones />} />
           </Route>
         </Routes>

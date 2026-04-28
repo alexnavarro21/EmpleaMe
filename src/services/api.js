@@ -175,12 +175,20 @@ export async function getEmpresas() {
   return data; // [{ usuario_id, nombre_empresa, descripcion, telefono_contacto, total_vacantes }]
 }
 
-export async function getEstudiantes() {
-  const res = await fetch(`${BASE_URL}/perfiles/estudiantes`, {
-    headers: authHeaders(),
-  });
+export async function getEstudiantes(colegioId) {
+  const url = colegioId
+    ? `${BASE_URL}/perfiles/estudiantes?colegio_id=${colegioId}`
+    : `${BASE_URL}/perfiles/estudiantes`;
+  const res = await fetch(url, { headers: authHeaders() });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al obtener estudiantes");
+  return data;
+}
+
+export async function getColegios() {
+  const res = await fetch(`${BASE_URL}/perfiles/colegios`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener colegios");
   return data;
 }
 
@@ -204,6 +212,26 @@ export async function getEmpresaById(id) {
 
 export async function actualizarPerfilEmpresa(id, datos) {
   const res = await fetch(`${BASE_URL}/perfiles/empresa/${id}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al actualizar perfil");
+  return data;
+}
+
+export async function getColegioById(id) {
+  const res = await fetch(`${BASE_URL}/perfiles/colegio/${id}`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener perfil");
+  return data;
+}
+
+export async function actualizarPerfilColegio(id, datos) {
+  const res = await fetch(`${BASE_URL}/perfiles/colegio/${id}`, {
     method: "PUT",
     headers: authHeaders(),
     body: JSON.stringify(datos),
@@ -561,6 +589,16 @@ export async function getUsuariosAdmin() {
   const res = await fetch(`${BASE_URL}/admin/usuarios`, { headers: authHeaders() });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al obtener usuarios");
+  return data;
+}
+
+export async function marcarEgresado(estudianteId) {
+  const res = await fetch(`${BASE_URL}/admin/historial-academico/${estudianteId}/egreso`, {
+    method: "PATCH",
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al registrar egreso");
   return data;
 }
 
@@ -956,6 +994,56 @@ export async function moderarContenido(contenido) {
   });
   if (!res.ok) return { aprobado: true };
   return res.json();
+}
+
+// ── SLEP ──────────────────────────────────────────────────────────────────────
+
+export async function getSlepStats() {
+  const res = await fetch(`${BASE_URL}/slep/stats`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener estadísticas");
+  return data;
+}
+
+export async function getSlepEmpresas() {
+  const res = await fetch(`${BASE_URL}/slep/empresas`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener empresas");
+  return data;
+}
+
+export async function getSlepColegios() {
+  const res = await fetch(`${BASE_URL}/slep/colegios`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener colegios");
+  return data;
+}
+
+export async function getSlepReportes(estado = "pendiente") {
+  const res = await fetch(`${BASE_URL}/slep/reportes?estado=${estado}`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener reportes");
+  return data;
+}
+
+export async function actualizarSlepReporte(id, estado) {
+  const res = await fetch(`${BASE_URL}/slep/reportes/${id}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify({ estado }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al actualizar reporte");
+  return data;
+}
+
+export async function eliminarContenidoSlepReporte(id) {
+  const res = await fetch(`${BASE_URL}/slep/reportes/${id}/contenido`, {
+    method: "DELETE", headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al eliminar contenido");
+  return data;
 }
 
 // Lista de usuarios que sigue el usuario :id

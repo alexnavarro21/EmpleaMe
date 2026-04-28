@@ -362,6 +362,7 @@ CREATE TABLE IF NOT EXISTS notificaciones (
 -- 30. Talleres (publicados por el centro)
 CREATE TABLE IF NOT EXISTS talleres (
   id                 INT AUTO_INCREMENT PRIMARY KEY,
+  colegio_id         INT,
   titulo             VARCHAR(200) NOT NULL,
   descripcion        TEXT,
   requisitos         TEXT,
@@ -377,7 +378,8 @@ CREATE TABLE IF NOT EXISTS talleres (
   esta_activo        BOOLEAN DEFAULT TRUE,
   permite_inscripcion BOOLEAN DEFAULT TRUE,
   url_multimedia     VARCHAR(500) DEFAULT NULL,
-  creado_en          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  creado_en          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (colegio_id) REFERENCES usuarios(id) ON DELETE SET NULL
 );
 
 -- 31. Inscripciones a talleres
