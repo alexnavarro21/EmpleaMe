@@ -142,7 +142,7 @@ function TallerPreview({ form, isDark, colegioNombre }) {
 }
 
 // ── Formulario crear/editar (página completa) ─────────────────────────────────
-function TallerForm({ taller, onGuardar, onCancelar, isDark }) {
+function TallerForm({ taller, onGuardar, onCancelar, isDark, colegioNombre }) {
   const T  = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M  = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B  = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
@@ -608,6 +608,7 @@ export default function AdminTalleres() {
         onGuardar={handleGuardar}
         onCancelar={() => setVista("panel")}
         isDark={isDark}
+        colegioNombre={colegioNombre}
       />
     );
   }
