@@ -1126,9 +1126,12 @@ export default function EstudianteDashboard() {
             <div className="h-16 bg-gradient-to-r from-[#0A3A6A] to-[#0F4D8A]" />
             <div className="px-4 pb-4">
               <div className="-mt-7 mb-3">
-                <div className="w-14 h-14 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xl font-bold border-2 border-white">
-                  <Icon icon="mdi:shield-account-outline" width={28} />
-                </div>
+                <Avatar
+                  initial={(adminColegio?.nombre_institucion || "C")[0].toUpperCase()}
+                  color="bg-[#0F4D8A]"
+                  size="lg"
+                  foto={adminColegio?.foto_perfil}
+                />
               </div>
               <p className={`text-sm font-semibold ${T}`}>{adminColegio?.nombre_institucion || "Centro educacional"}</p>
               <p className={`text-xs ${M} mt-0.5`}>Administrador del sistema</p>

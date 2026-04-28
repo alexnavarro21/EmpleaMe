@@ -100,10 +100,16 @@ export default function Layout() {
     : "estudiante";
   const usuarioId = usuario.id;
 
-  const [fotoPerfil, setFotoPerfil] = useState(() => {
-    const raw = localStorage.getItem(`foto_perfil_${usuarioId}`) || "";
-    return raw ? (raw.startsWith("http") ? raw : `${BASE_ORIGIN}${raw}`) : null;
-  });
+  const resolverFoto = (raw) => {
+    if (!raw) return null;
+    if (raw.startsWith("http")) return raw;
+    if (raw.startsWith("/")) return `${BASE_ORIGIN}${raw}`;
+    return `${BASE_ORIGIN}/uploads/${raw}`;
+  };
+
+  const [fotoPerfil, setFotoPerfil] = useState(() =>
+    resolverFoto(localStorage.getItem(`foto_perfil_${usuarioId}`) || "")
+  );
 
   // Search bar state
   const [searchQuery, setSearchQuery] = useState("");
@@ -123,7 +129,7 @@ export default function Layout() {
       .then((data) => {
         const raw = data.foto_perfil || "";
         localStorage.setItem(`foto_perfil_${usuarioId}`, raw);
-        setFotoPerfil(raw ? (raw.startsWith("http") ? raw : `${BASE_ORIGIN}${raw}`) : null);
+        setFotoPerfil(resolverFoto(raw));
       })
       .catch(() => {});
   }, [usuarioId, role]);
@@ -133,8 +139,24 @@ export default function Layout() {
       if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
       if (searchRef.current && !searchRef.current.contains(e.target)) setShowSuggestions(false);
     }
+    function handleStorageChange(e) {
+      if (e.key === `foto_perfil_${usuarioId}`) {
+        setFotoPerfil(resolverFoto(e.newValue || ""));
+      }
+    }
+    function handleFotoUpdate(e) {
+      if (e.detail?.key === `foto_perfil_${usuarioId}`) {
+        setFotoPerfil(resolverFoto(e.detail.value || ""));
+      }
+    }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("foto_perfil_updated", handleFotoUpdate);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("foto_perfil_updated", handleFotoUpdate);
+    };
   }, []);
 
   const isOnBuscar = location.pathname.includes("/buscar");

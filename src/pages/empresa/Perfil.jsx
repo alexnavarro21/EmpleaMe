@@ -141,7 +141,8 @@ export default function EmpresaPerfil() {
                       try {
                         const { foto_perfil } = await subirFotoPerfil(file);
                         setFotoPerfil(foto_perfil);
-                        localStorage.setItem(`foto_perfil_${usuario.id}`,foto_perfil || "");
+                        localStorage.setItem(`foto_perfil_${usuario.id}`, foto_perfil || "");
+                        window.dispatchEvent(new CustomEvent("foto_perfil_updated", { detail: { key: `foto_perfil_${usuario.id}`, value: foto_perfil || "" } }));
                       } catch (err) {
                         setSaveMsg("Error al subir foto: " + err.message);
                       } finally {
