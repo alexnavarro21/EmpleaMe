@@ -247,9 +247,8 @@ function AccionesEstudiante({ userId, isDark, onEliminado }) {
   );
 }
 function TabUsuarios({ rawUsers, isDark }) {
-  const [search, setSearch]         = useState("");
-  const [roleFilter, setRoleFilter] = useState("todos");
-  const [users, setUsers]           = useState(rawUsers);
+  const [search, setSearch] = useState("");
+  const [users, setUsers]   = useState(rawUsers);
   const handleEliminado = (id) => setUsers((prev) => prev.filter((u) => u.id !== id));
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -258,63 +257,50 @@ function TabUsuarios({ rawUsers, isDark }) {
 
   const filtered = users.filter((u) => {
     const name = u.nombre || u.correo || "";
-    const matchSearch = name.toLowerCase().includes(search.toLowerCase()) || u.correo.toLowerCase().includes(search.toLowerCase());
-    const matchRole   = roleFilter === "todos" || u.rol === roleFilter;
-    return matchSearch && matchRole;
+    return name.toLowerCase().includes(search.toLowerCase()) || u.correo.toLowerCase().includes(search.toLowerCase());
   });
 
   return (
     <Card className="p-0 overflow-hidden">
-      <div className={`flex items-center gap-3 p-4 border-b ${B} flex-wrap`}>
-        <div className="relative flex-1 min-w-48">
+      <div className={`flex items-center gap-3 p-4 border-b ${B}`}>
+        <div className="relative flex-1">
           <Icon icon="mdi:search" width={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${M}`} />
           <input type="text" placeholder="Buscar por nombre o email..." value={search}
             onChange={(e) => setSearch(e.target.value)}
             className={`w-full pl-8 pr-3 py-2 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"}`} />
-        </div>
-        <div className="flex gap-1">
-          {["todos", "estudiante"].map((r) => (
-            <button key={r} onClick={() => setRoleFilter(r)}
-              className={`text-xs px-3 py-1.5 rounded-lg capitalize transition-colors ${roleFilter === r ? "bg-[#0F4D8A] text-[#E6F1FB]" : `${S} ${M} hover:bg-[#0F4D8A]/10`}`}>
-              {r}
-            </button>
-          ))}
         </div>
       </div>
       <div className="overflow-x-auto">
         {filtered.length === 0 ? (
           <div className={`text-center py-12 ${M}`}>
             <Icon icon="mdi:search" width={40} className="mx-auto mb-3" />
-            <p className={`text-sm ${T}`}>No se encontraron usuarios</p>
+            <p className={`text-sm ${T}`}>No se encontraron estudiantes</p>
           </div>
         ) : (
           <table className="w-full">
             <thead>
               <tr className={`border-b ${B} ${S}`}>
-                {["Usuario", "Email", "Carrera", "Rol", "Registro", "Acciones"].map((h) => (
+                {["Estudiante", "Email", "Carrera", "Registro", "Acciones"].map((h) => (
                   <th key={h} className={`text-left text-xs font-medium ${M} px-5 py-3`}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {filtered.map((u) => (
-                <tr key={`${u.rol}-${u.id}`} className={`border-b ${B} last:border-0 transition-colors ${isDark ? "hover:bg-[#313130]/50" : "hover:bg-[#F7F6F3]"}`}>
+                <tr key={u.id} className={`border-b ${B} last:border-0 transition-colors ${isDark ? "hover:bg-[#313130]/50" : "hover:bg-[#F7F6F3]"}`}>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
-                        <Icon icon={roleIcon[u.rol] || "mdi:account-outline"} width={16} className="text-[#378ADD]" />
+                        <Icon icon="mynaui:user-solid" width={16} className="text-[#378ADD]" />
                       </div>
                       <span className={`text-sm font-medium ${T}`}>{u.nombre || u.correo}</span>
                     </div>
                   </td>
                   <td className="px-5 py-3"><span className={`text-sm ${M}`}>{u.correo}</span></td>
                   <td className="px-5 py-3"><span className={`text-sm ${M}`}>{u.carrera || "—"}</span></td>
-                  <td className="px-5 py-3"><Badge color={roleColor[u.rol] || "gray"}>{u.rol}</Badge></td>
                   <td className="px-5 py-3"><span className={`text-sm ${M}`}>{formatDate(u.fecha_creacion)}</span></td>
                   <td className="px-5 py-3">
-                    {u.rol === "estudiante"
-                      ? <AccionesEstudiante userId={u.id} isDark={isDark} onEliminado={handleEliminado} />
-                      : <span className="text-xs text-[#888780]">—</span>}
+                    <AccionesEstudiante userId={u.id} isDark={isDark} onEliminado={handleEliminado} />
                   </td>
                 </tr>
               ))}
