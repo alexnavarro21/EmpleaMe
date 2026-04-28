@@ -3,6 +3,7 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, PrimaryButton, SecondaryButton, FormField, PageHeader } from "../../components/ui";
 import { getColegioById, actualizarPerfilColegio, subirFotoPerfil, getMediaUrl } from "../../services/api";
+import PublicacionesUsuario from "../../components/PublicacionesUsuario";
 import { REGIONES_COMUNAS, REGIONES } from "../../data/regionesComunas";
 
 export default function AdminPerfil() {
@@ -269,6 +270,8 @@ export default function AdminPerfil() {
           </Card>
         </div>
       </div>
+
+      <PublicacionesUsuario usuarioId={usuario.id} />
     </div>
   );
 }

@@ -244,7 +244,9 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
         <Link
           to={pub.autor_rol === "empresa"
             ? `/empresa-publica/${pub.autor_id}`
-            : `/${usuario.rol === "colegio" ? "admin" : usuario.rol}/candidato/${pub.autor_id}`}
+            : pub.autor_rol === "colegio"
+              ? `/colegio-publico/${pub.autor_id}`
+              : `/${usuario.rol === "colegio" ? "admin" : usuario.rol}/candidato/${pub.autor_id}`}
           className="flex items-center gap-3 hover:opacity-80 transition-opacity"
           onClick={(e) => e.stopPropagation()}
         >

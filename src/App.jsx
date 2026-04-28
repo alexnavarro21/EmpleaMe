@@ -32,6 +32,7 @@ import SlepMensajeria from "./pages/slep/Mensajeria";
 
 import BuscarPerfiles from "./pages/BuscarPerfiles";
 import PerfilEmpresaPublico from "./pages/PerfilEmpresaPublico";
+import PerfilColegioPublico from "./pages/PerfilColegioPublico";
 import Notificaciones from "./pages/Notificaciones";
 import Seguidores from "./pages/Seguidores";
 
@@ -44,8 +45,9 @@ export default function App() {
           <Route path="/" element={<Login />} />
           <Route element={<Layout />}>
 
-            {/* Perfil público de empresa — accesible desde cualquier rol */}
+            {/* Perfiles públicos — accesibles desde cualquier rol */}
             <Route path="/empresa-publica/:id" element={<PerfilEmpresaPublico />} />
+            <Route path="/colegio-publico/:id" element={<PerfilColegioPublico />} />
 
             {/* Estudiante */}
             <Route path="/estudiante/dashboard" element={<EstudianteDashboard />} />
