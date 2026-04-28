@@ -602,6 +602,16 @@ export async function marcarEgresado(estudianteId) {
   return data;
 }
 
+export async function eliminarUsuario(usuarioId) {
+  const res = await fetch(`${BASE_URL}/usuarios/${usuarioId}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al eliminar usuario");
+  return data;
+}
+
 // Evaluaciones docentes  →  GET|POST /api/admin/evaluaciones
 export async function getEvaluaciones() {
   const res = await fetch(`${BASE_URL}/admin/evaluaciones`, { headers: authHeaders() });

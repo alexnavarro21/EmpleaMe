@@ -7,7 +7,7 @@ import {
 } from "../../components/ui";
 import {
   getUsuariosAdmin, getHabilidades, getEstudianteById,
-  marcarEgresado,
+  marcarEgresado, eliminarUsuario,
   guardarEvaluacion, getEvaluaciones,
   asignarHabilidadesTecnicas,
   subirExcelTests, subirExcelPromedios, subirExcelAlumnos,
@@ -180,55 +180,83 @@ function formatDate(iso) {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" });
 }
-function AccionesEstudiante({ userId, isDark }) {
-  const [confirmar, setConfirmar] = useState(false);
+function AccionesEstudiante({ userId, isDark, onEliminado }) {
+  const [confirmarEgreso, setConfirmarEgreso] = useState(false);
+  const [confirmarElim, setConfirmarElim]     = useState(false);
   const [estado, setEstado] = useState("idle");
-  const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
-  const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
+  const M  = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
+  const B  = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
   const BG = isDark ? "bg-[#262624]" : "bg-white";
+
   const handleEgresar = async () => {
-    setEstado("loading");
-    try { await marcarEgresado(userId); setEstado("ok"); setConfirmar(false); }
-    catch (err) { setEstado(err.message?.includes("No hay registro") ? "no_registro" : "error"); setConfirmar(false); }
+    setEstado("loading-egreso");
+    try { await marcarEgresado(userId); setEstado("egresado"); setConfirmarEgreso(false); }
+    catch (err) { setEstado(err.message?.includes("No hay registro") ? "no_registro" : "error-egreso"); setConfirmarEgreso(false); }
   };
-  if (estado === "ok") return (
-    <div className="flex items-center gap-2">
-      <a href={`/admin/candidato/${userId}`} className="text-xs text-[#378ADD] hover:underline">Ver perfil</a>
-      <span className="text-xs text-green-500 flex items-center gap-1"><Icon icon="mdi:check-circle-outline" width={13} />Egresado</span>
-    </div>
-  );
+
+  const handleEliminar = async () => {
+    setEstado("loading-elim");
+    try { await eliminarUsuario(userId); onEliminado?.(userId); }
+    catch { setEstado("error-elim"); setConfirmarElim(false); }
+  };
+
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <a href={`/admin/candidato/${userId}`} className="text-xs text-[#378ADD] hover:underline">Ver perfil</a>
-      {!confirmar ? (
-        <button onClick={() => { setEstado("idle"); setConfirmar(true); }}
+
+      {/* Marcar egresado */}
+      {estado === "egresado" ? (
+        <span className="text-xs text-green-500 flex items-center gap-1"><Icon icon="mdi:check-circle-outline" width={13} />Egresado</span>
+      ) : !confirmarEgreso ? (
+        <button onClick={() => { setConfirmarElim(false); setConfirmarEgreso(true); }}
           className={`text-xs flex items-center gap-1 px-2 py-1 rounded-lg border transition-colors ${isDark ? "border-[#3a3a38] text-[#B4B2A9] hover:border-amber-500/50 hover:text-amber-400" : "border-[#D3D1C7] text-[#5F5E5A] hover:border-amber-400 hover:text-amber-600"}`}>
-          <Icon icon="mdi:school-outline" width={12} />Marcar egresado
+          <Icon icon="mdi:school-outline" width={12} />Egresar
         </button>
       ) : (
         <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs ${B} ${BG}`}>
-          <span className={M}>¿Confirmar?</span>
-          <button onClick={handleEgresar} disabled={estado === "loading"} className="text-amber-500 hover:text-amber-600 font-medium disabled:opacity-50">
-            {estado === "loading" ? <Icon icon="mdi:loading" width={12} className="animate-spin" /> : "Sí"}
+          <span className={M}>¿Egresar?</span>
+          <button onClick={handleEgresar} disabled={estado === "loading-egreso"} className="text-amber-500 hover:text-amber-600 font-medium disabled:opacity-50">
+            {estado === "loading-egreso" ? <Icon icon="mdi:loading" width={12} className="animate-spin" /> : "Sí"}
           </button>
           <span className={M}>·</span>
-          <button onClick={() => setConfirmar(false)} className={`${M} hover:text-red-400`}>No</button>
+          <button onClick={() => setConfirmarEgreso(false)} className={`${M} hover:text-red-400`}>No</button>
         </div>
       )}
-      {estado === "no_registro" && <span className={`text-xs ${M}`}>Sin registro en curso</span>}
-      {estado === "error"       && <span className="text-xs text-red-400">Error al registrar</span>}
+
+      {/* Eliminar */}
+      {!confirmarElim ? (
+        <button onClick={() => { setConfirmarEgreso(false); setConfirmarElim(true); }}
+          className={`text-xs flex items-center gap-1 px-2 py-1 rounded-lg border transition-colors ${isDark ? "border-[#3a3a38] text-[#B4B2A9] hover:border-red-500/50 hover:text-red-400" : "border-[#D3D1C7] text-[#5F5E5A] hover:border-red-400 hover:text-red-500"}`}>
+          <Icon icon="mdi:trash-can-outline" width={12} />Eliminar
+        </button>
+      ) : (
+        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs border-red-400 ${BG}`}>
+          <span className="text-red-500 font-medium">¿Eliminar permanentemente?</span>
+          <button onClick={handleEliminar} disabled={estado === "loading-elim"} className="text-red-500 hover:text-red-600 font-medium disabled:opacity-50">
+            {estado === "loading-elim" ? <Icon icon="mdi:loading" width={12} className="animate-spin" /> : "Sí"}
+          </button>
+          <span className={M}>·</span>
+          <button onClick={() => setConfirmarElim(false)} className={`${M} hover:text-[#0F4D8A]`}>No</button>
+        </div>
+      )}
+
+      {estado === "no_registro"  && <span className={`text-xs ${M}`}>Sin registro en curso</span>}
+      {estado === "error-egreso" && <span className="text-xs text-red-400">Error al egresar</span>}
+      {estado === "error-elim"   && <span className="text-xs text-red-400">Error al eliminar</span>}
     </div>
   );
 }
 function TabUsuarios({ rawUsers, isDark }) {
   const [search, setSearch]         = useState("");
   const [roleFilter, setRoleFilter] = useState("todos");
+  const [users, setUsers]           = useState(rawUsers);
+  const handleEliminado = (id) => setUsers((prev) => prev.filter((u) => u.id !== id));
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
   const S = isDark ? "bg-[#313130]" : "bg-[#F7F6F3]";
 
-  const filtered = rawUsers.filter((u) => {
+  const filtered = users.filter((u) => {
     const name = u.nombre || u.correo || "";
     const matchSearch = name.toLowerCase().includes(search.toLowerCase()) || u.correo.toLowerCase().includes(search.toLowerCase());
     const matchRole   = roleFilter === "todos" || u.rol === roleFilter;
@@ -285,7 +313,7 @@ function TabUsuarios({ rawUsers, isDark }) {
                   <td className="px-5 py-3"><span className={`text-sm ${M}`}>{formatDate(u.fecha_creacion)}</span></td>
                   <td className="px-5 py-3">
                     {u.rol === "estudiante"
-                      ? <AccionesEstudiante userId={u.id} isDark={isDark} />
+                      ? <AccionesEstudiante userId={u.id} isDark={isDark} onEliminado={handleEliminado} />
                       : <span className="text-xs text-[#888780]">—</span>}
                   </td>
                 </tr>

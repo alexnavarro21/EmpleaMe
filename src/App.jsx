@@ -19,7 +19,6 @@ import AdminPanel from "./pages/admin/Panel";
 import AdminPerfil from "./pages/admin/Perfil";
 import AdminEvaluaciones from "./pages/admin/Evaluaciones";
 import AdminTalleres from "./pages/admin/Talleres";
-import { Navigate } from "react-router-dom";
 import AdminMensajeria from "./pages/admin/Mensajeria";
 import AdminReportes from "./pages/admin/Reportes";
 
