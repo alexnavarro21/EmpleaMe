@@ -8,7 +8,7 @@ const profilePaths = {
   estudiante: "/estudiante/perfil",
   empresa: "/empresa/perfil",
   admin: "/admin/perfil",
-  slep: null,
+  slep: "/slep/perfil",
 };
 
 const navLinks = {
@@ -117,11 +117,13 @@ export default function Layout() {
   const [searchLoading, setSearchLoading] = useState(false);
 
   useEffect(() => {
-    if (!usuarioId || role === "slep") return;
+    if (!usuarioId) return;
     const endpoint = role === "empresa"
       ? `${BASE_API}/perfiles/empresa/${usuarioId}`
       : role === "admin"
       ? `${BASE_API}/perfiles/colegio/${usuarioId}`
+      : role === "slep"
+      ? `${BASE_API}/slep/perfil`
       : `${BASE_API}/perfiles/estudiante/${usuarioId}`;
     fetch(endpoint, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } })
       .then((r) => r.json())

@@ -1008,6 +1008,24 @@ export async function moderarContenido(contenido) {
 
 // ── SLEP ──────────────────────────────────────────────────────────────────────
 
+export async function getSlepPerfil() {
+  const res = await fetch(`${BASE_URL}/slep/perfil`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener perfil SLEP");
+  return data;
+}
+
+export async function actualizarPerfilSlep(datos) {
+  const res = await fetch(`${BASE_URL}/slep/perfil`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al actualizar perfil SLEP");
+  return data;
+}
+
 export async function getSlepStats() {
   const res = await fetch(`${BASE_URL}/slep/stats`, { headers: authHeaders() });
   const data = await res.json();

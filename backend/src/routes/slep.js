@@ -4,6 +4,42 @@ const { verificarToken, soloRol } = require("../middleware/auth");
 
 const auth = [verificarToken, soloRol("slep")];
 
+// GET /api/slep/perfil
+router.get("/perfil", ...auth, async (req, res) => {
+  const id = req.usuario.id;
+  try {
+    let [[perfil]] = await db.query("SELECT * FROM perfiles_slep WHERE usuario_id = ?", [id]);
+    if (!perfil) {
+      await db.query("INSERT INTO perfiles_slep (usuario_id, nombre_organismo) VALUES (?, 'SLEP')", [id]);
+      [[perfil]] = await db.query("SELECT * FROM perfiles_slep WHERE usuario_id = ?", [id]);
+    }
+    res.json(perfil);
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// PUT /api/slep/perfil
+router.put("/perfil", ...auth, async (req, res) => {
+  const id = req.usuario.id;
+  const { nombre_organismo, telefono_contacto, descripcion, region } = req.body;
+  try {
+    await db.query(
+      `INSERT INTO perfiles_slep (usuario_id, nombre_organismo, telefono_contacto, descripcion, region)
+       VALUES (?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         nombre_organismo  = VALUES(nombre_organismo),
+         telefono_contacto = VALUES(telefono_contacto),
+         descripcion       = VALUES(descripcion),
+         region            = VALUES(region)`,
+      [id, nombre_organismo || "SLEP", telefono_contacto || null, descripcion || null, region || null]
+    );
+    res.json({ mensaje: "Perfil actualizado" });
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
 // GET /api/slep/stats
 router.get("/stats", ...auth, async (req, res) => {
   try {

@@ -27,6 +27,7 @@ import SlepEmpresas   from "./pages/slep/Empresas";
 import SlepColegios   from "./pages/slep/Colegios";
 import SlepReportes   from "./pages/slep/Reportes";
 import SlepMensajeria from "./pages/slep/Mensajeria";
+import SlepPerfil     from "./pages/slep/Perfil";
 
 import BuscarPerfiles from "./pages/BuscarPerfiles";
 import PerfilEmpresaPublico from "./pages/PerfilEmpresaPublico";
@@ -85,6 +86,7 @@ export default function App() {
             <Route path="/admin/notificaciones" element={<Notificaciones />} />
 
             {/* SLEP */}
+            <Route path="/slep/perfil"         element={<SlepPerfil />} />
             <Route path="/slep/inicio"         element={<EstudianteDashboard />} />
             <Route path="/slep/panel"          element={<SlepPanel />} />
             <Route path="/slep/empresas"       element={<SlepEmpresas />} />

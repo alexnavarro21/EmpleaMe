@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, PageHeader } from "../../components/ui";
@@ -85,7 +86,9 @@ export default function SlepColegios() {
                           <Icon icon="mdi:school-outline" width={16} className="text-[#378ADD]" />
                         </div>
                         <div>
-                          <p className={`text-sm font-medium ${T}`}>{c.nombre_institucion || "Sin nombre"}</p>
+                          <Link to={`/colegio-publico/${c.usuario_id}`} className={`text-sm font-medium ${T} hover:text-[#378ADD] transition-colors`}>
+                            {c.nombre_institucion || "Sin nombre"}
+                          </Link>
                           {c.telefono_contacto && (
                             <p className={`text-xs ${M}`}>{c.telefono_contacto}</p>
                           )}
