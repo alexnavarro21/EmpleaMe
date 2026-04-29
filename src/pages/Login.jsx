@@ -24,7 +24,9 @@ export default function Login() {
   const [colegios, setColegios] = useState([]);
   const [regColegioId, setRegColegioId] = useState("");
   const [regRut, setRegRut] = useState("");
-  const [regNombreCompleto, setRegNombreCompleto] = useState("");
+  const [regNombre, setRegNombre] = useState("");
+  const [regApellidoPaterno, setRegApellidoPaterno] = useState("");
+  const [regApellidoMaterno, setRegApellidoMaterno] = useState("");
   const [regCarrera, setRegCarrera] = useState("");
   const [regSemestre, setRegSemestre] = useState("");
   const [regTelefono, setRegTelefono] = useState("");
@@ -95,7 +97,9 @@ export default function Login() {
         rut: activeRole === "estudiante" && regRut ? regRut : undefined,
         contrasena: regContrasena,
         rol: activeRole,
-        nombre_completo: regNombreCompleto || undefined,
+        nombre: regNombre || undefined,
+        apellido_paterno: regApellidoPaterno || undefined,
+        apellido_materno: regApellidoMaterno || undefined,
         carrera: regCarrera || undefined,
         semestre: regSemestre || undefined,
         telefono: regTelefono || undefined,
@@ -244,13 +248,31 @@ export default function Login() {
                 {activeRole === "estudiante" && (
                   <>
                     <FormField
-                      label="Nombre completo *"
+                      label="Nombre *"
                       type="text"
-                      placeholder="Tu nombre y apellido"
-                      value={regNombreCompleto}
-                      onChange={(e) => setRegNombreCompleto(e.target.value)}
+                      placeholder="Tu nombre"
+                      value={regNombre}
+                      onChange={(e) => setRegNombre(e.target.value)}
                       isDark={isDark}
                     />
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField
+                        label="Apellido paterno *"
+                        type="text"
+                        placeholder="Apellido paterno"
+                        value={regApellidoPaterno}
+                        onChange={(e) => setRegApellidoPaterno(e.target.value)}
+                        isDark={isDark}
+                      />
+                      <FormField
+                        label="Apellido materno"
+                        type="text"
+                        placeholder="Apellido materno"
+                        value={regApellidoMaterno}
+                        onChange={(e) => setRegApellidoMaterno(e.target.value)}
+                        isDark={isDark}
+                      />
+                    </div>
                     <div className="grid grid-cols-2 gap-3">
                       <SelectField label="Carrera *" value={regCarrera} onChange={(e) => setRegCarrera(e.target.value)} isDark={isDark}>
                         <option value="">Selecciona tu carrera</option>

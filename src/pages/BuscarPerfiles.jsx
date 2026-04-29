@@ -324,6 +324,7 @@ export default function BuscarPerfiles() {
   const [filtroPrecio,        setFiltroPrecio]        = useState("todas"); // todas | gratuito | pago
   const [filtroRemuneracion,  setFiltroRemuneracion]  = useState("todas"); // todas | con_paga | sin_paga
   const [minEvalDocente,      setMinEvalDocente]      = useState(1);
+  const [selectedGenero,      setSelectedGenero]      = useState("");
   const [reportarPerfil,     setReportarPerfil]     = useState(null); // { id, tipo }
 
   const T  = isDark ? "text-[#D3D1C7]"   : "text-[#2C2C2A]";
@@ -380,6 +381,7 @@ export default function BuscarPerfiles() {
     if (minEvalDocente > 1 && s.calificacion_docente && parseFloat(s.calificacion_docente) < minEvalDocente) return false;
     if (selectedRegion && s.region !== selectedRegion) return false;
     if (selectedComuna && s.comuna !== selectedComuna) return false;
+    if (selectedGenero && s.genero !== selectedGenero) return false;
     if (selectedHabilidades.length > 0) {
       const sHabs = (s.habilidades || []).map((h) => h.toLowerCase());
       if (!selectedHabilidades.some((h) => sHabs.includes(h.toLowerCase()))) return false;
@@ -445,7 +447,7 @@ export default function BuscarPerfiles() {
   const tabLabel = { estudiantes: "estudiante", empresas: "empresa", vacantes: "vacante", talleres: "taller", colegios: "colegio" }[tab];
   const usuarioActual = JSON.parse(localStorage.getItem("usuario") || "{}");
 
-  const limpiarFiltros = () => { setSearch(""); setSelectedCareer("Todas"); setMinGpa(1); setMinEvalDocente(1); setSelectedRegion(""); setSelectedComuna(""); setSelectedHabilidades([]); setHabBusqueda(""); setSelectedModalidad(""); setFiltroPrecio("todas"); setFiltroRemuneracion("todas"); };
+  const limpiarFiltros = () => { setSearch(""); setSelectedCareer("Todas"); setMinGpa(1); setMinEvalDocente(1); setSelectedRegion(""); setSelectedComuna(""); setSelectedHabilidades([]); setHabBusqueda(""); setSelectedModalidad(""); setFiltroPrecio("todas"); setFiltroRemuneracion("todas"); setSelectedGenero(""); };
 
   const handleContactarEstudiante = async (id) => {
     setContactandoId(id);
@@ -548,6 +550,21 @@ export default function BuscarPerfiles() {
                       <input type="range" min="1" max="7" step="0.1" value={minEvalDocente} onChange={(e) => setMinEvalDocente(parseFloat(e.target.value))} className="w-full accent-[#378ADD]" />
                       <div className={`flex justify-between text-xs ${M} mt-1`}><span>1.0</span><span>4.0</span><span>7.0</span></div>
                       <p className={`text-xs ${M} mt-1`}>Solo filtra estudiantes con evaluación registrada</p>
+                    </div>
+                    <div className="mb-4">
+                      <label className={`block text-xs mb-1.5 ${M}`}>Género</label>
+                      <select
+                        value={selectedGenero}
+                        onChange={(e) => setSelectedGenero(e.target.value)}
+                        className={`w-full px-2.5 py-2 rounded-lg text-xs outline-none border focus:border-[#378ADD] transition-colors ${
+                          isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
+                        }`}
+                      >
+                        <option value="">Todos</option>
+                        <option value="masculino">Masculino</option>
+                        <option value="femenino">Femenino</option>
+                        <option value="otro">Otro</option>
+                      </select>
                     </div>
                   </>
                 )}

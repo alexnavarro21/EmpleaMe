@@ -105,7 +105,7 @@ router.put("/estudiante/:id", verificarToken, async (req, res) => {
       return res.status(403).json({ error: "Este estudiante no pertenece a tu institución" });
   }
 
-  const { nombre_completo, carrera, telefono, biografia, semestre, promedio, estado_civil, rut, region, comuna, colegio_id } = req.body;
+  const { nombre, apellido_paterno, apellido_materno, carrera, telefono, biografia, semestre, promedio, estado_civil, genero, rut, region, comuna, colegio_id } = req.body;
   try {
     const [[carreraRow]] = await db.query(
       "SELECT id FROM carreras WHERE nombre = ?", [carrera]
@@ -115,12 +115,13 @@ router.put("/estudiante/:id", verificarToken, async (req, res) => {
 
     await db.query(
       `UPDATE perfiles_estudiantes
-       SET nombre_completo=?, carrera_id=?, telefono=?, biografia=?, semestre=?, promedio=?,
-           estado_civil=?, rut=?, region=?, comuna=?, colegio_id=?
+       SET nombre=?, apellido_paterno=?, apellido_materno=?, carrera_id=?, telefono=?, biografia=?,
+           semestre=?, promedio=?, estado_civil=?, genero=?, rut=?, region=?, comuna=?, colegio_id=?
        WHERE usuario_id=?`,
-      [nombre_completo, carreraRow.id, telefono || null, biografia || null,
-       semestre || null, promedio || null, estado_civil || null,
-       rut || null, region || null, comuna || null, colegio_id || null, req.params.id]
+      [nombre || '', apellido_paterno || '', apellido_materno || null, carreraRow.id,
+       telefono || null, biografia || null, semestre || null, promedio || null,
+       estado_civil || null, genero || 'no_especifica', rut || null, region || null,
+       comuna || null, colegio_id || null, req.params.id]
     );
     res.json({ mensaje: "Perfil actualizado" });
   } catch (err) {
@@ -241,7 +242,7 @@ router.get("/estudiantes", verificarToken, async (req, res) => {
     const [rows] = await db.query(
       `SELECT pe.usuario_id, pe.nombre_completo, c.nombre AS carrera, pe.semestre,
               pe.promedio, pe.calificacion_docente, pe.biografia,
-              pe.region, pe.comuna, pe.foto_perfil,
+              pe.region, pe.comuna, pe.foto_perfil, pe.genero,
               GROUP_CONCAT(h.nombre SEPARATOR '||') AS habilidades_raw
        FROM perfiles_estudiantes pe
        LEFT JOIN carreras c ON c.id = pe.carrera_id

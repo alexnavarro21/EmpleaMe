@@ -66,7 +66,7 @@ router.post("/register", async (req, res) => {
   const {
     correo, rut, contrasena, rol,
     // estudiante
-    nombre_completo, carrera, semestre, telefono, colegio_id,
+    nombre, apellido_paterno, apellido_materno, carrera, semestre, telefono, colegio_id,
     // empresa
     nombre_empresa, telefono_contacto,
   } = req.body;
@@ -98,8 +98,8 @@ router.post("/register", async (req, res) => {
     const usuarioId = result.insertId;
 
     if (rol === "estudiante") {
-      if (!nombre_completo || !carrera)
-        return res.status(400).json({ error: "nombre_completo y carrera son requeridos para estudiante" });
+      if (!nombre || !apellido_paterno || !carrera)
+        return res.status(400).json({ error: "nombre, apellido_paterno y carrera son requeridos para estudiante" });
       const [[carreraRow]] = await conn.query(
         "SELECT id FROM carreras WHERE nombre = ?", [carrera]
       );
@@ -110,9 +110,9 @@ router.post("/register", async (req, res) => {
       ))[0][0] : null;
       await conn.query(
         `INSERT INTO perfiles_estudiantes
-           (usuario_id, nombre_completo, rut, carrera_id, semestre, telefono, colegio_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [usuarioId, nombre_completo, rutNorm, carreraRow.id, semestre || null, telefono || null, colegioValido ? colegio_id : null]
+           (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, semestre, telefono, colegio_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [usuarioId, nombre.trim(), apellido_paterno.trim(), apellido_materno?.trim() || null, rutNorm, carreraRow.id, semestre || null, telefono || null, colegioValido ? colegio_id : null]
       );
     } else if (rol === "empresa") {
       if (!nombre_empresa)

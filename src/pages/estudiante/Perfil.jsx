@@ -26,12 +26,15 @@ export default function EstudiantePerfil() {
 
   // Form state
   const [nombre, setNombre] = useState("");
+  const [apellidoPaterno, setApellidoPaterno] = useState("");
+  const [apellidoMaterno, setApellidoMaterno] = useState("");
   const [carrera, setCarrera] = useState("");
   const [telefono, setTelefono] = useState("");
   const [biografia, setBiografia] = useState("");
   const [semestre, setSemestre] = useState("");
   const [promedio, setPromedio] = useState("");
   const [estadoCivil, setEstadoCivil] = useState("");
+  const [genero, setGenero] = useState("no_especifica");
   const [rut, setRut] = useState("");
   const [region, setRegion] = useState("");
   const [comuna, setComuna] = useState("");
@@ -72,13 +75,16 @@ export default function EstudiantePerfil() {
     ]).then(([perfil, posts]) => {
       if (perfil.status === "fulfilled") {
         const data = perfil.value;
-        setNombre(data.nombre_completo || "");
+        setNombre(data.nombre || "");
+        setApellidoPaterno(data.apellido_paterno || "");
+        setApellidoMaterno(data.apellido_materno || "");
         setCarrera(data.carrera || "");
         setTelefono(data.telefono || "");
         setBiografia(data.biografia || "");
         setSemestre(data.semestre ? String(data.semestre) : "");
         setPromedio(data.promedio ? String(data.promedio) : "");
         setEstadoCivil(data.estado_civil || "");
+        setGenero(data.genero || "no_especifica");
         setRut(data.rut || "");
         setRegion(data.region || "");
         setComuna(data.comuna || "");
@@ -112,13 +118,16 @@ export default function EstudiantePerfil() {
     setSaveMsg("");
     try {
       await actualizarPerfilEstudiante(usuario.id, {
-        nombre_completo: nombre,
+        nombre,
+        apellido_paterno: apellidoPaterno,
+        apellido_materno: apellidoMaterno || null,
         carrera,
         telefono,
         biografia,
         semestre: semestre ? parseInt(semestre) : null,
         promedio: promedio ? parseFloat(promedio) : null,
         estado_civil: estadoCivil || null,
+        genero: genero || 'no_especifica',
         rut: rut || null,
         region: region || null,
         comuna: comuna || null,
@@ -142,7 +151,7 @@ export default function EstudiantePerfil() {
     setGenerandoCV(true);
     try {
       await generarCV({
-        nombre,
+        nombre: [nombre, apellidoPaterno, apellidoMaterno].filter(Boolean).join(' '),
         carrera,
         telefono,
         correo:  usuario.correo || "",
@@ -186,7 +195,8 @@ export default function EstudiantePerfil() {
   const laboralesFavoritos = historialLaboral.filter((l) => favoritosLaboral.includes(l.id));
 
   const rutValido = validarRut(rut);
-  const pctCompleto = calcularCompletitud({ nombre_completo: nombre, carrera, telefono, biografia, estado_civil: estadoCivil, rut, region, comuna });
+  const nombreCompleto = [nombre, apellidoPaterno, apellidoMaterno].filter(Boolean).join(' ');
+  const pctCompleto = calcularCompletitud({ nombre_completo: nombreCompleto, carrera, telefono, biografia, estado_civil: estadoCivil, rut, region, comuna });
 
   if (loading) {
     return (
@@ -257,7 +267,7 @@ export default function EstudiantePerfil() {
                 </label>
               )}
             </div>
-            <p className={`text-base font-semibold ${T}`}>{nombre || "Sin nombre"}</p>
+            <p className={`text-base font-semibold ${T}`}>{nombreCompleto || "Sin nombre"}</p>
             <p className={`text-xs ${M}`}>{nombreCarrera || "Sin carrera"}</p>
             {(comuna || region) && (
               <p className={`text-xs ${M} mb-1 flex items-center justify-center gap-1`}>
@@ -310,10 +320,24 @@ export default function EstudiantePerfil() {
               {activeTab === "Personal" && (
                 <div className="grid grid-cols-2 gap-x-6">
                   <FormField
-                    label="Nombre completo"
-                    placeholder="Tu nombre y apellido"
+                    label="Nombre"
+                    placeholder="Tu nombre"
                     value={nombre}
                     onChange={(e) => setNombre(e.target.value)}
+                    disabled={!editMode}
+                  />
+                  <FormField
+                    label="Apellido paterno"
+                    placeholder="Apellido paterno"
+                    value={apellidoPaterno}
+                    onChange={(e) => setApellidoPaterno(e.target.value)}
+                    disabled={!editMode}
+                  />
+                  <FormField
+                    label="Apellido materno"
+                    placeholder="Apellido materno (opcional)"
+                    value={apellidoMaterno}
+                    onChange={(e) => setApellidoMaterno(e.target.value)}
                     disabled={!editMode}
                     className="col-span-2"
                   />
@@ -358,6 +382,23 @@ export default function EstudiantePerfil() {
                     value={usuario.correo || ""}
                     disabled
                   />
+                  <div className="mb-4">
+                    <label className={`block text-xs mb-1.5 ${M}`}>Género</label>
+                    <select
+                      value={genero}
+                      onChange={(e) => setGenero(e.target.value)}
+                      disabled={!editMode}
+                      className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
+                        isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
+                               : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
+                      } disabled:opacity-60`}
+                    >
+                      <option value="no_especifica">Prefiero no especificar</option>
+                      <option value="masculino">Masculino</option>
+                      <option value="femenino">Femenino</option>
+                      <option value="otro">Otro</option>
+                    </select>
+                  </div>
                   <div className="mb-4">
                     <label className={`block text-xs mb-1.5 ${M}`}>Estado civil</label>
                     <select
