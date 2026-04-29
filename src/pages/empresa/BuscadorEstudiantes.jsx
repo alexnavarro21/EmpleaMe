@@ -22,7 +22,6 @@ export default function EmpresaBuscadorEstudiantes() {
   const [selectedCareer, setSelectedCareer] = useState("Todas");
   const [minGpa, setMinGpa] = useState(1);
   const [selectedRegion, setSelectedRegion] = useState("");
-  const [selectedGenero, setSelectedGenero] = useState("");
   const [selectedComuna, setSelectedComuna] = useState("");
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
@@ -54,8 +53,7 @@ export default function EmpresaBuscadorEstudiantes() {
     const matchGpa = !s.promedio || s.promedio >= minGpa;
     const matchRegion = !selectedRegion || s.region === selectedRegion;
     const matchComuna = !selectedComuna || s.comuna === selectedComuna;
-    const matchGenero = !selectedGenero || s.genero === selectedGenero;
-    return matchSearch && matchCareer && matchGpa && matchRegion && matchComuna && matchGenero;
+    return matchSearch && matchCareer && matchGpa && matchRegion && matchComuna;
   });
 
   const filteredCompanies = companies.filter((c) => {
@@ -170,21 +168,6 @@ export default function EmpresaBuscadorEstudiantes() {
                   <div className={`flex justify-between text-xs ${M} mt-1`}>
                     <span>1.0</span><span>4.0</span><span>7.0</span>
                   </div>
-                </div>
-                <div className="mb-4">
-                  <label className={`block text-xs mb-1.5 ${M}`}>Género</label>
-                  <select
-                    value={selectedGenero}
-                    onChange={(e) => setSelectedGenero(e.target.value)}
-                    className={`w-full px-2.5 py-2 rounded-lg text-xs outline-none border focus:border-[#378ADD] transition-colors ${
-                      isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
-                    }`}
-                  >
-                    <option value="">Todos</option>
-                    <option value="masculino">Masculino</option>
-                    <option value="femenino">Femenino</option>
-                    <option value="otro">Otro</option>
-                  </select>
                 </div>
               </>
             )}
