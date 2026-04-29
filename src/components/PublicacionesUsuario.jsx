@@ -21,7 +21,7 @@ function tiempoRelativo(fecha) {
   return `Hace ${Math.floor(diff / 86400)} días`;
 }
 
-function MiniPostCard({ pub, isDark, onDeleted }) {
+function MiniPostCard({ pub, isDark, onDeleted, puedeModerar }) {
   const [verMas, setVerMas] = useState(false);
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [confirmarEliminar, setConfirmarEliminar] = useState(false);
@@ -33,7 +33,7 @@ function MiniPostCard({ pub, isDark, onDeleted }) {
   const HV = isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]";
 
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
-  const canDelete = usuario.rol === "colegio" || pub.autor_id === usuario.id;
+  const canDelete = usuario.rol === "colegio" || pub.autor_id === usuario.id || puedeModerar;
 
   const handleEliminar = async () => {
     setEliminando(true);
@@ -154,7 +154,7 @@ function MiniPostCard({ pub, isDark, onDeleted }) {
   );
 }
 
-export default function PublicacionesUsuario({ usuarioId }) {
+export default function PublicacionesUsuario({ usuarioId, puedeModerar = false }) {
   const { isDark } = useDark();
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -193,6 +193,7 @@ export default function PublicacionesUsuario({ usuarioId }) {
               key={pub.id}
               pub={pub}
               isDark={isDark}
+              puedeModerar={puedeModerar}
               onDeleted={(id) => setPublicaciones((prev) => prev.filter((p) => p.id !== id))}
             />
           ))}

@@ -184,6 +184,14 @@ router.delete("/:id", verificarToken, async (req, res) => {
         );
         if (!pertenece)
           return res.status(403).json({ error: "Sin permisos para eliminar esta publicación" });
+      } else if (rol === "slep") {
+        // SLEP solo puede borrar publicaciones de empresas y colegios
+        const [[esEmpresaOColegio]] = await db.query(
+          "SELECT 1 FROM usuarios WHERE id = ? AND rol IN ('empresa', 'colegio')",
+          [pub.autor_id]
+        );
+        if (!esEmpresaOColegio)
+          return res.status(403).json({ error: "SLEP solo puede eliminar publicaciones de empresas y colegios" });
       } else {
         return res.status(403).json({ error: "Sin permisos para eliminar esta publicación" });
       }

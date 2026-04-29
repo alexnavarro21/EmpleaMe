@@ -160,7 +160,7 @@ export default function PerfilColegioPublico() {
         </div>
       </div>
 
-      <PublicacionesUsuario usuarioId={id} />
+      <PublicacionesUsuario usuarioId={id} puedeModerar={usuario.rol === "slep"} />
     </div>
   );
 }
