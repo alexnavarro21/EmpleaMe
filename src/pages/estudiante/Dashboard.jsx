@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge } from "../../components/ui";
-import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante, toggleLike, getTalleres, getAdminStats, inscribirseEnTaller, eliminarPublicacion, eliminarTaller, getSiguiendo, toggleSeguir, getColegioById } from "../../services/api";
+import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante, toggleLike, getTalleres, getAdminStats, inscribirseEnTaller, eliminarPublicacion, eliminarTaller, getSiguiendo, toggleSeguir, getColegioById, getSlepPerfil, getSlepStats } from "../../services/api";
 import { calcularCompletitud } from "../../utils/perfilCompletitud";
 import CrearPublicacion from "../../components/CrearPublicacion";
 import VerMasModal from "../../components/VerMasModal";
@@ -198,7 +198,8 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
     ? { label: pub.vacante_tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica", color: pub.vacante_tipo === "puesto_laboral" ? "green" : "orange" }
     : (TIPO_BADGE[pub.tipo] || { label: pub.tipo, color: "blue" });
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
-  const canDelete = usuario.rol === "colegio" || pub.autor_id === usuario.id;
+  const canDelete = usuario.rol === "colegio" || pub.autor_id === usuario.id ||
+    (usuario.rol === "slep" && (pub.autor_rol === "empresa" || pub.autor_rol === "colegio"));
 
   const handleEliminar = async () => {
     setEliminando(true);
@@ -244,7 +245,9 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
         <Link
           to={pub.autor_rol === "empresa"
             ? `/empresa-publica/${pub.autor_id}`
-            : `/${usuario.rol === "colegio" ? "admin" : usuario.rol}/candidato/${pub.autor_id}`}
+            : pub.autor_rol === "colegio"
+              ? `/colegio-publico/${pub.autor_id}`
+              : `/${usuario.rol === "colegio" ? "admin" : usuario.rol}/candidato/${pub.autor_id}`}
           className="flex items-center gap-3 hover:opacity-80 transition-opacity"
           onClick={(e) => e.stopPropagation()}
         >
@@ -256,7 +259,7 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
         </Link>
         <div className="flex items-center gap-2">
           {/* Botón Seguir (no se muestra al propio autor ni al admin) */}
-          {pub.autor_id !== usuario.id && usuario.rol !== "colegio" && (
+          {pub.autor_id !== usuario.id && usuario.rol !== "colegio" && usuario.rol !== "slep" && (
             <button
               onClick={handleToggleSeguir}
               disabled={toggleandoSeguir}
@@ -936,6 +939,7 @@ export default function EstudianteDashboard() {
   const isEstudiante = location.pathname.startsWith("/estudiante");
   const isEmpresa = location.pathname.startsWith("/empresa");
   const isAdmin = location.pathname.startsWith("/admin");
+  const isSlep = location.pathname.startsWith("/slep");
 
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
   const [perfil, setPerfil] = useState(null);
@@ -964,6 +968,10 @@ export default function EstudianteDashboard() {
   // Estado admin
   const [adminStats, setAdminStats] = useState(null);
   const [adminColegio, setAdminColegio] = useState(null);
+
+  // Estado slep
+  const [slepPerfil, setSlepPerfil] = useState(null);
+  const [slepStats, setSlepStats] = useState(null);
 
   const LIMITE_PUBS = 20;
 
@@ -1008,6 +1016,10 @@ export default function EstudianteDashboard() {
       getAdminStats().then(setAdminStats).catch(console.error);
       getColegioById(usuario.id).then(setAdminColegio).catch(console.error);
     }
+    if (usuario.id && usuario.rol === "slep") {
+      getSlepPerfil().then(setSlepPerfil).catch(console.error);
+      getSlepStats().then(setSlepStats).catch(console.error);
+    }
     cargarPublicaciones();
     getTalleres().then(setTalleres).catch(console.error);
     if (usuario.id) {
@@ -1045,7 +1057,7 @@ export default function EstudianteDashboard() {
     { done: !!(biografia),           label: "Presentación personal" },
   ];
 
-  const conSidebar = isEstudiante || isEmpresa || isAdmin;
+  const conSidebar = isEstudiante || isEmpresa || isAdmin || isSlep;
   const vacantesActivasEmpresa = empresaVacantes.filter((v) => v.esta_activa);
   const mensajesNoLeidos = empresaConversaciones.filter((c) => c.no_leidos > 0);
 
@@ -1124,9 +1136,12 @@ export default function EstudianteDashboard() {
             <div className="h-16 bg-gradient-to-r from-[#0A3A6A] to-[#0F4D8A]" />
             <div className="px-4 pb-4">
               <div className="-mt-7 mb-3">
-                <div className="w-14 h-14 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xl font-bold border-2 border-white">
-                  <Icon icon="mdi:shield-account-outline" width={28} />
-                </div>
+                <Avatar
+                  initial={(adminColegio?.nombre_institucion || "C")[0].toUpperCase()}
+                  color="bg-[#0F4D8A]"
+                  size="lg"
+                  foto={adminColegio?.foto_perfil}
+                />
               </div>
               <p className={`text-sm font-semibold ${T}`}>{adminColegio?.nombre_institucion || "Centro educacional"}</p>
               <p className={`text-xs ${M} mt-0.5`}>Administrador del sistema</p>
@@ -1169,6 +1184,73 @@ export default function EstudianteDashboard() {
               { icon: "mdi:message-outline",          label: "Mensajería",           to: "/admin/mensajeria"   },
               { icon: "mdi:account-search-outline",   label: "Buscar perfiles",      to: "/admin/buscar"       },
               { icon: "mdi:flag-outline",             label: "Reportes",             to: "/admin/reportes"     },
+            ].map((link) => (
+              <Link
+                key={link.label}
+                to={link.to}
+                className={`flex items-center gap-2.5 py-2 text-xs rounded-lg px-2 -mx-2 transition-colors ${isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"} ${M}`}
+              >
+                <Icon icon={link.icon} width={15} className="flex-shrink-0" />
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── LEFT SIDEBAR SLEP ── */}
+      {isSlep && (
+        <div className="flex flex-col gap-4 sticky top-20">
+          <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
+            <div className="h-16 bg-gradient-to-r from-[#0A3A6A] to-[#0F4D8A]" />
+            <div className="px-4 pb-4">
+              <div className="-mt-7 mb-3">
+                <Avatar
+                  initial={(slepPerfil?.nombre_organismo || "S")[0].toUpperCase()}
+                  color="bg-[#0A3A6A]"
+                  size="lg"
+                  foto={slepPerfil?.foto_perfil}
+                />
+              </div>
+              <p className={`text-sm font-semibold ${T}`}>{slepPerfil?.nombre_organismo || "SLEP"}</p>
+              <p className={`text-xs ${M} mt-0.5`}>Organismo administrador</p>
+
+              <div className={`grid grid-cols-2 gap-2 mt-3 pt-3 border-t ${B}`}>
+                <div className="text-center">
+                  <p className={`text-base font-semibold ${T}`}>{slepStats?.total_colegios ?? "—"}</p>
+                  <p className={`text-xs ${M}`}>Colegios</p>
+                </div>
+                <div className="text-center">
+                  <p className={`text-base font-semibold ${T}`}>{slepStats?.total_empresas ?? "—"}</p>
+                  <p className={`text-xs ${M}`}>Empresas</p>
+                </div>
+                <div className="text-center">
+                  <p className={`text-base font-semibold text-green-600`}>{slepStats?.total_vacantes ?? "—"}</p>
+                  <p className={`text-xs ${M}`}>Vacantes</p>
+                </div>
+                <div className="text-center">
+                  <p className={`text-base font-semibold ${T}`}>{slepStats?.total_estudiantes ?? "—"}</p>
+                  <p className={`text-xs ${M}`}>Estudiantes</p>
+                </div>
+              </div>
+
+              <Link
+                to="/slep/panel"
+                className="block text-center mt-3 text-xs font-medium text-[#0F4D8A] hover:text-[#0A3A6A] border border-[#0F4D8A] hover:bg-[#E6F1FB] py-1.5 rounded-lg transition-colors"
+              >
+                Ir al panel
+              </Link>
+            </div>
+          </div>
+
+          <div className={`rounded-xl border ${B} ${BG} p-4`}>
+            <p className={`text-xs font-semibold ${T} mb-2`}>Accesos rápidos</p>
+            {[
+              { icon: "mdi:office-building-outline",  label: "Empresas",       to: "/slep/empresas"   },
+              { icon: "mdi:domain",                    label: "Colegios",       to: "/slep/colegios"   },
+              { icon: "mdi:flag-outline",              label: "Reportes",       to: "/slep/reportes"   },
+              { icon: "mdi:message-outline",           label: "Mensajería",     to: "/slep/mensajeria" },
+              { icon: "mdi:account-search-outline",    label: "Buscar perfiles",to: "/slep/buscar"     },
             ].map((link) => (
               <Link
                 key={link.label}

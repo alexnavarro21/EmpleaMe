@@ -592,6 +592,17 @@ export async function getUsuariosAdmin() {
   return data;
 }
 
+export async function cambiarContrasenaEstudiante(estudianteId, contrasena) {
+  const res = await fetch(`${BASE_URL}/admin/usuarios/${estudianteId}/contrasena`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify({ contrasena }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al cambiar contraseña");
+  return data;
+}
+
 export async function marcarEgresado(estudianteId) {
   const res = await fetch(`${BASE_URL}/admin/historial-academico/${estudianteId}/egreso`, {
     method: "PATCH",
@@ -599,6 +610,16 @@ export async function marcarEgresado(estudianteId) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al registrar egreso");
+  return data;
+}
+
+export async function eliminarUsuario(usuarioId) {
+  const res = await fetch(`${BASE_URL}/usuarios/${usuarioId}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al eliminar usuario");
   return data;
 }
 
@@ -998,6 +1019,24 @@ export async function moderarContenido(contenido) {
 
 // ── SLEP ──────────────────────────────────────────────────────────────────────
 
+export async function getSlepPerfil() {
+  const res = await fetch(`${BASE_URL}/slep/perfil`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener perfil SLEP");
+  return data;
+}
+
+export async function actualizarPerfilSlep(datos) {
+  const res = await fetch(`${BASE_URL}/slep/perfil`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al actualizar perfil SLEP");
+  return data;
+}
+
 export async function getSlepStats() {
   const res = await fetch(`${BASE_URL}/slep/stats`, { headers: authHeaders() });
   const data = await res.json();
@@ -1012,10 +1051,64 @@ export async function getSlepEmpresas() {
   return data;
 }
 
+export async function crearSlepEmpresa(datos) {
+  const res = await fetch(`${BASE_URL}/slep/empresas`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al crear empresa");
+  return data;
+}
+
+export async function editarSlepEmpresa(id, datos) {
+  const res = await fetch(`${BASE_URL}/slep/empresas/${id}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al editar empresa");
+  return data;
+}
+
+export async function eliminarSlepEmpresa(id) {
+  const res = await fetch(`${BASE_URL}/slep/empresas/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al eliminar empresa");
+  return data;
+}
+
 export async function getSlepColegios() {
   const res = await fetch(`${BASE_URL}/slep/colegios`, { headers: authHeaders() });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al obtener colegios");
+  return data;
+}
+
+export async function crearSlepColegio(datos) {
+  const res = await fetch(`${BASE_URL}/slep/colegios`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al crear colegio");
+  return data;
+}
+
+export async function editarSlepColegio(id, datos) {
+  const res = await fetch(`${BASE_URL}/slep/colegios/${id}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al editar colegio");
   return data;
 }
 
@@ -1043,6 +1136,17 @@ export async function eliminarContenidoSlepReporte(id) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al eliminar contenido");
+  return data;
+}
+
+export async function cambiarContrasena(contrasena_actual, contrasena_nueva) {
+  const res = await fetch(`${BASE_URL}/auth/cambiar-contrasena`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify({ contrasena_actual, contrasena_nueva }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al cambiar contraseña");
   return data;
 }
 

@@ -7,6 +7,7 @@ import {
 } from "../../components/ui";
 import {
   getUsuariosAdmin, getHabilidades, getEstudianteById,
+  marcarEgresado, eliminarUsuario,
   guardarEvaluacion, getEvaluaciones,
   asignarHabilidadesTecnicas,
   subirExcelTests, subirExcelPromedios, subirExcelAlumnos,
@@ -171,6 +172,145 @@ function StudentSearch({ estudiantes, selectedId, onSelect, isDark }) {
 }
 
 // ── Tab components ────────────────────────────────────────────────────────────
+
+// ── TAB 0: Usuarios ───────────────────────────────────────────────────────────
+const roleColor = { estudiante: "blue", empresa: "orange", colegio: "green" };
+const roleIcon  = { estudiante: "mynaui:user-solid", empresa: "cuida:building-outline", colegio: "mingcute:settings-2-line" };
+function formatDate(iso) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" });
+}
+function AccionesEstudiante({ userId, isDark, onEliminado }) {
+  const [confirmarEgreso, setConfirmarEgreso] = useState(false);
+  const [confirmarElim, setConfirmarElim]     = useState(false);
+  const [estado, setEstado] = useState("idle");
+  const M  = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
+  const B  = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
+  const BG = isDark ? "bg-[#262624]" : "bg-white";
+
+  const handleEgresar = async () => {
+    setEstado("loading-egreso");
+    try { await marcarEgresado(userId); setEstado("egresado"); setConfirmarEgreso(false); }
+    catch (err) { setEstado(err.message?.includes("No hay registro") ? "no_registro" : "error-egreso"); setConfirmarEgreso(false); }
+  };
+
+  const handleEliminar = async () => {
+    setEstado("loading-elim");
+    try { await eliminarUsuario(userId); onEliminado?.(userId); }
+    catch { setEstado("error-elim"); setConfirmarElim(false); }
+  };
+
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <a href={`/admin/candidato/${userId}`} className="text-xs text-[#378ADD] hover:underline">Ver perfil</a>
+
+      {/* Marcar egresado */}
+      {estado === "egresado" ? (
+        <span className="text-xs text-green-500 flex items-center gap-1"><Icon icon="mdi:check-circle-outline" width={13} />Egresado</span>
+      ) : !confirmarEgreso ? (
+        <button onClick={() => { setConfirmarElim(false); setConfirmarEgreso(true); }}
+          className={`text-xs flex items-center gap-1 px-2 py-1 rounded-lg border transition-colors ${isDark ? "border-[#3a3a38] text-[#B4B2A9] hover:border-amber-500/50 hover:text-amber-400" : "border-[#D3D1C7] text-[#5F5E5A] hover:border-amber-400 hover:text-amber-600"}`}>
+          <Icon icon="mdi:school-outline" width={12} />Egresar
+        </button>
+      ) : (
+        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs ${B} ${BG}`}>
+          <span className={M}>¿Egresar?</span>
+          <button onClick={handleEgresar} disabled={estado === "loading-egreso"} className="text-amber-500 hover:text-amber-600 font-medium disabled:opacity-50">
+            {estado === "loading-egreso" ? <Icon icon="mdi:loading" width={12} className="animate-spin" /> : "Sí"}
+          </button>
+          <span className={M}>·</span>
+          <button onClick={() => setConfirmarEgreso(false)} className={`${M} hover:text-red-400`}>No</button>
+        </div>
+      )}
+
+      {/* Eliminar */}
+      {!confirmarElim ? (
+        <button onClick={() => { setConfirmarEgreso(false); setConfirmarElim(true); }}
+          className={`text-xs flex items-center gap-1 px-2 py-1 rounded-lg border transition-colors ${isDark ? "border-[#3a3a38] text-[#B4B2A9] hover:border-red-500/50 hover:text-red-400" : "border-[#D3D1C7] text-[#5F5E5A] hover:border-red-400 hover:text-red-500"}`}>
+          <Icon icon="mdi:trash-can-outline" width={12} />Eliminar
+        </button>
+      ) : (
+        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs border-red-400 ${BG}`}>
+          <span className="text-red-500 font-medium">¿Eliminar permanentemente?</span>
+          <button onClick={handleEliminar} disabled={estado === "loading-elim"} className="text-red-500 hover:text-red-600 font-medium disabled:opacity-50">
+            {estado === "loading-elim" ? <Icon icon="mdi:loading" width={12} className="animate-spin" /> : "Sí"}
+          </button>
+          <span className={M}>·</span>
+          <button onClick={() => setConfirmarElim(false)} className={`${M} hover:text-[#0F4D8A]`}>No</button>
+        </div>
+      )}
+
+      {estado === "no_registro"  && <span className={`text-xs ${M}`}>Sin registro en curso</span>}
+      {estado === "error-egreso" && <span className="text-xs text-red-400">Error al egresar</span>}
+      {estado === "error-elim"   && <span className="text-xs text-red-400">Error al eliminar</span>}
+    </div>
+  );
+}
+function TabUsuarios({ rawUsers, isDark }) {
+  const [search, setSearch] = useState("");
+  const [users, setUsers]   = useState(rawUsers);
+  const handleEliminado = (id) => setUsers((prev) => prev.filter((u) => u.id !== id));
+  const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
+  const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
+  const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
+  const S = isDark ? "bg-[#313130]" : "bg-[#F7F6F3]";
+
+  const filtered = users.filter((u) => {
+    const name = u.nombre || u.correo || "";
+    return name.toLowerCase().includes(search.toLowerCase()) || u.correo.toLowerCase().includes(search.toLowerCase());
+  });
+
+  return (
+    <Card className="p-0 overflow-hidden">
+      <div className={`flex items-center gap-3 p-4 border-b ${B}`}>
+        <div className="relative flex-1">
+          <Icon icon="mdi:search" width={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${M}`} />
+          <input type="text" placeholder="Buscar por nombre o email..." value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className={`w-full pl-8 pr-3 py-2 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"}`} />
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        {filtered.length === 0 ? (
+          <div className={`text-center py-12 ${M}`}>
+            <Icon icon="mdi:search" width={40} className="mx-auto mb-3" />
+            <p className={`text-sm ${T}`}>No se encontraron estudiantes</p>
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className={`border-b ${B} ${S}`}>
+                {["Estudiante", "Email", "Carrera", "Registro", "Acciones"].map((h) => (
+                  <th key={h} className={`text-left text-xs font-medium ${M} px-5 py-3`}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((u) => (
+                <tr key={u.id} className={`border-b ${B} last:border-0 transition-colors ${isDark ? "hover:bg-[#313130]/50" : "hover:bg-[#F7F6F3]"}`}>
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
+                        <Icon icon="mynaui:user-solid" width={16} className="text-[#378ADD]" />
+                      </div>
+                      <span className={`text-sm font-medium ${T}`}>{u.nombre || u.correo}</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3"><span className={`text-sm ${M}`}>{u.correo}</span></td>
+                  <td className="px-5 py-3"><span className={`text-sm ${M}`}>{u.carrera || "—"}</span></td>
+                  <td className="px-5 py-3"><span className={`text-sm ${M}`}>{formatDate(u.fecha_creacion)}</span></td>
+                  <td className="px-5 py-3">
+                    <AccionesEstudiante userId={u.id} isDark={isDark} onEliminado={handleEliminado} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </Card>
+  );
+}
 
 // TAB 1: Editar estudiante (técnicas, blandas, idiomas, historial)
 function TabEditarEstudiante({ estudiantes, habilidades, isDark }) {
@@ -1435,19 +1575,21 @@ function TabCrearAlumnos({ isDark }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 const TABS = [
+  { key: "usuarios",          label: "Usuarios",              icon: "mdi:account-group-outline" },
   { key: "editar_estudiante", label: "Editar estudiante",     icon: "mdi:account-edit-outline" },
   { key: "evaluacion",        label: "Evaluación estudiante", icon: "mdi:clipboard-list-outline" },
   { key: "tests",             label: "Tests socioemocionales",icon: "hugeicons:brain-02" },
   { key: "promedios",         label: "Promedios académicos",  icon: "mdi:school-outline" },
   { key: "habilidades",       label: "Habilidades",           icon: "mdi:tag-multiple-outline" },
-  { key: "crear_alumnos",    label: "Crear alumnos",         icon: "mdi:account-multiple-plus-outline" },
+  { key: "crear_alumnos",     label: "Crear alumnos",         icon: "mdi:account-multiple-plus-outline" },
 ];
 
 export default function GestionEstudiantes() {
   const { isDark } = useDark();
-  const [tab, setTab] = useState("editar_estudiante");
-  const [estudiantes, setEstudiantes] = useState([]);
-  const [habilidades, setHabilidades]  = useState([]);
+  const [tab, setTab] = useState("usuarios");
+  const [rawUsers, setRawUsers]         = useState([]);
+  const [estudiantes, setEstudiantes]   = useState([]);
+  const [habilidades, setHabilidades]   = useState([]);
   const [loading, setLoading] = useState(true);
 
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
@@ -1458,12 +1600,10 @@ export default function GestionEstudiantes() {
   useEffect(() => {
     Promise.all([getUsuariosAdmin(), getHabilidades()])
       .then(([ests, habs]) => {
-        // Normalizar al formato que espera StudentSearch: usuario_id + nombre_completo
-        const normalizados = ests.map((e) => ({
-          usuario_id: e.id,
-          nombre_completo: e.nombre,
-          carrera: e.carrera,
-        }));
+        setRawUsers(ests);
+        const normalizados = ests
+          .filter((e) => e.rol === "estudiante")
+          .map((e) => ({ usuario_id: e.id, nombre_completo: e.nombre, carrera: e.carrera }));
         setEstudiantes(normalizados);
         setHabilidades(habs);
       })
@@ -1502,6 +1642,7 @@ export default function GestionEstudiantes() {
         </div>
       ) : (
         <>
+          {tab === "usuarios"          && <TabUsuarios        rawUsers={rawUsers} isDark={isDark} />}
           {tab === "editar_estudiante" && <TabEditarEstudiante estudiantes={estudiantes} habilidades={habilidades} isDark={isDark} />}
           {tab === "evaluacion"        && <TabEvaluacion      estudiantes={estudiantes} habilidades={habilidades} isDark={isDark} />}
           {tab === "tests"             && <TabTests  isDark={isDark} />}

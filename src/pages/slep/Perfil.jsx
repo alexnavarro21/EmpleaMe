@@ -2,25 +2,28 @@ import { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, PrimaryButton, SecondaryButton, FormField, PageHeader } from "../../components/ui";
-import { getColegioById, actualizarPerfilColegio, subirFotoPerfil, getMediaUrl } from "../../services/api";
-import PublicacionesUsuario from "../../components/PublicacionesUsuario";
-import { REGIONES_COMUNAS, REGIONES } from "../../data/regionesComunas";
+import { getSlepPerfil, actualizarPerfilSlep, subirFotoPerfil, getMediaUrl, cambiarContrasena } from "../../services/api";
+import { REGIONES } from "../../data/regionesComunas";
 
-export default function AdminPerfil() {
+export default function SlepPerfil() {
   const { isDark } = useDark();
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
 
-  const [nombreInstitucion, setNombreInstitucion] = useState("");
+  const [contrasenaActual, setContrasenaActual] = useState("");
+  const [contrasenaNueva, setContrasenaNueva]   = useState("");
+  const [contrasenaConf, setContrasenaConf]     = useState("");
+  const [cambiandoPwd, setCambiandoPwd]         = useState(false);
+  const [pwdMsg, setPwdMsg]                     = useState("");
+
+  const [nombreOrganismo, setNombreOrganismo] = useState("");
   const [telefono, setTelefono] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [region, setRegion] = useState("");
-  const [comuna, setComuna] = useState("");
   const [fotoPerfil, setFotoPerfil] = useState(null);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
-  const [totalEstudiantes, setTotalEstudiantes] = useState(0);
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -32,14 +35,12 @@ export default function AdminPerfil() {
   useEffect(() => {
     async function cargar() {
       try {
-        const perfil = await getColegioById(usuario.id);
-        setNombreInstitucion(perfil.nombre_institucion || "");
+        const perfil = await getSlepPerfil();
+        setNombreOrganismo(perfil.nombre_organismo || "");
         setTelefono(perfil.telefono_contacto || "");
         setDescripcion(perfil.descripcion || "");
         setRegion(perfil.region || "");
-        setComuna(perfil.comuna || "");
         setFotoPerfil(perfil.foto_perfil || null);
-        setTotalEstudiantes(perfil.total_estudiantes || 0);
         localStorage.setItem(`foto_perfil_${usuario.id}`, perfil.foto_perfil || "");
       } catch (err) {
         console.error(err);
@@ -54,12 +55,11 @@ export default function AdminPerfil() {
     setSaving(true);
     setSaveMsg("");
     try {
-      await actualizarPerfilColegio(usuario.id, {
-        nombre_institucion: nombreInstitucion,
+      await actualizarPerfilSlep({
+        nombre_organismo: nombreOrganismo,
         telefono_contacto: telefono,
         descripcion,
         region: region || null,
-        comuna: comuna || null,
       });
       setSaveMsg("Cambios guardados");
       setEditMode(false);
@@ -71,8 +71,30 @@ export default function AdminPerfil() {
     }
   };
 
-  const completado = [nombreInstitucion, telefono, descripcion, region, comuna].filter(Boolean).length;
-  const pctCompleto = Math.round((completado / 5) * 100);
+  const handleCambiarContrasena = async (e) => {
+    e.preventDefault();
+    if (contrasenaNueva !== contrasenaConf) {
+      setPwdMsg("error:Las contraseñas nuevas no coinciden");
+      return;
+    }
+    setCambiandoPwd(true);
+    setPwdMsg("");
+    try {
+      await cambiarContrasena(contrasenaActual, contrasenaNueva);
+      setPwdMsg("ok:Contraseña actualizada correctamente");
+      setContrasenaActual("");
+      setContrasenaNueva("");
+      setContrasenaConf("");
+    } catch (err) {
+      setPwdMsg("error:" + err.message);
+    } finally {
+      setCambiandoPwd(false);
+      setTimeout(() => setPwdMsg(""), 4000);
+    }
+  };
+
+  const completado = [nombreOrganismo, telefono, descripcion, region].filter(Boolean).length;
+  const pctCompleto = Math.round((completado / 4) * 100);
 
   if (loading) {
     return (
@@ -86,8 +108,8 @@ export default function AdminPerfil() {
   return (
     <div>
       <PageHeader
-        title={nombreInstitucion || "Perfil del Colegio"}
-        subtitle="Gestiona la información de tu institución"
+        title={nombreOrganismo || "Perfil SLEP"}
+        subtitle="Gestiona la información de tu organismo"
         action={
           <div className="flex gap-2 items-center">
             {saveMsg && (
@@ -108,11 +130,11 @@ export default function AdminPerfil() {
           <Card className="text-center">
             <div className="relative w-20 h-20 mx-auto mb-3">
               {fotoPerfil ? (
-                <img src={getMediaUrl(fotoPerfil)} alt="Logo institución" className="w-20 h-20 rounded-full object-cover" />
+                <img src={getMediaUrl(fotoPerfil)} alt="Logo SLEP" className="w-20 h-20 rounded-full object-cover" />
               ) : (
-                <div className="w-20 h-20 rounded-full flex items-center justify-center bg-[#0F4D8A]">
+                <div className="w-20 h-20 rounded-full flex items-center justify-center bg-[#0A3A6A]">
                   <span className="text-3xl font-bold text-white">
-                    {nombreInstitucion ? nombreInstitucion[0].toUpperCase() : "C"}
+                    {nombreOrganismo ? nombreOrganismo[0].toUpperCase() : "S"}
                   </span>
                 </div>
               )}
@@ -145,12 +167,12 @@ export default function AdminPerfil() {
                 </label>
               )}
             </div>
-            <p className={`text-base font-semibold ${T}`}>{nombreInstitucion || "Sin nombre"}</p>
+            <p className={`text-base font-semibold ${T}`}>{nombreOrganismo || "SLEP"}</p>
             <p className={`text-xs ${M}`}>{usuario.correo}</p>
-            {(comuna || region) && (
+            {region && (
               <p className={`text-xs ${M} mb-2 flex items-center justify-center gap-1`}>
                 <Icon icon="mdi:map-marker-outline" width={12} />
-                {[comuna, region].filter(Boolean).join(", ")}
+                {region}
               </p>
             )}
 
@@ -164,35 +186,17 @@ export default function AdminPerfil() {
               </div>
             </div>
           </Card>
-
-          {/* Estadísticas */}
-          <Card>
-            <p className={`text-xs font-semibold ${T} mb-3`}>Resumen</p>
-            <div className="flex flex-col gap-3">
-              {[
-                { icon: "mdi:school-outline", label: "Estudiantes inscritos", value: totalEstudiantes },
-              ].map((stat) => (
-                <div key={stat.label} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Icon icon={stat.icon} width={15} className="text-[#378ADD]" />
-                    <span className={`text-xs ${M}`}>{stat.label}</span>
-                  </div>
-                  <span className={`text-sm font-semibold ${T}`}>{stat.value}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
         </div>
 
-        {/* Formulario */}
-        <div className="col-span-2">
+        {/* Formulario + Contraseña */}
+        <div className="col-span-2 flex flex-col gap-4">
           <Card>
             <div className="grid grid-cols-2 gap-x-6">
               <FormField
-                label="Nombre de la institución"
-                placeholder="Ej: Colegio San Ignacio"
-                value={nombreInstitucion}
-                onChange={(e) => setNombreInstitucion(e.target.value)}
+                label="Nombre del organismo"
+                placeholder="Ej: SLEP Atacama"
+                value={nombreOrganismo}
+                onChange={(e) => setNombreOrganismo(e.target.value)}
                 disabled={!editMode}
                 className="col-span-2"
               />
@@ -210,11 +214,11 @@ export default function AdminPerfil() {
                 value={usuario.correo || ""}
                 disabled
               />
-              <div className="mb-3">
+              <div className="mb-3 col-span-2">
                 <label className={`block text-xs mb-1.5 ${M}`}>Región</label>
                 <select
                   value={region}
-                  onChange={(e) => { setRegion(e.target.value); setComuna(""); }}
+                  onChange={(e) => setRegion(e.target.value)}
                   disabled={!editMode}
                   className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
                     isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
@@ -227,28 +231,11 @@ export default function AdminPerfil() {
                   ))}
                 </select>
               </div>
-              <div className="mb-3">
-                <label className={`block text-xs mb-1.5 ${M}`}>Comuna</label>
-                <select
-                  value={comuna}
-                  onChange={(e) => setComuna(e.target.value)}
-                  disabled={!editMode || !region}
-                  className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
-                    isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
-                           : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
-                  } disabled:opacity-60`}
-                >
-                  <option value="">{region ? "Selecciona la comuna" : "Primero selecciona región"}</option>
-                  {(REGIONES_COMUNAS[region] || []).map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </div>
               <div className="col-span-2 mb-3">
-                <label className={`block text-xs mb-1.5 ${M}`}>Descripción de la institución</label>
+                <label className={`block text-xs mb-1.5 ${M}`}>Descripción del organismo</label>
                 <textarea
                   rows={4}
-                  placeholder="Cuéntales a los estudiantes y empresas sobre tu institución..."
+                  placeholder="Describe el organismo y su misión..."
                   value={descripcion}
                   onChange={(e) => setDescripcion(e.target.value)}
                   disabled={!editMode}
@@ -269,10 +256,71 @@ export default function AdminPerfil() {
               )}
             </div>
           </Card>
+
+          {/* Cambiar contraseña */}
+          <Card>
+            <h3 className={`text-sm font-semibold ${T} mb-4 flex items-center gap-2`}>
+              <Icon icon="mdi:lock-outline" width={16} className="text-[#378ADD]" />
+              Cambiar contraseña
+            </h3>
+            <form onSubmit={handleCambiarContrasena} className="grid grid-cols-2 gap-x-6 gap-y-3">
+              <div className="col-span-2">
+                <label className={`block text-xs mb-1.5 ${M}`}>Contraseña actual</label>
+                <input
+                  type="password"
+                  value={contrasenaActual}
+                  onChange={(e) => setContrasenaActual(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD]
+                    ${isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
+                             : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"}`}
+                />
+              </div>
+              <div>
+                <label className={`block text-xs mb-1.5 ${M}`}>Nueva contraseña</label>
+                <input
+                  type="password"
+                  value={contrasenaNueva}
+                  onChange={(e) => setContrasenaNueva(e.target.value)}
+                  required
+                  minLength={6}
+                  placeholder="Mínimo 6 caracteres"
+                  className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD]
+                    ${isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
+                             : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"}`}
+                />
+              </div>
+              <div>
+                <label className={`block text-xs mb-1.5 ${M}`}>Confirmar nueva contraseña</label>
+                <input
+                  type="password"
+                  value={contrasenaConf}
+                  onChange={(e) => setContrasenaConf(e.target.value)}
+                  required
+                  placeholder="Repite la nueva contraseña"
+                  className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD]
+                    ${isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
+                             : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"}`}
+                />
+              </div>
+              {pwdMsg && (
+                <p className={`col-span-2 text-xs flex items-center gap-1.5 ${
+                  pwdMsg.startsWith("ok:") ? "text-green-600" : "text-red-500"
+                }`}>
+                  <Icon icon={pwdMsg.startsWith("ok:") ? "mdi:check-circle-outline" : "mdi:alert-circle-outline"} width={14} />
+                  {pwdMsg.replace(/^(ok:|error:)/, "")}
+                </p>
+              )}
+              <div className="col-span-2 mt-1">
+                <PrimaryButton type="submit" disabled={cambiandoPwd}>
+                  {cambiandoPwd ? "Cambiando..." : "Cambiar contraseña"}
+                </PrimaryButton>
+              </div>
+            </form>
+          </Card>
         </div>
       </div>
-
-      <PublicacionesUsuario usuarioId={usuario.id} />
     </div>
   );
 }

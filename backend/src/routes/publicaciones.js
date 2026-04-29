@@ -94,11 +94,13 @@ router.get("/", verificarToken, async (req, res) => {
               CASE u.rol
                 WHEN 'empresa'    THEN pe.nombre_empresa
                 WHEN 'estudiante' THEN est.nombre_completo
+                WHEN 'colegio'    THEN pc.nombre_institucion
                 ELSE 'Centro Educacional'
               END AS autor_nombre,
               CASE u.rol
                 WHEN 'empresa'    THEN pe.foto_perfil
                 WHEN 'estudiante' THEN est.foto_perfil
+                WHEN 'colegio'    THEN pc.foto_perfil
                 ELSE NULL
               END AS autor_foto_perfil,
               ${likesFields}
@@ -108,6 +110,7 @@ router.get("/", verificarToken, async (req, res) => {
        JOIN usuarios u             ON u.id   = p.autor_id
        LEFT JOIN perfiles_empresas pe     ON pe.usuario_id  = u.id
        LEFT JOIN perfiles_estudiantes est ON est.usuario_id = u.id
+       LEFT JOIN perfiles_colegios pc     ON pc.usuario_id  = u.id
        LEFT JOIN vacantes v               ON v.id = p.vacante_id
        WHERE p.esta_activa = TRUE
        ${autor_id ? "AND p.autor_id = ?" : ""}
@@ -171,8 +174,28 @@ router.delete("/:id", verificarToken, async (req, res) => {
     // Verificar permisos
     const [[pub]] = await db.query("SELECT autor_id FROM publicaciones WHERE id = ?", [pubId]);
     if (!pub) return res.status(404).json({ error: "Publicación no encontrada" });
-    if (rol !== "colegio" && pub.autor_id !== id)
-      return res.status(403).json({ error: "Sin permisos para eliminar esta publicación" });
+
+    if (pub.autor_id !== id) {
+      if (rol === "colegio") {
+        // Colegio solo puede borrar posts de sus propios estudiantes
+        const [[pertenece]] = await db.query(
+          "SELECT 1 FROM perfiles_estudiantes WHERE usuario_id = ? AND colegio_id = ?",
+          [pub.autor_id, id]
+        );
+        if (!pertenece)
+          return res.status(403).json({ error: "Sin permisos para eliminar esta publicación" });
+      } else if (rol === "slep") {
+        // SLEP solo puede borrar publicaciones de empresas y colegios
+        const [[esEmpresaOColegio]] = await db.query(
+          "SELECT 1 FROM usuarios WHERE id = ? AND rol IN ('empresa', 'colegio')",
+          [pub.autor_id]
+        );
+        if (!esEmpresaOColegio)
+          return res.status(403).json({ error: "SLEP solo puede eliminar publicaciones de empresas y colegios" });
+      } else {
+        return res.status(403).json({ error: "Sin permisos para eliminar esta publicación" });
+      }
+    }
 
     // Borrar registros asociados y luego la publicación
     await db.query("DELETE FROM publicacion_likes WHERE publicacion_id = ?", [pubId]);

@@ -16,6 +16,21 @@ router.post("/", verificarToken, async (req, res) => {
     return res.status(400).json({ error: "referencia_id es requerido" });
 
   try {
+    const [[existing]] = await db.query(
+      "SELECT id, estado FROM reportes WHERE reportado_por = ? AND tipo = ? AND referencia_id = ?",
+      [req.usuario.id, tipo, referencia_id]
+    );
+
+    if (existing) {
+      if (existing.estado === "pendiente")
+        return res.status(409).json({ error: "Ya reportaste este contenido" });
+      await db.query(
+        "UPDATE reportes SET estado = 'pendiente', motivo = ?, descripcion = ?, creado_en = NOW(), revisado_en = NULL, revisado_por = NULL WHERE id = ?",
+        [motivo, descripcion?.trim() || null, existing.id]
+      );
+      return res.status(201).json({ mensaje: "Reporte enviado. El equipo lo revisará pronto." });
+    }
+
     await db.query(
       "INSERT INTO reportes (reportado_por, tipo, referencia_id, motivo, descripcion) VALUES (?, ?, ?, ?, ?)",
       [req.usuario.id, tipo, referencia_id, motivo, descripcion?.trim() || null]

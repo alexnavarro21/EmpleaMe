@@ -49,6 +49,10 @@ router.post("/:id/toggle", verificarToken, async (req, res) => {
     return res.status(400).json({ error: "No puedes seguirte a ti mismo" });
   }
 
+  if (req.usuario.rol === "slep") {
+    return res.status(403).json({ error: "El perfil SLEP no puede seguir usuarios" });
+  }
+
   try {
     const hayTabla = await tieneTablaSeguidores();
     if (!hayTabla) return res.status(503).json({ error: "Función no disponible aún" });

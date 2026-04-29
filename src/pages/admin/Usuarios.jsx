@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PageHeader } from "../../components/ui";
-import { getUsuariosAdmin, marcarEgresado } from "../../services/api";
+import { getUsuariosAdmin, marcarEgresado, cambiarContrasenaEstudiante } from "../../services/api";
 
 const roleColor = { estudiante: "blue", empresa: "orange", admin: "green" };
 const statusColor = { activo: "green", inactivo: "gray", pendiente: "yellow" };
@@ -17,9 +17,30 @@ function formatDate(iso) {
 function AccionesEstudiante({ userId, isDark }) {
   const [confirmar, setConfirmar] = useState(false);
   const [estado, setEstado] = useState("idle"); // idle | loading | ok | error | no_registro
+  const [showPwd, setShowPwd]       = useState(false);
+  const [nuevaPwd, setNuevaPwd]     = useState("");
+  const [cambiandoPwd, setCambiandoPwd] = useState(false);
+  const [pwdMsg, setPwdMsg]         = useState(""); // "ok:..." | "error:..."
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
   const BG = isDark ? "bg-[#262624]" : "bg-white";
+
+  const handleCambiarPwd = async (e) => {
+    e.preventDefault();
+    if (nuevaPwd.length < 6) { setPwdMsg("error:Mínimo 6 caracteres"); return; }
+    setCambiandoPwd(true);
+    setPwdMsg("");
+    try {
+      await cambiarContrasenaEstudiante(userId, nuevaPwd);
+      setPwdMsg("ok:Contraseña actualizada");
+      setNuevaPwd("");
+      setTimeout(() => { setShowPwd(false); setPwdMsg(""); }, 1500);
+    } catch (err) {
+      setPwdMsg("error:" + err.message);
+    } finally {
+      setCambiandoPwd(false);
+    }
+  };
 
   const handleEgresar = async () => {
     setEstado("loading");
@@ -81,6 +102,44 @@ function AccionesEstudiante({ userId, isDark }) {
       )}
       {estado === "error" && (
         <span className="text-xs text-red-400">Error al registrar</span>
+      )}
+
+      {!showPwd ? (
+        <button
+          onClick={() => { setShowPwd(true); setPwdMsg(""); setNuevaPwd(""); }}
+          className={`text-xs flex items-center gap-1 px-2 py-1 rounded-lg border transition-colors ${
+            isDark
+              ? "border-[#3a3a38] text-[#B4B2A9] hover:border-[#378ADD]/50 hover:text-[#378ADD]"
+              : "border-[#D3D1C7] text-[#5F5E5A] hover:border-[#378ADD]/50 hover:text-[#378ADD]"
+          }`}
+        >
+          <Icon icon="mdi:key-outline" width={12} />
+          Contraseña
+        </button>
+      ) : (
+        <form onSubmit={handleCambiarPwd} className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs ${B} ${BG}`}>
+          <input
+            type="password"
+            value={nuevaPwd}
+            onChange={(e) => setNuevaPwd(e.target.value)}
+            placeholder="Nueva contraseña"
+            autoFocus
+            className={`text-xs outline-none bg-transparent w-28 ${M}`}
+          />
+          {pwdMsg ? (
+            <span className={pwdMsg.startsWith("ok:") ? "text-green-500" : "text-red-400"}>
+              {pwdMsg.replace(/^(ok:|error:)/, "")}
+            </span>
+          ) : (
+            <>
+              <button type="submit" disabled={cambiandoPwd} className="text-[#378ADD] hover:text-[#0F4D8A] font-medium disabled:opacity-50">
+                {cambiandoPwd ? <Icon icon="mdi:loading" width={12} className="animate-spin" /> : "Guardar"}
+              </button>
+              <span className={M}>·</span>
+              <button type="button" onClick={() => setShowPwd(false)} className={`${M} hover:text-red-400`}>✕</button>
+            </>
+          )}
+        </form>
       )}
     </div>
   );

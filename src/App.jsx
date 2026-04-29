@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DarkModeProvider } from "./context/DarkModeContext";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
@@ -17,10 +17,8 @@ import EmpresaMensajeria from "./pages/empresa/EmpresaMensajeria";
 
 import AdminPanel from "./pages/admin/Panel";
 import AdminPerfil from "./pages/admin/Perfil";
-import AdminUsuarios from "./pages/admin/Usuarios";
 import AdminEvaluaciones from "./pages/admin/Evaluaciones";
 import AdminTalleres from "./pages/admin/Talleres";
-import { Navigate } from "react-router-dom";
 import AdminMensajeria from "./pages/admin/Mensajeria";
 import AdminReportes from "./pages/admin/Reportes";
 
@@ -29,9 +27,11 @@ import SlepEmpresas   from "./pages/slep/Empresas";
 import SlepColegios   from "./pages/slep/Colegios";
 import SlepReportes   from "./pages/slep/Reportes";
 import SlepMensajeria from "./pages/slep/Mensajeria";
+import SlepPerfil     from "./pages/slep/Perfil";
 
 import BuscarPerfiles from "./pages/BuscarPerfiles";
 import PerfilEmpresaPublico from "./pages/PerfilEmpresaPublico";
+import PerfilColegioPublico from "./pages/PerfilColegioPublico";
 import Notificaciones from "./pages/Notificaciones";
 import Seguidores from "./pages/Seguidores";
 
@@ -44,8 +44,9 @@ export default function App() {
           <Route path="/" element={<Login />} />
           <Route element={<Layout />}>
 
-            {/* Perfil público de empresa — accesible desde cualquier rol */}
+            {/* Perfiles públicos — accesibles desde cualquier rol */}
             <Route path="/empresa-publica/:id" element={<PerfilEmpresaPublico />} />
+            <Route path="/colegio-publico/:id" element={<PerfilColegioPublico />} />
 
             {/* Estudiante */}
             <Route path="/estudiante/dashboard" element={<EstudianteDashboard />} />
@@ -73,7 +74,7 @@ export default function App() {
             <Route path="/admin/inicio" element={<EstudianteDashboard />} />
             <Route path="/admin/perfil" element={<AdminPerfil />} />
             <Route path="/admin/panel" element={<AdminPanel />} />
-            <Route path="/admin/usuarios" element={<AdminUsuarios />} />
+            <Route path="/admin/usuarios" element={<Navigate to="/admin/evaluaciones" replace />} />
             <Route path="/admin/evaluaciones" element={<AdminEvaluaciones />} />
             <Route path="/admin/notas" element={<Navigate to="/admin/evaluaciones" replace />} />
             <Route path="/admin/tests" element={<Navigate to="/admin/evaluaciones" replace />} />
@@ -85,6 +86,7 @@ export default function App() {
             <Route path="/admin/notificaciones" element={<Notificaciones />} />
 
             {/* SLEP */}
+            <Route path="/slep/perfil"         element={<SlepPerfil />} />
             <Route path="/slep/inicio"         element={<EstudianteDashboard />} />
             <Route path="/slep/panel"          element={<SlepPanel />} />
             <Route path="/slep/empresas"       element={<SlepEmpresas />} />

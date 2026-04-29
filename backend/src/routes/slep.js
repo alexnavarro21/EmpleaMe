@@ -1,8 +1,45 @@
 const router = require("express").Router();
+const bcrypt = require("bcrypt");
 const db = require("../db");
 const { verificarToken, soloRol } = require("../middleware/auth");
 
 const auth = [verificarToken, soloRol("slep")];
+
+// GET /api/slep/perfil
+router.get("/perfil", ...auth, async (req, res) => {
+  const id = req.usuario.id;
+  try {
+    let [[perfil]] = await db.query("SELECT * FROM perfiles_slep WHERE usuario_id = ?", [id]);
+    if (!perfil) {
+      await db.query("INSERT INTO perfiles_slep (usuario_id, nombre_organismo) VALUES (?, 'SLEP')", [id]);
+      [[perfil]] = await db.query("SELECT * FROM perfiles_slep WHERE usuario_id = ?", [id]);
+    }
+    res.json(perfil);
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// PUT /api/slep/perfil
+router.put("/perfil", ...auth, async (req, res) => {
+  const id = req.usuario.id;
+  const { nombre_organismo, telefono_contacto, descripcion, region } = req.body;
+  try {
+    await db.query(
+      `INSERT INTO perfiles_slep (usuario_id, nombre_organismo, telefono_contacto, descripcion, region)
+       VALUES (?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         nombre_organismo  = VALUES(nombre_organismo),
+         telefono_contacto = VALUES(telefono_contacto),
+         descripcion       = VALUES(descripcion),
+         region            = VALUES(region)`,
+      [id, nombre_organismo || "SLEP", telefono_contacto || null, descripcion || null, region || null]
+    );
+    res.json({ mensaje: "Perfil actualizado" });
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
 
 // GET /api/slep/stats
 router.get("/stats", ...auth, async (req, res) => {
@@ -17,12 +54,52 @@ router.get("/stats", ...auth, async (req, res) => {
   }
 });
 
+// ── Empresas ──────────────────────────────────────────────────────────────────
+
+// POST /api/slep/empresas — crear cuenta de empresa
+router.post("/empresas", ...auth, async (req, res) => {
+  const { nombre_empresa, correo, contrasena, region, comuna, telefono_contacto, descripcion } = req.body;
+  if (!nombre_empresa || !correo || !contrasena)
+    return res.status(400).json({ error: "nombre_empresa, correo y contrasena son requeridos" });
+
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+    const hash = await bcrypt.hash(contrasena, 10);
+    const [result] = await conn.query(
+      "INSERT INTO usuarios (correo, contrasena_hash, rol, creado_por) VALUES (?, ?, 'empresa', ?)",
+      [correo.trim().toLowerCase(), hash, req.usuario.id]
+    ).catch(() =>
+      conn.query(
+        "INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES (?, ?, 'empresa')",
+        [correo.trim().toLowerCase(), hash]
+      )
+    );
+    const usuarioId = result.insertId;
+    await conn.query(
+      `INSERT INTO perfiles_empresas (usuario_id, nombre_empresa, telefono_contacto, descripcion, region, comuna)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [usuarioId, nombre_empresa, telefono_contacto || null, descripcion || null, region || null, comuna || null]
+    );
+    await conn.commit();
+    res.status(201).json({ id: usuarioId, mensaje: "Empresa creada correctamente" });
+  } catch (err) {
+    await conn.rollback();
+    if (err.code === "ER_DUP_ENTRY")
+      return res.status(409).json({ error: "El correo ya está registrado" });
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  } finally {
+    conn.release();
+  }
+});
+
 // GET /api/slep/empresas
 router.get("/empresas", ...auth, async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT pe.usuario_id, pe.nombre_empresa, pe.descripcion, pe.telefono_contacto,
               pe.region, pe.comuna, pe.foto_perfil, u.correo, u.fecha_creacion,
+              u.creado_por,
               COUNT(v.id) AS total_vacantes_activas
        FROM perfiles_empresas pe
        JOIN usuarios u ON u.id = pe.usuario_id
@@ -32,7 +109,103 @@ router.get("/empresas", ...auth, async (req, res) => {
     );
     res.json(rows);
   } catch (err) {
+    // Si creado_por no existe aún, devolver sin ese campo
+    try {
+      const [rows] = await db.query(
+        `SELECT pe.usuario_id, pe.nombre_empresa, pe.descripcion, pe.telefono_contacto,
+                pe.region, pe.comuna, pe.foto_perfil, u.correo, u.fecha_creacion,
+                COUNT(v.id) AS total_vacantes_activas
+         FROM perfiles_empresas pe
+         JOIN usuarios u ON u.id = pe.usuario_id
+         LEFT JOIN vacantes v ON v.empresa_id = pe.usuario_id AND v.esta_activa = TRUE
+         GROUP BY pe.usuario_id
+         ORDER BY pe.nombre_empresa`
+      );
+      res.json(rows);
+    } catch (e2) {
+      res.status(500).json({ error: "Error del servidor", detalle: e2.message });
+    }
+  }
+});
+
+// PUT /api/slep/empresas/:id — editar perfil de empresa
+router.put("/empresas/:id", ...auth, async (req, res) => {
+  const { nombre_empresa, telefono_contacto, descripcion, region, comuna, contrasena } = req.body;
+  const id = parseInt(req.params.id);
+  if (!nombre_empresa)
+    return res.status(400).json({ error: "nombre_empresa es requerido" });
+  try {
+    const [[empresa]] = await db.query(
+      "SELECT 1 FROM perfiles_empresas WHERE usuario_id = ?", [id]
+    );
+    if (!empresa) return res.status(404).json({ error: "Empresa no encontrada" });
+    await db.query(
+      `UPDATE perfiles_empresas
+       SET nombre_empresa=?, telefono_contacto=?, descripcion=?, region=?, comuna=?
+       WHERE usuario_id=?`,
+      [nombre_empresa, telefono_contacto || null, descripcion || null, region || null, comuna || null, id]
+    );
+    if (contrasena && contrasena.length >= 6) {
+      const hash = await bcrypt.hash(contrasena, 10);
+      await db.query("UPDATE usuarios SET contrasena_hash=? WHERE id=?", [hash, id]);
+    }
+    res.json({ mensaje: "Empresa actualizada" });
+  } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// DELETE /api/slep/empresas/:id — eliminar empresa (cascada borra perfil, vacantes, etc.)
+router.delete("/empresas/:id", ...auth, async (req, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    const [[usuario]] = await db.query(
+      "SELECT id, rol FROM usuarios WHERE id = ? AND rol = 'empresa'", [id]
+    );
+    if (!usuario) return res.status(404).json({ error: "Empresa no encontrada" });
+    await db.query("DELETE FROM usuarios WHERE id = ?", [id]);
+    res.json({ mensaje: "Empresa eliminada correctamente" });
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// ── Colegios ──────────────────────────────────────────────────────────────────
+
+// POST /api/slep/colegios — crear cuenta de colegio
+router.post("/colegios", ...auth, async (req, res) => {
+  const { nombre_institucion, correo, contrasena, region, comuna, telefono_contacto, descripcion } = req.body;
+  if (!nombre_institucion || !correo || !contrasena)
+    return res.status(400).json({ error: "nombre_institucion, correo y contrasena son requeridos" });
+
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+    const hash = await bcrypt.hash(contrasena, 10);
+    const [result] = await conn.query(
+      "INSERT INTO usuarios (correo, contrasena_hash, rol, creado_por) VALUES (?, ?, 'colegio', ?)",
+      [correo.trim().toLowerCase(), hash, req.usuario.id]
+    ).catch(() =>
+      conn.query(
+        "INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES (?, ?, 'colegio')",
+        [correo.trim().toLowerCase(), hash]
+      )
+    );
+    const usuarioId = result.insertId;
+    await conn.query(
+      `INSERT INTO perfiles_colegios (usuario_id, nombre_institucion, telefono_contacto, descripcion, region, comuna)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [usuarioId, nombre_institucion, telefono_contacto || null, descripcion || null, region || null, comuna || null]
+    );
+    await conn.commit();
+    res.status(201).json({ id: usuarioId, mensaje: "Colegio creado correctamente" });
+  } catch (err) {
+    await conn.rollback();
+    if (err.code === "ER_DUP_ENTRY")
+      return res.status(409).json({ error: "El correo ya está registrado" });
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  } finally {
+    conn.release();
   }
 });
 
@@ -42,6 +215,7 @@ router.get("/colegios", ...auth, async (req, res) => {
     const [rows] = await db.query(
       `SELECT pc.usuario_id, pc.nombre_institucion, pc.descripcion, pc.telefono_contacto,
               pc.region, pc.comuna, pc.foto_perfil, u.correo, u.fecha_creacion,
+              u.creado_por,
               COUNT(pe.usuario_id) AS total_estudiantes
        FROM perfiles_colegios pc
        JOIN usuarios u ON u.id = pc.usuario_id
@@ -51,9 +225,52 @@ router.get("/colegios", ...auth, async (req, res) => {
     );
     res.json(rows);
   } catch (err) {
+    try {
+      const [rows] = await db.query(
+        `SELECT pc.usuario_id, pc.nombre_institucion, pc.descripcion, pc.telefono_contacto,
+                pc.region, pc.comuna, pc.foto_perfil, u.correo, u.fecha_creacion,
+                COUNT(pe.usuario_id) AS total_estudiantes
+         FROM perfiles_colegios pc
+         JOIN usuarios u ON u.id = pc.usuario_id
+         LEFT JOIN perfiles_estudiantes pe ON pe.colegio_id = pc.usuario_id
+         GROUP BY pc.usuario_id
+         ORDER BY pc.nombre_institucion`
+      );
+      res.json(rows);
+    } catch (e2) {
+      res.status(500).json({ error: "Error del servidor", detalle: e2.message });
+    }
+  }
+});
+
+// PUT /api/slep/colegios/:id — editar perfil de colegio
+router.put("/colegios/:id", ...auth, async (req, res) => {
+  const { nombre_institucion, telefono_contacto, descripcion, region, comuna, contrasena } = req.body;
+  const id = parseInt(req.params.id);
+  if (!nombre_institucion)
+    return res.status(400).json({ error: "nombre_institucion es requerido" });
+  try {
+    const [[colegio]] = await db.query(
+      "SELECT 1 FROM perfiles_colegios WHERE usuario_id = ?", [id]
+    );
+    if (!colegio) return res.status(404).json({ error: "Colegio no encontrado" });
+    await db.query(
+      `UPDATE perfiles_colegios
+       SET nombre_institucion=?, telefono_contacto=?, descripcion=?, region=?, comuna=?
+       WHERE usuario_id=?`,
+      [nombre_institucion, telefono_contacto || null, descripcion || null, region || null, comuna || null, id]
+    );
+    if (contrasena && contrasena.length >= 6) {
+      const hash = await bcrypt.hash(contrasena, 10);
+      await db.query("UPDATE usuarios SET contrasena_hash=? WHERE id=?", [hash, id]);
+    }
+    res.json({ mensaje: "Colegio actualizado" });
+  } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }
 });
+
+// ── Reportes ──────────────────────────────────────────────────────────────────
 
 // Verifica que el reporte sea sobre contenido de empresa o colegio
 async function esSlepReporte(reporteId) {
@@ -108,7 +325,8 @@ router.get("/reportes", ...auth, async (req, res) => {
        LEFT JOIN perfiles_empresas  emp_ref ON emp_ref.usuario_id = u_ref.id
        WHERE r.estado = ?
          AND (
-           (r.tipo = 'publicacion' AND r.referencia_id IN (
+           r.revisado_por IS NOT NULL
+           OR (r.tipo = 'publicacion' AND r.referencia_id IN (
              SELECT p.id FROM publicaciones p
              JOIN usuarios u2 ON u2.id = p.autor_id
              WHERE u2.rol IN ('empresa','colegio')

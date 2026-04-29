@@ -285,6 +285,11 @@ router.put("/foto", verificarToken, upload.single("foto"), async (req, res) => {
         "UPDATE perfiles_colegios SET foto_perfil = ? WHERE usuario_id = ?",
         [url, id]
       );
+    } else if (rol === "slep") {
+      await db.query(
+        "INSERT INTO perfiles_slep (usuario_id, foto_perfil) VALUES (?, ?) ON DUPLICATE KEY UPDATE foto_perfil = VALUES(foto_perfil)",
+        [id, url]
+      );
     } else {
       return res.status(403).json({ error: "Rol no soportado para foto de perfil" });
     }

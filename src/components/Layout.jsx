@@ -8,7 +8,7 @@ const profilePaths = {
   estudiante: "/estudiante/perfil",
   empresa: "/empresa/perfil",
   admin: "/admin/perfil",
-  slep: null,
+  slep: "/slep/perfil",
 };
 
 const navLinks = {
@@ -23,8 +23,7 @@ const navLinks = {
   admin: [
     { to: "/admin/inicio", label: "Inicio" },
     { to: "/admin/panel", label: "Panel" },
-    { to: "/admin/usuarios", label: "Usuarios" },
-    { to: "/admin/evaluaciones", label: "Gestión de Estudiantes" },
+    { to: "/admin/evaluaciones", label: "Estudiantes" },
     { to: "/admin/talleres", label: "Talleres" },
   ],
   slep: [
@@ -33,7 +32,6 @@ const navLinks = {
     { to: "/slep/empresas",    label: "Empresas" },
     { to: "/slep/colegios",    label: "Colegios" },
     { to: "/slep/reportes",    label: "Reportes" },
-    { to: "/slep/mensajeria",  label: "Mensajería" },
   ],
 };
 
@@ -100,10 +98,16 @@ export default function Layout() {
     : "estudiante";
   const usuarioId = usuario.id;
 
-  const [fotoPerfil, setFotoPerfil] = useState(() => {
-    const raw = localStorage.getItem(`foto_perfil_${usuarioId}`) || "";
-    return raw ? (raw.startsWith("http") ? raw : `${BASE_ORIGIN}${raw}`) : null;
-  });
+  const resolverFoto = (raw) => {
+    if (!raw) return null;
+    if (raw.startsWith("http")) return raw;
+    if (raw.startsWith("/")) return `${BASE_ORIGIN}${raw}`;
+    return `${BASE_ORIGIN}/uploads/${raw}`;
+  };
+
+  const [fotoPerfil, setFotoPerfil] = useState(() =>
+    resolverFoto(localStorage.getItem(`foto_perfil_${usuarioId}`) || "")
+  );
 
   // Search bar state
   const [searchQuery, setSearchQuery] = useState("");
@@ -112,18 +116,20 @@ export default function Layout() {
   const [searchLoading, setSearchLoading] = useState(false);
 
   useEffect(() => {
-    if (!usuarioId || role === "slep") return;
+    if (!usuarioId) return;
     const endpoint = role === "empresa"
       ? `${BASE_API}/perfiles/empresa/${usuarioId}`
       : role === "admin"
       ? `${BASE_API}/perfiles/colegio/${usuarioId}`
+      : role === "slep"
+      ? `${BASE_API}/slep/perfil`
       : `${BASE_API}/perfiles/estudiante/${usuarioId}`;
     fetch(endpoint, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } })
       .then((r) => r.json())
       .then((data) => {
         const raw = data.foto_perfil || "";
         localStorage.setItem(`foto_perfil_${usuarioId}`, raw);
-        setFotoPerfil(raw ? (raw.startsWith("http") ? raw : `${BASE_ORIGIN}${raw}`) : null);
+        setFotoPerfil(resolverFoto(raw));
       })
       .catch(() => {});
   }, [usuarioId, role]);
@@ -133,8 +139,24 @@ export default function Layout() {
       if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
       if (searchRef.current && !searchRef.current.contains(e.target)) setShowSuggestions(false);
     }
+    function handleStorageChange(e) {
+      if (e.key === `foto_perfil_${usuarioId}`) {
+        setFotoPerfil(resolverFoto(e.newValue || ""));
+      }
+    }
+    function handleFotoUpdate(e) {
+      if (e.detail?.key === `foto_perfil_${usuarioId}`) {
+        setFotoPerfil(resolverFoto(e.detail.value || ""));
+      }
+    }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("foto_perfil_updated", handleFotoUpdate);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("foto_perfil_updated", handleFotoUpdate);
+    };
   }, []);
 
   const isOnBuscar = location.pathname.includes("/buscar");
@@ -278,7 +300,7 @@ export default function Layout() {
                     onChange={handleSearchChange}
                     onFocus={() => { if (searchQuery.trim() && suggestions.length > 0) setShowSuggestions(true); }}
                     placeholder="Buscar estudiantes, empresas..."
-                    className="w-120 pl-9 pr-4 py-1.5 rounded-full text-sm bg-[#0F4D8A]/50 border border-[#1a5fa8] text-[#E6F1FB] placeholder-[#85B7EB] outline-none focus:w-80 focus:bg-[#0F4D8A]/80 focus:border-[#378ADD] transition-all duration-200"
+                    className="w-64 pl-9 pr-4 py-1.5 rounded-full text-sm bg-[#0F4D8A]/50 border border-[#1a5fa8] text-[#E6F1FB] placeholder-[#85B7EB] outline-none focus:w-[28rem] focus:bg-[#0F4D8A]/80 focus:border-[#378ADD] transition-all duration-200"
                   />
                 </div>
               </form>
