@@ -137,4 +137,29 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// PUT /api/auth/cambiar-contrasena — cualquier usuario autenticado
+router.put("/cambiar-contrasena", require("../middleware/auth").verificarToken, async (req, res) => {
+  const { contrasena_actual, contrasena_nueva } = req.body;
+  if (!contrasena_actual || !contrasena_nueva)
+    return res.status(400).json({ error: "contrasena_actual y contrasena_nueva son requeridos" });
+  if (contrasena_nueva.length < 6)
+    return res.status(400).json({ error: "La nueva contraseña debe tener al menos 6 caracteres" });
+
+  try {
+    const [[usuario]] = await db.query(
+      "SELECT contrasena_hash FROM usuarios WHERE id = ?", [req.usuario.id]
+    );
+    if (!usuario) return res.status(404).json({ error: "Usuario no encontrado" });
+
+    const valido = await bcrypt.compare(contrasena_actual, String(usuario.contrasena_hash));
+    if (!valido) return res.status(401).json({ error: "La contraseña actual es incorrecta" });
+
+    const hash = await bcrypt.hash(contrasena_nueva, 10);
+    await db.query("UPDATE usuarios SET contrasena_hash = ? WHERE id = ?", [hash, req.usuario.id]);
+    res.json({ mensaje: "Contraseña actualizada correctamente" });
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
 module.exports = router;

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, PrimaryButton, SecondaryButton, FormField, PageHeader } from "../../components/ui";
-import { getSlepPerfil, actualizarPerfilSlep, subirFotoPerfil, getMediaUrl } from "../../services/api";
+import { getSlepPerfil, actualizarPerfilSlep, subirFotoPerfil, getMediaUrl, cambiarContrasena } from "../../services/api";
 import { REGIONES } from "../../data/regionesComunas";
 
 export default function SlepPerfil() {
@@ -11,6 +11,12 @@ export default function SlepPerfil() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
+
+  const [contrasenaActual, setContrasenaActual] = useState("");
+  const [contrasenaNueva, setContrasenaNueva]   = useState("");
+  const [contrasenaConf, setContrasenaConf]     = useState("");
+  const [cambiandoPwd, setCambiandoPwd]         = useState(false);
+  const [pwdMsg, setPwdMsg]                     = useState("");
 
   const [nombreOrganismo, setNombreOrganismo] = useState("");
   const [telefono, setTelefono] = useState("");
@@ -62,6 +68,28 @@ export default function SlepPerfil() {
       setSaveMsg("Error: " + err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleCambiarContrasena = async (e) => {
+    e.preventDefault();
+    if (contrasenaNueva !== contrasenaConf) {
+      setPwdMsg("error:Las contraseñas nuevas no coinciden");
+      return;
+    }
+    setCambiandoPwd(true);
+    setPwdMsg("");
+    try {
+      await cambiarContrasena(contrasenaActual, contrasenaNueva);
+      setPwdMsg("ok:Contraseña actualizada correctamente");
+      setContrasenaActual("");
+      setContrasenaNueva("");
+      setContrasenaConf("");
+    } catch (err) {
+      setPwdMsg("error:" + err.message);
+    } finally {
+      setCambiandoPwd(false);
+      setTimeout(() => setPwdMsg(""), 4000);
     }
   };
 
@@ -160,8 +188,8 @@ export default function SlepPerfil() {
           </Card>
         </div>
 
-        {/* Formulario */}
-        <div className="col-span-2">
+        {/* Formulario + Contraseña */}
+        <div className="col-span-2 flex flex-col gap-4">
           <Card>
             <div className="grid grid-cols-2 gap-x-6">
               <FormField
@@ -227,6 +255,69 @@ export default function SlepPerfil() {
                 </div>
               )}
             </div>
+          </Card>
+
+          {/* Cambiar contraseña */}
+          <Card>
+            <h3 className={`text-sm font-semibold ${T} mb-4 flex items-center gap-2`}>
+              <Icon icon="mdi:lock-outline" width={16} className="text-[#378ADD]" />
+              Cambiar contraseña
+            </h3>
+            <form onSubmit={handleCambiarContrasena} className="grid grid-cols-2 gap-x-6 gap-y-3">
+              <div className="col-span-2">
+                <label className={`block text-xs mb-1.5 ${M}`}>Contraseña actual</label>
+                <input
+                  type="password"
+                  value={contrasenaActual}
+                  onChange={(e) => setContrasenaActual(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD]
+                    ${isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
+                             : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"}`}
+                />
+              </div>
+              <div>
+                <label className={`block text-xs mb-1.5 ${M}`}>Nueva contraseña</label>
+                <input
+                  type="password"
+                  value={contrasenaNueva}
+                  onChange={(e) => setContrasenaNueva(e.target.value)}
+                  required
+                  minLength={6}
+                  placeholder="Mínimo 6 caracteres"
+                  className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD]
+                    ${isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
+                             : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"}`}
+                />
+              </div>
+              <div>
+                <label className={`block text-xs mb-1.5 ${M}`}>Confirmar nueva contraseña</label>
+                <input
+                  type="password"
+                  value={contrasenaConf}
+                  onChange={(e) => setContrasenaConf(e.target.value)}
+                  required
+                  placeholder="Repite la nueva contraseña"
+                  className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD]
+                    ${isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
+                             : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"}`}
+                />
+              </div>
+              {pwdMsg && (
+                <p className={`col-span-2 text-xs flex items-center gap-1.5 ${
+                  pwdMsg.startsWith("ok:") ? "text-green-600" : "text-red-500"
+                }`}>
+                  <Icon icon={pwdMsg.startsWith("ok:") ? "mdi:check-circle-outline" : "mdi:alert-circle-outline"} width={14} />
+                  {pwdMsg.replace(/^(ok:|error:)/, "")}
+                </p>
+              )}
+              <div className="col-span-2 mt-1">
+                <PrimaryButton type="submit" disabled={cambiandoPwd}>
+                  {cambiandoPwd ? "Cambiando..." : "Cambiar contraseña"}
+                </PrimaryButton>
+              </div>
+            </form>
           </Card>
         </div>
       </div>
