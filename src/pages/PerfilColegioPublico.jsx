@@ -102,7 +102,7 @@ export default function PerfilColegioPublico() {
             )}
             <p className={`text-xs ${M} mt-1 mb-3`}>Institución educativa en EmpleaMe</p>
 
-            {usuario.id && parseInt(id) !== usuario.id && (
+            {usuario.id && parseInt(id) !== usuario.id && usuario.rol !== "slep" && (
               <button
                 onClick={handleToggleSeguir}
                 disabled={toggleandoSeguir}

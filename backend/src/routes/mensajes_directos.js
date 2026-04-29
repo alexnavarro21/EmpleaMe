@@ -42,6 +42,17 @@ router.post("/", verificarToken, async (req, res) => {
   if (destinatario_id === id)
     return res.status(400).json({ error: "No puedes iniciar una conversación contigo mismo" });
 
+  // Solo SLEP puede iniciar conversaciones con SLEP
+  try {
+    const [[dest]] = await db.query("SELECT rol FROM usuarios WHERE id = ?", [destinatario_id]);
+    if (!dest) return res.status(404).json({ error: "Usuario no encontrado" });
+    if (dest.rol === "slep" && req.usuario.rol !== "slep") {
+      return res.status(403).json({ error: "No puedes iniciar una conversación con este usuario" });
+    }
+  } catch (err) {
+    return res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+
   // Siempre guardamos con el menor ID primero para garantizar unicidad
   const u1 = Math.min(id, destinatario_id);
   const u2 = Math.max(id, destinatario_id);

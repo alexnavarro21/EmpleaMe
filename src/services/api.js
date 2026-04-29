@@ -1040,10 +1040,32 @@ export async function getSlepEmpresas() {
   return data;
 }
 
+export async function crearSlepEmpresa(datos) {
+  const res = await fetch(`${BASE_URL}/slep/empresas`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al crear empresa");
+  return data;
+}
+
 export async function getSlepColegios() {
   const res = await fetch(`${BASE_URL}/slep/colegios`, { headers: authHeaders() });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al obtener colegios");
+  return data;
+}
+
+export async function crearSlepColegio(datos) {
+  const res = await fetch(`${BASE_URL}/slep/colegios`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al crear colegio");
   return data;
 }
 

@@ -149,8 +149,8 @@ export default function PerfilEmpresaPublico() {
             <p className={`text-xs ${M} mb-3`}>Empresa registrada en EmpleaMe</p>
             <Badge color="blue">Empresa Verificada</Badge>
 
-            {/* Botón Seguir (visible para todos excepto la propia empresa) */}
-            {usuario.id && parseInt(id) !== usuario.id && (
+            {/* Botón Seguir (visible para todos excepto la propia empresa y SLEP) */}
+            {usuario.id && parseInt(id) !== usuario.id && usuario.rol !== "slep" && (
               <button
                 onClick={handleToggleSeguir}
                 disabled={toggleandoSeguir}

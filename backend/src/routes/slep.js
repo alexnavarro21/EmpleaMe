@@ -1,4 +1,5 @@
 const router = require("express").Router();
+const bcrypt = require("bcrypt");
 const db = require("../db");
 const { verificarToken, soloRol } = require("../middleware/auth");
 
@@ -53,6 +54,38 @@ router.get("/stats", ...auth, async (req, res) => {
   }
 });
 
+// POST /api/slep/empresas — crear cuenta de empresa
+router.post("/empresas", ...auth, async (req, res) => {
+  const { nombre_empresa, correo, contrasena, region, comuna, telefono_contacto, descripcion } = req.body;
+  if (!nombre_empresa || !correo || !contrasena)
+    return res.status(400).json({ error: "nombre_empresa, correo y contrasena son requeridos" });
+
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+    const hash = await bcrypt.hash(contrasena, 10);
+    const [result] = await conn.query(
+      "INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES (?, ?, 'empresa')",
+      [correo.trim().toLowerCase(), hash]
+    );
+    const usuarioId = result.insertId;
+    await conn.query(
+      `INSERT INTO perfiles_empresas (usuario_id, nombre_empresa, telefono_contacto, descripcion, region, comuna)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [usuarioId, nombre_empresa, telefono_contacto || null, descripcion || null, region || null, comuna || null]
+    );
+    await conn.commit();
+    res.status(201).json({ id: usuarioId, mensaje: "Empresa creada correctamente" });
+  } catch (err) {
+    await conn.rollback();
+    if (err.code === "ER_DUP_ENTRY")
+      return res.status(409).json({ error: "El correo ya está registrado" });
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  } finally {
+    conn.release();
+  }
+});
+
 // GET /api/slep/empresas
 router.get("/empresas", ...auth, async (req, res) => {
   try {
@@ -69,6 +102,38 @@ router.get("/empresas", ...auth, async (req, res) => {
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// POST /api/slep/colegios — crear cuenta de colegio
+router.post("/colegios", ...auth, async (req, res) => {
+  const { nombre_institucion, correo, contrasena, region, comuna, telefono_contacto, descripcion } = req.body;
+  if (!nombre_institucion || !correo || !contrasena)
+    return res.status(400).json({ error: "nombre_institucion, correo y contrasena son requeridos" });
+
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+    const hash = await bcrypt.hash(contrasena, 10);
+    const [result] = await conn.query(
+      "INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES (?, ?, 'colegio')",
+      [correo.trim().toLowerCase(), hash]
+    );
+    const usuarioId = result.insertId;
+    await conn.query(
+      `INSERT INTO perfiles_colegios (usuario_id, nombre_institucion, telefono_contacto, descripcion, region, comuna)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [usuarioId, nombre_institucion, telefono_contacto || null, descripcion || null, region || null, comuna || null]
+    );
+    await conn.commit();
+    res.status(201).json({ id: usuarioId, mensaje: "Colegio creado correctamente" });
+  } catch (err) {
+    await conn.rollback();
+    if (err.code === "ER_DUP_ENTRY")
+      return res.status(409).json({ error: "El correo ya está registrado" });
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  } finally {
+    conn.release();
   }
 });
 
