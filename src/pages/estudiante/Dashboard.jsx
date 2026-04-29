@@ -198,7 +198,8 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
     ? { label: pub.vacante_tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica", color: pub.vacante_tipo === "puesto_laboral" ? "green" : "orange" }
     : (TIPO_BADGE[pub.tipo] || { label: pub.tipo, color: "blue" });
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
-  const canDelete = usuario.rol === "colegio" || pub.autor_id === usuario.id;
+  const canDelete = usuario.rol === "colegio" || pub.autor_id === usuario.id ||
+    (usuario.rol === "slep" && (pub.autor_rol === "empresa" || pub.autor_rol === "colegio"));
 
   const handleEliminar = async () => {
     setEliminando(true);
@@ -258,7 +259,7 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
         </Link>
         <div className="flex items-center gap-2">
           {/* Botón Seguir (no se muestra al propio autor ni al admin) */}
-          {pub.autor_id !== usuario.id && usuario.rol !== "colegio" && (
+          {pub.autor_id !== usuario.id && usuario.rol !== "colegio" && usuario.rol !== "slep" && (
             <button
               onClick={handleToggleSeguir}
               disabled={toggleandoSeguir}
