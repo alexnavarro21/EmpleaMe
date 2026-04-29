@@ -592,6 +592,17 @@ export async function getUsuariosAdmin() {
   return data;
 }
 
+export async function cambiarContrasenaEstudiante(estudianteId, contrasena) {
+  const res = await fetch(`${BASE_URL}/admin/usuarios/${estudianteId}/contrasena`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify({ contrasena }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al cambiar contraseña");
+  return data;
+}
+
 export async function marcarEgresado(estudianteId) {
   const res = await fetch(`${BASE_URL}/admin/historial-academico/${estudianteId}/egreso`, {
     method: "PATCH",

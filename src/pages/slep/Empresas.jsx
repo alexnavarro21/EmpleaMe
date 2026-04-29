@@ -192,6 +192,13 @@ export default function SlepEmpresas() {
             <textarea rows={3} className={inputCls} placeholder="Descripción de la empresa..." value={form.descripcion || ""}
               onChange={(e) => setForm((f) => ({ ...f, descripcion: e.target.value }))} />
           </div>
+          {!esCrear && (
+            <div>
+              <label className={`text-xs font-medium ${M} block mb-1`}>Nueva contraseña <span className={`font-normal ${M}`}>(dejar vacío para no cambiar)</span></label>
+              <input type="password" className={inputCls} placeholder="Mínimo 6 caracteres" value={form.contrasena || ""}
+                onChange={(e) => setForm((f) => ({ ...f, contrasena: e.target.value }))} minLength={6} />
+            </div>
+          )}
           {error && (
             <p className="text-xs text-red-500 flex items-center gap-1">
               <Icon icon="mdi:alert-circle-outline" width={14} />{error}

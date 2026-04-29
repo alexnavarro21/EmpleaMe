@@ -1,6 +1,7 @@
 const router  = require("express").Router();
 const multer  = require("multer");
 const XLSX    = require("xlsx");
+const bcrypt  = require("bcrypt");
 const db      = require("../db");
 const { verificarToken, soloRol } = require("../middleware/auth");
 
@@ -762,6 +763,23 @@ router.post("/alumnos/excel", ...auth, upload.single("archivo"), async (req, res
     res.json({ creados: creados.length, filas: creados, omitidos, errores });
   } catch (err) {
     res.status(500).json({ error: "Error procesando el archivo", detalle: err.message });
+  }
+});
+
+// PUT /api/admin/usuarios/:id/contrasena — colegio cambia contraseña de un alumno suyo
+router.put("/usuarios/:id/contrasena", ...auth, async (req, res) => {
+  const estudianteId = parseInt(req.params.id);
+  const { contrasena } = req.body;
+  if (!contrasena || contrasena.length < 6)
+    return res.status(400).json({ error: "La contraseña debe tener al menos 6 caracteres" });
+  try {
+    if (!await esMiEstudiante(estudianteId, req.usuario.id))
+      return res.status(403).json({ error: "Este estudiante no pertenece a tu institución" });
+    const hash = await bcrypt.hash(contrasena, 10);
+    await db.query("UPDATE usuarios SET contrasena_hash=? WHERE id=?", [hash, estudianteId]);
+    res.json({ mensaje: "Contraseña actualizada" });
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }
 });
 

@@ -130,7 +130,7 @@ router.get("/empresas", ...auth, async (req, res) => {
 
 // PUT /api/slep/empresas/:id — editar perfil de empresa
 router.put("/empresas/:id", ...auth, async (req, res) => {
-  const { nombre_empresa, telefono_contacto, descripcion, region, comuna } = req.body;
+  const { nombre_empresa, telefono_contacto, descripcion, region, comuna, contrasena } = req.body;
   const id = parseInt(req.params.id);
   if (!nombre_empresa)
     return res.status(400).json({ error: "nombre_empresa es requerido" });
@@ -145,6 +145,10 @@ router.put("/empresas/:id", ...auth, async (req, res) => {
        WHERE usuario_id=?`,
       [nombre_empresa, telefono_contacto || null, descripcion || null, region || null, comuna || null, id]
     );
+    if (contrasena && contrasena.length >= 6) {
+      const hash = await bcrypt.hash(contrasena, 10);
+      await db.query("UPDATE usuarios SET contrasena_hash=? WHERE id=?", [hash, id]);
+    }
     res.json({ mensaje: "Empresa actualizada" });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
@@ -241,7 +245,7 @@ router.get("/colegios", ...auth, async (req, res) => {
 
 // PUT /api/slep/colegios/:id — editar perfil de colegio
 router.put("/colegios/:id", ...auth, async (req, res) => {
-  const { nombre_institucion, telefono_contacto, descripcion, region, comuna } = req.body;
+  const { nombre_institucion, telefono_contacto, descripcion, region, comuna, contrasena } = req.body;
   const id = parseInt(req.params.id);
   if (!nombre_institucion)
     return res.status(400).json({ error: "nombre_institucion es requerido" });
@@ -256,6 +260,10 @@ router.put("/colegios/:id", ...auth, async (req, res) => {
        WHERE usuario_id=?`,
       [nombre_institucion, telefono_contacto || null, descripcion || null, region || null, comuna || null, id]
     );
+    if (contrasena && contrasena.length >= 6) {
+      const hash = await bcrypt.hash(contrasena, 10);
+      await db.query("UPDATE usuarios SET contrasena_hash=? WHERE id=?", [hash, id]);
+    }
     res.json({ mensaje: "Colegio actualizado" });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
