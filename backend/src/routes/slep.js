@@ -317,7 +317,8 @@ router.get("/reportes", ...auth, async (req, res) => {
        LEFT JOIN perfiles_empresas  emp_ref ON emp_ref.usuario_id = u_ref.id
        WHERE r.estado = ?
          AND (
-           (r.tipo = 'publicacion' AND r.referencia_id IN (
+           r.revisado_por IS NOT NULL
+           OR (r.tipo = 'publicacion' AND r.referencia_id IN (
              SELECT p.id FROM publicaciones p
              JOIN usuarios u2 ON u2.id = p.autor_id
              WHERE u2.rol IN ('empresa','colegio')

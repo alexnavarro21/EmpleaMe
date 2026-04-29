@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
-import { Card, PageHeader } from "../../components/ui";
+import { Card, PageHeader, Paginacion } from "../../components/ui";
 import { getSlepColegios, crearSlepColegio, editarSlepColegio } from "../../services/api";
 
 function formatDate(iso) {
@@ -20,6 +20,8 @@ export default function SlepColegios() {
   const [colegios, setColegios] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [search, setSearch]     = useState("");
+  const [pagina, setPagina]     = useState(1);
+  const [porPagina, setPorPagina] = useState(12);
 
   // Modal crear
   const [showCrear, setShowCrear]     = useState(false);
@@ -63,6 +65,8 @@ export default function SlepColegios() {
     c.correo?.toLowerCase().includes(search.toLowerCase()) ||
     c.region?.toLowerCase().includes(search.toLowerCase())
   );
+  const totalPaginasCol = Math.ceil(filtered.length / porPagina);
+  const paginadas = filtered.slice((pagina - 1) * porPagina, pagina * porPagina);
 
   // Crear
   const handleCrear = async (e) => {
@@ -208,7 +212,7 @@ export default function SlepColegios() {
               type="text"
               placeholder="Buscar por nombre, email o región..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setPagina(1); }}
               className={`w-full pl-8 pr-3 py-2 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
                 isDark
                   ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
@@ -234,7 +238,7 @@ export default function SlepColegios() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((c) => (
+                {paginadas.map((c) => (
                   <tr
                     key={c.usuario_id}
                     className={`border-b ${B} last:border-0 transition-colors ${isDark ? "hover:bg-[#313130]/50" : "hover:bg-[#F7F6F3]"}`}
@@ -298,6 +302,18 @@ export default function SlepColegios() {
             </div>
           )}
         </div>
+        {!loading && filtered.length > 0 && (
+          <div className="px-4 pb-4">
+            <Paginacion
+              paginaActual={pagina}
+              totalPaginas={totalPaginasCol}
+              onCambiar={setPagina}
+              porPagina={porPagina}
+              opciones={[12, 24, 48]}
+              onCambiarPorPagina={(v) => { setPorPagina(v); setPagina(1); }}
+            />
+          </div>
+        )}
       </Card>
 
       {/* Modal crear */}

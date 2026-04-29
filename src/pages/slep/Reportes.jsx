@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import { Link } from "react-router-dom";
 import { useDark } from "../../context/DarkModeContext";
-import { PageHeader } from "../../components/ui";
+import { PageHeader, Paginacion } from "../../components/ui";
 import { getSlepReportes, actualizarSlepReporte, eliminarContenidoSlepReporte } from "../../services/api";
 import { MOTIVO_LABEL } from "../../utils/reportes";
 
@@ -46,6 +46,8 @@ export default function SlepReportes() {
   const [filtroEstado, setFiltroEstado] = useState("pendiente");
   const [actualizando, setActualizando] = useState(null);
   const [eliminando, setEliminando]   = useState(null);
+  const [pagina, setPagina]           = useState(1);
+  const [porPagina, setPorPagina]     = useState(12);
 
   const cargar = (estado) => {
     setLoading(true);
@@ -55,7 +57,7 @@ export default function SlepReportes() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { cargar(filtroEstado); }, [filtroEstado]);
+  useEffect(() => { setPagina(1); cargar(filtroEstado); }, [filtroEstado]);
 
   const handleAccion = async (id, estado) => {
     setActualizando(id);
@@ -82,6 +84,9 @@ export default function SlepReportes() {
       setEliminando(null);
     }
   };
+
+  const paginados = reportes.slice((pagina - 1) * porPagina, pagina * porPagina);
+  const totalPaginas = Math.ceil(reportes.length / porPagina);
 
   return (
     <div>
@@ -117,14 +122,15 @@ export default function SlepReportes() {
           <p className={`text-sm font-medium ${T}`}>No hay reportes {ESTADO_CFG[filtroEstado]?.label.toLowerCase()}</p>
         </div>
       ) : (
+        <>
         <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
-          {reportes.map((r, i) => {
+          {paginados.map((r, i) => {
             const cfg = ESTADO_CFG[r.estado] || ESTADO_CFG.pendiente;
             const enlacePerfil = perfilLink(r);
             return (
               <div
                 key={r.id}
-                className={`px-5 py-4 flex items-start gap-4 ${i < reportes.length - 1 ? `border-b ${B}` : ""}`}
+                className={`px-5 py-4 flex items-start gap-4 ${i < paginados.length - 1 ? `border-b ${B}` : ""}`}
               >
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
                   <Icon
@@ -223,6 +229,15 @@ export default function SlepReportes() {
             );
           })}
         </div>
+        <Paginacion
+          paginaActual={pagina}
+          totalPaginas={totalPaginas}
+          onCambiar={setPagina}
+          porPagina={porPagina}
+          opciones={[12, 24, 48]}
+          onCambiarPorPagina={(v) => { setPorPagina(v); setPagina(1); }}
+        />
+        </>
       )}
     </div>
   );
