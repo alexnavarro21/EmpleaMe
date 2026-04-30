@@ -6,11 +6,11 @@ import { getNotificaciones, marcarNotificacionesLeidas } from "../services/api";
 
 function getNotifLink(tipo, role, referenciaId) {
   if (tipo === "seguidor" && referenciaId) {
-    const prefix = role === "empresa" ? "empresa" : role === "admin" ? "admin" : "estudiante";
+    const prefix = role === "empresa" ? "empresa" : role === "admin" ? "admin" : role === "slep" ? "slep" : "estudiante";
     return `/${prefix}/candidato/${referenciaId}`;
   }
   if (tipo === "seguidor") {
-    return role === "empresa" ? "/empresa/seguidores" : "/estudiante/seguidores";
+    return role === "empresa" ? "/empresa/seguidores" : role === "admin" ? "/admin/inicio" : role === "slep" ? "/slep/inicio" : "/estudiante/seguidores";
   }
 
   const links = {
@@ -40,6 +40,15 @@ function getNotifLink(tipo, role, referenciaId) {
       postulacion_rechazada: "/admin/panel",
       vacante_cerrada:       "/admin/panel",
       practica_completada:   "/admin/panel",
+    },
+    slep: {
+      mensaje:               "/slep/mensajeria",
+      comentario:            "/slep/inicio",
+      postulacion_nueva:     "/slep/usuarios",
+      postulacion_aceptada:  "/slep/panel",
+      postulacion_rechazada: "/slep/panel",
+      vacante_cerrada:       "/slep/panel",
+      practica_completada:   "/slep/panel",
     },
   };
   return links[role]?.[tipo] || null;
@@ -78,6 +87,8 @@ export default function NotificacionesBell({ role }) {
     ? "/empresa/notificaciones"
     : role === "admin"
     ? "/admin/notificaciones"
+    : role === "slep"
+    ? "/slep/notificaciones"
     : "/estudiante/notificaciones";
 
   // Click outside closes dropdown

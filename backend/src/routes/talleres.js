@@ -190,15 +190,23 @@ router.post("/:id/inscribir", verificarToken, soloRol("estudiante"), async (req,
       [tallerId, req.usuario.id]
     );
 
-    // Notificación al centro
+    // Notificación al colegio dueño del taller y al SLEP
     try {
-      const [[est]]  = await db.query("SELECT nombre_completo FROM perfiles_estudiantes WHERE usuario_id = ?", [req.usuario.id]);
-      const [[tal]]  = await db.query("SELECT titulo FROM talleres WHERE id = ?", [tallerId]);
-      const [[centro]] = await db.query("SELECT id FROM usuarios WHERE rol = 'centro' LIMIT 1");
-      if (centro) {
+      const [[est]] = await db.query("SELECT nombre_completo FROM perfiles_estudiantes WHERE usuario_id = ?", [req.usuario.id]);
+      const [[tal]] = await db.query("SELECT titulo, colegio_id FROM talleres WHERE id = ?", [tallerId]);
+      const notifTitulo   = `Nueva inscripción en "${tal.titulo}"`;
+      const notifContenido = `${est.nombre_completo} se ha inscrito al taller`;
+      if (tal?.colegio_id) {
         await db.query(
           "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido) VALUES (?, 'postulacion_nueva', ?, ?)",
-          [centro.id, `Nueva inscripción en "${tal.titulo}"`, `${est.nombre_completo} se ha inscrito al taller`]
+          [tal.colegio_id, notifTitulo, notifContenido]
+        );
+      }
+      const [[slep]] = await db.query("SELECT id FROM usuarios WHERE rol = 'slep' LIMIT 1");
+      if (slep) {
+        await db.query(
+          "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido) VALUES (?, 'postulacion_nueva', ?, ?)",
+          [slep.id, notifTitulo, notifContenido]
         );
       }
     } catch (_) {}

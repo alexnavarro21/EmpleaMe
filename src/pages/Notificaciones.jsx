@@ -8,22 +8,18 @@ import { getNotificaciones, marcarNotificacionesLeidas } from "../services/api";
 function getRoleFromPath(pathname) {
   if (pathname.startsWith("/admin"))    return "admin";
   if (pathname.startsWith("/empresa"))  return "empresa";
+  if (pathname.startsWith("/slep"))     return "slep";
   return "estudiante";
 }
 
 function getNotifLink(tipo, role, referenciaId) {
   // Notificación de seguidor: navegar al perfil del usuario que te siguió
   if (tipo === "seguidor" && referenciaId) {
-    const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
-    // Necesitamos saber el rol del seguidor para armar el link correcto.
-    // Como no lo tenemos, usamos la ruta de candidato (funciona para ambos roles
-    // ya que PerfilCandidato soporta empresas y estudiantes).
-    const prefix = role === "empresa" ? "empresa" : role === "admin" ? "admin" : "estudiante";
+    const prefix = role === "empresa" ? "empresa" : role === "admin" ? "admin" : role === "slep" ? "slep" : "estudiante";
     return `/${prefix}/candidato/${referenciaId}`;
   }
   if (tipo === "seguidor") {
-    // Sin referencia_id: ir a la página de seguidores
-    return role === "empresa" ? "/empresa/seguidores" : "/estudiante/seguidores";
+    return role === "empresa" ? "/empresa/seguidores" : role === "admin" ? "/admin/inicio" : role === "slep" ? "/slep/inicio" : "/estudiante/seguidores";
   }
 
   const links = {
@@ -53,6 +49,15 @@ function getNotifLink(tipo, role, referenciaId) {
       postulacion_rechazada: "/admin/panel",
       vacante_cerrada:       "/admin/panel",
       practica_completada:   "/admin/panel",
+    },
+    slep: {
+      mensaje:               "/slep/mensajeria",
+      comentario:            "/slep/inicio",
+      postulacion_nueva:     "/slep/usuarios",
+      postulacion_aceptada:  "/slep/panel",
+      postulacion_rechazada: "/slep/panel",
+      vacante_cerrada:       "/slep/panel",
+      practica_completada:   "/slep/panel",
     },
   };
   return links[role]?.[tipo] || null;
