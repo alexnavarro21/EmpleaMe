@@ -29,8 +29,7 @@ const navLinks = {
   slep: [
     { to: "/slep/inicio",      label: "Inicio" },
     { to: "/slep/panel",       label: "Panel" },
-    { to: "/slep/empresas",    label: "Empresas" },
-    { to: "/slep/colegios",    label: "Colegios" },
+    { to: "/slep/usuarios",    label: "Usuarios" },
     { to: "/slep/reportes",    label: "Reportes" },
   ],
 };
