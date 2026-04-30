@@ -25,8 +25,10 @@ router.post("/login", async (req, res) => {
   try {
     const id = identifier.trim().toLowerCase();
     const [rows] = await db.query(
-      "SELECT * FROM usuarios WHERE correo = ? OR rut = ?",
-      [id, id]
+      `SELECT u.* FROM usuarios u
+       LEFT JOIN perfiles_estudiantes pe ON pe.usuario_id = u.id
+       WHERE u.correo = ? OR u.rut = ? OR pe.rut = ?`,
+      [id, id, id]
     );
     if (rows.length === 0)
       return res.status(401).json({ error: "Credenciales inválidas" });

@@ -73,8 +73,8 @@ export default function Login() {
       setRegError("Las empresas deben registrarse con correo.");
       return;
     }
-    if (activeRole === "estudiante" && (!regNombreCompleto || !regCarrera)) {
-      setRegError("Nombre completo y carrera son obligatorios.");
+    if (activeRole === "estudiante" && (!regNombre || !regApellidoPaterno || !regCarrera)) {
+      setRegError("Nombre, apellido paterno y carrera son obligatorios.");
       return;
     }
     if (activeRole === "empresa" && !regNombreEmpresa) {
