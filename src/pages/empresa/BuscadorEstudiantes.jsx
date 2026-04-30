@@ -229,7 +229,7 @@ export default function EmpresaBuscadorEstudiantes() {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className={`text-sm font-semibold ${T} truncate`}>{s.nombre_completo}</p>
-                        <p className={`text-xs ${M}`}>{nombreCarrera}{s.semestre ? ` · Sem. ${s.semestre}` : ""}</p>
+                        <p className={`text-xs ${M}`}>{nombreCarrera}{s.nivel ? ` · ${s.nivel}` : ""}</p>
                         {(s.comuna || s.region) && (
                           <p className={`text-xs ${M} flex items-center gap-1`}>
                             <Icon icon="mdi:map-marker-outline" width={11} />

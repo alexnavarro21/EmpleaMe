@@ -1565,7 +1565,7 @@ function TabCrearAlumnos({ isDark }) {
         <ul className={`text-xs ${M} space-y-1.5`}>
           <li>· El teléfono es opcional, puede dejarse vacío.</li>
           <li>· Los correos ya registrados se omiten automáticamente.</li>
-          <li>· Los alumnos completan carrera, semestre y demás datos al iniciar sesión.</li>
+          <li>· Los alumnos completan carrera, nivel y demás datos al iniciar sesión.</li>
         </ul>
       </Card>
     </div>

@@ -31,7 +31,7 @@ export default function EstudiantePerfil() {
   const [carrera, setCarrera] = useState("");
   const [telefono, setTelefono] = useState("");
   const [biografia, setBiografia] = useState("");
-  const [semestre, setSemestre] = useState("");
+  const [nivel, setNivel] = useState("");
   const [promedio, setPromedio] = useState("");
   const [estadoCivil, setEstadoCivil] = useState("");
   const [genero, setGenero] = useState("no_especifica");
@@ -81,7 +81,7 @@ export default function EstudiantePerfil() {
         setCarrera(data.carrera || "");
         setTelefono(data.telefono || "");
         setBiografia(data.biografia || "");
-        setSemestre(data.semestre ? String(data.semestre) : "");
+        setNivel(data.nivel || "");
         setPromedio(data.promedio ? String(data.promedio) : "");
         setEstadoCivil(data.estado_civil || "");
         setGenero(data.genero || "no_especifica");
@@ -124,7 +124,7 @@ export default function EstudiantePerfil() {
         carrera,
         telefono,
         biografia,
-        semestre: semestre ? parseInt(semestre) : null,
+        nivel: nivel || null,
         promedio: promedio ? parseFloat(promedio) : null,
         estado_civil: estadoCivil || null,
         genero: genero || 'no_especifica',
@@ -432,6 +432,24 @@ export default function EstudiantePerfil() {
                       <option value="">Selecciona tu carrera</option>
                       <option value="Administracion">Administración</option>
                       <option value="Mecanica Automotriz">Mecánica Automotriz</option>
+                    </select>
+                  </div>
+                  <div className="mb-4">
+                    <label className={`block text-xs mb-1.5 ${M}`}>Nivel / Curso</label>
+                    <select
+                      value={nivel}
+                      onChange={(e) => setNivel(e.target.value)}
+                      disabled={!editMode}
+                      className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
+                        isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
+                               : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
+                      } disabled:opacity-60`}
+                    >
+                      <option value="">Sin especificar</option>
+                      <option value="1° Medio">1° Medio</option>
+                      <option value="2° Medio">2° Medio</option>
+                      <option value="3° Medio">3° Medio</option>
+                      <option value="4° Medio">4° Medio</option>
                     </select>
                   </div>
                   <div className="mb-4">

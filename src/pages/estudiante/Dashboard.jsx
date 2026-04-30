@@ -1031,7 +1031,7 @@ export default function EstudianteDashboard() {
 
   const nombre = perfil?.nombre_completo || "";
   const carrera = perfil?.carrera || "";
-  const semestre = perfil?.semestre || "";
+  const nivel = perfil?.nivel || "";
   const telefono = perfil?.telefono || "";
   const biografia = perfil?.biografia || "";
   const promedio = perfil?.promedio || "";
@@ -1043,7 +1043,7 @@ export default function EstudianteDashboard() {
 
   const nombreCarrera = careerDisplay[carrera] || carrera;
   const inicial = nombre ? nombre.charAt(0).toUpperCase() : "?";
-  const subtitleParts = [nombreCarrera, semestre ? `${semestre}° semestre` : ""].filter(Boolean);
+  const subtitleParts = [nombreCarrera, nivel].filter(Boolean);
 
   const pctCompleto = calcularCompletitud({ nombre_completo: nombre, carrera, telefono, biografia, estado_civil: estadoCivil, rut, region, comuna });
   const perfilCompleto = pctCompleto === 100;

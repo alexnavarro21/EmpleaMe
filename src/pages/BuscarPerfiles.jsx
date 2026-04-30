@@ -766,7 +766,7 @@ export default function BuscarPerfiles() {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className={`text-sm font-semibold ${T} truncate`}>{s.nombre_completo}</p>
-                        <p className={`text-xs ${M}`}>{nombreCarrera}{s.semestre ? ` · Sem. ${s.semestre}` : ""}</p>
+                        <p className={`text-xs ${M}`}>{nombreCarrera}{s.nivel ? ` · ${s.nivel}` : ""}</p>
                         {(s.comuna || s.region) && (
                           <p className={`text-xs ${M} flex items-center gap-1`}><Icon icon="mdi:map-marker-outline" width={11} />{[s.comuna, s.region].filter(Boolean).join(", ")}</p>
                         )}
@@ -937,18 +937,28 @@ export default function BuscarPerfiles() {
                     </div>
                   )}
                   <div className="flex gap-2 mt-2">
-                    <button
-                      onClick={() => handleContactarColegio(c.usuario_id)}
-                      disabled={contactandoId === c.usuario_id}
-                      className="flex-1 py-2 rounded-lg text-xs font-semibold bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
-                    >
-                      <Icon
-                        icon={contactandoId === c.usuario_id ? "mdi:loading" : "mdi:message-outline"}
-                        width={14}
-                        className={contactandoId === c.usuario_id ? "animate-spin" : ""}
-                      />
-                      {contactandoId === c.usuario_id ? "Conectando..." : "Contactar"}
-                    </button>
+                    <Link to={`/colegio-publico/${c.usuario_id}`} className="flex-1">
+                      <button className={`w-full py-2 rounded-lg text-xs font-semibold border transition-colors flex items-center justify-center gap-1.5 ${
+                        isDark ? "border-[#3a3a38] text-[#D3D1C7] hover:border-[#378ADD] hover:text-[#378ADD]" : "border-[#D3D1C7] text-[#2C2C2A] hover:border-[#378ADD] hover:text-[#378ADD]"
+                      }`}>
+                        <Icon icon="mdi:eye-outline" width={14} />
+                        Ver perfil
+                      </button>
+                    </Link>
+                    {(role === "slep" || role === "empresa") && (
+                      <button
+                        onClick={() => handleContactarColegio(c.usuario_id)}
+                        disabled={contactandoId === c.usuario_id}
+                        className="flex-1 py-2 rounded-lg text-xs font-semibold bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                      >
+                        <Icon
+                          icon={contactandoId === c.usuario_id ? "mdi:loading" : "mdi:message-outline"}
+                          width={14}
+                          className={contactandoId === c.usuario_id ? "animate-spin" : ""}
+                        />
+                        {contactandoId === c.usuario_id ? "Conectando..." : "Contactar"}
+                      </button>
+                    )}
                   </div>
                 </Card>
               ))}

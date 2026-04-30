@@ -145,6 +145,21 @@ export default function PerfilColegioPublico() {
                 <Icon icon="mdi:account-group-outline" width={14} className="flex-shrink-0 text-[#378ADD]" />
                 {colegio.total_estudiantes ?? 0} estudiante{colegio.total_estudiantes !== 1 ? "s" : ""} registrado{colegio.total_estudiantes !== 1 ? "s" : ""}
               </p>
+              {colegio.carreras_impartidas?.length > 0 && (
+                <div>
+                  <p className={`text-xs ${M} mb-1.5`}>Carreras impartidas</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {colegio.carreras_impartidas.map((c) => (
+                      <span
+                        key={c}
+                        className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#0F4D8A]/10 text-[#378ADD] border border-[#378ADD]/30"
+                      >
+                        {c === "Administracion" ? "Administración" : c === "Mecanica Automotriz" ? "Mecánica Automotriz" : c}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
         </div>

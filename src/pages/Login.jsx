@@ -28,7 +28,7 @@ export default function Login() {
   const [regApellidoPaterno, setRegApellidoPaterno] = useState("");
   const [regApellidoMaterno, setRegApellidoMaterno] = useState("");
   const [regCarrera, setRegCarrera] = useState("");
-  const [regSemestre, setRegSemestre] = useState("");
+  const [regNivel, setRegNivel] = useState("");
   const [regTelefono, setRegTelefono] = useState("");
   const [regNombreEmpresa, setRegNombreEmpresa] = useState("");
   const [regTelefonoEmpresa, setRegTelefonoEmpresa] = useState("");
@@ -101,7 +101,7 @@ export default function Login() {
         apellido_paterno: regApellidoPaterno || undefined,
         apellido_materno: regApellidoMaterno || undefined,
         carrera: regCarrera || undefined,
-        semestre: regSemestre || undefined,
+        nivel: regNivel || undefined,
         telefono: regTelefono || undefined,
         nombre_empresa: regNombreEmpresa || undefined,
         telefono_contacto: regTelefonoEmpresa || undefined,
@@ -279,10 +279,10 @@ export default function Login() {
                         <option value="Administracion">Administración</option>
                         <option value="Mecanica Automotriz">Mecánica Automotriz</option>
                       </SelectField>
-                      <SelectField label="Semestre" value={regSemestre} onChange={(e) => setRegSemestre(e.target.value)} isDark={isDark}>
-                        <option value="">Semestre (opcional)</option>
-                        {[1,2,3,4,5,6].map((s) => (
-                          <option key={s} value={s}>{s}° semestre</option>
+                      <SelectField label="Nivel" value={regNivel} onChange={(e) => setRegNivel(e.target.value)} isDark={isDark}>
+                        <option value="">Nivel (opcional)</option>
+                        {['1° Medio','2° Medio','3° Medio','4° Medio'].map((n) => (
+                          <option key={n} value={n}>{n}</option>
                         ))}
                       </SelectField>
                     </div>

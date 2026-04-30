@@ -105,7 +105,7 @@ router.put("/estudiante/:id", verificarToken, async (req, res) => {
       return res.status(403).json({ error: "Este estudiante no pertenece a tu institución" });
   }
 
-  const { nombre, apellido_paterno, apellido_materno, carrera, telefono, biografia, semestre, promedio, estado_civil, genero, rut, region, comuna, colegio_id } = req.body;
+  const { nombre, apellido_paterno, apellido_materno, carrera, telefono, biografia, nivel, promedio, estado_civil, genero, rut, region, comuna, colegio_id } = req.body;
   try {
     const [[carreraRow]] = await db.query(
       "SELECT id FROM carreras WHERE nombre = ?", [carrera]
@@ -116,10 +116,10 @@ router.put("/estudiante/:id", verificarToken, async (req, res) => {
     await db.query(
       `UPDATE perfiles_estudiantes
        SET nombre=?, apellido_paterno=?, apellido_materno=?, carrera_id=?, telefono=?, biografia=?,
-           semestre=?, promedio=?, estado_civil=?, genero=?, rut=?, region=?, comuna=?, colegio_id=?
+           nivel=?, promedio=?, estado_civil=?, genero=?, rut=?, region=?, comuna=?, colegio_id=?
        WHERE usuario_id=?`,
       [nombre || '', apellido_paterno || '', apellido_materno || null, carreraRow.id,
-       telefono || null, biografia || null, semestre || null, promedio || null,
+       telefono || null, biografia || null, nivel || null, promedio || null,
        estado_civil || null, genero || 'no_especifica', rut || null, region || null,
        comuna || null, colegio_id || null, req.params.id]
     );
@@ -176,7 +176,16 @@ router.get("/colegio/:id", verificarToken, async (req, res) => {
       [req.params.id]
     );
 
-    res.json({ ...perfil[0], total_estudiantes: stats.total_estudiantes });
+    const [carreras] = await db.query(
+      `SELECT c.nombre FROM colegio_carreras cc JOIN carreras c ON c.id = cc.carrera_id WHERE cc.colegio_id = ?`,
+      [req.params.id]
+    );
+
+    res.json({
+      ...perfil[0],
+      total_estudiantes: stats.total_estudiantes,
+      carreras_impartidas: carreras.map((c) => c.nombre),
+    });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }
@@ -184,15 +193,39 @@ router.get("/colegio/:id", verificarToken, async (req, res) => {
 
 // PUT /api/perfiles/colegio/:id
 router.put("/colegio/:id", verificarToken, async (req, res) => {
-  const { nombre_institucion, telefono_contacto, descripcion, region, comuna } = req.body;
+  const { nombre_institucion, telefono_contacto, descripcion, region, comuna, carreras_impartidas } = req.body;
+  const conn = await db.getConnection();
   try {
-    await db.query(
+    await conn.beginTransaction();
+
+    await conn.query(
       "UPDATE perfiles_colegios SET nombre_institucion=?, telefono_contacto=?, descripcion=?, region=?, comuna=? WHERE usuario_id=?",
       [nombre_institucion, telefono_contacto, descripcion, region || null, comuna || null, req.params.id]
     );
+
+    if (Array.isArray(carreras_impartidas)) {
+      await conn.query("DELETE FROM colegio_carreras WHERE colegio_id = ?", [req.params.id]);
+      if (carreras_impartidas.length > 0) {
+        const [carreraRows] = await conn.query(
+          "SELECT id FROM carreras WHERE nombre IN (?)",
+          [carreras_impartidas]
+        );
+        if (carreraRows.length > 0) {
+          await conn.query(
+            "INSERT INTO colegio_carreras (colegio_id, carrera_id) VALUES ?",
+            [carreraRows.map((c) => [req.params.id, c.id])]
+          );
+        }
+      }
+    }
+
+    await conn.commit();
     res.json({ mensaje: "Perfil actualizado" });
   } catch (err) {
+    await conn.rollback();
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  } finally {
+    conn.release();
   }
 });
 
@@ -240,7 +273,7 @@ router.get("/estudiantes", verificarToken, async (req, res) => {
     const whereClause = colegio_id ? "WHERE pe.colegio_id = ?" : "";
     const params      = colegio_id ? [Number(colegio_id)] : [];
     const [rows] = await db.query(
-      `SELECT pe.usuario_id, pe.nombre_completo, c.nombre AS carrera, pe.semestre,
+      `SELECT pe.usuario_id, pe.nombre_completo, c.nombre AS carrera, pe.nivel,
               pe.promedio, pe.calificacion_docente, pe.biografia,
               pe.region, pe.comuna, pe.foto_perfil, pe.genero,
               GROUP_CONCAT(h.nombre SEPARATOR '||') AS habilidades_raw

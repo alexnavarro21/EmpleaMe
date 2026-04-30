@@ -66,7 +66,7 @@ router.post("/register", async (req, res) => {
   const {
     correo, rut, contrasena, rol,
     // estudiante
-    nombre, apellido_paterno, apellido_materno, carrera, semestre, telefono, colegio_id,
+    nombre, apellido_paterno, apellido_materno, carrera, nivel, telefono, colegio_id,
     // empresa
     nombre_empresa, telefono_contacto,
   } = req.body;
@@ -110,9 +110,9 @@ router.post("/register", async (req, res) => {
       ))[0][0] : null;
       await conn.query(
         `INSERT INTO perfiles_estudiantes
-           (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, semestre, telefono, colegio_id)
+           (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, nivel, telefono, colegio_id)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [usuarioId, nombre.trim(), apellido_paterno.trim(), apellido_materno?.trim() || null, rutNorm, carreraRow.id, semestre || null, telefono || null, colegioValido ? colegio_id : null]
+        [usuarioId, nombre.trim(), apellido_paterno.trim(), apellido_materno?.trim() || null, rutNorm, carreraRow.id, nivel || null, telefono || null, colegioValido ? colegio_id : null]
       );
     } else if (rol === "empresa") {
       if (!nombre_empresa)

@@ -165,7 +165,7 @@ export default function EmpresaPerfilCandidato() {
               </p>
             )}
             <div className="flex flex-wrap gap-1.5 justify-center mb-2">
-              {student.semestre && <Badge color="blue">Semestre {student.semestre}</Badge>}
+              {student.nivel && <Badge color="blue">{student.nivel}</Badge>}
               {student.estado_civil && <Badge color="gray">{student.estado_civil}</Badge>}
             </div>
 
@@ -284,10 +284,10 @@ export default function EmpresaPerfilCandidato() {
                     </span>
                   </div>
                 )}
-                {student.semestre && (
+                {student.nivel && (
                   <div className="flex justify-between items-center py-2.5">
-                    <span className={`text-xs ${M}`}>Semestre</span>
-                    <span className={`text-sm font-semibold ${T}`}>{student.semestre}° sem.</span>
+                    <span className={`text-xs ${M}`}>Nivel</span>
+                    <span className={`text-sm font-semibold ${T}`}>{student.nivel}</span>
                   </div>
                 )}
               </div>
