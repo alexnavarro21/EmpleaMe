@@ -63,12 +63,14 @@ router.get("/usuarios", ...auth, async (req, res) => {
     const [rows] = await db.query(`
       SELECT u.id, u.correo, u.rol, u.fecha_creacion,
              pe.nombre_completo AS nombre,
+             pe.rut,
+             pe.nivel,
              c.nombre AS carrera
       FROM usuarios u
       JOIN perfiles_estudiantes pe ON pe.usuario_id = u.id
       LEFT JOIN carreras c         ON c.id = pe.carrera_id
       WHERE pe.colegio_id = ?
-      ORDER BY u.fecha_creacion DESC
+      ORDER BY pe.nombre_completo ASC
     `, [colegioId]);
     res.json(rows);
   } catch (err) {
