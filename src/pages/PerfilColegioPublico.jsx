@@ -4,7 +4,7 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 import { Card, SecondaryButton, PageHeader } from "../components/ui";
 import PublicacionesUsuario from "../components/PublicacionesUsuario";
-import { getColegioById, getMediaUrl, toggleSeguir, getEstadoSeguimiento } from "../services/api";
+import { getColegioById, getMediaUrl } from "../services/api";
 
 export default function PerfilColegioPublico() {
   const { isDark } = useDark();
@@ -14,10 +14,6 @@ export default function PerfilColegioPublico() {
   const [colegio, setColegio] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [siguiendo, setSiguiendo] = useState(false);
-  const [seguidoresCount, setSeguidoresCount] = useState(0);
-  const [toggleandoSeguir, setToggleandoSeguir] = useState(false);
-
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
@@ -30,28 +26,7 @@ export default function PerfilColegioPublico() {
       .catch(() => setError("No se pudo cargar el perfil del colegio."))
       .finally(() => setLoading(false));
 
-    if (usuario.id && parseInt(id) !== usuario.id) {
-      getEstadoSeguimiento(id)
-        .then((est) => {
-          setSiguiendo(est.siguiendo);
-          setSeguidoresCount(est.seguidores);
-        })
-        .catch(() => {});
-    }
   }, [id]);
-
-  const handleToggleSeguir = async () => {
-    setToggleandoSeguir(true);
-    try {
-      const res = await toggleSeguir(id);
-      setSiguiendo(res.siguiendo);
-      setSeguidoresCount((c) => res.siguiendo ? c + 1 : Math.max(0, c - 1));
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setToggleandoSeguir(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -102,31 +77,6 @@ export default function PerfilColegioPublico() {
             )}
             <p className={`text-xs ${M} mt-1 mb-3`}>Institución educativa en EmpleaMe</p>
 
-            {usuario.id && parseInt(id) !== usuario.id && usuario.rol !== "slep" && (
-              <button
-                onClick={handleToggleSeguir}
-                disabled={toggleandoSeguir}
-                className={`mt-2 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 border ${
-                  siguiendo
-                    ? `${isDark ? "border-[#3a3a38] text-[#D3D1C7] hover:bg-red-500/10 hover:border-red-500/40 hover:text-red-400" : "border-[#D3D1C7] text-[#5F5E5A] hover:bg-red-50 hover:border-red-300 hover:text-red-500"}`
-                    : "border-[#378ADD] bg-[#378ADD]/10 text-[#378ADD] hover:bg-[#378ADD]/20"
-                }`}
-              >
-                <Icon
-                  icon={toggleandoSeguir ? "mdi:loading" : siguiendo ? "mdi:account-check" : "mdi:account-plus-outline"}
-                  width={16}
-                  className={toggleandoSeguir ? "animate-spin" : ""}
-                />
-                {toggleandoSeguir ? "..." : siguiendo ? "Siguiendo" : "Seguir"}
-              </button>
-            )}
-
-            {seguidoresCount > 0 && (
-              <p className={`text-xs ${M} mt-2`}>
-                <Icon icon="mdi:account-group-outline" width={12} className="inline mr-1" />
-                {seguidoresCount} seguidor{seguidoresCount !== 1 ? "es" : ""}
-              </p>
-            )}
 
             <div className={`mt-4 pt-4 border-t ${B} flex flex-col gap-2.5 text-left`}>
               {colegio.telefono_contacto && (

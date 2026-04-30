@@ -258,8 +258,9 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
           </div>
         </Link>
         <div className="flex items-center gap-2">
-          {/* Botón Seguir (no se muestra al propio autor ni al admin) */}
-          {pub.autor_id !== usuario.id && usuario.rol !== "colegio" && usuario.rol !== "slep" && (
+          {/* Botón Seguir: no en posts propios, ni cuando el autor es colegio/slep */}
+          {pub.autor_id !== usuario.id && usuario.rol !== "colegio" && usuario.rol !== "slep"
+            && pub.autor_rol !== "colegio" && pub.autor_rol !== "slep" && (
             <button
               onClick={handleToggleSeguir}
               disabled={toggleandoSeguir}
