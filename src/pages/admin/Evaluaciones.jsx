@@ -419,7 +419,7 @@ function TabUsuarios({ rawUsers, isDark }) {
                       <span className={`text-sm font-medium ${T}`}>{u.nombre || u.correo}</span>
                     </div>
                   </td>
-                  <td className="px-5 py-3"><span className={`text-sm font-mono ${M}`}>{u.rut || "—"}</span></td>
+                  <td className="px-5 py-3"><span className={`text-sm ${M}`}>{u.rut || "—"}</span></td>
                   <td className="px-5 py-3"><span className={`text-sm ${M}`}>{u.correo}</span></td>
                   <td className="px-5 py-3"><span className={`text-sm ${M}`}>{u.carrera || "—"}</span></td>
                   <td className="px-5 py-3">
