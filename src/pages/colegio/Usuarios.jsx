@@ -337,8 +337,15 @@ function TabUsuarios({ rawUsers, isDark }) {
   const [carreraFilter, setCarreraFilter] = useState("todas");
   const [nivelFilter, setNivelFilter]     = useState("todos");
   const [users, setUsers]                 = useState(rawUsers);
+  const [sortCol, setSortCol]             = useState(null);
+  const [sortDir, setSortDir]             = useState("asc");
 
   const handleEliminado = (id) => setUsers((prev) => prev.filter((u) => u.id !== id));
+
+  const toggleSort = (col) => {
+    if (sortCol === col) setSortDir((d) => d === "asc" ? "desc" : "asc");
+    else { setSortCol(col); setSortDir("asc"); }
+  };
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -357,6 +364,15 @@ function TabUsuarios({ rawUsers, isDark }) {
     const matchNivel   = nivelFilter   === "todos"  || u.nivel   === nivelFilter;
     return matchSearch && matchCarrera && matchNivel;
   });
+
+  const sorted = sortCol ? [...filtered].sort((a, b) => {
+    const apellido = (u) => { const p = (u.nombre || "").trim().split(" "); return p.slice(-2).join(" ") || u.correo || ""; };
+    const valA = (sortCol === "nombre" ? apellido(a) : a[sortCol]) || "";
+    const valB = (sortCol === "nombre" ? apellido(b) : b[sortCol]) || "";
+    return sortDir === "asc"
+      ? valA.localeCompare(valB, "es", { sensitivity: "base" })
+      : valB.localeCompare(valA, "es", { sensitivity: "base" });
+  }) : filtered;
 
   const selectCls = `text-sm outline-none border rounded-lg px-3 py-2 transition-all focus:border-[#378ADD] ${
     isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
@@ -403,13 +419,34 @@ function TabUsuarios({ rawUsers, isDark }) {
           <table className="w-full">
             <thead>
               <tr className={`border-b ${B} ${S}`}>
-                {["Estudiante", "RUT", "Email", "Carrera", "Nivel", "Acciones"].map((h) => (
-                  <th key={h} className={`text-left text-xs font-medium ${M} px-5 py-3`}>{h}</th>
+                {[
+                  { label: "Estudiante", col: "nombre" },
+                  { label: "RUT",        col: null },
+                  { label: "Email",      col: null },
+                  { label: "Carrera",    col: "carrera" },
+                  { label: "Nivel",      col: "nivel" },
+                  { label: "Acciones",   col: null },
+                ].map(({ label, col }) => (
+                  <th key={label} className={`text-left text-xs font-medium ${M} px-5 py-3`}>
+                    {col ? (
+                      <button onClick={() => toggleSort(col)}
+                        className={`flex items-center gap-1 hover:${T} transition-colors`}>
+                        {label}
+                        <Icon
+                          icon={sortCol === col
+                            ? sortDir === "asc" ? "mdi:arrow-up" : "mdi:arrow-down"
+                            : "mdi:unfold-more-horizontal"}
+                          width={13}
+                          className={sortCol === col ? "text-[#378ADD]" : "opacity-40"}
+                        />
+                      </button>
+                    ) : label}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {filtered.map((u) => (
+              {sorted.map((u) => (
                 <tr key={u.id} className={`border-b ${B} last:border-0 transition-colors ${isDark ? "hover:bg-[#313130]/50" : "hover:bg-[#F7F6F3]"}`}>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
