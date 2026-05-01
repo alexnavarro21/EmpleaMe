@@ -13,21 +13,21 @@ const profilePaths = {
 
 const navLinks = {
   estudiante: [
-    { to: "/estudiante/dashboard", label: "Inicio" },
+    { to: "/estudiante/muro", label: "Inicio" },
   ],
   empresa: [
-    { to: "/empresa/inicio", label: "Inicio" },
+    { to: "/empresa/muro", label: "Inicio" },
     { to: "/empresa/dashboard", label: "Panel" },
     { to: "/empresa/publicar", label: "Publicar Vacante" },
   ],
   admin: [
-    { to: "/admin/inicio", label: "Inicio" },
+    { to: "/admin/muro", label: "Inicio" },
     { to: "/admin/panel", label: "Panel" },
-    { to: "/admin/evaluaciones", label: "Estudiantes" },
+    { to: "/admin/usuarios", label: "Estudiantes" },
     { to: "/admin/talleres", label: "Talleres" },
   ],
   slep: [
-    { to: "/slep/inicio",      label: "Inicio" },
+    { to: "/slep/muro",      label: "Inicio" },
     { to: "/slep/panel",       label: "Panel" },
     { to: "/slep/usuarios",    label: "Usuarios" },
     { to: "/slep/reportes",    label: "Reportes" },
@@ -35,10 +35,10 @@ const navLinks = {
 };
 
 const homePaths = {
-  estudiante: "/estudiante/dashboard",
-  empresa: "/empresa/inicio",
-  admin: "/admin/inicio",
-  slep: "/slep/inicio",
+  estudiante: "/estudiante/muro",
+  empresa: "/empresa/muro",
+  admin: "/admin/muro",
+  slep: "/slep/muro",
 };
 
 const messagingPaths = {

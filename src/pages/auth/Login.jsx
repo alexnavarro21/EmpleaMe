@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDark } from "../context/DarkModeContext";
-import { loginUsuario, registrarUsuario, listarColegios } from "../services/api";
+import { useDark } from "../../context/DarkModeContext";
+import { loginUsuario, registrarUsuario, listarColegios } from "../../services/api";
 
 const RUTAS_ROL = {
-  estudiante: "/estudiante/dashboard",
-  empresa: "/empresa/inicio",
-  colegio: "/admin/inicio",
-  slep: "/slep/inicio",
+  estudiante: "/estudiante/muro",
+  empresa: "/empresa/muro",
+  colegio: "/admin/muro",
+  slep: "/slep/muro",
 };
 
 export default function Login() {

@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
-import { useDark } from "../context/DarkModeContext";
-import { Card, Badge, PrimaryButton } from "../components/ui";
+import { useDark } from "../../context/DarkModeContext";
+import { Card, Badge, PrimaryButton } from "../../components/ui";
 import {
   getEstudiantes, getEmpresas, getVacantes, getTalleres, getColegios,
   iniciarMensajeDirecto, iniciarConversacionConEmpresa,
   postularAVacante, inscribirseEnTaller, getMediaUrl,
-} from "../services/api";
-import { REGIONES_COMUNAS, REGIONES } from "../data/regionesComunas";
-import ModalReporte from "../components/ModalReporte";
+} from "../../services/api";
+import { REGIONES_COMUNAS, REGIONES } from "../../data/regionesComunas";
+import ModalReporte from "../../components/ModalReporte";
 
 const careerDisplay = {
   Administracion: "Administración",

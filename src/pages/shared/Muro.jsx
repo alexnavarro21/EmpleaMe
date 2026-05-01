@@ -1187,7 +1187,7 @@ export default function EstudianteDashboard() {
             {[
               { icon: "mdi:account-group-outline",   label: "Gestión de usuarios",  to: "/admin/usuarios"     },
               { icon: "mdi:school-outline",           label: "Talleres",             to: "/admin/talleres"     },
-              { icon: "mdi:clipboard-check-outline",  label: "Evaluaciones",         to: "/admin/evaluaciones" },
+              { icon: "mdi:clipboard-check-outline",  label: "Evaluaciones",         to: "/admin/usuarios" },
               { icon: "mdi:message-outline",          label: "Mensajería",           to: "/admin/mensajeria"   },
               { icon: "mdi:account-search-outline",   label: "Buscar perfiles",      to: "/admin/buscar"       },
               { icon: "mdi:flag-outline",             label: "Reportes",             to: "/admin/reportes"     },
@@ -1744,7 +1744,7 @@ export default function EstudianteDashboard() {
                 </span>
               </div>
               <p className={`text-xs ${M}`}>{adminStats.estudiantes_evaluados} de {adminStats.total_estudiantes} estudiantes evaluados</p>
-              <Link to="/admin/evaluaciones" className="block text-center mt-2 text-xs text-[#0F4D8A] hover:underline">
+              <Link to="/admin/usuarios" className="block text-center mt-2 text-xs text-[#0F4D8A] hover:underline">
                 Ver evaluaciones →
               </Link>
             </div>
