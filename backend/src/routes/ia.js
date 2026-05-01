@@ -12,7 +12,7 @@ function calcularHashPerfil(perfil, habilidades, idiomas, historial_academico, h
     biografia:          perfil.biografia,
     promedio:           perfil.promedio,
     calificacion_docente: perfil.calificacion_docente,
-    semestre:           perfil.semestre,
+    nivel:              perfil.nivel,
     habilidades:        habilidades.map(h => ({ nombre: h.nombre, nivel: h.nivel_dominio })),
     idiomas:            idiomas.map(i => ({ idioma: i.idioma, nivel: i.nivel })),
     historial_academico: historial_academico.map(a => ({ titulo: a.titulo, institucion: a.institucion })),
@@ -58,7 +58,7 @@ ${vacante.descripcion ? `- Descripción: ${vacante.descripcion}` : ""}
 PERFIL DEL ESTUDIANTE:
 - Nombre: ${perfil.nombre_completo}
 - Carrera: ${perfil.carrera}
-- Semestre: ${perfil.semestre || "No especificado"}
+- Nivel: ${perfil.nivel || "No especificado"}
 - Promedio académico: ${perfil.promedio ? `${perfil.promedio} / 7.0` : "No registrado"}
 - Evaluación docente: ${perfil.calificacion_docente ? `${perfil.calificacion_docente} / 7.0` : "No registrada"}
 - Sobre mí: ${perfil.biografia || "Sin biografía"}

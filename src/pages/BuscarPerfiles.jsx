@@ -445,7 +445,14 @@ export default function BuscarPerfiles() {
   const tabLabel = { estudiantes: "estudiante", empresas: "empresa", vacantes: "vacante", talleres: "taller", colegios: "colegio" }[tab];
   const usuarioActual = JSON.parse(localStorage.getItem("usuario") || "{}");
 
-  const limpiarFiltros = () => { setSearch(""); setSelectedCareer("Todas"); setMinGpa(1); setMinEvalDocente(1); setSelectedRegion(""); setSelectedComuna(""); setSelectedHabilidades([]); setHabBusqueda(""); setSelectedModalidad(""); setFiltroPrecio("todas"); setFiltroRemuneracion("todas"); };
+  const limpiarFiltros = () => {
+    setSearch(""); setSelectedCareer("Todas"); setMinGpa(1); setMinEvalDocente(1);
+    setSelectedRegion(""); setSelectedComuna(""); setSelectedHabilidades([]);
+    setHabBusqueda(""); setSelectedModalidad(""); setFiltroPrecio("todas"); setFiltroRemuneracion("todas");
+    const params = new URLSearchParams(location.search);
+    params.delete("q");
+    navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
+  };
 
   const handleContactarEstudiante = async (id) => {
     setContactandoId(id);
@@ -713,42 +720,6 @@ export default function BuscarPerfiles() {
 
         {/* ── Resultados ── */}
         <div className="col-span-3 flex flex-col gap-4">
-          {/* Barra de búsqueda principal — pill, tinte azul igual al navbar */}
-          <div className="relative">
-            <Icon icon="mdi:magnify" width={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#378ADD] pointer-events-none" />
-            <input
-              type="text"
-              autoFocus
-              placeholder={{ estudiantes: "Buscar estudiantes por nombre, habilidad...", empresas: "Buscar empresas por nombre o descripción...", vacantes: "Buscar vacantes por título, empresa o área...", talleres: "Buscar talleres por título o área...", colegios: "Buscar instituciones por nombre o región..." }[tab]}
-              value={search}
-              onChange={(e) => {
-                const val = e.target.value;
-                setSearch(val);
-                const params = new URLSearchParams(location.search);
-                if (val.trim()) { params.set("q", val.trim()); } else { params.delete("q"); }
-                navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
-              }}
-              className={`w-full pl-10 pr-10 py-3 rounded-full text-sm outline-none border transition-all shadow-sm ${
-                isDark
-                  ? "bg-[#0F4D8A]/20 border-[#378ADD]/30 text-[#D3D1C7] placeholder-[#6B8FAF] focus:bg-[#0F4D8A]/35 focus:border-[#378ADD]"
-                  : "bg-[#EBF4FF] border-[#378ADD]/30 text-[#1a3a5c] placeholder-[#7AAFD4] focus:bg-[#DBEEFF] focus:border-[#378ADD]"
-              }`}
-            />
-            {search && (
-              <button
-                onClick={() => {
-                  setSearch("");
-                  const params = new URLSearchParams(location.search);
-                  params.delete("q");
-                  navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
-                }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#378ADD]/60 hover:text-red-400 transition-colors"
-              >
-                <Icon icon="mdi:close-circle" width={16} />
-              </button>
-            )}
-          </div>
-
           {/* Estudiantes */}
           {tab === "estudiantes" && (
             <div className="grid grid-cols-2 gap-4">
@@ -766,7 +737,7 @@ export default function BuscarPerfiles() {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className={`text-sm font-semibold ${T} truncate`}>{s.nombre_completo}</p>
-                        <p className={`text-xs ${M}`}>{nombreCarrera}{s.semestre ? ` · Sem. ${s.semestre}` : ""}</p>
+                        <p className={`text-xs ${M}`}>{nombreCarrera}{s.nivel ? ` · ${s.nivel}` : ""}</p>
                         {(s.comuna || s.region) && (
                           <p className={`text-xs ${M} flex items-center gap-1`}><Icon icon="mdi:map-marker-outline" width={11} />{[s.comuna, s.region].filter(Boolean).join(", ")}</p>
                         )}
@@ -937,18 +908,28 @@ export default function BuscarPerfiles() {
                     </div>
                   )}
                   <div className="flex gap-2 mt-2">
-                    <button
-                      onClick={() => handleContactarColegio(c.usuario_id)}
-                      disabled={contactandoId === c.usuario_id}
-                      className="flex-1 py-2 rounded-lg text-xs font-semibold bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
-                    >
-                      <Icon
-                        icon={contactandoId === c.usuario_id ? "mdi:loading" : "mdi:message-outline"}
-                        width={14}
-                        className={contactandoId === c.usuario_id ? "animate-spin" : ""}
-                      />
-                      {contactandoId === c.usuario_id ? "Conectando..." : "Contactar"}
-                    </button>
+                    <Link to={`/colegio-publico/${c.usuario_id}`} className="flex-1">
+                      <button className={`w-full py-2 rounded-lg text-xs font-semibold border transition-colors flex items-center justify-center gap-1.5 ${
+                        isDark ? "border-[#3a3a38] text-[#D3D1C7] hover:border-[#378ADD] hover:text-[#378ADD]" : "border-[#D3D1C7] text-[#2C2C2A] hover:border-[#378ADD] hover:text-[#378ADD]"
+                      }`}>
+                        <Icon icon="mdi:eye-outline" width={14} />
+                        Ver perfil
+                      </button>
+                    </Link>
+                    {(role === "slep" || role === "empresa") && (
+                      <button
+                        onClick={() => handleContactarColegio(c.usuario_id)}
+                        disabled={contactandoId === c.usuario_id}
+                        className="flex-1 py-2 rounded-lg text-xs font-semibold bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                      >
+                        <Icon
+                          icon={contactandoId === c.usuario_id ? "mdi:loading" : "mdi:message-outline"}
+                          width={14}
+                          className={contactandoId === c.usuario_id ? "animate-spin" : ""}
+                        />
+                        {contactandoId === c.usuario_id ? "Conectando..." : "Contactar"}
+                      </button>
+                    )}
                   </div>
                 </Card>
               ))}

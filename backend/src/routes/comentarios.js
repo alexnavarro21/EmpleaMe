@@ -48,10 +48,12 @@ router.post("/", verificarToken, async (req, res) => {
       const [[pub]] = await db.query("SELECT autor_id FROM publicaciones WHERE id = ?", [req.params.id]);
       if (pub && pub.autor_id !== req.usuario.id) {
         const [[commenter]] = await db.query(
-          `SELECT COALESCE(pe.nombre_empresa, est.nombre_completo, 'Usuario') AS nombre
+          `SELECT COALESCE(pe.nombre_empresa, est.nombre_completo, pc.nombre_institucion, ps.nombre_organismo, 'Usuario') AS nombre
            FROM usuarios u
            LEFT JOIN perfiles_empresas pe     ON pe.usuario_id  = u.id
            LEFT JOIN perfiles_estudiantes est ON est.usuario_id = u.id
+           LEFT JOIN perfiles_colegios pc     ON pc.usuario_id  = u.id
+           LEFT JOIN perfiles_slep ps         ON ps.usuario_id  = u.id
            WHERE u.id = ?`, [req.usuario.id]
         );
         await db.query(

@@ -24,16 +24,21 @@ async function getDatosUsuario(usuarioId) {
       CASE u.rol
         WHEN 'empresa'    THEN pe.nombre_empresa
         WHEN 'estudiante' THEN est.nombre_completo
-        ELSE 'Administrador'
+        WHEN 'colegio'    THEN pc.nombre_institucion
+        WHEN 'slep'       THEN ps.nombre_organismo
+        ELSE 'Usuario'
       END AS nombre,
       CASE u.rol
         WHEN 'empresa'    THEN pe.foto_perfil
         WHEN 'estudiante' THEN est.foto_perfil
+        WHEN 'colegio'    THEN pc.foto_perfil
         ELSE NULL
       END AS foto_perfil
      FROM usuarios u
      LEFT JOIN perfiles_empresas pe     ON pe.usuario_id  = u.id
      LEFT JOIN perfiles_estudiantes est ON est.usuario_id = u.id
+     LEFT JOIN perfiles_colegios pc     ON pc.usuario_id  = u.id
+     LEFT JOIN perfiles_slep ps         ON ps.usuario_id  = u.id
      WHERE u.id = ?`,
     [usuarioId]
   );

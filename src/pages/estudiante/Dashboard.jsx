@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge } from "../../components/ui";
-import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getPostulacionesEstudiante, toggleLike, getTalleres, getAdminStats, inscribirseEnTaller, eliminarPublicacion, eliminarTaller, getSiguiendo, toggleSeguir, getColegioById, getSlepPerfil, getSlepStats } from "../../services/api";
+import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getMensajesDirectos, getPostulacionesEstudiante, toggleLike, getTalleres, getAdminStats, inscribirseEnTaller, eliminarPublicacion, eliminarTaller, getSiguiendo, toggleSeguir, getColegioById, getSlepPerfil, getSlepStats } from "../../services/api";
 import { calcularCompletitud } from "../../utils/perfilCompletitud";
 import CrearPublicacion from "../../components/CrearPublicacion";
 import VerMasModal from "../../components/VerMasModal";
@@ -258,8 +258,9 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
           </div>
         </Link>
         <div className="flex items-center gap-2">
-          {/* Botón Seguir (no se muestra al propio autor ni al admin) */}
-          {pub.autor_id !== usuario.id && usuario.rol !== "colegio" && usuario.rol !== "slep" && (
+          {/* Botón Seguir: no en posts propios, ni cuando el autor es colegio/slep */}
+          {pub.autor_id !== usuario.id && usuario.rol !== "colegio" && usuario.rol !== "slep"
+            && pub.autor_rol !== "colegio" && pub.autor_rol !== "slep" && (
             <button
               onClick={handleToggleSeguir}
               disabled={toggleandoSeguir}
@@ -958,6 +959,7 @@ export default function EstudianteDashboard() {
   // Estado estudiante extra
   const [estudiantePostulaciones, setEstudiantePostulaciones] = useState([]);
   const [estudianteConversaciones, setEstudianteConversaciones] = useState([]);
+  const [estudianteDirectas, setEstudianteDirectas] = useState([]);
 
   // Estado empresa
   const [empresaPerfil, setEmpresaPerfil] = useState(null);
@@ -1005,6 +1007,7 @@ export default function EstudianteDashboard() {
       getEstudianteById(usuario.id).then(setPerfil).catch(console.error);
       getPostulacionesEstudiante().then(setEstudiantePostulaciones).catch(console.error);
       getConversaciones().then(setEstudianteConversaciones).catch(console.error);
+      getMensajesDirectos().then(setEstudianteDirectas).catch(console.error);
     }
     if (usuario.id && usuario.rol === "empresa") {
       getEmpresaById(usuario.id).then(setEmpresaPerfil).catch(console.error);
@@ -1031,7 +1034,7 @@ export default function EstudianteDashboard() {
 
   const nombre = perfil?.nombre_completo || "";
   const carrera = perfil?.carrera || "";
-  const semestre = perfil?.semestre || "";
+  const nivel = perfil?.nivel || "";
   const telefono = perfil?.telefono || "";
   const biografia = perfil?.biografia || "";
   const promedio = perfil?.promedio || "";
@@ -1043,7 +1046,7 @@ export default function EstudianteDashboard() {
 
   const nombreCarrera = careerDisplay[carrera] || carrera;
   const inicial = nombre ? nombre.charAt(0).toUpperCase() : "?";
-  const subtitleParts = [nombreCarrera, semestre ? `${semestre}° semestre` : ""].filter(Boolean);
+  const subtitleParts = [nombreCarrera, nivel].filter(Boolean);
 
   const pctCompleto = calcularCompletitud({ nombre_completo: nombre, carrera, telefono, biografia, estado_civil: estadoCivil, rut, region, comuna });
   const perfilCompleto = pctCompleto === 100;
@@ -1060,6 +1063,10 @@ export default function EstudianteDashboard() {
   const conSidebar = isEstudiante || isEmpresa || isAdmin || isSlep;
   const vacantesActivasEmpresa = empresaVacantes.filter((v) => v.esta_activa);
   const mensajesNoLeidos = empresaConversaciones.filter((c) => c.no_leidos > 0);
+  const todasConvsEstudiante = [
+    ...estudianteConversaciones.map((c) => ({ ...c, esDirecta: false })),
+    ...estudianteDirectas.map((c) => ({ ...c, esDirecta: true })),
+  ].sort((a, b) => new Date(b.ultimo_tiempo || 0) - new Date(a.ultimo_tiempo || 0));
 
   return (
     <div className={conSidebar ? "grid grid-cols-1 lg:grid-cols-[280px_1fr_260px] gap-5 items-start" : "max-w-2xl mx-auto w-full flex flex-col gap-4"}>
@@ -1291,8 +1298,8 @@ export default function EstudianteDashboard() {
                 <p className={`text-xs ${M}`}>Aceptadas</p>
               </div>
               <div className="text-center">
-                <p className={`text-base font-semibold ${estudianteConversaciones.some((c) => c.no_leidos > 0) ? "text-red-500" : T}`}>
-                  {estudianteConversaciones.reduce((a, c) => a + (c.no_leidos || 0), 0)}
+                <p className={`text-base font-semibold ${todasConvsEstudiante.some((c) => c.no_leidos > 0) ? "text-red-500" : T}`}>
+                  {todasConvsEstudiante.reduce((a, c) => a + (c.no_leidos || 0), 0)}
                 </p>
                 <p className={`text-xs ${M}`}>Mensajes</p>
               </div>
@@ -1788,24 +1795,24 @@ export default function EstudianteDashboard() {
         <div className={`rounded-xl border ${B} ${BG} p-4`}>
           <div className="flex items-center justify-between mb-3">
             <p className={`text-xs font-semibold ${T}`}>Mensajes</p>
-            {estudianteConversaciones.some((c) => c.no_leidos > 0) && (
+            {todasConvsEstudiante.some((c) => c.no_leidos > 0) && (
               <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isDark ? "bg-red-500/15 text-red-400" : "bg-red-100 text-red-600"}`}>
-                {estudianteConversaciones.reduce((a, c) => a + (c.no_leidos || 0), 0)} sin leer
+                {todasConvsEstudiante.reduce((a, c) => a + (c.no_leidos || 0), 0)} sin leer
               </span>
             )}
           </div>
-          {estudianteConversaciones.length === 0 ? (
+          {todasConvsEstudiante.length === 0 ? (
             <p className={`text-xs ${M}`}>Sin conversaciones aún.</p>
           ) : (
             <>
-              {estudianteConversaciones.slice(0, 3).map((c, i) => {
+              {todasConvsEstudiante.slice(0, 3).map((c, i) => {
                 const nombre = c.contraparte || c.nombre_empresa || c.nombre_estudiante || "Usuario";
                 return (
                   <Link
-                    key={c.id}
+                    key={`${c.esDirecta ? "d" : "e"}-${c.id}`}
                     to="/estudiante/mensajeria"
-                    state={{ conversacionId: c.id }}
-                    className={`flex items-center gap-2.5 ${i < Math.min(estudianteConversaciones.length, 3) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}
+                    state={c.esDirecta ? { directaId: c.id } : { conversacionId: c.id }}
+                    className={`flex items-center gap-2.5 ${i < Math.min(todasConvsEstudiante.length, 3) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}
                   >
                     {c.contraparte_foto ? (
                       <img src={resolverMedia(c.contraparte_foto)} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />

@@ -7,7 +7,7 @@ import {
 } from "../../components/ui";
 import {
   getUsuariosAdmin, getHabilidades, getEstudianteById,
-  marcarEgresado, eliminarUsuario,
+  marcarEgresado, eliminarUsuario, cambiarContrasenaEstudiante,
   guardarEvaluacion, getEvaluaciones,
   asignarHabilidadesTecnicas,
   subirExcelTests, subirExcelPromedios, subirExcelAlumnos,
@@ -180,107 +180,230 @@ function formatDate(iso) {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" });
 }
-function AccionesEstudiante({ userId, isDark, onEliminado }) {
-  const [confirmarEgreso, setConfirmarEgreso] = useState(false);
-  const [confirmarElim, setConfirmarElim]     = useState(false);
-  const [estado, setEstado] = useState("idle");
+const NIVELES_FILTER = ["1° Medio", "2° Medio", "3° Medio", "4° Medio"];
+
+function AccionesDropdown({ userId, isDark, onEliminado }) {
+  const [open, setOpen]             = useState(false);
+  const [modo, setModo]             = useState("idle"); // idle | egresar | eliminar | pwd
+  const [cargando, setCargando]     = useState(false);
+  const [egresoOk, setEgresoOk]     = useState(false);
+  const [error, setError]           = useState("");
+  const [nuevaPwd, setNuevaPwd]     = useState("");
+  const [pwdMsg, setPwdMsg]         = useState("");
+  const ref = useRef(null);
+
   const M  = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B  = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
   const BG = isDark ? "bg-[#262624]" : "bg-white";
 
+  useEffect(() => {
+    function handler(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   const handleEgresar = async () => {
-    setEstado("loading-egreso");
-    try { await marcarEgresado(userId); setEstado("egresado"); setConfirmarEgreso(false); }
-    catch (err) { setEstado(err.message?.includes("No hay registro") ? "no_registro" : "error-egreso"); setConfirmarEgreso(false); }
+    setCargando(true); setError("");
+    try { await marcarEgresado(userId); setEgresoOk(true); setModo("idle"); }
+    catch (err) {
+      setError(err.message?.includes("No hay registro") ? "Sin registro en curso" : "Error al egresar");
+      setModo("idle");
+    } finally { setCargando(false); }
   };
 
   const handleEliminar = async () => {
-    setEstado("loading-elim");
+    setCargando(true); setError("");
     try { await eliminarUsuario(userId); onEliminado?.(userId); }
-    catch { setEstado("error-elim"); setConfirmarElim(false); }
+    catch { setError("Error al eliminar"); setModo("idle"); }
+    finally { setCargando(false); }
   };
 
+  const handleCambiarPwd = async (e) => {
+    e.preventDefault();
+    if (nuevaPwd.length < 6) { setPwdMsg("error:Mínimo 6 caracteres"); return; }
+    setCargando(true); setPwdMsg("");
+    try {
+      await cambiarContrasenaEstudiante(userId, nuevaPwd);
+      setPwdMsg("ok:Contraseña actualizada");
+      setNuevaPwd("");
+      setTimeout(() => { setModo("idle"); setPwdMsg(""); }, 1500);
+    } catch (err) { setPwdMsg("error:" + err.message); }
+    finally { setCargando(false); }
+  };
+
+  if (egresoOk) {
+    return (
+      <div className="flex items-center gap-2">
+        <a href={`/admin/candidato/${userId}`} className="text-xs text-[#378ADD] hover:underline">Ver perfil</a>
+        <span className="text-xs text-green-500 flex items-center gap-1">
+          <Icon icon="mdi:check-circle-outline" width={13} />Egresado
+        </span>
+      </div>
+    );
+  }
+
+  if (modo === "egresar") {
+    return (
+      <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs ${B} ${BG}`}>
+        <span className={M}>¿Marcar egresado?</span>
+        <button onClick={handleEgresar} disabled={cargando} className="text-amber-500 hover:text-amber-600 font-medium disabled:opacity-50">
+          {cargando ? <Icon icon="mdi:loading" width={12} className="animate-spin" /> : "Sí"}
+        </button>
+        <span className={M}>·</span>
+        <button onClick={() => setModo("idle")} className={`${M} hover:text-red-400`}>No</button>
+      </div>
+    );
+  }
+
+  if (modo === "eliminar") {
+    return (
+      <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs border-red-400/50 ${BG}`}>
+        <span className="text-red-400">¿Eliminar?</span>
+        <button onClick={handleEliminar} disabled={cargando} className="text-red-500 hover:text-red-600 font-medium disabled:opacity-50">
+          {cargando ? <Icon icon="mdi:loading" width={12} className="animate-spin" /> : "Sí"}
+        </button>
+        <span className={M}>·</span>
+        <button onClick={() => setModo("idle")} className={`${M} hover:text-[#378ADD]`}>No</button>
+      </div>
+    );
+  }
+
+  if (modo === "pwd") {
+    return (
+      <form onSubmit={handleCambiarPwd} className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs ${B} ${BG}`}>
+        <input type="password" value={nuevaPwd} onChange={(e) => setNuevaPwd(e.target.value)}
+          placeholder="Nueva contraseña" autoFocus className={`text-xs outline-none bg-transparent w-28 ${M}`} />
+        {pwdMsg ? (
+          <span className={pwdMsg.startsWith("ok:") ? "text-green-500" : "text-red-400"}>
+            {pwdMsg.replace(/^(ok:|error:)/, "")}
+          </span>
+        ) : (
+          <>
+            <button type="submit" disabled={cargando} className="text-[#378ADD] hover:text-[#0F4D8A] font-medium disabled:opacity-50">
+              {cargando ? <Icon icon="mdi:loading" width={12} className="animate-spin" /> : "Guardar"}
+            </button>
+            <span className={M}>·</span>
+            <button type="button" onClick={() => setModo("idle")} className={`${M} hover:text-red-400`}>✕</button>
+          </>
+        )}
+      </form>
+    );
+  }
+
   return (
-    <div className="flex items-center gap-2 flex-wrap">
-      <a href={`/admin/candidato/${userId}`} className="text-xs text-[#378ADD] hover:underline">Ver perfil</a>
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className={`p-1.5 rounded-lg transition-colors ${
+          isDark ? "text-[#888780] hover:bg-[#313130] hover:text-[#D3D1C7]" : "text-[#888780] hover:bg-[#F7F6F3] hover:text-[#2C2C2A]"
+        }`}
+      >
+        <Icon icon="mdi:dots-vertical" width={18} />
+      </button>
 
-      {/* Marcar egresado */}
-      {estado === "egresado" ? (
-        <span className="text-xs text-green-500 flex items-center gap-1"><Icon icon="mdi:check-circle-outline" width={13} />Egresado</span>
-      ) : !confirmarEgreso ? (
-        <button onClick={() => { setConfirmarElim(false); setConfirmarEgreso(true); }}
-          className={`text-xs flex items-center gap-1 px-2 py-1 rounded-lg border transition-colors ${isDark ? "border-[#3a3a38] text-[#B4B2A9] hover:border-amber-500/50 hover:text-amber-400" : "border-[#D3D1C7] text-[#5F5E5A] hover:border-amber-400 hover:text-amber-600"}`}>
-          <Icon icon="mdi:school-outline" width={12} />Egresar
-        </button>
-      ) : (
-        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs ${B} ${BG}`}>
-          <span className={M}>¿Egresar?</span>
-          <button onClick={handleEgresar} disabled={estado === "loading-egreso"} className="text-amber-500 hover:text-amber-600 font-medium disabled:opacity-50">
-            {estado === "loading-egreso" ? <Icon icon="mdi:loading" width={12} className="animate-spin" /> : "Sí"}
+      {open && (
+        <div className={`absolute right-0 z-20 mt-1 w-44 rounded-xl border shadow-lg py-1 ${B} ${BG}`}>
+          <a href={`/admin/candidato/${userId}`}
+            className={`flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${isDark ? "text-[#D3D1C7] hover:bg-[#313130]" : "text-[#2C2C2A] hover:bg-[#F7F6F3]"}`}
+            onClick={() => setOpen(false)}>
+            <Icon icon="mdi:account-outline" width={15} className="text-[#378ADD]" />Ver perfil
+          </a>
+          <button
+            className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${isDark ? "text-[#D3D1C7] hover:bg-[#313130]" : "text-[#2C2C2A] hover:bg-[#F7F6F3]"}`}
+            onClick={() => { setModo("egresar"); setOpen(false); }}>
+            <Icon icon="mdi:school-outline" width={15} className="text-amber-500" />Marcar egresado
           </button>
-          <span className={M}>·</span>
-          <button onClick={() => setConfirmarEgreso(false)} className={`${M} hover:text-red-400`}>No</button>
+          <button
+            className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${isDark ? "text-[#D3D1C7] hover:bg-[#313130]" : "text-[#2C2C2A] hover:bg-[#F7F6F3]"}`}
+            onClick={() => { setModo("pwd"); setNuevaPwd(""); setPwdMsg(""); setOpen(false); }}>
+            <Icon icon="mdi:key-outline" width={15} className="text-[#378ADD]" />Cambiar contraseña
+          </button>
+          <div className={`my-1 border-t ${B}`} />
+          <button
+            className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${isDark ? "text-red-400 hover:bg-[#313130]" : "text-red-500 hover:bg-[#F7F6F3]"}`}
+            onClick={() => { setModo("eliminar"); setOpen(false); }}>
+            <Icon icon="mdi:trash-can-outline" width={15} />Eliminar
+          </button>
         </div>
       )}
-
-      {/* Eliminar */}
-      {!confirmarElim ? (
-        <button onClick={() => { setConfirmarEgreso(false); setConfirmarElim(true); }}
-          className={`text-xs flex items-center gap-1 px-2 py-1 rounded-lg border transition-colors ${isDark ? "border-[#3a3a38] text-[#B4B2A9] hover:border-red-500/50 hover:text-red-400" : "border-[#D3D1C7] text-[#5F5E5A] hover:border-red-400 hover:text-red-500"}`}>
-          <Icon icon="mdi:trash-can-outline" width={12} />Eliminar
-        </button>
-      ) : (
-        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs border-red-400 ${BG}`}>
-          <span className="text-red-500 font-medium">¿Eliminar permanentemente?</span>
-          <button onClick={handleEliminar} disabled={estado === "loading-elim"} className="text-red-500 hover:text-red-600 font-medium disabled:opacity-50">
-            {estado === "loading-elim" ? <Icon icon="mdi:loading" width={12} className="animate-spin" /> : "Sí"}
-          </button>
-          <span className={M}>·</span>
-          <button onClick={() => setConfirmarElim(false)} className={`${M} hover:text-[#0F4D8A]`}>No</button>
-        </div>
-      )}
-
-      {estado === "no_registro"  && <span className={`text-xs ${M}`}>Sin registro en curso</span>}
-      {estado === "error-egreso" && <span className="text-xs text-red-400">Error al egresar</span>}
-      {estado === "error-elim"   && <span className="text-xs text-red-400">Error al eliminar</span>}
+      {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
     </div>
   );
 }
 function TabUsuarios({ rawUsers, isDark }) {
-  const [search, setSearch] = useState("");
-  const [users, setUsers]   = useState(rawUsers);
+  const [search, setSearch]               = useState("");
+  const [carreraFilter, setCarreraFilter] = useState("todas");
+  const [nivelFilter, setNivelFilter]     = useState("todos");
+  const [users, setUsers]                 = useState(rawUsers);
+
   const handleEliminado = (id) => setUsers((prev) => prev.filter((u) => u.id !== id));
+
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
-  const S = isDark ? "bg-[#313130]" : "bg-[#F7F6F3]";
+  const S = isDark ? "bg-[#313130]"    : "bg-[#F7F6F3]";
+
+  const carreras = Array.from(new Set(users.map((u) => u.carrera).filter(Boolean)));
 
   const filtered = users.filter((u) => {
-    const name = u.nombre || u.correo || "";
-    return name.toLowerCase().includes(search.toLowerCase()) || u.correo.toLowerCase().includes(search.toLowerCase());
+    const q = search.toLowerCase();
+    const matchSearch =
+      (u.nombre || u.correo || "").toLowerCase().includes(q) ||
+      (u.correo || "").toLowerCase().includes(q) ||
+      (u.rut    || "").toLowerCase().includes(q);
+    const matchCarrera = carreraFilter === "todas" || u.carrera === carreraFilter;
+    const matchNivel   = nivelFilter   === "todos"  || u.nivel   === nivelFilter;
+    return matchSearch && matchCarrera && matchNivel;
   });
+
+  const selectCls = `text-sm outline-none border rounded-lg px-3 py-2 transition-all focus:border-[#378ADD] ${
+    isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
+  }`;
+
+  const hayFiltros = search || carreraFilter !== "todas" || nivelFilter !== "todos";
 
   return (
     <Card className="p-0 overflow-hidden">
-      <div className={`flex items-center gap-3 p-4 border-b ${B}`}>
-        <div className="relative flex-1">
+      <div className={`flex items-center gap-3 p-4 border-b ${B} flex-wrap`}>
+        <div className="relative flex-1 min-w-48">
           <Icon icon="mdi:search" width={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${M}`} />
-          <input type="text" placeholder="Buscar por nombre o email..." value={search}
+          <input type="text" placeholder="Buscar por nombre, email o RUT..." value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className={`w-full pl-8 pr-3 py-2 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"}`} />
+            className={`w-full pl-8 pr-3 py-2 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
+              isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
+            }`} />
         </div>
+        <select value={carreraFilter} onChange={(e) => setCarreraFilter(e.target.value)} className={selectCls}>
+          <option value="todas">Todas las carreras</option>
+          {carreras.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select value={nivelFilter} onChange={(e) => setNivelFilter(e.target.value)} className={selectCls}>
+          <option value="todos">Todos los niveles</option>
+          {NIVELES_FILTER.map((n) => <option key={n} value={n}>{n}</option>)}
+        </select>
+        {hayFiltros && (
+          <button onClick={() => { setSearch(""); setCarreraFilter("todas"); setNivelFilter("todos"); }}
+            className={`p-2 rounded-lg transition-colors ${S} ${M} hover:text-red-400`}>
+            <Icon icon="mdi:close" width={14} />
+          </button>
+        )}
       </div>
+
       <div className="overflow-x-auto">
         {filtered.length === 0 ? (
           <div className={`text-center py-12 ${M}`}>
-            <Icon icon="mdi:search" width={40} className="mx-auto mb-3" />
-            <p className={`text-sm ${T}`}>No se encontraron estudiantes</p>
+            <Icon icon="mdi:magnify" width={40} className="mx-auto mb-3" />
+            <p className={`text-sm ${T}`}>
+              {users.length === 0 ? "No hay estudiantes registrados" : "Sin resultados para los filtros aplicados"}
+            </p>
           </div>
         ) : (
           <table className="w-full">
             <thead>
               <tr className={`border-b ${B} ${S}`}>
-                {["Estudiante", "Email", "Carrera", "Registro", "Acciones"].map((h) => (
+                {["Estudiante", "RUT", "Email", "Carrera", "Nivel", "Acciones"].map((h) => (
                   <th key={h} className={`text-left text-xs font-medium ${M} px-5 py-3`}>{h}</th>
                 ))}
               </tr>
@@ -296,11 +419,16 @@ function TabUsuarios({ rawUsers, isDark }) {
                       <span className={`text-sm font-medium ${T}`}>{u.nombre || u.correo}</span>
                     </div>
                   </td>
+                  <td className="px-5 py-3"><span className={`text-sm ${M}`}>{u.rut || "—"}</span></td>
                   <td className="px-5 py-3"><span className={`text-sm ${M}`}>{u.correo}</span></td>
                   <td className="px-5 py-3"><span className={`text-sm ${M}`}>{u.carrera || "—"}</span></td>
-                  <td className="px-5 py-3"><span className={`text-sm ${M}`}>{formatDate(u.fecha_creacion)}</span></td>
                   <td className="px-5 py-3">
-                    <AccionesEstudiante userId={u.id} isDark={isDark} onEliminado={handleEliminado} />
+                    {u.nivel
+                      ? <span className={`text-xs px-2 py-0.5 rounded-full border ${B} ${M}`}>{u.nivel}</span>
+                      : <span className={`text-sm ${M}`}>—</span>}
+                  </td>
+                  <td className="px-5 py-3">
+                    <AccionesDropdown userId={u.id} isDark={isDark} onEliminado={handleEliminado} />
                   </td>
                 </tr>
               ))}
@@ -1565,7 +1693,7 @@ function TabCrearAlumnos({ isDark }) {
         <ul className={`text-xs ${M} space-y-1.5`}>
           <li>· El teléfono es opcional, puede dejarse vacío.</li>
           <li>· Los correos ya registrados se omiten automáticamente.</li>
-          <li>· Los alumnos completan carrera, semestre y demás datos al iniciar sesión.</li>
+          <li>· Los alumnos completan carrera, nivel y demás datos al iniciar sesión.</li>
         </ul>
       </Card>
     </div>

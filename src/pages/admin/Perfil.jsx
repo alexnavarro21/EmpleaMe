@@ -21,6 +21,10 @@ export default function AdminPerfil() {
   const [fotoPerfil, setFotoPerfil] = useState(null);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [totalEstudiantes, setTotalEstudiantes] = useState(0);
+  const [carrerasImpartidas, setCarrerasImpartidas] = useState([]);
+
+  const CARRERAS_DISPONIBLES = ["Administracion", "Mecanica Automotriz"];
+  const CARRERAS_DISPLAY = { Administracion: "Administración", "Mecanica Automotriz": "Mecánica Automotriz" };
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -40,6 +44,7 @@ export default function AdminPerfil() {
         setComuna(perfil.comuna || "");
         setFotoPerfil(perfil.foto_perfil || null);
         setTotalEstudiantes(perfil.total_estudiantes || 0);
+        setCarrerasImpartidas(perfil.carreras_impartidas || []);
         localStorage.setItem(`foto_perfil_${usuario.id}`, perfil.foto_perfil || "");
       } catch (err) {
         console.error(err);
@@ -60,6 +65,7 @@ export default function AdminPerfil() {
         descripcion,
         region: region || null,
         comuna: comuna || null,
+        carreras_impartidas: carrerasImpartidas,
       });
       setSaveMsg("Cambios guardados");
       setEditMode(false);
@@ -259,6 +265,44 @@ export default function AdminPerfil() {
                       : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
                     }`}
                 />
+              </div>
+              <div className="col-span-2 mb-3">
+                <label className={`block text-xs mb-2 ${M}`}>Carreras impartidas</label>
+                <div className="flex flex-wrap gap-2">
+                  {CARRERAS_DISPONIBLES.map((c) => {
+                    const activa = carrerasImpartidas.includes(c);
+                    return editMode ? (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() =>
+                          setCarrerasImpartidas((prev) =>
+                            activa ? prev.filter((x) => x !== c) : [...prev, c]
+                          )
+                        }
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                          activa
+                            ? "bg-[#0F4D8A] text-white border-[#0F4D8A]"
+                            : isDark
+                            ? "border-[#3a3a38] text-[#888780] hover:border-[#378ADD]"
+                            : "border-[#D3D1C7] text-[#5F5E5A] hover:border-[#378ADD]"
+                        }`}
+                      >
+                        {CARRERAS_DISPLAY[c] || c}
+                      </button>
+                    ) : activa ? (
+                      <span
+                        key={c}
+                        className="px-3 py-1 rounded-full text-xs font-medium bg-[#0F4D8A]/10 text-[#378ADD] border border-[#378ADD]/30"
+                      >
+                        {CARRERAS_DISPLAY[c] || c}
+                      </span>
+                    ) : null;
+                  })}
+                  {!editMode && carrerasImpartidas.length === 0 && (
+                    <span className={`text-xs ${M}`}>Sin carreras registradas</span>
+                  )}
+                </div>
               </div>
               {editMode && (
                 <div className="col-span-2 mt-2">

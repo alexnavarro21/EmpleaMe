@@ -24,9 +24,11 @@ export default function Login() {
   const [colegios, setColegios] = useState([]);
   const [regColegioId, setRegColegioId] = useState("");
   const [regRut, setRegRut] = useState("");
-  const [regNombreCompleto, setRegNombreCompleto] = useState("");
+  const [regNombre, setRegNombre] = useState("");
+  const [regApellidoPaterno, setRegApellidoPaterno] = useState("");
+  const [regApellidoMaterno, setRegApellidoMaterno] = useState("");
   const [regCarrera, setRegCarrera] = useState("");
-  const [regSemestre, setRegSemestre] = useState("");
+  const [regNivel, setRegNivel] = useState("");
   const [regTelefono, setRegTelefono] = useState("");
   const [regNombreEmpresa, setRegNombreEmpresa] = useState("");
   const [regTelefonoEmpresa, setRegTelefonoEmpresa] = useState("");
@@ -71,8 +73,8 @@ export default function Login() {
       setRegError("Las empresas deben registrarse con correo.");
       return;
     }
-    if (activeRole === "estudiante" && (!regNombreCompleto || !regCarrera)) {
-      setRegError("Nombre completo y carrera son obligatorios.");
+    if (activeRole === "estudiante" && (!regNombre || !regApellidoPaterno || !regCarrera)) {
+      setRegError("Nombre, apellido paterno y carrera son obligatorios.");
       return;
     }
     if (activeRole === "empresa" && !regNombreEmpresa) {
@@ -95,9 +97,11 @@ export default function Login() {
         rut: activeRole === "estudiante" && regRut ? regRut : undefined,
         contrasena: regContrasena,
         rol: activeRole,
-        nombre_completo: regNombreCompleto || undefined,
+        nombre: regNombre || undefined,
+        apellido_paterno: regApellidoPaterno || undefined,
+        apellido_materno: regApellidoMaterno || undefined,
         carrera: regCarrera || undefined,
-        semestre: regSemestre || undefined,
+        nivel: regNivel || undefined,
         telefono: regTelefono || undefined,
         nombre_empresa: regNombreEmpresa || undefined,
         telefono_contacto: regTelefonoEmpresa || undefined,
@@ -244,23 +248,41 @@ export default function Login() {
                 {activeRole === "estudiante" && (
                   <>
                     <FormField
-                      label="Nombre completo *"
+                      label="Nombre *"
                       type="text"
-                      placeholder="Tu nombre y apellido"
-                      value={regNombreCompleto}
-                      onChange={(e) => setRegNombreCompleto(e.target.value)}
+                      placeholder="Tu nombre"
+                      value={regNombre}
+                      onChange={(e) => setRegNombre(e.target.value)}
                       isDark={isDark}
                     />
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField
+                        label="Apellido paterno *"
+                        type="text"
+                        placeholder="Apellido paterno"
+                        value={regApellidoPaterno}
+                        onChange={(e) => setRegApellidoPaterno(e.target.value)}
+                        isDark={isDark}
+                      />
+                      <FormField
+                        label="Apellido materno"
+                        type="text"
+                        placeholder="Apellido materno"
+                        value={regApellidoMaterno}
+                        onChange={(e) => setRegApellidoMaterno(e.target.value)}
+                        isDark={isDark}
+                      />
+                    </div>
                     <div className="grid grid-cols-2 gap-3">
                       <SelectField label="Carrera *" value={regCarrera} onChange={(e) => setRegCarrera(e.target.value)} isDark={isDark}>
                         <option value="">Selecciona tu carrera</option>
                         <option value="Administracion">Administración</option>
                         <option value="Mecanica Automotriz">Mecánica Automotriz</option>
                       </SelectField>
-                      <SelectField label="Semestre" value={regSemestre} onChange={(e) => setRegSemestre(e.target.value)} isDark={isDark}>
-                        <option value="">Semestre (opcional)</option>
-                        {[1,2,3,4,5,6].map((s) => (
-                          <option key={s} value={s}>{s}° semestre</option>
+                      <SelectField label="Nivel" value={regNivel} onChange={(e) => setRegNivel(e.target.value)} isDark={isDark}>
+                        <option value="">Nivel (opcional)</option>
+                        {['1° Medio','2° Medio','3° Medio','4° Medio'].map((n) => (
+                          <option key={n} value={n}>{n}</option>
                         ))}
                       </SelectField>
                     </div>

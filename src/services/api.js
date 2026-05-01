@@ -33,11 +33,11 @@ export async function loginUsuario(identifier, contrasena) {
 }
 
 // rol: "estudiante" | "empresa" | "colegio" | "slep"
-export async function registrarUsuario({ correo, contrasena, rol, nombre_completo, carrera, semestre, telefono, nombre_empresa, telefono_contacto, colegio_id }) {
+export async function registrarUsuario({ correo, rut, contrasena, rol, nombre, apellido_paterno, apellido_materno, carrera, nivel, telefono, nombre_empresa, telefono_contacto, colegio_id }) {
   const res = await fetch(`${BASE_URL}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ correo, contrasena, rol, nombre_completo, carrera, semestre, telefono, nombre_empresa, telefono_contacto, colegio_id }),
+    body: JSON.stringify({ correo, rut, contrasena, rol, nombre, apellido_paterno, apellido_materno, carrera, nivel, telefono, nombre_empresa, telefono_contacto, colegio_id }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al crear la cuenta");

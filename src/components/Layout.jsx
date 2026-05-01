@@ -29,8 +29,7 @@ const navLinks = {
   slep: [
     { to: "/slep/inicio",      label: "Inicio" },
     { to: "/slep/panel",       label: "Panel" },
-    { to: "/slep/empresas",    label: "Empresas" },
-    { to: "/slep/colegios",    label: "Colegios" },
+    { to: "/slep/usuarios",    label: "Usuarios" },
     { to: "/slep/reportes",    label: "Reportes" },
   ],
 };
@@ -284,8 +283,8 @@ export default function Layout() {
             </div>
           </div>
 
-          {/* Centro: Barra de búsqueda — oculta en /buscar (aparece grande en la página) */}
-          <div className={`flex-shrink-0 transition-all ${isOnBuscar ? "opacity-0 pointer-events-none w-0 overflow-hidden" : ""}`} ref={searchRef}>
+          {/* Centro: Barra de búsqueda */}
+          <div className="flex-shrink-0" ref={searchRef}>
             <div className="relative">
               <form onSubmit={handleSearchSubmit}>
                 <div className="relative">
