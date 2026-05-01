@@ -108,6 +108,27 @@ router.get("/evaluaciones", ...auth, async (req, res) => {
   }
 });
 
+router.get("/evaluaciones/:estudianteId/:periodo", ...auth, async (req, res) => {
+  const { estudianteId, periodo } = req.params;
+  try {
+    if (!await esMiEstudiante(estudianteId, req.usuario.id))
+      return res.status(403).json({ error: "Estudiante no pertenece a tu institución" });
+    const [[eval_]] = await db.query(
+      "SELECT id, observaciones FROM evaluaciones WHERE estudiante_id = ? AND periodo = ? ORDER BY creada_en DESC LIMIT 1",
+      [estudianteId, periodo]
+    );
+    if (!eval_) return res.json({ ratings: {}, observaciones: "" });
+    const [habs] = await db.query(
+      "SELECT habilidad_id, puntaje FROM evaluacion_habilidades WHERE evaluacion_id = ?",
+      [eval_.id]
+    );
+    const ratings = Object.fromEntries(habs.map((h) => [h.habilidad_id, h.puntaje]));
+    res.json({ ratings, observaciones: eval_.observaciones || "" });
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
 router.post("/evaluaciones", ...auth, async (req, res) => {
   const { estudiante_id, periodo, habilidades, observaciones } = req.body;
   if (!estudiante_id || !periodo)
@@ -115,6 +136,10 @@ router.post("/evaluaciones", ...auth, async (req, res) => {
   try {
     if (!await esMiEstudiante(estudiante_id, req.usuario.id))
       return res.status(403).json({ error: "Estudiante no pertenece a tu institución" });
+    await db.query(
+      "DELETE FROM evaluaciones WHERE estudiante_id = ? AND periodo = ?",
+      [estudiante_id, periodo]
+    );
     const [evalResult] = await db.query(
       "INSERT INTO evaluaciones (estudiante_id, evaluador_id, periodo, observaciones) VALUES (?, ?, ?, ?)",
       [estudiante_id, req.usuario.id, periodo, observaciones || null]

@@ -8,7 +8,7 @@ import {
 import {
   getUsuariosAdmin, getHabilidades, getEstudianteById,
   marcarEgresado, eliminarUsuario, cambiarContrasenaEstudiante,
-  guardarEvaluacion, getEvaluaciones,
+  guardarEvaluacion, getEvaluaciones, getEvaluacionEstudiante,
   asignarHabilidadesTecnicas,
   subirExcelTests, subirExcelPromedios, subirExcelAlumnos,
   getIdiomasEstudiante, agregarIdioma, eliminarIdioma,
@@ -1013,13 +1013,41 @@ function TabEvaluacion({ estudiantes, habilidades, isDark }) {
   const [historial, setHistorial] = useState([]);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
-
-  const tecnicas = habilidades.filter((h) => h.categoria === "tecnica" || h.categoria === "técnica");
-  const blandas  = habilidades.filter((h) => h.categoria === "blanda");
+  const [estudianteHabIds, setEstudianteHabIds] = useState(null);
+  const [loadingHabs, setLoadingHabs] = useState(false);
 
   useEffect(() => {
     getEvaluaciones().then(setHistorial).catch(() => {});
   }, []);
+
+  async function cargarEstudiante(id, per) {
+    setRatings({});
+    setObs("");
+    if (!id) { setEstudianteHabIds(null); return; }
+    setLoadingHabs(true);
+    try {
+      const perfil = await getEstudianteById(id);
+      setEstudianteHabIds(new Set((perfil.habilidades || []).map((h) => h.id)));
+    } catch { setEstudianteHabIds(new Set()); }
+    finally { setLoadingHabs(false); }
+    getEvaluacionEstudiante(id, per)
+      .then((ev) => { setRatings(ev.ratings || {}); setObs(ev.observaciones || ""); })
+      .catch(() => {});
+  }
+
+  async function handleSelectEstudiante(id) {
+    setSelectedId(id);
+    await cargarEstudiante(id, periodo);
+  }
+
+  async function handlePeriodoChange(per) {
+    setPeriodo(per);
+    if (selectedId) await cargarEstudiante(selectedId, per);
+  }
+
+  const habIds = estudianteHabIds;
+  const tecnicas = habIds ? habilidades.filter((h) => habIds.has(h.id) && (h.categoria === "tecnica" || h.categoria === "técnica")) : [];
+  const blandas  = habIds ? habilidades.filter((h) => habIds.has(h.id) && h.categoria === "blanda") : [];
 
   async function handleGuardar() {
     if (!selectedId) return;
@@ -1053,13 +1081,13 @@ function TabEvaluacion({ estudiantes, habilidades, isDark }) {
               <StudentSearch
                 estudiantes={estudiantes}
                 selectedId={selectedId}
-                onSelect={(id) => { setSelectedId(id); setRatings({}); }}
+                onSelect={handleSelectEstudiante}
                 isDark={isDark}
               />
             </div>
             <div>
               <label className={`block text-xs mb-1.5 ${M}`}>Período</label>
-              <select value={periodo} onChange={(e) => setPeriodo(e.target.value)}
+              <select value={periodo} onChange={(e) => handlePeriodoChange(e.target.value)}
                 className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border focus:border-[#378ADD] ${
                   isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
                 }`}
@@ -1069,7 +1097,19 @@ function TabEvaluacion({ estudiantes, habilidades, isDark }) {
             </div>
           </div>
 
-          {tecnicas.length > 0 && (
+          {!selectedId && (
+            <p className={`text-sm ${M} text-center py-6`}>Selecciona un estudiante para ver sus habilidades</p>
+          )}
+
+          {selectedId && loadingHabs && (
+            <p className={`text-sm ${M} text-center py-6`}>Cargando habilidades...</p>
+          )}
+
+          {selectedId && !loadingHabs && habIds && tecnicas.length === 0 && blandas.length === 0 && (
+            <p className={`text-sm ${M} text-center py-6`}>Este estudiante no tiene habilidades registradas</p>
+          )}
+
+          {!loadingHabs && tecnicas.length > 0 && (
             <div className={`p-4 rounded-xl ${S} mb-4`}>
               <div className="flex justify-between mb-3">
                 <h4 className={`text-sm font-semibold ${T}`}>Habilidades técnicas</h4>
@@ -1084,7 +1124,7 @@ function TabEvaluacion({ estudiantes, habilidades, isDark }) {
             </div>
           )}
 
-          {blandas.length > 0 && (
+          {!loadingHabs && blandas.length > 0 && (
             <div className={`p-4 rounded-xl ${S} mb-4`}>
               <div className="flex justify-between mb-3">
                 <h4 className={`text-sm font-semibold ${T}`}>Competencias socioemocionales</h4>

@@ -631,6 +631,13 @@ export async function getEvaluaciones() {
   return data;
 }
 
+export async function getEvaluacionEstudiante(estudianteId, periodo) {
+  const res = await fetch(`${BASE_URL}/admin/evaluaciones/${estudianteId}/${encodeURIComponent(periodo)}`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener evaluación");
+  return data;
+}
+
 export async function guardarEvaluacion(datos) {
   const res = await fetch(`${BASE_URL}/admin/evaluaciones`, {
     method: "POST",
