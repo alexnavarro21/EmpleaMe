@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
-import { useDark } from "../context/DarkModeContext";
-import { Card, PageHeader } from "../components/ui";
-import { getSeguidores, getSiguiendo, getMediaUrl, toggleSeguir } from "../services/api";
+import { useDark } from "../../context/DarkModeContext";
+import { Card, PageHeader } from "../../components/ui";
+import { getSeguidores, getSiguiendo, getMediaUrl, toggleSeguir } from "../../services/api";
 
 const BASE_URL = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
 function resolverMedia(url) {

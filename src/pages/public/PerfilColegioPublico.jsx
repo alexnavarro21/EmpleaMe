@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
-import { useDark } from "../context/DarkModeContext";
-import { Card, SecondaryButton, PageHeader } from "../components/ui";
-import PublicacionesUsuario from "../components/PublicacionesUsuario";
-import { getColegioById, getMediaUrl } from "../services/api";
+import { useDark } from "../../context/DarkModeContext";
+import { Card, SecondaryButton, PageHeader } from "../../components/ui";
+import PublicacionesUsuario from "../../components/PublicacionesUsuario";
+import { getColegioById, getMediaUrl } from "../../services/api";
 
 export default function PerfilColegioPublico() {
   const { isDark } = useDark();

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
-import { useDark } from "../context/DarkModeContext";
-import { PageHeader, Paginacion } from "../components/ui";
-import { getNotificaciones, marcarNotificacionesLeidas } from "../services/api";
+import { useDark } from "../../context/DarkModeContext";
+import { PageHeader, Paginacion } from "../../components/ui";
+import { getNotificaciones, marcarNotificacionesLeidas } from "../../services/api";
 
 function getRoleFromPath(pathname) {
   if (pathname.startsWith("/admin"))    return "admin";
@@ -19,13 +19,13 @@ function getNotifLink(tipo, role, referenciaId) {
     return `/${prefix}/candidato/${referenciaId}`;
   }
   if (tipo === "seguidor") {
-    return role === "empresa" ? "/empresa/seguidores" : role === "admin" ? "/admin/inicio" : role === "slep" ? "/slep/inicio" : "/estudiante/seguidores";
+    return role === "empresa" ? "/empresa/seguidores" : role === "admin" ? "/admin/muro" : role === "slep" ? "/slep/muro" : "/estudiante/seguidores";
   }
 
   const links = {
     estudiante: {
       mensaje:               "/estudiante/mensajeria",
-      comentario:            "/estudiante/dashboard",
+      comentario:            "/estudiante/muro",
       postulacion_aceptada:  "/estudiante/postulaciones",
       postulacion_rechazada: "/estudiante/postulaciones",
       vacante_cerrada:       "/estudiante/postulaciones",
@@ -34,7 +34,7 @@ function getNotifLink(tipo, role, referenciaId) {
     },
     empresa: {
       mensaje:               "/empresa/mensajeria",
-      comentario:            "/empresa/inicio",
+      comentario:            "/empresa/muro",
       postulacion_nueva:     "/empresa/dashboard",
       postulacion_aceptada:  "/empresa/dashboard",
       postulacion_rechazada: "/empresa/dashboard",
@@ -43,7 +43,7 @@ function getNotifLink(tipo, role, referenciaId) {
     },
     admin: {
       mensaje:               "/admin/mensajeria",
-      comentario:            "/admin/inicio",
+      comentario:            "/admin/muro",
       postulacion_nueva:     "/admin/talleres",
       postulacion_aceptada:  "/admin/panel",
       postulacion_rechazada: "/admin/panel",
@@ -52,7 +52,7 @@ function getNotifLink(tipo, role, referenciaId) {
     },
     slep: {
       mensaje:               "/slep/mensajeria",
-      comentario:            "/slep/inicio",
+      comentario:            "/slep/muro",
       postulacion_nueva:     "/slep/usuarios",
       postulacion_aceptada:  "/slep/panel",
       postulacion_rechazada: "/slep/panel",

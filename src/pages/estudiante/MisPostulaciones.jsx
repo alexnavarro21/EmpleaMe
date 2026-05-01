@@ -77,7 +77,7 @@ export default function MisPostulaciones() {
         subtitle={`${postulaciones.length} postulación${postulaciones.length !== 1 ? "es" : ""} en total`}
         action={
           <Link
-            to="/estudiante/dashboard"
+            to="/estudiante/muro"
             className={`text-sm px-4 py-2 rounded-lg border ${B} ${M} hover:text-[#378ADD] hover:border-[#378ADD] transition-colors`}
           >
             ← Volver al inicio
@@ -141,7 +141,7 @@ export default function MisPostulaciones() {
               : `Sin postulaciones ${filtro === "aceptado" ? "aceptadas" : filtro === "rechazado" ? "rechazadas" : "pendientes"}.`}
           </p>
           {filtro === "todas" && !busqueda && (
-            <Link to="/estudiante/dashboard" className="inline-block mt-3 text-xs text-[#378ADD] hover:underline">
+            <Link to="/estudiante/muro" className="inline-block mt-3 text-xs text-[#378ADD] hover:underline">
               Explorar vacantes en el muro →
             </Link>
           )}

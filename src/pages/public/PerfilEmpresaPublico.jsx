@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
-import { useDark } from "../context/DarkModeContext";
-import { Card, Badge, SecondaryButton, PrimaryButton, PageHeader, Paginacion } from "../components/ui";
-import PublicacionesUsuario from "../components/PublicacionesUsuario";
-import { getEmpresaById, getVacantesEmpresa, postularAVacante, iniciarConversacionConEmpresa, getEstudianteById, getMediaUrl, toggleSeguir, getEstadoSeguimiento } from "../services/api";
-import { calcularCompletitud } from "../utils/perfilCompletitud";
-import ModalReporte from "../components/ModalReporte";
+import { useDark } from "../../context/DarkModeContext";
+import { Card, Badge, SecondaryButton, PrimaryButton, PageHeader, Paginacion } from "../../components/ui";
+import PublicacionesUsuario from "../../components/PublicacionesUsuario";
+import { getEmpresaById, getVacantesEmpresa, postularAVacante, iniciarConversacionConEmpresa, getEstudianteById, getMediaUrl, toggleSeguir, getEstadoSeguimiento } from "../../services/api";
+import { calcularCompletitud } from "../../utils/perfilCompletitud";
+import ModalReporte from "../../components/ModalReporte";
 
 export default function PerfilEmpresaPublico() {
   const { isDark } = useDark();
