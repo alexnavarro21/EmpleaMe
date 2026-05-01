@@ -304,7 +304,7 @@ function AccionesDropdown({ userId, isDark, onEliminado }) {
       </button>
 
       {open && (
-        <div className={`absolute right-0 z-20 mt-1 w-44 rounded-xl border shadow-lg py-1 ${B} ${BG}`}>
+        <div className={`absolute right-0 z-20 mt-1 w-47 rounded-xl border shadow-lg py-1 ${B} ${BG}`}>
           <a href={`/admin/candidato/${userId}`}
             className={`flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${isDark ? "text-[#D3D1C7] hover:bg-[#313130]" : "text-[#2C2C2A] hover:bg-[#F7F6F3]"}`}
             onClick={() => setOpen(false)}>
@@ -1820,10 +1820,10 @@ export default function GestionEstudiantes() {
     <div>
       <PageHeader
         title="Gestión de Estudiantes"
-        subtitle="Habilidades, evaluaciones, tests socioemocionales y promedios"
+        subtitle="Usuarios, evaluaciones, habilidades, tests y promedios académicos"
       />
 
-      <div className={`flex border-b ${B} mb-6 gap-0.5`}>
+      <div className={`flex border-b ${B} mb-6 gap-0.25`}>
         {TABS.map((t) => (
           <button
             key={t.key}
