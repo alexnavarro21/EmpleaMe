@@ -810,4 +810,86 @@ router.put("/usuarios/:id/contrasena", ...auth, async (req, res) => {
   }
 });
 
+// ── Charts ────────────────────────────────────────────────────────────────────
+
+// GET /api/admin/charts/postulaciones-por-mes?carrera=&nivel=&genero=
+router.get("/charts/postulaciones-por-mes", ...auth, async (req, res) => {
+  const colegioId = req.usuario.id;
+  const { carrera, nivel, genero } = req.query;
+  try {
+    let where = "WHERE pe.colegio_id = ?";
+    const params = [colegioId];
+    if (carrera) { where += " AND c.nombre = ?";   params.push(carrera); }
+    if (nivel)   { where += " AND pe.nivel = ?";   params.push(nivel);   }
+    if (genero)  { where += " AND pe.genero = ?";  params.push(genero);  }
+    const [rows] = await db.query(`
+      SELECT DATE_FORMAT(p.fecha_postulacion, '%Y-%m') AS mes,
+             COUNT(*) AS total
+      FROM postulaciones p
+      JOIN perfiles_estudiantes pe ON pe.usuario_id = p.estudiante_id
+      LEFT JOIN carreras c ON c.id = pe.carrera_id
+      ${where}
+      GROUP BY mes
+      ORDER BY mes ASC
+      LIMIT 12
+    `, params);
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// GET /api/admin/charts/top-empresas
+router.get("/charts/top-empresas", ...auth, async (req, res) => {
+  const colegioId = req.usuario.id;
+  try {
+    const [rows] = await db.query(`
+      SELECT pe2.nombre_empresa AS empresa, COUNT(*) AS total
+      FROM postulaciones p
+      JOIN perfiles_estudiantes pe ON pe.usuario_id = p.estudiante_id
+      JOIN vacantes v ON v.id = p.vacante_id
+      JOIN perfiles_empresas pe2 ON pe2.usuario_id = v.empresa_id
+      WHERE pe.colegio_id = ?
+      GROUP BY pe2.usuario_id, pe2.nombre_empresa
+      ORDER BY total DESC
+      LIMIT 8
+    `, [colegioId]);
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// GET /api/admin/charts/estado-postulaciones
+router.get("/charts/estado-postulaciones", ...auth, async (req, res) => {
+  const colegioId = req.usuario.id;
+  try {
+    const [rows] = await db.query(`
+      SELECT p.estado, COUNT(*) AS total
+      FROM postulaciones p
+      JOIN perfiles_estudiantes pe ON pe.usuario_id = p.estudiante_id
+      WHERE pe.colegio_id = ?
+      GROUP BY p.estado
+    `, [colegioId]);
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// GET /api/admin/charts/vacantes-disponibles?area=&tipo=
+router.get("/charts/vacantes-disponibles", ...auth, async (req, res) => {
+  const { area, tipo } = req.query;
+  try {
+    let where = "WHERE v.esta_activa = TRUE";
+    const params = [];
+    if (area) { where += " AND v.area = ?"; params.push(area); }
+    if (tipo) { where += " AND v.tipo = ?"; params.push(tipo); }
+    const [rows] = await db.query(`
+      SELECT COALESCE(v.area, 'Sin área') AS area,
+             v.tipo,
+             COUNT(*) AS total
+      FROM vacantes v
+      ${where}
+      GROUP BY v.area, v.tipo
+      ORDER BY total DESC
+    `, params);
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 module.exports = router;
