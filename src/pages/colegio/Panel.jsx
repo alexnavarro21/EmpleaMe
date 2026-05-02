@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
@@ -8,7 +8,11 @@ import {
   getChartPostulacionesPorMes, getChartTopEmpresas,
   getChartEstadoPostulaciones, getChartVacantesDisponibles,
 } from "../../services/api";
-import { BarChart, AreaChart, DonutChart } from "@tremor/react";
+import {
+  BarChart, Bar, AreaChart, Area,
+  PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+} from "recharts";
 
 const quickLinks = [
   { to: "/admin/usuarios",   icon: "mdi:account-group-outline",  label: "Gestión de usuarios",    desc: "Ver y administrar cuentas" },
@@ -24,8 +28,54 @@ const quickLinks = [
 const MESES = { "01":"Ene","02":"Feb","03":"Mar","04":"Abr","05":"May","06":"Jun","07":"Jul","08":"Ago","09":"Sep","10":"Oct","11":"Nov","12":"Dic" };
 const formatMes = (ym) => { const [y, m] = ym.split("-"); return `${MESES[m]} ${y.slice(2)}`; };
 
-const ESTADO_LABEL = { pendiente: "Pendiente", aceptada: "Aceptada", rechazada: "Rechazada", retirada: "Retirada" };
-const ESTADO_COLOR = ["blue", "emerald", "rose", "amber"];
+const ESTADO_LABEL = { pendiente: "Pendiente", aceptado: "Aceptada", rechazado: "Rechazada", completado: "Completada" };
+const ESTADO_HEX   = ["#378ADD", "#10b981", "#f43f5e", "#f59e0b"];
+
+const C = {
+  blue:  "#378ADD",
+  amber: "#f59e0b",
+  sky:   "#0ea5e9",
+  muted: "#888780",
+  axis:  "#B4B2A9",
+};
+
+function MouseTracked({ children }) {
+  const ref = useRef(null);
+  const [pos, setPos] = useState(null);
+  return (
+    <div
+      ref={ref}
+      onMouseMove={(e) => {
+        const r = ref.current?.getBoundingClientRect();
+        if (!r) return;
+        setPos({ x: e.clientX - r.left, y: e.clientY - r.top + 18 });
+      }}
+      onMouseLeave={() => setPos(null)}
+    >
+      {children(pos)}
+    </div>
+  );
+}
+
+function CustomTooltip({ active, payload, label, isDark }) {
+  if (!active || !payload?.length) return null;
+  const bg  = isDark ? "#262624" : "#ffffff";
+  const bd  = isDark ? "#3a3a38" : "#D3D1C7";
+  const clr = isDark ? "#D3D1C7" : "#2C2C2A";
+  const sub = isDark ? "#888780" : "#5F5E5A";
+  return (
+    <div style={{ background: bg, border: `1px solid ${bd}`, borderRadius: 12, padding: "10px 14px", boxShadow: "0 4px 16px rgba(0,0,0,0.10)", zIndex: 9999, minWidth: 140 }}>
+      {label && <p style={{ fontSize: 11, color: sub, marginBottom: 6, fontWeight: 600 }}>{label}</p>}
+      {payload.map((p) => (
+        <div key={p.dataKey} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+          <span style={{ width: 8, height: 8, borderRadius: 2, background: p.color, display: "inline-block", flexShrink: 0 }} />
+          <span style={{ fontSize: 12, color: sub, flex: 1 }}>{p.name}</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: clr }}>{p.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 const CARRERAS = ["Administracion", "Mecanica Automotriz"];
 const NIVELES  = ["1° Medio", "2° Medio", "3° Medio", "4° Medio"];
@@ -42,7 +92,7 @@ function ChartCard({ title, loading, children, filters }) {
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
   const bg = isDark ? "bg-[#262624]" : "bg-white";
   return (
-    <div className={`rounded-xl border ${B} ${bg} p-5`}>
+    <div className={`rounded-xl border ${B} ${bg} p-5`} style={{ overflow: "visible" }}>
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <p className={`text-sm font-semibold ${T}`}>{title}</p>
         {filters}
@@ -125,15 +175,15 @@ export default function AdminPanel() {
   const v = (key) => loadingStats ? "…" : (stats?.[key] ?? "—");
 
   // transform postMes
-  const postMesData = postMes.map((r) => ({ mes: formatMes(r.mes), Postulaciones: r.total }));
+  const postMesData = postMes.map((r) => ({ mes: formatMes(r.mes), Postulaciones: Number(r.total) }));
 
   // transform topEmpresas
-  const topEmpData = topEmp.map((r) => ({ empresa: r.empresa, Postulaciones: r.total }));
+  const topEmpData = topEmp.map((r) => ({ empresa: r.empresa, Postulaciones: Number(r.total) }));
 
   // transform estados
   const estadosData = estados.map((r) => ({
     name: ESTADO_LABEL[r.estado] || r.estado,
-    value: r.total,
+    value: Number(r.total),
   }));
 
   // transform vacantes — pivot por area, separate practica vs puesto_laboral
@@ -142,7 +192,7 @@ export default function AdminPanel() {
     const rows = vacantes.filter((r) => r.area === area);
     const p = rows.find((r) => r.tipo === "practica");
     const pl = rows.find((r) => r.tipo === "puesto_laboral");
-    return { area, "Práctica": p?.total || 0, "Puesto laboral": pl?.total || 0 };
+    return { area, "Práctica": Number(p?.total || 0), "Puesto laboral": Number(pl?.total || 0) };
   });
   const vacAreas = [...new Set(vacantes.map((r) => r.area).filter(Boolean))];
 
@@ -161,71 +211,9 @@ export default function AdminPanel() {
         <StatCard label="Conversaciones supervisadas" value={v("total_conversaciones")} sub="Entre alumnos y empresas" />
       </div>
 
-      {/* Quick links + resumen */}
-      <div className="grid grid-cols-3 gap-6 mb-8">
-        <div className="col-span-2">
-          <h2 className={`text-sm font-semibold ${T} mb-3`}>Acceso rápido</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {quickLinks.map((ql, i) => (
-              <Link key={i} to={ql.to}>
-                <Card className="hover:border-[#378ADD] transition-colors cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${S}`}>
-                      <Icon icon={ql.icon} width={20} className="text-[#378ADD]" />
-                    </div>
-                    <div>
-                      <p className={`text-sm font-medium ${T}`}>{ql.label}</p>
-                      <p className={`text-xs ${M}`}>{ql.desc}</p>
-                    </div>
-                  </div>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-4">
-          <Card>
-            <p className={`text-sm font-semibold ${T} mb-3`}>Resumen semestral</p>
-            <div className={`flex flex-col gap-2 text-xs ${M}`}>
-              {[
-                { label: "Estudiantes evaluados",   value: `${v("estudiantes_evaluados")} / ${v("total_estudiantes")}` },
-                { label: "Evaluaciones registradas", value: v("total_evaluaciones") },
-                { label: "Talleres activos",          value: v("total_talleres_activos") },
-                { label: "Postulaciones realizadas",  value: v("total_postulaciones") },
-                { label: "Conversaciones activas",    value: v("total_conversaciones") },
-              ].map((row) => (
-                <div key={row.label} className={`flex justify-between pb-2 border-b ${B} last:border-0`}>
-                  <span>{row.label}</span>
-                  <strong className={T}>{row.value}</strong>
-                </div>
-              ))}
-            </div>
-          </Card>
-          <Card>
-            <p className={`text-sm font-semibold ${T} mb-3`}>Progreso de evaluaciones</p>
-            {loadingStats
-              ? <div className={`flex items-center justify-center py-4 ${M}`}><Icon icon="mdi:loading" width={20} className="animate-spin" /></div>
-              : <>
-                  <div className="flex justify-between items-end mb-2">
-                    <span className={`text-xs ${M}`}>Estudiantes evaluados</span>
-                    <span className={`text-sm font-semibold ${T}`}>{v("estudiantes_evaluados")} / {v("total_estudiantes")}</span>
-                  </div>
-                  <div className={`w-full h-2 rounded-full ${S} overflow-hidden`}>
-                    <div className="h-full rounded-full bg-[#378ADD] transition-all"
-                      style={{ width: stats?.total_estudiantes > 0 ? `${Math.round((stats.estudiantes_evaluados / stats.total_estudiantes) * 100)}%` : "0%" }} />
-                  </div>
-                  <p className={`text-xs ${M} mt-2 text-right`}>
-                    {stats?.total_estudiantes > 0 ? `${Math.round((stats.estudiantes_evaluados / stats.total_estudiantes) * 100)}% completado` : "Sin estudiantes aún"}
-                  </p>
-                </>}
-          </Card>
-        </div>
-      </div>
-
       {/* Charts */}
       <h2 className={`text-sm font-semibold ${T} mb-3`}>Analítica</h2>
-      <div className={isDark ? "dark" : ""}>
+      <div className={`${isDark ? "dark" : ""} mb-8`}>
 
         {/* Row 1: Postulaciones por mes + Top empresas */}
         <div className="grid grid-cols-3 gap-6 mb-6">
@@ -234,7 +222,7 @@ export default function AdminPanel() {
               title="Postulaciones por mes"
               loading={loadingPostMes}
               filters={
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <FilterSelect value={filtroCarrera} onChange={setFiltroCarrera} options={CARRERAS} placeholder="Todas las carreras" isDark={isDark} />
                   <FilterSelect value={filtroNivel}   onChange={setFiltroNivel}   options={NIVELES}  placeholder="Todos los niveles"   isDark={isDark} />
                   <FilterSelect value={filtroGenero}  onChange={setFiltroGenero}  options={GENEROS}  placeholder="Todos los géneros"   isDark={isDark} />
@@ -243,31 +231,42 @@ export default function AdminPanel() {
             >
               {postMesData.length === 0
                 ? <p className={`text-xs text-center py-10 ${M}`}>Sin datos para los filtros seleccionados</p>
-                : <AreaChart
-                    data={postMesData}
-                    index="mes"
-                    categories={["Postulaciones"]}
-                    colors={["blue"]}
-                    showLegend={false}
-                    showGridLines={false}
-                    className="h-48 mt-2"
-                  />}
+                : <MouseTracked>
+                    {(pos) => (
+                      <ResponsiveContainer width="100%" height={200}>
+                        <AreaChart data={postMesData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id="grad-blue" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%"  stopColor={C.blue} stopOpacity={0.25} />
+                              <stop offset="95%" stopColor={C.blue} stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <XAxis dataKey="mes" tick={{ fontSize: 11, fill: C.axis }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 11, fill: C.axis }} axisLine={false} tickLine={false} allowDecimals={false} />
+                          <Tooltip position={pos ?? undefined} content={<CustomTooltip isDark={isDark} />} />
+                          <Area type="monotone" dataKey="Postulaciones" stroke={C.blue} strokeWidth={2} fill="url(#grad-blue)" dot={false} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    )}
+                  </MouseTracked>}
             </ChartCard>
           </div>
 
-          <ChartCard title="Top empresas con más postulaciones" loading={loadingTopEmp}>
+          <ChartCard title="Top empresas" loading={loadingTopEmp}>
             {topEmpData.length === 0
               ? <p className={`text-xs text-center py-10 ${M}`}>Sin datos aún</p>
-              : <BarChart
-                  data={topEmpData}
-                  index="empresa"
-                  categories={["Postulaciones"]}
-                  colors={["sky"]}
-                  layout="vertical"
-                  showLegend={false}
-                  showGridLines={false}
-                  className="h-48 mt-2"
-                />}
+              : <MouseTracked>
+                  {(pos) => (
+                    <ResponsiveContainer width="100%" height={200}>
+                      <BarChart data={topEmpData} layout="vertical" margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
+                        <XAxis type="number" tick={{ fontSize: 11, fill: C.axis }} axisLine={false} tickLine={false} allowDecimals={false} />
+                        <YAxis type="category" dataKey="empresa" width={90} tick={{ fontSize: 11, fill: C.axis }} axisLine={false} tickLine={false} />
+                        <Tooltip position={pos ?? undefined} content={<CustomTooltip isDark={isDark} />} />
+                        <Bar dataKey="Postulaciones" fill={C.sky} radius={[0, 4, 4, 0]} maxBarSize={20} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </MouseTracked>}
           </ChartCard>
         </div>
 
@@ -276,16 +275,19 @@ export default function AdminPanel() {
           <ChartCard title="Estado de postulaciones" loading={loadingEstados}>
             {estadosData.length === 0
               ? <p className={`text-xs text-center py-10 ${M}`}>Sin postulaciones aún</p>
-              : <div className="flex items-center justify-center">
-                  <DonutChart
-                    data={estadosData}
-                    category="value"
-                    index="name"
-                    colors={ESTADO_COLOR}
-                    showLabel={true}
-                    className="h-48 mt-2"
-                  />
-                </div>}
+              : <MouseTracked>
+                  {(pos) => (
+                    <ResponsiveContainer width="100%" height={220}>
+                      <PieChart>
+                        <Pie data={estadosData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3}>
+                          {estadosData.map((_, i) => <Cell key={i} fill={ESTADO_HEX[i % ESTADO_HEX.length]} />)}
+                        </Pie>
+                        <Tooltip position={pos ?? undefined} content={<CustomTooltip isDark={isDark} />} />
+                        <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, color: isDark ? "#888780" : "#5F5E5A" }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
+                </MouseTracked>}
           </ChartCard>
 
           <div className="col-span-2">
@@ -303,19 +305,77 @@ export default function AdminPanel() {
             >
               {vacData.length === 0
                 ? <p className={`text-xs text-center py-10 ${M}`}>Sin vacantes activas</p>
-                : <BarChart
-                    data={vacData}
-                    index="area"
-                    categories={["Práctica", "Puesto laboral"]}
-                    colors={["blue", "amber"]}
-                    showLegend={true}
-                    showGridLines={false}
-                    stack={false}
-                    className="h-48 mt-2"
-                  />}
+                : <MouseTracked>
+                    {(pos) => (
+                      <ResponsiveContainer width="100%" height={200}>
+                        <BarChart data={vacData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                          <XAxis dataKey="area" tick={{ fontSize: 11, fill: C.axis }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 11, fill: C.axis }} axisLine={false} tickLine={false} allowDecimals={false} />
+                          <Tooltip position={pos ?? undefined} content={<CustomTooltip isDark={isDark} />} />
+                          <Legend iconType="square" iconSize={8} wrapperStyle={{ fontSize: 11, color: isDark ? "#888780" : "#5F5E5A" }} />
+                          <Bar dataKey="Práctica"       fill={C.blue}  radius={[4, 4, 0, 0]} maxBarSize={28} />
+                          <Bar dataKey="Puesto laboral" fill={C.amber} radius={[4, 4, 0, 0]} maxBarSize={28} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    )}
+                  </MouseTracked>}
             </ChartCard>
           </div>
         </div>
+      </div>
+
+      {/* Resumen + Progreso */}
+      <div className="grid grid-cols-2 gap-6 mb-8">
+        <Card>
+          <p className={`text-sm font-semibold ${T} mb-3`}>Resumen semestral</p>
+          <div className={`flex flex-col gap-2 text-xs ${M}`}>
+            {[
+              { label: "Estudiantes evaluados",    value: `${v("estudiantes_evaluados")} / ${v("total_estudiantes")}` },
+              { label: "Evaluaciones registradas", value: v("total_evaluaciones") },
+              { label: "Talleres activos",          value: v("total_talleres_activos") },
+              { label: "Postulaciones realizadas",  value: v("total_postulaciones") },
+              { label: "Conversaciones activas",    value: v("total_conversaciones") },
+            ].map((row) => (
+              <div key={row.label} className={`flex justify-between pb-2 border-b ${B} last:border-0`}>
+                <span>{row.label}</span>
+                <strong className={T}>{row.value}</strong>
+              </div>
+            ))}
+          </div>
+        </Card>
+        <Card>
+          <p className={`text-sm font-semibold ${T} mb-3`}>Progreso de evaluaciones</p>
+          {loadingStats
+            ? <div className={`flex items-center justify-center py-4 ${M}`}><Icon icon="mdi:loading" width={20} className="animate-spin" /></div>
+            : <>
+                <div className="flex justify-between items-end mb-2">
+                  <span className={`text-xs ${M}`}>Estudiantes evaluados</span>
+                  <span className={`text-sm font-semibold ${T}`}>{v("estudiantes_evaluados")} / {v("total_estudiantes")}</span>
+                </div>
+                <div className={`w-full h-2 rounded-full ${S} overflow-hidden`}>
+                  <div className="h-full rounded-full bg-[#378ADD] transition-all"
+                    style={{ width: stats?.total_estudiantes > 0 ? `${Math.round((stats.estudiantes_evaluados / stats.total_estudiantes) * 100)}%` : "0%" }} />
+                </div>
+                <p className={`text-xs ${M} mt-2 text-right`}>
+                  {stats?.total_estudiantes > 0 ? `${Math.round((stats.estudiantes_evaluados / stats.total_estudiantes) * 100)}% completado` : "Sin estudiantes aún"}
+                </p>
+              </>}
+        </Card>
+      </div>
+
+      {/* Quick links — compactos al fondo */}
+      <h2 className={`text-sm font-semibold ${T} mb-3`}>Acceso rápido</h2>
+      <div className="grid grid-cols-4 gap-2">
+        {quickLinks.map((ql, i) => (
+          <Link key={i} to={ql.to}>
+            <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border ${B} hover:border-[#378ADD] transition-colors cursor-pointer ${isDark ? "bg-[#262624]" : "bg-white"}`}>
+              <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${S}`}>
+                <Icon icon={ql.icon} width={15} className="text-[#378ADD]" />
+              </div>
+              <p className={`text-xs font-medium ${T} leading-tight`}>{ql.label}</p>
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );

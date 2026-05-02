@@ -823,7 +823,7 @@ router.get("/charts/postulaciones-por-mes", ...auth, async (req, res) => {
     if (nivel)   { where += " AND pe.nivel = ?";   params.push(nivel);   }
     if (genero)  { where += " AND pe.genero = ?";  params.push(genero);  }
     const [rows] = await db.query(`
-      SELECT DATE_FORMAT(p.fecha_postulacion, '%Y-%m') AS mes,
+      SELECT DATE_FORMAT(p.fecha_creacion, '%Y-%m') AS mes,
              COUNT(*) AS total
       FROM postulaciones p
       JOIN perfiles_estudiantes pe ON pe.usuario_id = p.estudiante_id
