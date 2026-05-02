@@ -332,6 +332,8 @@ function AccionesDropdown({ userId, isDark, onEliminado }) {
     </div>
   );
 }
+const PAGE_SIZE = 10;
+
 function TabUsuarios({ rawUsers, isDark }) {
   const [search, setSearch]               = useState("");
   const [carreraFilter, setCarreraFilter] = useState("todas");
@@ -339,13 +341,20 @@ function TabUsuarios({ rawUsers, isDark }) {
   const [users, setUsers]                 = useState(rawUsers);
   const [sortCol, setSortCol]             = useState(null);
   const [sortDir, setSortDir]             = useState("asc");
+  const [page, setPage]                   = useState(1);
 
   const handleEliminado = (id) => setUsers((prev) => prev.filter((u) => u.id !== id));
 
   const toggleSort = (col) => {
     if (sortCol === col) setSortDir((d) => d === "asc" ? "desc" : "asc");
     else { setSortCol(col); setSortDir("asc"); }
+    setPage(1);
   };
+
+  const applySearch  = (v) => { setSearch(v);       setPage(1); };
+  const applyCarrera = (v) => { setCarreraFilter(v); setPage(1); };
+  const applyNivel   = (v) => { setNivelFilter(v);   setPage(1); };
+  const clearFiltros = ()  => { setSearch(""); setCarreraFilter("todas"); setNivelFilter("todos"); setPage(1); };
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -378,7 +387,10 @@ function TabUsuarios({ rawUsers, isDark }) {
     isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
   }`;
 
-  const hayFiltros = search || carreraFilter !== "todas" || nivelFilter !== "todos";
+  const totalPages  = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const safePage    = Math.min(page, totalPages);
+  const paginated   = sorted.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const hayFiltros  = search || carreraFilter !== "todas" || nivelFilter !== "todos";
 
   return (
     <Card className="p-0 overflow-hidden">
@@ -386,21 +398,21 @@ function TabUsuarios({ rawUsers, isDark }) {
         <div className="relative flex-1 min-w-48">
           <Icon icon="mdi:search" width={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${M}`} />
           <input type="text" placeholder="Buscar por nombre, email o RUT..." value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => applySearch(e.target.value)}
             className={`w-full pl-8 pr-3 py-2 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
               isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
             }`} />
         </div>
-        <select value={carreraFilter} onChange={(e) => setCarreraFilter(e.target.value)} className={selectCls}>
+        <select value={carreraFilter} onChange={(e) => applyCarrera(e.target.value)} className={selectCls}>
           <option value="todas">Todas las carreras</option>
           {carreras.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
-        <select value={nivelFilter} onChange={(e) => setNivelFilter(e.target.value)} className={selectCls}>
+        <select value={nivelFilter} onChange={(e) => applyNivel(e.target.value)} className={selectCls}>
           <option value="todos">Todos los niveles</option>
           {NIVELES_FILTER.map((n) => <option key={n} value={n}>{n}</option>)}
         </select>
         {hayFiltros && (
-          <button onClick={() => { setSearch(""); setCarreraFilter("todas"); setNivelFilter("todos"); }}
+          <button onClick={clearFiltros}
             className={`p-2 rounded-lg transition-colors ${S} ${M} hover:text-red-400`}>
             <Icon icon="mdi:close" width={14} />
           </button>
@@ -446,7 +458,7 @@ function TabUsuarios({ rawUsers, isDark }) {
               </tr>
             </thead>
             <tbody>
-              {sorted.map((u) => (
+              {paginated.map((u) => (
                 <tr key={u.id} className={`border-b ${B} last:border-0 transition-colors ${isDark ? "hover:bg-[#313130]/50" : "hover:bg-[#F7F6F3]"}`}>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
@@ -473,6 +485,72 @@ function TabUsuarios({ rawUsers, isDark }) {
           </table>
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div className={`flex items-center justify-between px-5 py-3 border-t ${B}`}>
+          <span className={`text-xs ${M}`}>
+            {sorted.length} resultado{sorted.length !== 1 ? "s" : ""} · página {safePage} de {totalPages}
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage(1)}
+              disabled={safePage === 1}
+              className={`p-1.5 rounded-lg transition-colors disabled:opacity-30 ${isDark ? "hover:bg-[#313130] text-[#888780]" : "hover:bg-[#F7F6F3] text-[#5F5E5A]"}`}
+            >
+              <Icon icon="mdi:chevron-double-left" width={16} />
+            </button>
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={safePage === 1}
+              className={`p-1.5 rounded-lg transition-colors disabled:opacity-30 ${isDark ? "hover:bg-[#313130] text-[#888780]" : "hover:bg-[#F7F6F3] text-[#5F5E5A]"}`}
+            >
+              <Icon icon="mdi:chevron-left" width={16} />
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((p) => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
+              .reduce((acc, p, idx, arr) => {
+                if (idx > 0 && p - arr[idx - 1] > 1) acc.push("…");
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((item, idx) =>
+                item === "…" ? (
+                  <span key={`dots-${idx}`} className={`px-1 text-xs ${M}`}>…</span>
+                ) : (
+                  <button
+                    key={item}
+                    onClick={() => setPage(item)}
+                    className={`min-w-[30px] h-[30px] rounded-lg text-xs font-medium transition-colors ${
+                      item === safePage
+                        ? "bg-[#378ADD] text-white"
+                        : isDark
+                          ? "text-[#888780] hover:bg-[#313130]"
+                          : "text-[#5F5E5A] hover:bg-[#F7F6F3]"
+                    }`}
+                  >
+                    {item}
+                  </button>
+                )
+              )}
+
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage === totalPages}
+              className={`p-1.5 rounded-lg transition-colors disabled:opacity-30 ${isDark ? "hover:bg-[#313130] text-[#888780]" : "hover:bg-[#F7F6F3] text-[#5F5E5A]"}`}
+            >
+              <Icon icon="mdi:chevron-right" width={16} />
+            </button>
+            <button
+              onClick={() => setPage(totalPages)}
+              disabled={safePage === totalPages}
+              className={`p-1.5 rounded-lg transition-colors disabled:opacity-30 ${isDark ? "hover:bg-[#313130] text-[#888780]" : "hover:bg-[#F7F6F3] text-[#5F5E5A]"}`}
+            >
+              <Icon icon="mdi:chevron-double-right" width={16} />
+            </button>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }
