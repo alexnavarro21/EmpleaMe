@@ -375,13 +375,13 @@ export default function AdminMensajeria() {
     <div>
       <PageHeader title="Mensajería" subtitle="Supervisión de conversaciones y mensajes directos" />
 
-      <div className={`flex gap-1 mb-4 p-1 rounded-xl w-fit border ${B} ${cardBg}`}>
+      <div className={`flex gap-1 mb-2 -mt-4 p-1 rounded-xl w-72 border ${B} ${cardBg}`}>
         {[
           { id: "supervision", icon: "mdi:eye", label: "Supervisión" },
-          { id: "directos",    icon: "mdi:message-text-outline", label: "Mensajes directos" },
+          { id: "directos",    icon: "mdi:message-text-outline", label: "Mis Mensajes" },
         ].map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === t.id ? "bg-[#0F4D8A] text-[#E6F1FB]" : `${M} hover:bg-[#0F4D8A]/10`}`}>
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${tab === t.id ? "bg-[#0F4D8A] text-[#E6F1FB]" : `${M} hover:bg-[#0F4D8A]/10`}`}>
             <Icon icon={t.icon} width={15} />
             {t.label}
           </button>

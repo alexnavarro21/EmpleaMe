@@ -123,7 +123,7 @@ export default function Login() {
       <div className={`min-h-screen font-sans ${isDark ? "bg-[#1e1e1c]" : "bg-white"}`}>
 
         {/* Main grid */}
-        <div className="grid md:grid-cols-2 min-h-screen">
+        <div className="grid md:grid-cols-2 h-screen">
 
           {/* Left panel */}
           <div className={`relative flex flex-col justify-center px-10 py-16 ${isDark ? "bg-[#02192e]" : "bg-[#042C53]"}`}>
@@ -165,7 +165,8 @@ export default function Login() {
           </div>
 
           {/* Right panel */}
-          <div className={`flex flex-col justify-center px-8 py-12 ${isDark ? "bg-[#262624]" : "bg-white"}`}>
+          <div className={`flex flex-col overflow-y-auto ${isDark ? "bg-[#262624]" : "bg-white"}`}>
+          <div className="my-auto px-8 py-12">
             {/* Tabs */}
             <div className={`flex mb-6 border-b ${isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]"}`}>
               {["login", "register"].map((tab) => (
@@ -375,6 +376,7 @@ export default function Login() {
                 </p>
               </form>
             )}
+          </div>
           </div>
         </div>
       </div>
