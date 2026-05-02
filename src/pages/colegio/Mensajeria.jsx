@@ -131,7 +131,7 @@ function SupervisionPanel({ isDark }) {
             <div className={`px-5 py-3 border-b ${B} ${cardBg} flex items-center justify-between flex-shrink-0`}>
               <div>
                 <p className={`text-sm font-semibold ${T}`}>{conv.nombre_estudiante} — {conv.nombre_empresa}</p>
-                <p className={`text-xs ${M}`}>Supervisión · {messages.length} mensajes</p>
+                <p className={`text-xs ${M} flex items-center gap-1`}><Icon icon="mdi:eye" width={12}/>Supervisión · {messages.length} mensajes</p>
               </div>
               <Badge color="green">activa</Badge>
             </div>
@@ -377,7 +377,7 @@ export default function AdminMensajeria() {
 
       <div className={`flex gap-1 mb-4 p-1 rounded-xl w-fit border ${B} ${cardBg}`}>
         {[
-          { id: "supervision", icon: "mdi:shield-eye-outline", label: "Supervisión" },
+          { id: "supervision", icon: "mdi:eye", label: "Supervisión" },
           { id: "directos",    icon: "mdi:message-text-outline", label: "Mensajes directos" },
         ].map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}

@@ -53,7 +53,7 @@ function VacanteModal({ vacante, role, onClose }) {
   const infoItems = [
     vacante.tipo      && { icon: vacante.tipo === "puesto_laboral" ? "mdi:briefcase-outline" : "mdi:school-outline", label: vacante.tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica profesional", color: vacante.tipo === "puesto_laboral" ? "text-green-500" : "text-orange-500" },
     vacante.area      && { icon: "mdi:tag-outline",           label: vacante.area,      color: "text-[#378ADD]" },
-    vacante.modalidad && { icon: "mdi:map-marker-outline",    label: vacante.modalidad  },
+    vacante.modalidad && { icon: vacante.modalidad.toLowerCase() === "remoto" ? "mdi:laptop" : vacante.modalidad.toLowerCase() === "hibrido" || vacante.modalidad.toLowerCase() === "híbrido" ? "mdi:home-city" : "mdi:map-marker-outline", label: vacante.modalidad },
     vacante.duracion  && { icon: "mdi:clock-outline",         label: vacante.duracion   },
     vacante.remuneracion && { icon: "mdi:currency-usd",       label: vacante.remuneracion },
     vacante.direccion && { icon: "mdi:map-outline",           label: vacante.direccion  },
@@ -585,8 +585,8 @@ export default function BuscarPerfiles() {
                 {[
                   { value: "",           label: "Todas",      icon: "mdi:view-grid-outline"  },
                   { value: "presencial", label: "Presencial", icon: "streamline:city-hall-remix" },
-                  { value: "remoto",     label: "Remoto",     icon: "mdi:monitor-outline"     },
-                  { value: "hibrido",    label: "Híbrido",    icon: "mdi:home-work-outline"   },
+                  { value: "remoto",     label: "Remoto",     icon: "mdi:laptop"     },
+                  { value: "hibrido",    label: "Híbrido",    icon: "mdi:home-city"   },
                 ].map((m) => (
                   <button key={m.value} onClick={() => setSelectedModalidad(m.value)}
                     className={`w-full text-left text-sm px-3 py-1.5 rounded-lg mb-1 transition-colors flex items-center gap-2 ${
@@ -850,7 +850,7 @@ export default function BuscarPerfiles() {
                   <p className="text-xs font-medium text-[#378ADD] mb-2">{v.nombre_empresa}</p>
                   <div className={`flex flex-wrap gap-x-3 gap-y-1 text-xs ${M} mb-3`}>
                     {v.area     && <span className="flex items-center gap-1"><Icon icon="mdi:tag-outline" width={12}/>{v.area}</span>}
-                    {v.modalidad && <span className="flex items-center gap-1"><Icon icon="mdi:map-marker-outline" width={12}/>{v.modalidad}</span>}
+                    {v.modalidad && <span className="flex items-center gap-1"><Icon icon={v.modalidad.toLowerCase() === "remoto" ? "mdi:laptop" : v.modalidad.toLowerCase() === "hibrido" || v.modalidad.toLowerCase() === "híbrido" ? "mdi:home-city" : "mdi:map-marker-outline"} width={12}/>{v.modalidad}</span>}
                     {v.duracion  && <span className="flex items-center gap-1"><Icon icon="mdi:clock-outline" width={12}/>{v.duracion}</span>}
                   </div>
                   {v.habilidades?.length > 0 && (
