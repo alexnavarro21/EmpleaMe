@@ -36,8 +36,9 @@ const C = {
   amber: "#f59e0b",
   sky:   "#0ea5e9",
   muted: "#888780",
-  axis:  "#B4B2A9",
+  axis:  "#5a5a56",
 };
+
 
 function MouseTracked({ children }) {
   const ref = useRef(null);
@@ -298,27 +299,32 @@ export default function AdminPanel() {
                 <div className="flex gap-2">
                   <FilterSelect value={filtroArea} onChange={setFiltroArea} options={vacAreas} placeholder="Todas las áreas" isDark={isDark} />
                   <FilterSelect value={filtroTipo} onChange={setFiltroTipo}
-                    options={["practica", "puesto_laboral"]}
+                    options={[{ value: "practica", label: "Práctica" }, { value: "puesto_laboral", label: "Puesto Laboral" }]}
                     placeholder="Todos los tipos" isDark={isDark} />
                 </div>
               }
             >
               {vacData.length === 0
                 ? <p className={`text-xs text-center py-10 ${M}`}>Sin vacantes activas</p>
-                : <MouseTracked>
-                    {(pos) => (
-                      <ResponsiveContainer width="100%" height={200}>
-                        <BarChart data={vacData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                          <XAxis dataKey="area" tick={{ fontSize: 11, fill: C.axis }} axisLine={false} tickLine={false} />
-                          <YAxis tick={{ fontSize: 11, fill: C.axis }} axisLine={false} tickLine={false} allowDecimals={false} />
-                          <Tooltip position={pos ?? undefined} content={<CustomTooltip isDark={isDark} />} />
-                          <Legend iconType="square" iconSize={8} wrapperStyle={{ fontSize: 11, color: isDark ? "#888780" : "#5F5E5A" }} />
-                          <Bar dataKey="Práctica"       fill={C.blue}  radius={[4, 4, 0, 0]} maxBarSize={28} />
-                          <Bar dataKey="Puesto laboral" fill={C.amber} radius={[4, 4, 0, 0]} maxBarSize={28} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    )}
-                  </MouseTracked>}
+                : <>
+                    <div className={`flex gap-4 mb-2 text-xs ${isDark ? "text-[#888780]" : "text-[#5F5E5A]"}`}>
+                      <span className="flex items-center gap-1.5"><span style={{ width:8, height:8, borderRadius:2, background:C.blue,  display:"inline-block" }} />Práctica</span>
+                      <span className="flex items-center gap-1.5"><span style={{ width:8, height:8, borderRadius:2, background:C.amber, display:"inline-block" }} />Puesto laboral</span>
+                    </div>
+                    <MouseTracked>
+                      {(pos) => (
+                        <ResponsiveContainer width="100%" height={220}>
+                          <BarChart data={vacData} margin={{ top: 4, right: 4, left: -20, bottom: 4 }}>
+                            <XAxis dataKey="area" interval={0} tickFormatter={(v) => v.length > 12 ? v.slice(0, 12) + "." : v} tick={{ fontSize: 11, fill: C.axis, angle: -45, textAnchor: "end", dy: 4, dx: -4 }} axisLine={false} tickLine={false} height={70} />
+                            <YAxis tick={{ fontSize: 11, fill: C.axis }} axisLine={false} tickLine={false} allowDecimals={false} />
+                            <Tooltip position={pos ?? undefined} content={<CustomTooltip isDark={isDark} />} />
+                            <Bar dataKey="Práctica"       fill={C.blue}  radius={[4, 4, 0, 0]} maxBarSize={28} />
+                            <Bar dataKey="Puesto laboral" fill={C.amber} radius={[4, 4, 0, 0]} maxBarSize={28} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      )}
+                    </MouseTracked>
+                  </>}
             </ChartCard>
           </div>
         </div>
