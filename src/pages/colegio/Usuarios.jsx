@@ -8,7 +8,7 @@ import {
 import {
   getUsuariosAdmin, getHabilidades, getEstudianteById,
   marcarEgresado, eliminarUsuario, cambiarContrasenaEstudiante,
-  guardarEvaluacion, getEvaluaciones,
+  guardarEvaluacion, getEvaluaciones, getEvaluacionEstudiante,
   asignarHabilidadesTecnicas,
   subirExcelTests, subirExcelPromedios, subirExcelAlumnos,
   getIdiomasEstudiante, agregarIdioma, eliminarIdioma,
@@ -304,7 +304,7 @@ function AccionesDropdown({ userId, isDark, onEliminado }) {
       </button>
 
       {open && (
-        <div className={`absolute right-0 z-20 mt-1 w-44 rounded-xl border shadow-lg py-1 ${B} ${BG}`}>
+        <div className={`absolute right-0 z-20 mt-1 w-47 rounded-xl border shadow-lg py-1 ${B} ${BG}`}>
           <a href={`/admin/candidato/${userId}`}
             className={`flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${isDark ? "text-[#D3D1C7] hover:bg-[#313130]" : "text-[#2C2C2A] hover:bg-[#F7F6F3]"}`}
             onClick={() => setOpen(false)}>
@@ -332,13 +332,29 @@ function AccionesDropdown({ userId, isDark, onEliminado }) {
     </div>
   );
 }
+const PAGE_SIZE = 10;
+
 function TabUsuarios({ rawUsers, isDark }) {
   const [search, setSearch]               = useState("");
   const [carreraFilter, setCarreraFilter] = useState("todas");
   const [nivelFilter, setNivelFilter]     = useState("todos");
   const [users, setUsers]                 = useState(rawUsers);
+  const [sortCol, setSortCol]             = useState(null);
+  const [sortDir, setSortDir]             = useState("asc");
+  const [page, setPage]                   = useState(1);
 
   const handleEliminado = (id) => setUsers((prev) => prev.filter((u) => u.id !== id));
+
+  const toggleSort = (col) => {
+    if (sortCol === col) setSortDir((d) => d === "asc" ? "desc" : "asc");
+    else { setSortCol(col); setSortDir("asc"); }
+    setPage(1);
+  };
+
+  const applySearch  = (v) => { setSearch(v);       setPage(1); };
+  const applyCarrera = (v) => { setCarreraFilter(v); setPage(1); };
+  const applyNivel   = (v) => { setNivelFilter(v);   setPage(1); };
+  const clearFiltros = ()  => { setSearch(""); setCarreraFilter("todas"); setNivelFilter("todos"); setPage(1); };
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -358,11 +374,23 @@ function TabUsuarios({ rawUsers, isDark }) {
     return matchSearch && matchCarrera && matchNivel;
   });
 
+  const sorted = sortCol ? [...filtered].sort((a, b) => {
+    const apellido = (u) => { const p = (u.nombre || "").trim().split(" "); return p.slice(-2).join(" ") || u.correo || ""; };
+    const valA = (sortCol === "nombre" ? apellido(a) : a[sortCol]) || "";
+    const valB = (sortCol === "nombre" ? apellido(b) : b[sortCol]) || "";
+    return sortDir === "asc"
+      ? valA.localeCompare(valB, "es", { sensitivity: "base" })
+      : valB.localeCompare(valA, "es", { sensitivity: "base" });
+  }) : filtered;
+
   const selectCls = `text-sm outline-none border rounded-lg px-3 py-2 transition-all focus:border-[#378ADD] ${
     isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
   }`;
 
-  const hayFiltros = search || carreraFilter !== "todas" || nivelFilter !== "todos";
+  const totalPages  = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const safePage    = Math.min(page, totalPages);
+  const paginated   = sorted.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const hayFiltros  = search || carreraFilter !== "todas" || nivelFilter !== "todos";
 
   return (
     <Card className="p-0 overflow-hidden">
@@ -370,21 +398,21 @@ function TabUsuarios({ rawUsers, isDark }) {
         <div className="relative flex-1 min-w-48">
           <Icon icon="mdi:search" width={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${M}`} />
           <input type="text" placeholder="Buscar por nombre, email o RUT..." value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => applySearch(e.target.value)}
             className={`w-full pl-8 pr-3 py-2 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
               isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
             }`} />
         </div>
-        <select value={carreraFilter} onChange={(e) => setCarreraFilter(e.target.value)} className={selectCls}>
+        <select value={carreraFilter} onChange={(e) => applyCarrera(e.target.value)} className={selectCls}>
           <option value="todas">Todas las carreras</option>
           {carreras.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
-        <select value={nivelFilter} onChange={(e) => setNivelFilter(e.target.value)} className={selectCls}>
+        <select value={nivelFilter} onChange={(e) => applyNivel(e.target.value)} className={selectCls}>
           <option value="todos">Todos los niveles</option>
           {NIVELES_FILTER.map((n) => <option key={n} value={n}>{n}</option>)}
         </select>
         {hayFiltros && (
-          <button onClick={() => { setSearch(""); setCarreraFilter("todas"); setNivelFilter("todos"); }}
+          <button onClick={clearFiltros}
             className={`p-2 rounded-lg transition-colors ${S} ${M} hover:text-red-400`}>
             <Icon icon="mdi:close" width={14} />
           </button>
@@ -403,13 +431,34 @@ function TabUsuarios({ rawUsers, isDark }) {
           <table className="w-full">
             <thead>
               <tr className={`border-b ${B} ${S}`}>
-                {["Estudiante", "RUT", "Email", "Carrera", "Nivel", "Acciones"].map((h) => (
-                  <th key={h} className={`text-left text-xs font-medium ${M} px-5 py-3`}>{h}</th>
+                {[
+                  { label: "Estudiante", col: "nombre" },
+                  { label: "RUT",        col: null },
+                  { label: "Email",      col: null },
+                  { label: "Carrera",    col: "carrera" },
+                  { label: "Nivel",      col: "nivel" },
+                  { label: "Acciones",   col: null },
+                ].map(({ label, col }) => (
+                  <th key={label} className={`text-left text-xs font-medium ${M} px-5 py-3`}>
+                    {col ? (
+                      <button onClick={() => toggleSort(col)}
+                        className={`flex items-center gap-1 hover:${T} transition-colors`}>
+                        {label}
+                        <Icon
+                          icon={sortCol === col
+                            ? sortDir === "asc" ? "mdi:arrow-up" : "mdi:arrow-down"
+                            : "mdi:unfold-more-horizontal"}
+                          width={13}
+                          className={sortCol === col ? "text-[#378ADD]" : "opacity-40"}
+                        />
+                      </button>
+                    ) : label}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {filtered.map((u) => (
+              {paginated.map((u) => (
                 <tr key={u.id} className={`border-b ${B} last:border-0 transition-colors ${isDark ? "hover:bg-[#313130]/50" : "hover:bg-[#F7F6F3]"}`}>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
@@ -436,6 +485,72 @@ function TabUsuarios({ rawUsers, isDark }) {
           </table>
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div className={`flex items-center justify-between px-5 py-3 border-t ${B}`}>
+          <span className={`text-xs ${M}`}>
+            {sorted.length} resultado{sorted.length !== 1 ? "s" : ""} · página {safePage} de {totalPages}
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage(1)}
+              disabled={safePage === 1}
+              className={`p-1.5 rounded-lg transition-colors disabled:opacity-30 ${isDark ? "hover:bg-[#313130] text-[#888780]" : "hover:bg-[#F7F6F3] text-[#5F5E5A]"}`}
+            >
+              <Icon icon="mdi:chevron-double-left" width={16} />
+            </button>
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={safePage === 1}
+              className={`p-1.5 rounded-lg transition-colors disabled:opacity-30 ${isDark ? "hover:bg-[#313130] text-[#888780]" : "hover:bg-[#F7F6F3] text-[#5F5E5A]"}`}
+            >
+              <Icon icon="mdi:chevron-left" width={16} />
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((p) => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
+              .reduce((acc, p, idx, arr) => {
+                if (idx > 0 && p - arr[idx - 1] > 1) acc.push("…");
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((item, idx) =>
+                item === "…" ? (
+                  <span key={`dots-${idx}`} className={`px-1 text-xs ${M}`}>…</span>
+                ) : (
+                  <button
+                    key={item}
+                    onClick={() => setPage(item)}
+                    className={`min-w-[30px] h-[30px] rounded-lg text-xs font-medium transition-colors ${
+                      item === safePage
+                        ? "bg-[#378ADD] text-white"
+                        : isDark
+                          ? "text-[#888780] hover:bg-[#313130]"
+                          : "text-[#5F5E5A] hover:bg-[#F7F6F3]"
+                    }`}
+                  >
+                    {item}
+                  </button>
+                )
+              )}
+
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage === totalPages}
+              className={`p-1.5 rounded-lg transition-colors disabled:opacity-30 ${isDark ? "hover:bg-[#313130] text-[#888780]" : "hover:bg-[#F7F6F3] text-[#5F5E5A]"}`}
+            >
+              <Icon icon="mdi:chevron-right" width={16} />
+            </button>
+            <button
+              onClick={() => setPage(totalPages)}
+              disabled={safePage === totalPages}
+              className={`p-1.5 rounded-lg transition-colors disabled:opacity-30 ${isDark ? "hover:bg-[#313130] text-[#888780]" : "hover:bg-[#F7F6F3] text-[#5F5E5A]"}`}
+            >
+              <Icon icon="mdi:chevron-double-right" width={16} />
+            </button>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }
@@ -976,13 +1091,41 @@ function TabEvaluacion({ estudiantes, habilidades, isDark }) {
   const [historial, setHistorial] = useState([]);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
-
-  const tecnicas = habilidades.filter((h) => h.categoria === "tecnica" || h.categoria === "técnica");
-  const blandas  = habilidades.filter((h) => h.categoria === "blanda");
+  const [estudianteHabIds, setEstudianteHabIds] = useState(null);
+  const [loadingHabs, setLoadingHabs] = useState(false);
 
   useEffect(() => {
     getEvaluaciones().then(setHistorial).catch(() => {});
   }, []);
+
+  async function cargarEstudiante(id, per) {
+    setRatings({});
+    setObs("");
+    if (!id) { setEstudianteHabIds(null); return; }
+    setLoadingHabs(true);
+    try {
+      const perfil = await getEstudianteById(id);
+      setEstudianteHabIds(new Set((perfil.habilidades || []).map((h) => h.id)));
+    } catch { setEstudianteHabIds(new Set()); }
+    finally { setLoadingHabs(false); }
+    getEvaluacionEstudiante(id, per)
+      .then((ev) => { setRatings(ev.ratings || {}); setObs(ev.observaciones || ""); })
+      .catch(() => {});
+  }
+
+  async function handleSelectEstudiante(id) {
+    setSelectedId(id);
+    await cargarEstudiante(id, periodo);
+  }
+
+  async function handlePeriodoChange(per) {
+    setPeriodo(per);
+    if (selectedId) await cargarEstudiante(selectedId, per);
+  }
+
+  const habIds = estudianteHabIds;
+  const tecnicas = habIds ? habilidades.filter((h) => habIds.has(h.id) && (h.categoria === "tecnica" || h.categoria === "técnica")) : [];
+  const blandas  = habIds ? habilidades.filter((h) => habIds.has(h.id) && h.categoria === "blanda") : [];
 
   async function handleGuardar() {
     if (!selectedId) return;
@@ -1016,13 +1159,13 @@ function TabEvaluacion({ estudiantes, habilidades, isDark }) {
               <StudentSearch
                 estudiantes={estudiantes}
                 selectedId={selectedId}
-                onSelect={(id) => { setSelectedId(id); setRatings({}); }}
+                onSelect={handleSelectEstudiante}
                 isDark={isDark}
               />
             </div>
             <div>
               <label className={`block text-xs mb-1.5 ${M}`}>Período</label>
-              <select value={periodo} onChange={(e) => setPeriodo(e.target.value)}
+              <select value={periodo} onChange={(e) => handlePeriodoChange(e.target.value)}
                 className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border focus:border-[#378ADD] ${
                   isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
                 }`}
@@ -1032,7 +1175,19 @@ function TabEvaluacion({ estudiantes, habilidades, isDark }) {
             </div>
           </div>
 
-          {tecnicas.length > 0 && (
+          {!selectedId && (
+            <p className={`text-sm ${M} text-center py-6`}>Selecciona un estudiante para ver sus habilidades</p>
+          )}
+
+          {selectedId && loadingHabs && (
+            <p className={`text-sm ${M} text-center py-6`}>Cargando habilidades...</p>
+          )}
+
+          {selectedId && !loadingHabs && habIds && tecnicas.length === 0 && blandas.length === 0 && (
+            <p className={`text-sm ${M} text-center py-6`}>Este estudiante no tiene habilidades registradas</p>
+          )}
+
+          {!loadingHabs && tecnicas.length > 0 && (
             <div className={`p-4 rounded-xl ${S} mb-4`}>
               <div className="flex justify-between mb-3">
                 <h4 className={`text-sm font-semibold ${T}`}>Habilidades técnicas</h4>
@@ -1047,7 +1202,7 @@ function TabEvaluacion({ estudiantes, habilidades, isDark }) {
             </div>
           )}
 
-          {blandas.length > 0 && (
+          {!loadingHabs && blandas.length > 0 && (
             <div className={`p-4 rounded-xl ${S} mb-4`}>
               <div className="flex justify-between mb-3">
                 <h4 className={`text-sm font-semibold ${T}`}>Competencias socioemocionales</h4>
@@ -1743,10 +1898,10 @@ export default function GestionEstudiantes() {
     <div>
       <PageHeader
         title="Gestión de Estudiantes"
-        subtitle="Habilidades, evaluaciones, tests socioemocionales y promedios"
+        subtitle="Usuarios, evaluaciones, habilidades, tests y promedios académicos"
       />
 
-      <div className={`flex border-b ${B} mb-6 gap-0.5`}>
+      <div className={`flex border-b ${B} mb-6 gap-0.25`}>
         {TABS.map((t) => (
           <button
             key={t.key}

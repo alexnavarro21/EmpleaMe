@@ -213,7 +213,7 @@ export default function EstudianteMensajeria() {
       />
 
       {/* Tabs */}
-      <div className={`flex gap-1 mb-4 p-1 rounded-xl w-fit border ${B} ${cardBg}`}>
+      <div className={`flex gap-1 mb-2 -mt-4 p-1 rounded-xl w-72 border ${B} ${cardBg}`}>
         {[
           { id: "empresas", icon: "mdi:office-building-outline", label: "Empresas",
             badge: convEmpresas.reduce((n, c) => n + (c.no_leidos || 0), 0) },
@@ -223,7 +223,7 @@ export default function EstudianteMensajeria() {
           <button
             key={t.id}
             onClick={() => { setTab(t.id); setNewMessage(""); }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
               tab === t.id
                 ? "bg-[#0F4D8A] text-[#E6F1FB]"
                 : `${M} hover:bg-[#0F4D8A]/10`

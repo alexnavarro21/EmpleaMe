@@ -584,6 +584,34 @@ export async function getAdminStats() {
   return data;
 }
 
+// Charts
+export async function getChartPostulacionesPorMes(params = {}) {
+  const q = new URLSearchParams(params).toString();
+  const res = await fetch(`${BASE_URL}/admin/charts/postulaciones-por-mes${q ? "?" + q : ""}`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error");
+  return data;
+}
+export async function getChartTopEmpresas() {
+  const res = await fetch(`${BASE_URL}/admin/charts/top-empresas`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error");
+  return data;
+}
+export async function getChartEstadoPostulaciones() {
+  const res = await fetch(`${BASE_URL}/admin/charts/estado-postulaciones`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error");
+  return data;
+}
+export async function getChartVacantesDisponibles(params = {}) {
+  const q = new URLSearchParams(params).toString();
+  const res = await fetch(`${BASE_URL}/admin/charts/vacantes-disponibles${q ? "?" + q : ""}`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error");
+  return data;
+}
+
 // Usuarios con nombres  →  GET /api/admin/usuarios
 export async function getUsuariosAdmin() {
   const res = await fetch(`${BASE_URL}/admin/usuarios`, { headers: authHeaders() });
@@ -628,6 +656,13 @@ export async function getEvaluaciones() {
   const res = await fetch(`${BASE_URL}/admin/evaluaciones`, { headers: authHeaders() });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al obtener evaluaciones");
+  return data;
+}
+
+export async function getEvaluacionEstudiante(estudianteId, periodo) {
+  const res = await fetch(`${BASE_URL}/admin/evaluaciones/${estudianteId}/${encodeURIComponent(periodo)}`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener evaluación");
   return data;
 }
 

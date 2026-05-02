@@ -20,7 +20,13 @@
       "Bash(sed -i '' -e 's|\"/estudiante/dashboard\"|\"/estudiante/muro\"|g' -e 's|\"/empresa/inicio\"|\"/empresa/muro\"|g' -e 's|\"/admin/inicio\"|\"/admin/muro\"|g' -e 's|\"/slep/inicio\"|\"/slep/muro\"|g' src/pages/auth/Login.jsx)",
       "Bash(sed -i '' -e 's|\"/estudiante/dashboard\"|\"/estudiante/muro\"|g' -e 's|\"/empresa/inicio\"|\"/empresa/muro\"|g' -e 's|\"/admin/inicio\"|\"/admin/muro\"|g' -e 's|\"/slep/inicio\"|\"/slep/muro\"|g' src/components/NotificacionesBell.jsx)",
       "Bash(sed -i '' -e 's|\"/estudiante/dashboard\"|\"/estudiante/muro\"|g' -e 's|\"/empresa/inicio\"|\"/empresa/muro\"|g' -e 's|\"/admin/inicio\"|\"/admin/muro\"|g' -e 's|\"/slep/inicio\"|\"/slep/muro\"|g' src/pages/shared/Notificaciones.jsx)",
-      "Bash(sed -i '' -e 's|\"/estudiante/dashboard\"|\"/estudiante/muro\"|g' src/pages/estudiante/MisPostulaciones.jsx)"
+      "Bash(sed -i '' -e 's|\"/estudiante/dashboard\"|\"/estudiante/muro\"|g' src/pages/estudiante/MisPostulaciones.jsx)",
+      "Bash(sed -n '50,65p' /Users/alex/Documents/development/empleame/src/pages/shared/BuscarPerfiles.jsx)",
+      "Bash(sed -n '848,858p' /Users/alex/Documents/development/empleame/src/pages/shared/BuscarPerfiles.jsx)",
+      "Bash(sed -n '125,145p' /Users/alex/Documents/development/empleame/src/pages/colegio/Mensajeria.jsx)",
+      "Bash(sed -n '208,217p' /Users/alex/Documents/development/empleame/src/pages/estudiante/EstudianteMensajeria.jsx)",
+      "Bash(sed -n '373,380p' /Users/alex/Documents/development/empleame/src/pages/colegio/Mensajeria.jsx)",
+      "Bash(mysql -h shinkansen.proxy.rlwy.net -P 30383 -u root -pwpmVfypuioXyCjFfcvkkQMSyeadqXTUT railway -e ' *)"
     ],
     "additionalDirectories": [
       "c:\\Users\\rikis\\.claude\\projects\\c--Users-rikis-Desktop-Proyecto-IS-EmpleaMe\\memory",
