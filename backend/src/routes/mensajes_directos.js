@@ -46,7 +46,7 @@ router.post("/", verificarToken, async (req, res) => {
   try {
     const [[dest]] = await db.query("SELECT rol FROM usuarios WHERE id = ?", [destinatario_id]);
     if (!dest) return res.status(404).json({ error: "Usuario no encontrado" });
-    if (dest.rol === "slep" && req.usuario.rol !== "slep") {
+    if (dest.rol === "slep" && req.usuario.rol !== "slep" && req.usuario.rol !== "colegio") {
       return res.status(403).json({ error: "No puedes iniciar una conversación con este usuario" });
     }
   } catch (err) {

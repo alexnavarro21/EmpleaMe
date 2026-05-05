@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Badge } from "../../components/ui";
-import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getMensajesDirectos, getPostulacionesEstudiante, toggleLike, getTalleres, getAdminStats, inscribirseEnTaller, eliminarPublicacion, eliminarTaller, getSiguiendo, toggleSeguir, getColegioById, getSlepPerfil, getSlepStats } from "../../services/api";
+import { getEstudianteById, getPublicaciones, postularAVacante, getEmpresaById, getVacantesEmpresa, getPostulantesEmpresa, getConversaciones, getMensajesDirectos, getPostulacionesEstudiante, toggleLike, getTalleres, getAdminStats, inscribirseEnTaller, eliminarPublicacion, eliminarTaller, getSiguiendo, toggleSeguir, getColegioById, getSlepPerfil, getSlepStats, getSlepInfo, iniciarMensajeDirecto } from "../../services/api";
 import { calcularCompletitud } from "../../utils/perfilCompletitud";
 import CrearPublicacion from "../../components/CrearPublicacion";
 import VerMasModal from "../../components/VerMasModal";
@@ -941,6 +941,7 @@ export default function EstudianteDashboard() {
   const isEmpresa = location.pathname.startsWith("/empresa");
   const isAdmin = location.pathname.startsWith("/admin");
   const isSlep = location.pathname.startsWith("/slep");
+  const navigate = useNavigate();
 
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
   const [perfil, setPerfil] = useState(null);
@@ -974,6 +975,9 @@ export default function EstudianteDashboard() {
   // Estado slep
   const [slepPerfil, setSlepPerfil] = useState(null);
   const [slepStats, setSlepStats] = useState(null);
+  const [slepMensajes, setSlepMensajes] = useState([]);
+  const [slepInfo, setSlepInfo] = useState(null);
+  const [contactandoSlep, setContactandoSlep] = useState(false);
 
   const LIMITE_PUBS = 20;
 
@@ -1018,10 +1022,12 @@ export default function EstudianteDashboard() {
     if (usuario.id && usuario.rol === "colegio") {
       getAdminStats().then(setAdminStats).catch(console.error);
       getColegioById(usuario.id).then(setAdminColegio).catch(console.error);
+      getSlepInfo().then(setSlepInfo).catch(console.error);
     }
     if (usuario.id && usuario.rol === "slep") {
       getSlepPerfil().then(setSlepPerfil).catch(console.error);
       getSlepStats().then(setSlepStats).catch(console.error);
+      getMensajesDirectos().then(setSlepMensajes).catch(console.error);
     }
     cargarPublicaciones();
     getTalleres().then(setTalleres).catch(console.error);
@@ -1749,6 +1755,116 @@ export default function EstudianteDashboard() {
               </Link>
             </div>
           )}
+
+          {/* Contactar SLEP */}
+          {slepInfo?.id && (
+            <div className={`rounded-xl border ${B} ${BG} p-4`}>
+              <p className={`text-xs font-semibold ${T} mb-2`}>Organismo administrador</p>
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="w-8 h-8 rounded-full bg-[#0A3A6A] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                  {(slepInfo.nombre_organismo || "S")[0].toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-xs font-medium ${T} truncate`}>{slepInfo.nombre_organismo || "SLEP"}</p>
+                  <p className={`text-xs ${M}`}>Organismo administrador</p>
+                </div>
+              </div>
+              <button
+                disabled={contactandoSlep}
+                onClick={async () => {
+                  setContactandoSlep(true);
+                  try {
+                    const conv = await iniciarMensajeDirecto(slepInfo.id);
+                    navigate("/admin/mensajeria", { state: { directaId: conv.id } });
+                  } catch (err) {
+                    console.error("Error al contactar SLEP:", err);
+                  } finally {
+                    setContactandoSlep(false);
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB] text-xs font-medium transition-colors disabled:opacity-50"
+              >
+                <Icon icon={contactandoSlep ? "mdi:loading" : "mdi:message-outline"} width={14} className={contactandoSlep ? "animate-spin" : ""} />
+                {contactandoSlep ? "Abriendo chat..." : "Contactar SLEP"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── RIGHT SIDEBAR SLEP ── */}
+      {isSlep && (
+        <div className="flex flex-col gap-4 sticky top-20 max-h-[calc(100vh-5rem)] overflow-y-auto pr-0.5">
+          {/* Conversaciones recientes */}
+          <div className={`rounded-xl border ${B} ${BG} p-4`}>
+            <div className="flex items-center justify-between mb-3">
+              <p className={`text-xs font-semibold ${T}`}>Mensajes recientes</p>
+              {slepMensajes.some((c) => c.no_leidos > 0) && (
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isDark ? "bg-red-500/15 text-red-400" : "bg-red-100 text-red-600"}`}>
+                  {slepMensajes.reduce((a, c) => a + (c.no_leidos || 0), 0)} sin leer
+                </span>
+              )}
+            </div>
+            {slepMensajes.length === 0 ? (
+              <p className={`text-xs ${M}`}>Sin conversaciones aún.</p>
+            ) : (
+              <>
+                {slepMensajes.slice(0, 4).map((c, i) => {
+                  const nombre = c.contraparte || "Usuario";
+                  return (
+                    <Link
+                      key={c.id}
+                      to="/slep/mensajeria"
+                      state={{ directaId: c.id }}
+                      className={`flex items-center gap-2.5 ${i < Math.min(slepMensajes.length, 4) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}
+                    >
+                      {c.contraparte_foto ? (
+                        <img src={resolverMedia(c.contraparte_foto)} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
+                      ) : (
+                        <div className="w-7 h-7 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                          {nombre[0]?.toUpperCase() || "?"}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-xs font-medium ${T} truncate`}>{nombre}</p>
+                        <p className={`text-xs ${M} truncate`}>{c.ultimo_mensaje || "Sin mensajes"}</p>
+                      </div>
+                      {c.no_leidos > 0 && (
+                        <span className="text-xs bg-[#0F4D8A] text-white font-semibold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">
+                          {c.no_leidos}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+                <Link to="/slep/mensajeria" className="block text-center mt-2 text-xs text-[#378ADD] hover:underline">
+                  Ver todos →
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* Resumen de gestión */}
+          <div className={`rounded-xl border ${B} ${BG} p-4`}>
+            <p className={`text-xs font-semibold ${T} mb-3`}>Resumen del sistema</p>
+            {[
+              { label: "Colegios",        value: slepStats?.total_colegios,    icon: "mdi:domain",                    color: "text-[#0F4D8A]"  },
+              { label: "Empresas",        value: slepStats?.total_empresas,    icon: "mdi:office-building-outline",   color: "text-[#378ADD]"  },
+              { label: "Estudiantes",     value: slepStats?.total_estudiantes, icon: "mdi:account-school-outline",    color: "text-[#5F5E5A]"  },
+              { label: "Vacantes activas",value: slepStats?.total_vacantes,    icon: "mdi:briefcase-check-outline",   color: "text-green-600"  },
+            ].map((s, i, arr) => (
+              <div key={s.label} className={`flex items-center gap-2.5 ${i < arr.length - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}>
+                <Icon icon={s.icon} width={16} className={`flex-shrink-0 ${s.color}`} />
+                <div className="flex-1 min-w-0">
+                  <p className={`text-xs ${M} truncate`}>{s.label}</p>
+                </div>
+                <p className={`text-sm font-semibold ${T} flex-shrink-0`}>{s.value ?? "—"}</p>
+              </div>
+            ))}
+            <Link to="/slep/panel" className="block text-center mt-2 text-xs text-[#0F4D8A] hover:underline">
+              Ir al panel →
+            </Link>
+          </div>
         </div>
       )}
 

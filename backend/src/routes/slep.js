@@ -5,6 +5,22 @@ const { verificarToken, soloRol } = require("../middleware/auth");
 
 const auth = [verificarToken, soloRol("slep")];
 
+// GET /api/slep/info — datos básicos del SLEP accesibles a colegios
+router.get("/info", verificarToken, soloRol("colegio", "slep"), async (req, res) => {
+  try {
+    const [[slep]] = await db.query(
+      `SELECT u.id, ps.nombre_organismo, ps.foto_perfil
+       FROM usuarios u
+       LEFT JOIN perfiles_slep ps ON ps.usuario_id = u.id
+       WHERE u.rol = 'slep'
+       LIMIT 1`
+    );
+    res.json(slep || { id: null, nombre_organismo: "SLEP" });
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
 // GET /api/slep/perfil
 router.get("/perfil", ...auth, async (req, res) => {
   const id = req.usuario.id;

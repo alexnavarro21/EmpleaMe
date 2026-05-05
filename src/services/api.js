@@ -1079,6 +1079,13 @@ export async function getSlepStats() {
   return data;
 }
 
+export async function getSlepInfo() {
+  const res = await fetch(`${BASE_URL}/slep/info`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener info SLEP");
+  return data;
+}
+
 export async function getSlepEmpresas() {
   const res = await fetch(`${BASE_URL}/slep/empresas`, { headers: authHeaders() });
   const data = await res.json();
