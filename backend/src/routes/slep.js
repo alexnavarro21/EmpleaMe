@@ -5,15 +5,32 @@ const { verificarToken, soloRol } = require("../middleware/auth");
 
 const auth = [verificarToken, soloRol("slep")];
 
-// GET /api/slep/info — datos básicos del SLEP accesibles a colegios
+// GET /api/slep/info — datos básicos del SLEP, accesibles a colegios y al propio SLEP
+// Para colegios: devuelve su SLEP asignado (por slep_id); para slep: devuelve su propio perfil
 router.get("/info", verificarToken, soloRol("colegio", "slep"), async (req, res) => {
   try {
+    if (req.usuario.rol === "slep") {
+      const [[slep]] = await db.query(
+        `SELECT u.id, ps.nombre_organismo, ps.foto_perfil
+         FROM usuarios u
+         LEFT JOIN perfiles_slep ps ON ps.usuario_id = u.id
+         WHERE u.id = ?`,
+        [req.usuario.id]
+      );
+      return res.json(slep || { id: null, nombre_organismo: "SLEP" });
+    }
+    // Para colegio: buscar su slep_id
+    const [[colegio]] = await db.query(
+      "SELECT slep_id FROM perfiles_colegios WHERE usuario_id = ?",
+      [req.usuario.id]
+    );
+    if (!colegio?.slep_id) return res.json({ id: null, nombre_organismo: "SLEP" });
     const [[slep]] = await db.query(
       `SELECT u.id, ps.nombre_organismo, ps.foto_perfil
        FROM usuarios u
        LEFT JOIN perfiles_slep ps ON ps.usuario_id = u.id
-       WHERE u.rol = 'slep'
-       LIMIT 1`
+       WHERE u.id = ?`,
+      [colegio.slep_id]
     );
     res.json(slep || { id: null, nombre_organismo: "SLEP" });
   } catch (err) {
@@ -57,12 +74,22 @@ router.put("/perfil", ...auth, async (req, res) => {
   }
 });
 
-// GET /api/slep/stats
+// GET /api/slep/stats — solo estadísticas de los colegios y estudiantes propios
 router.get("/stats", ...auth, async (req, res) => {
+  const slepId = req.usuario.id;
   try {
+    const [[{ total_colegios }]] = await db.query(
+      "SELECT COUNT(*) AS total_colegios FROM perfiles_colegios WHERE slep_id = ?",
+      [slepId]
+    );
+    const [[{ total_estudiantes }]] = await db.query(
+      `SELECT COUNT(*) AS total_estudiantes
+       FROM perfiles_estudiantes pe
+       JOIN perfiles_colegios pc ON pc.usuario_id = pe.colegio_id
+       WHERE pc.slep_id = ?`,
+      [slepId]
+    );
     const [[{ total_empresas }]]    = await db.query("SELECT COUNT(*) AS total_empresas FROM perfiles_empresas");
-    const [[{ total_colegios }]]    = await db.query("SELECT COUNT(*) AS total_colegios FROM perfiles_colegios");
-    const [[{ total_estudiantes }]] = await db.query("SELECT COUNT(*) AS total_estudiantes FROM perfiles_estudiantes");
     const [[{ total_vacantes }]]    = await db.query("SELECT COUNT(*) AS total_vacantes FROM vacantes WHERE esta_activa = TRUE");
     res.json({ total_empresas, total_colegios, total_estudiantes, total_vacantes });
   } catch (err) {
@@ -85,11 +112,6 @@ router.post("/empresas", ...auth, async (req, res) => {
     const [result] = await conn.query(
       "INSERT INTO usuarios (correo, contrasena_hash, rol, creado_por) VALUES (?, ?, 'empresa', ?)",
       [correo.trim().toLowerCase(), hash, req.usuario.id]
-    ).catch(() =>
-      conn.query(
-        "INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES (?, ?, 'empresa')",
-        [correo.trim().toLowerCase(), hash]
-      )
     );
     const usuarioId = result.insertId;
     await conn.query(
@@ -125,22 +147,7 @@ router.get("/empresas", ...auth, async (req, res) => {
     );
     res.json(rows);
   } catch (err) {
-    // Si creado_por no existe aún, devolver sin ese campo
-    try {
-      const [rows] = await db.query(
-        `SELECT pe.usuario_id, pe.nombre_empresa, pe.descripcion, pe.telefono_contacto,
-                pe.region, pe.comuna, pe.foto_perfil, u.correo, u.fecha_creacion,
-                COUNT(v.id) AS total_vacantes_activas
-         FROM perfiles_empresas pe
-         JOIN usuarios u ON u.id = pe.usuario_id
-         LEFT JOIN vacantes v ON v.empresa_id = pe.usuario_id AND v.esta_activa = TRUE
-         GROUP BY pe.usuario_id
-         ORDER BY pe.nombre_empresa`
-      );
-      res.json(rows);
-    } catch (e2) {
-      res.status(500).json({ error: "Error del servidor", detalle: e2.message });
-    }
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }
 });
 
@@ -171,7 +178,7 @@ router.put("/empresas/:id", ...auth, async (req, res) => {
   }
 });
 
-// DELETE /api/slep/empresas/:id — eliminar empresa (cascada borra perfil, vacantes, etc.)
+// DELETE /api/slep/empresas/:id
 router.delete("/empresas/:id", ...auth, async (req, res) => {
   const id = parseInt(req.params.id);
   try {
@@ -188,7 +195,7 @@ router.delete("/empresas/:id", ...auth, async (req, res) => {
 
 // ── Colegios ──────────────────────────────────────────────────────────────────
 
-// POST /api/slep/colegios — crear cuenta de colegio
+// POST /api/slep/colegios — crear cuenta de colegio asignada a este SLEP
 router.post("/colegios", ...auth, async (req, res) => {
   const { nombre_institucion, correo, contrasena, region, comuna, telefono_contacto, descripcion } = req.body;
   if (!nombre_institucion || !correo || !contrasena)
@@ -201,17 +208,12 @@ router.post("/colegios", ...auth, async (req, res) => {
     const [result] = await conn.query(
       "INSERT INTO usuarios (correo, contrasena_hash, rol, creado_por) VALUES (?, ?, 'colegio', ?)",
       [correo.trim().toLowerCase(), hash, req.usuario.id]
-    ).catch(() =>
-      conn.query(
-        "INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES (?, ?, 'colegio')",
-        [correo.trim().toLowerCase(), hash]
-      )
     );
     const usuarioId = result.insertId;
     await conn.query(
-      `INSERT INTO perfiles_colegios (usuario_id, nombre_institucion, telefono_contacto, descripcion, region, comuna)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [usuarioId, nombre_institucion, telefono_contacto || null, descripcion || null, region || null, comuna || null]
+      `INSERT INTO perfiles_colegios (usuario_id, slep_id, nombre_institucion, telefono_contacto, descripcion, region, comuna)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [usuarioId, req.usuario.id, nombre_institucion, telefono_contacto || null, descripcion || null, region || null, comuna || null]
     );
     await conn.commit();
     res.status(201).json({ id: usuarioId, mensaje: "Colegio creado correctamente" });
@@ -225,8 +227,9 @@ router.post("/colegios", ...auth, async (req, res) => {
   }
 });
 
-// GET /api/slep/colegios
+// GET /api/slep/colegios — solo colegios de este SLEP
 router.get("/colegios", ...auth, async (req, res) => {
+  const slepId = req.usuario.id;
   try {
     const [rows] = await db.query(
       `SELECT pc.usuario_id, pc.nombre_institucion, pc.descripcion, pc.telefono_contacto,
@@ -236,30 +239,18 @@ router.get("/colegios", ...auth, async (req, res) => {
        FROM perfiles_colegios pc
        JOIN usuarios u ON u.id = pc.usuario_id
        LEFT JOIN perfiles_estudiantes pe ON pe.colegio_id = pc.usuario_id
+       WHERE pc.slep_id = ?
        GROUP BY pc.usuario_id
-       ORDER BY pc.nombre_institucion`
+       ORDER BY pc.nombre_institucion`,
+      [slepId]
     );
     res.json(rows);
   } catch (err) {
-    try {
-      const [rows] = await db.query(
-        `SELECT pc.usuario_id, pc.nombre_institucion, pc.descripcion, pc.telefono_contacto,
-                pc.region, pc.comuna, pc.foto_perfil, u.correo, u.fecha_creacion,
-                COUNT(pe.usuario_id) AS total_estudiantes
-         FROM perfiles_colegios pc
-         JOIN usuarios u ON u.id = pc.usuario_id
-         LEFT JOIN perfiles_estudiantes pe ON pe.colegio_id = pc.usuario_id
-         GROUP BY pc.usuario_id
-         ORDER BY pc.nombre_institucion`
-      );
-      res.json(rows);
-    } catch (e2) {
-      res.status(500).json({ error: "Error del servidor", detalle: e2.message });
-    }
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }
 });
 
-// PUT /api/slep/colegios/:id — editar perfil de colegio
+// PUT /api/slep/colegios/:id — editar colegio (solo si pertenece a este SLEP)
 router.put("/colegios/:id", ...auth, async (req, res) => {
   const { nombre_institucion, telefono_contacto, descripcion, region, comuna, contrasena } = req.body;
   const id = parseInt(req.params.id);
@@ -267,7 +258,8 @@ router.put("/colegios/:id", ...auth, async (req, res) => {
     return res.status(400).json({ error: "nombre_institucion es requerido" });
   try {
     const [[colegio]] = await db.query(
-      "SELECT 1 FROM perfiles_colegios WHERE usuario_id = ?", [id]
+      "SELECT 1 FROM perfiles_colegios WHERE usuario_id = ? AND slep_id = ?",
+      [id, req.usuario.id]
     );
     if (!colegio) return res.status(404).json({ error: "Colegio no encontrado" });
     await db.query(
@@ -288,28 +280,45 @@ router.put("/colegios/:id", ...auth, async (req, res) => {
 
 // ── Reportes ──────────────────────────────────────────────────────────────────
 
-// Verifica que el reporte sea sobre contenido de empresa o colegio
-async function esSlepReporte(reporteId) {
+// Verifica que el reporte esté dentro del scope del SLEP actual
+async function esReporteDeSlep(reporteId, slepId) {
   const [[reporte]] = await db.query("SELECT tipo, referencia_id FROM reportes WHERE id = ?", [reporteId]);
   if (!reporte) return false;
+
+  // Usuarios gestionados por este SLEP: colegios del SLEP + estudiantes de esos colegios
+  const colegiosDelSlep = `
+    SELECT usuario_id FROM perfiles_colegios WHERE slep_id = ?
+  `;
+  const estudiantesDelSlep = `
+    SELECT pe.usuario_id FROM perfiles_estudiantes pe
+    JOIN perfiles_colegios pc ON pc.usuario_id = pe.colegio_id
+    WHERE pc.slep_id = ?
+  `;
+
   if (reporte.tipo === "publicacion") {
     const [[row]] = await db.query(
-      "SELECT 1 FROM publicaciones p JOIN usuarios u ON u.id = p.autor_id WHERE p.id = ? AND u.rol IN ('empresa','colegio')",
-      [reporte.referencia_id]
+      `SELECT 1 FROM publicaciones p
+       WHERE p.id = ?
+         AND p.autor_id IN (${colegiosDelSlep} UNION ${estudiantesDelSlep})`,
+      [reporte.referencia_id, slepId, slepId]
     );
     return !!row;
   }
   if (reporte.tipo === "comentario") {
     const [[row]] = await db.query(
-      "SELECT 1 FROM comentarios c JOIN usuarios u ON u.id = c.autor_id WHERE c.id = ? AND u.rol IN ('empresa','colegio')",
-      [reporte.referencia_id]
+      `SELECT 1 FROM comentarios c
+       WHERE c.id = ?
+         AND c.autor_id IN (${colegiosDelSlep} UNION ${estudiantesDelSlep})`,
+      [reporte.referencia_id, slepId, slepId]
     );
     return !!row;
   }
   if (reporte.tipo === "perfil") {
     const [[row]] = await db.query(
-      "SELECT 1 FROM usuarios WHERE id = ? AND rol IN ('empresa','colegio')",
-      [reporte.referencia_id]
+      `SELECT 1 FROM usuarios
+       WHERE id = ?
+         AND id IN (${colegiosDelSlep} UNION ${estudiantesDelSlep})`,
+      [reporte.referencia_id, slepId, slepId]
     );
     return !!row;
   }
@@ -319,6 +328,7 @@ async function esSlepReporte(reporteId) {
 // GET /api/slep/reportes?estado=pendiente
 router.get("/reportes", ...auth, async (req, res) => {
   const { estado = "pendiente" } = req.query;
+  const slepId = req.usuario.id;
   try {
     const [rows] = await db.query(
       `SELECT r.id, r.tipo, r.referencia_id, r.motivo, r.descripcion, r.estado, r.creado_en,
@@ -341,24 +351,41 @@ router.get("/reportes", ...auth, async (req, res) => {
        LEFT JOIN perfiles_empresas  emp_ref ON emp_ref.usuario_id = u_ref.id
        WHERE r.estado = ?
          AND (
-           r.revisado_por IS NOT NULL
-           OR (r.tipo = 'publicacion' AND r.referencia_id IN (
+           -- Publicaciones de colegios del SLEP o estudiantes de esos colegios
+           (r.tipo = 'publicacion' AND r.referencia_id IN (
              SELECT p.id FROM publicaciones p
-             JOIN usuarios u2 ON u2.id = p.autor_id
-             WHERE u2.rol IN ('empresa','colegio')
+             WHERE p.autor_id IN (
+               SELECT usuario_id FROM perfiles_colegios WHERE slep_id = ?
+               UNION
+               SELECT pe2.usuario_id FROM perfiles_estudiantes pe2
+               JOIN perfiles_colegios pc2 ON pc2.usuario_id = pe2.colegio_id
+               WHERE pc2.slep_id = ?
+             )
            ))
-           OR (r.tipo = 'comentario' AND r.referencia_id IN (
+           OR
+           -- Comentarios de colegios del SLEP o estudiantes de esos colegios
+           (r.tipo = 'comentario' AND r.referencia_id IN (
              SELECT c.id FROM comentarios c
-             JOIN usuarios u2 ON u2.id = c.autor_id
-             WHERE u2.rol IN ('empresa','colegio')
+             WHERE c.autor_id IN (
+               SELECT usuario_id FROM perfiles_colegios WHERE slep_id = ?
+               UNION
+               SELECT pe2.usuario_id FROM perfiles_estudiantes pe2
+               JOIN perfiles_colegios pc2 ON pc2.usuario_id = pe2.colegio_id
+               WHERE pc2.slep_id = ?
+             )
            ))
-           OR (r.tipo = 'perfil' AND r.referencia_id IN (
-             SELECT u2.id FROM usuarios u2
-             WHERE u2.rol IN ('empresa','colegio')
+           OR
+           -- Perfiles de colegios del SLEP o estudiantes de esos colegios
+           (r.tipo = 'perfil' AND r.referencia_id IN (
+             SELECT usuario_id FROM perfiles_colegios WHERE slep_id = ?
+             UNION
+             SELECT pe2.usuario_id FROM perfiles_estudiantes pe2
+             JOIN perfiles_colegios pc2 ON pc2.usuario_id = pe2.colegio_id
+             WHERE pc2.slep_id = ?
            ))
          )
        ORDER BY r.creado_en DESC`,
-      [estado]
+      [estado, slepId, slepId, slepId, slepId, slepId, slepId]
     );
     res.json(rows);
   } catch (err) {
@@ -366,13 +393,13 @@ router.get("/reportes", ...auth, async (req, res) => {
   }
 });
 
-// DELETE /api/slep/reportes/:id/contenido — SLEP elimina la publicación/comentario y resuelve el reporte
+// DELETE /api/slep/reportes/:id/contenido
 router.delete("/reportes/:id/contenido", ...auth, async (req, res) => {
   try {
     const [[reporte]] = await db.query("SELECT tipo, referencia_id FROM reportes WHERE id = ?", [req.params.id]);
     if (!reporte) return res.status(404).json({ error: "Reporte no encontrado" });
-    if (!await esSlepReporte(req.params.id))
-      return res.status(403).json({ error: "Este reporte no corresponde a contenido de empresa o colegio" });
+    if (!await esReporteDeSlep(req.params.id, req.usuario.id))
+      return res.status(403).json({ error: "Este reporte no pertenece a tu scope" });
 
     if (reporte.tipo === "publicacion") {
       await db.query("DELETE FROM publicaciones WHERE id = ?", [reporte.referencia_id]);
@@ -390,15 +417,15 @@ router.delete("/reportes/:id/contenido", ...auth, async (req, res) => {
   }
 });
 
-// PUT /api/slep/reportes/:id — SLEP actualiza estado del reporte
+// PUT /api/slep/reportes/:id
 router.put("/reportes/:id", ...auth, async (req, res) => {
   const { estado } = req.body;
   const estadosValidos = ["resuelto", "descartado"];
   if (!estadosValidos.includes(estado))
     return res.status(400).json({ error: "Estado inválido" });
   try {
-    if (!await esSlepReporte(req.params.id))
-      return res.status(403).json({ error: "Este reporte no corresponde a contenido de empresa o colegio" });
+    if (!await esReporteDeSlep(req.params.id, req.usuario.id))
+      return res.status(403).json({ error: "Este reporte no pertenece a tu scope" });
 
     await db.query(
       "UPDATE reportes SET estado = ?, revisado_en = NOW(), revisado_por = ? WHERE id = ?",
