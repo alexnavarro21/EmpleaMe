@@ -15,6 +15,7 @@ import {
   getHistorialAcademico, agregarHistorialAcademico, eliminarHistorialAcademico,
   getHistorialLaboral, agregarHistorialLaboral, eliminarHistorialLaboral,
   crearHabilidad, actualizarHabilidad, eliminarHabilidad, getEstudiantesDeHabilidad,
+  getMediaUrl,
 } from "../../services/api";
 
 // ── Download helper ───────────────────────────────────────────────────────────
@@ -462,9 +463,13 @@ function TabUsuarios({ rawUsers, isDark }) {
                 <tr key={u.id} className={`border-b ${B} last:border-0 transition-colors ${isDark ? "hover:bg-[#313130]/50" : "hover:bg-[#F7F6F3]"}`}>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
-                        <Icon icon="mynaui:user-solid" width={16} className="text-[#378ADD]" />
-                      </div>
+                      {u.foto_perfil ? (
+                        <img src={getMediaUrl(u.foto_perfil)} className="w-8 h-8 rounded-full object-cover flex-shrink-0" alt="" />
+                      ) : (
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
+                          <Icon icon="mynaui:user-solid" width={16} className="text-[#378ADD]" />
+                        </div>
+                      )}
                       <span className={`text-sm font-medium ${T}`}>{u.nombre || u.correo}</span>
                     </div>
                   </td>
