@@ -1086,6 +1086,36 @@ export async function getSlepInfo() {
   return data;
 }
 
+export async function getSlepChartPostulacionesPorColegio() {
+  const res = await fetch(`${BASE_URL}/slep/charts/postulaciones-por-colegio`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error");
+  return data;
+}
+
+export async function getSlepChartPostulacionesPorMes(params = {}) {
+  const q = new URLSearchParams(Object.entries(params).filter(([, v]) => v)).toString();
+  const res = await fetch(`${BASE_URL}/slep/charts/postulaciones-por-mes${q ? "?" + q : ""}`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error");
+  return data;
+}
+
+export async function getSlepChartTopEmpresas() {
+  const res = await fetch(`${BASE_URL}/slep/charts/top-empresas`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error");
+  return data;
+}
+
+export async function getSlepChartEstudiantesPorCarrera(params = {}) {
+  const q = new URLSearchParams(Object.entries(params).filter(([, v]) => v)).toString();
+  const res = await fetch(`${BASE_URL}/slep/charts/estudiantes-por-carrera${q ? "?" + q : ""}`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error");
+  return data;
+}
+
 export async function getSlepEmpresas() {
   const res = await fetch(`${BASE_URL}/slep/empresas`, { headers: authHeaders() });
   const data = await res.json();

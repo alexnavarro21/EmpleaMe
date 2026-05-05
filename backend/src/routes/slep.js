@@ -89,12 +89,116 @@ router.get("/stats", ...auth, async (req, res) => {
        WHERE pc.slep_id = ?`,
       [slepId]
     );
-    const [[{ total_empresas }]]    = await db.query("SELECT COUNT(*) AS total_empresas FROM perfiles_empresas");
-    const [[{ total_vacantes }]]    = await db.query("SELECT COUNT(*) AS total_vacantes FROM vacantes WHERE esta_activa = TRUE");
-    res.json({ total_empresas, total_colegios, total_estudiantes, total_vacantes });
+    const [[{ total_empresas }]] = await db.query("SELECT COUNT(*) AS total_empresas FROM perfiles_empresas");
+    const [[{ total_vacantes }]] = await db.query("SELECT COUNT(*) AS total_vacantes FROM vacantes WHERE esta_activa = TRUE");
+    const [[{ total_postulaciones }]] = await db.query(
+      `SELECT COUNT(*) AS total_postulaciones
+       FROM postulaciones p
+       JOIN perfiles_estudiantes pe ON pe.usuario_id = p.estudiante_id
+       JOIN perfiles_colegios pc ON pc.usuario_id = pe.colegio_id
+       WHERE pc.slep_id = ?`,
+      [slepId]
+    );
+    const [[{ postulaciones_este_mes }]] = await db.query(
+      `SELECT COUNT(*) AS postulaciones_este_mes
+       FROM postulaciones p
+       JOIN perfiles_estudiantes pe ON pe.usuario_id = p.estudiante_id
+       JOIN perfiles_colegios pc ON pc.usuario_id = pe.colegio_id
+       WHERE pc.slep_id = ?
+         AND DATE_FORMAT(p.fecha_creacion, '%Y-%m') = DATE_FORMAT(NOW(), '%Y-%m')`,
+      [slepId]
+    );
+    res.json({ total_empresas, total_colegios, total_estudiantes, total_vacantes, total_postulaciones, postulaciones_este_mes });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }
+});
+
+// ── Charts ────────────────────────────────────────────────────────────────────
+
+// GET /api/slep/charts/postulaciones-por-colegio
+router.get("/charts/postulaciones-por-colegio", ...auth, async (req, res) => {
+  const slepId = req.usuario.id;
+  try {
+    const [rows] = await db.query(
+      `SELECT pc.nombre_institucion AS colegio, COUNT(p.id) AS total
+       FROM postulaciones p
+       JOIN perfiles_estudiantes pe ON pe.usuario_id = p.estudiante_id
+       JOIN perfiles_colegios pc ON pc.usuario_id = pe.colegio_id
+       WHERE pc.slep_id = ?
+       GROUP BY pc.usuario_id, pc.nombre_institucion
+       ORDER BY total DESC
+       LIMIT 10`,
+      [slepId]
+    );
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// GET /api/slep/charts/postulaciones-por-mes?colegio_id=
+router.get("/charts/postulaciones-por-mes", ...auth, async (req, res) => {
+  const slepId = req.usuario.id;
+  const { colegio_id } = req.query;
+  try {
+    let where = "WHERE pc.slep_id = ?";
+    const params = [slepId];
+    if (colegio_id) { where += " AND pc.usuario_id = ?"; params.push(colegio_id); }
+    const [rows] = await db.query(
+      `SELECT DATE_FORMAT(p.fecha_creacion, '%Y-%m') AS mes, COUNT(*) AS total
+       FROM postulaciones p
+       JOIN perfiles_estudiantes pe ON pe.usuario_id = p.estudiante_id
+       JOIN perfiles_colegios pc ON pc.usuario_id = pe.colegio_id
+       ${where}
+       GROUP BY mes
+       ORDER BY mes ASC
+       LIMIT 12`,
+      params
+    );
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// GET /api/slep/charts/top-empresas
+router.get("/charts/top-empresas", ...auth, async (req, res) => {
+  const slepId = req.usuario.id;
+  try {
+    const [rows] = await db.query(
+      `SELECT pe2.nombre_empresa AS empresa, COUNT(*) AS total
+       FROM postulaciones p
+       JOIN perfiles_estudiantes pe ON pe.usuario_id = p.estudiante_id
+       JOIN perfiles_colegios pc ON pc.usuario_id = pe.colegio_id
+       JOIN vacantes v ON v.id = p.vacante_id
+       JOIN perfiles_empresas pe2 ON pe2.usuario_id = v.empresa_id
+       WHERE pc.slep_id = ?
+       GROUP BY pe2.usuario_id, pe2.nombre_empresa
+       ORDER BY total DESC
+       LIMIT 8`,
+      [slepId]
+    );
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// GET /api/slep/charts/estudiantes-por-carrera?colegio_id=
+router.get("/charts/estudiantes-por-carrera", ...auth, async (req, res) => {
+  const slepId = req.usuario.id;
+  const { colegio_id } = req.query;
+  try {
+    let where = "WHERE pc.slep_id = ?";
+    const params = [slepId];
+    if (colegio_id) { where += " AND pc.usuario_id = ?"; params.push(colegio_id); }
+    const [rows] = await db.query(
+      `SELECT COALESCE(c.nombre, 'Sin carrera') AS carrera, COUNT(*) AS total
+       FROM perfiles_estudiantes pe
+       JOIN perfiles_colegios pc ON pc.usuario_id = pe.colegio_id
+       LEFT JOIN carreras c ON c.id = pe.carrera_id
+       ${where}
+       GROUP BY c.id, c.nombre
+       ORDER BY total DESC`,
+      params
+    );
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // ── Empresas ──────────────────────────────────────────────────────────────────
