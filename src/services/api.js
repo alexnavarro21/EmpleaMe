@@ -51,6 +51,15 @@ export async function listarColegios() {
   return data; // [{ id, nombre_institucion }]
 }
 
+// ── Carreras ──────────────────────────────────────────────────────────────────
+
+export async function getCarreras() {
+  const res = await fetch(`${BASE_URL}/carreras`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener carreras");
+  return data; // [{ id, nombre }]
+}
+
 // ── Habilidades ───────────────────────────────────────────────────────────────
 
 export async function getHabilidades() {

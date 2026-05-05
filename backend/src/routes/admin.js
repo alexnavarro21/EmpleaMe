@@ -877,15 +877,16 @@ router.get("/charts/vacantes-disponibles", ...auth, async (req, res) => {
   try {
     let where = "WHERE v.esta_activa = TRUE";
     const params = [];
-    if (area) { where += " AND v.area = ?"; params.push(area); }
+    if (area) { where += " AND c.nombre = ?"; params.push(area); }
     if (tipo) { where += " AND v.tipo = ?"; params.push(tipo); }
     const [rows] = await db.query(`
-      SELECT COALESCE(v.area, 'Sin área') AS area,
+      SELECT COALESCE(c.nombre, 'Sin área') AS area,
              v.tipo,
              COUNT(*) AS total
       FROM vacantes v
+      LEFT JOIN carreras c ON c.id = v.carrera_id
       ${where}
-      GROUP BY v.area, v.tipo
+      GROUP BY v.carrera_id, v.tipo
       ORDER BY total DESC
     `, params);
     res.json(rows);

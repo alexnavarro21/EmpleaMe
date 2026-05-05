@@ -104,7 +104,7 @@ router.get("/resumen/:estudiante_id/:vacante_id", verificarToken, soloRol("empre
     if (!perfil) return res.status(404).json({ error: "Estudiante no encontrado" });
 
     const [[vacante]] = await db.query(
-      "SELECT titulo, area, modalidad, tipo, descripcion FROM vacantes WHERE id = ? AND empresa_id = ?",
+      "SELECT v.titulo, c.nombre AS area, v.modalidad, v.tipo, v.descripcion FROM vacantes v LEFT JOIN carreras c ON c.id = v.carrera_id WHERE v.id = ? AND v.empresa_id = ?",
       [vacante_id, req.usuario.id]
     );
     if (!vacante) return res.status(404).json({ error: "Vacante no encontrada" });
@@ -164,7 +164,7 @@ router.get("/ranking/:vacante_id", verificarToken, soloRol("empresa"), async (re
   try {
     // 1. Verificar que la vacante pertenece a esta empresa
     const [[vacante]] = await db.query(
-      "SELECT id, titulo, area, modalidad, tipo, descripcion FROM vacantes WHERE id = ? AND empresa_id = ?",
+      "SELECT v.id, v.titulo, c.nombre AS area, v.modalidad, v.tipo, v.descripcion FROM vacantes v LEFT JOIN carreras c ON c.id = v.carrera_id WHERE v.id = ? AND v.empresa_id = ?",
       [vacante_id, empresaId]
     );
     if (!vacante) return res.status(404).json({ error: "Vacante no encontrada" });
