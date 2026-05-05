@@ -978,6 +978,7 @@ export default function EstudianteDashboard() {
   const [slepMensajes, setSlepMensajes] = useState([]);
   const [slepInfo, setSlepInfo] = useState(null);
   const [contactandoSlep, setContactandoSlep] = useState(false);
+  const [contactandoColegio, setContactandoColegio] = useState(false);
 
   const LIMITE_PUBS = 20;
 
@@ -1309,6 +1310,27 @@ export default function EstudianteDashboard() {
             >
               Ver mi perfil
             </Link>
+
+            {perfil?.colegio_id && (
+              <button
+                disabled={contactandoColegio}
+                onClick={async () => {
+                  setContactandoColegio(true);
+                  try {
+                    const conv = await iniciarMensajeDirecto(perfil.colegio_id);
+                    navigate("/estudiante/mensajeria", { state: { directaId: conv.id } });
+                  } catch (err) {
+                    console.error("Error al contactar colegio:", err);
+                  } finally {
+                    setContactandoColegio(false);
+                  }
+                }}
+                className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-[#378ADD] bg-[#378ADD]/10 text-[#378ADD] hover:bg-[#378ADD]/20 transition-colors disabled:opacity-50"
+              >
+                <Icon icon={contactandoColegio ? "mdi:loading" : "mdi:school-outline"} width={14} className={contactandoColegio ? "animate-spin" : ""} />
+                {contactandoColegio ? "Abriendo chat..." : `Contactar ${perfil.colegio_nombre || "mi colegio"}`}
+              </button>
+            )}
           </div>
         </div>
 

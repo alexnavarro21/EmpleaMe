@@ -18,21 +18,24 @@ router.get("/", verificarToken, async (req, res) => {
                  COALESCE(pe2.foto_perfil, emp2.foto_perfil, pc2.foto_perfil, ps2.foto_perfil),
                  COALESCE(pe1.foto_perfil, emp1.foto_perfil, pc1.foto_perfil, ps1.foto_perfil)
               ) AS foto_contraparte,
+              IF(cd.usuario1_id = ?, u2.rol, u1.rol) AS contraparte_rol,
               (SELECT md.contenido FROM mensajes_directos md WHERE md.conversacion_id = cd.id ORDER BY md.enviado_en DESC LIMIT 1) AS ultimo_mensaje,
               (SELECT md.enviado_en FROM mensajes_directos md WHERE md.conversacion_id = cd.id ORDER BY md.enviado_en DESC LIMIT 1) AS ultimo_tiempo,
               (SELECT COUNT(*) FROM mensajes_directos md WHERE md.conversacion_id = cd.id AND md.leido = FALSE AND md.remitente_id != ?) AS no_leidos
        FROM conversaciones_directas cd
-       LEFT JOIN perfiles_estudiantes pe1 ON pe1.usuario_id = cd.usuario1_id
-       LEFT JOIN perfiles_empresas emp1   ON emp1.usuario_id = cd.usuario1_id
-       LEFT JOIN perfiles_colegios pc1    ON pc1.usuario_id = cd.usuario1_id
-       LEFT JOIN perfiles_slep ps1        ON ps1.usuario_id = cd.usuario1_id
-       LEFT JOIN perfiles_estudiantes pe2 ON pe2.usuario_id = cd.usuario2_id
-       LEFT JOIN perfiles_empresas emp2   ON emp2.usuario_id = cd.usuario2_id
-       LEFT JOIN perfiles_colegios pc2    ON pc2.usuario_id = cd.usuario2_id
-       LEFT JOIN perfiles_slep ps2        ON ps2.usuario_id = cd.usuario2_id
+       LEFT JOIN usuarios u1               ON u1.id = cd.usuario1_id
+       LEFT JOIN usuarios u2               ON u2.id = cd.usuario2_id
+       LEFT JOIN perfiles_estudiantes pe1  ON pe1.usuario_id = cd.usuario1_id
+       LEFT JOIN perfiles_empresas emp1    ON emp1.usuario_id = cd.usuario1_id
+       LEFT JOIN perfiles_colegios pc1     ON pc1.usuario_id = cd.usuario1_id
+       LEFT JOIN perfiles_slep ps1         ON ps1.usuario_id = cd.usuario1_id
+       LEFT JOIN perfiles_estudiantes pe2  ON pe2.usuario_id = cd.usuario2_id
+       LEFT JOIN perfiles_empresas emp2    ON emp2.usuario_id = cd.usuario2_id
+       LEFT JOIN perfiles_colegios pc2     ON pc2.usuario_id = cd.usuario2_id
+       LEFT JOIN perfiles_slep ps2         ON ps2.usuario_id = cd.usuario2_id
        WHERE cd.usuario1_id = ? OR cd.usuario2_id = ?
        ORDER BY ultimo_tiempo DESC`,
-      [id, id, id, id, id, id]
+      [id, id, id, id, id, id, id]
     );
     res.json(rows);
   } catch (err) {
