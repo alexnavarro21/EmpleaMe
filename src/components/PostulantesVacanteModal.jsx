@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
-import { getPostulantesPorVacante, actualizarEstadoPostulacion, iniciarConversacion, getResumenIA, getRankingIA, getMediaUrl } from "../services/api";
+import { getPostulantesPorVacante, actualizarEstadoPostulacion, iniciarConversacion, enviarMensaje, getResumenIA, getRankingIA, getMediaUrl } from "../services/api";
 
 function estadoConfig(isDark) {
   return {
@@ -17,6 +17,37 @@ function tiempoRelativo(fecha) {
   if (diff < 3600)  return `Hace ${Math.floor(diff / 60)} min`;
   if (diff < 86400) return `Hace ${Math.floor(diff / 3600)} h`;
   return `Hace ${Math.floor(diff / 86400)} días`;
+}
+
+function MotivoModal({ titulo, descripcion, placeholder, confirmLabel, confirmClass, onConfirmar, onCancelar, isDark, T, M, B, BG }) {
+  const [motivo, setMotivo] = useState("");
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" onClick={onCancelar}>
+      <div className={`w-full max-w-sm rounded-2xl p-6 shadow-xl ${BG}`} onClick={(e) => e.stopPropagation()}>
+        <h3 className={`text-base font-semibold ${T} mb-1`}>{titulo}</h3>
+        <p className={`text-sm ${M} mb-4`}>{descripcion}</p>
+        <textarea
+          value={motivo}
+          onChange={(e) => setMotivo(e.target.value)}
+          placeholder={placeholder}
+          rows={3}
+          className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border resize-none transition-all focus:border-[#378ADD] ${
+            isDark
+              ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
+              : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
+          }`}
+        />
+        <div className="flex gap-2 justify-end mt-4">
+          <button onClick={onCancelar} className={`px-4 py-2 text-sm rounded-lg border ${B} ${M} hover:border-[#378ADD] transition-colors`}>
+            Cancelar
+          </button>
+          <button onClick={() => onConfirmar(motivo.trim())} className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors ${confirmClass}`}>
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCambiado }) {
@@ -34,6 +65,7 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
   const [loading, setLoading] = useState(true);
   const [contactandoId, setContactandoId] = useState(null);
   const [actualizandoId, setActualizandoId] = useState(null);
+  const [modalRechazar, setModalRechazar] = useState(null);
   const [resumenes, setResumenes] = useState({});      // { estudiante_id: { texto, cargando, abierto } }
   const [rankingCargando, setRankingCargando] = useState(false);
   const [rankingActivo, setRankingActivo] = useState(false);
@@ -79,6 +111,23 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
         prev.map((p) => (p.id === postulacionId ? { ...p, estado: nuevoEstado } : p))
       );
       onEstadoCambiado?.();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setActualizandoId(null);
+    }
+  };
+
+  const handleRechazarConfirmado = async (postulante, motivo) => {
+    setModalRechazar(null);
+    setActualizandoId(postulante.id);
+    try {
+      await actualizarEstadoPostulacion(postulante.id, "rechazado");
+      setPostulantes((prev) => prev.map((p) => p.id === postulante.id ? { ...p, estado: "rechazado" } : p));
+      onEstadoCambiado?.();
+      const conv = await iniciarConversacion(postulante.estudiante_id);
+      const texto = `Hemos revisado tu postulación a la vacante "${vacante.titulo}". Lamentablemente, en esta ocasión no has sido seleccionado/a.${motivo ? `\n\nMotivo: ${motivo}` : ""}\n\n¡Te deseamos mucho éxito en tu búsqueda!`;
+      await enviarMensaje(conv.id, texto);
     } catch (err) {
       console.error(err);
     } finally {
@@ -206,6 +255,19 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
           </div>
         )}
 
+        {modalRechazar && (
+          <MotivoModal
+            titulo="Rechazar postulante"
+            descripcion={`Ingresa el motivo por el que rechazas a ${modalRechazar.nombre_completo}. Se enviará un mensaje automático al estudiante.`}
+            placeholder="Ej: El perfil no cumple con los requisitos del puesto..."
+            confirmLabel="Rechazar y notificar"
+            confirmClass="bg-red-600 hover:bg-red-700 text-white"
+            onConfirmar={(motivo) => handleRechazarConfirmado(modalRechazar, motivo)}
+            onCancelar={() => setModalRechazar(null)}
+            isDark={isDark} T={T} M={M} B={B} BG={BG}
+          />
+        )}
+
         {/* Lista */}
         <div className="overflow-y-auto flex-1 px-5 py-4">
           {loading ? (
@@ -301,7 +363,7 @@ export default function PostulantesVacanteModal({ vacante, onClose, onEstadoCamb
                               Aceptar
                             </button>
                             <button
-                              onClick={() => handleEstado(p.id, "rechazado")}
+                              onClick={() => setModalRechazar(p)}
                               title="Rechazar"
                               className={`text-xs px-2.5 py-1.5 rounded-lg transition-colors font-medium ${isDark ? "bg-red-500/15 text-red-400 hover:bg-red-500/25" : "bg-red-100 text-red-700 hover:bg-red-200"}`}
                             >

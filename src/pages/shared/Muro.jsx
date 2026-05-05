@@ -1165,14 +1165,6 @@ export default function EstudianteDashboard() {
                   <p className={`text-xs ${M}`}>Estudiantes</p>
                 </div>
                 <div className="text-center">
-                  <p className={`text-base font-semibold ${T}`}>{adminStats?.total_empresas ?? "—"}</p>
-                  <p className={`text-xs ${M}`}>Empresas</p>
-                </div>
-                <div className="text-center">
-                  <p className={`text-base font-semibold text-green-600`}>{adminStats?.total_vacantes_activas ?? "—"}</p>
-                  <p className={`text-xs ${M}`}>Vacantes</p>
-                </div>
-                <div className="text-center">
                   <p className={`text-base font-semibold text-amber-500`}>{adminStats?.total_postulaciones ?? "—"}</p>
                   <p className={`text-xs ${M}`}>Pendientes</p>
                 </div>
@@ -1692,8 +1684,6 @@ export default function EstudianteDashboard() {
             <p className={`text-xs font-semibold ${T} mb-3`}>Estado del sistema</p>
             {[
               { label: "Estudiantes registrados", value: adminStats?.total_estudiantes, icon: "mdi:account-school-outline",  color: "text-[#378ADD]"  },
-              { label: "Empresas registradas",    value: adminStats?.total_empresas,    icon: "mdi:domain",                  color: "text-[#0F4D8A]"  },
-              { label: "Vacantes activas",        value: adminStats?.total_vacantes_activas, icon: "mdi:briefcase-check-outline", color: "text-green-600"  },
               { label: "Postulaciones pendientes",value: adminStats?.total_postulaciones,icon: "mdi:clock-outline",           color: "text-amber-500"  },
               { label: "Conversaciones totales",  value: adminStats?.total_conversaciones,icon: "mdi:message-outline",        color: "text-[#378ADD]"  },
               { label: "Evaluaciones realizadas", value: adminStats?.total_evaluaciones, icon: "mdi:clipboard-check-outline", color: "text-green-600"  },
