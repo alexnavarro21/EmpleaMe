@@ -60,6 +60,13 @@ export async function getCarreras() {
   return data; // [{ id, nombre }]
 }
 
+export async function getCarrerasColegios() {
+  const res = await fetch(`${BASE_URL}/carreras?registradas=1`, { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener carreras");
+  return data; // [{ id, nombre }] — solo las registradas por algún colegio
+}
+
 // ── Habilidades ───────────────────────────────────────────────────────────────
 
 export async function getHabilidades() {
