@@ -6,7 +6,7 @@ import { Card, Badge, PrimaryButton } from "../../components/ui";
 import {
   getEstudiantes, getEmpresas, getVacantes, getTalleres, getColegios,
   iniciarMensajeDirecto, iniciarConversacionConEmpresa,
-  postularAVacante, inscribirseEnTaller, getMediaUrl, getCarrerasColegios,
+  postularAVacante, inscribirseEnTaller, getMediaUrl,
 } from "../../services/api";
 import { REGIONES_COMUNAS, REGIONES } from "../../data/regionesComunas";
 import ModalReporte from "../../components/ModalReporte";
@@ -320,7 +320,6 @@ export default function BuscarPerfiles() {
   const [modalTaller,        setModalTaller]        = useState(null);
   const [selectedHabilidades, setSelectedHabilidades] = useState([]);
   const [selectedAreas,       setSelectedAreas]       = useState([]);
-  const [carrerasColegios,    setCarrerasColegios]    = useState([]);
   const [habBusqueda,         setHabBusqueda]         = useState("");
   const [selectedModalidad,   setSelectedModalidad]   = useState("");
   const [filtroPrecio,        setFiltroPrecio]        = useState("todas"); // todas | gratuito | pago
@@ -350,20 +349,21 @@ export default function BuscarPerfiles() {
   useEffect(() => {
     const colegioFiltro = role === "admin" ? usuario.id : undefined;
     const fetchColegios = canSeeColegios ? getColegios() : Promise.reject();
-    Promise.allSettled([getEstudiantes(colegioFiltro), getEmpresas(), getVacantes(), getTalleres(true), fetchColegios, getCarrerasColegios()])
-      .then(([sts, cos, vacs, tals, cols, cars]) => {
+    Promise.allSettled([getEstudiantes(colegioFiltro), getEmpresas(), getVacantes(), getTalleres(true), fetchColegios])
+      .then(([sts, cos, vacs, tals, cols]) => {
         if (sts.status  === "fulfilled") setStudents(sts.value);
         if (cos.status  === "fulfilled") setCompanies(cos.value);
         if (vacs.status === "fulfilled") setVacantes(vacs.value);
         if (tals.status === "fulfilled") setTalleres(tals.value);
         if (cols.status === "fulfilled") setColegios(cols.value);
-        if (cars.status === "fulfilled") setCarrerasColegios(cars.value);
       })
       .finally(() => setLoading(false));
   }, []);
 
   const uniqueCareers = ["Todas", ...new Set(students.map((s) => s.carrera).filter(Boolean))];
-  const uniqueAreas = ["Todas", ...carrerasColegios.map((c) => c.nombre)];
+  const uniqueAreas   = ["Todas", ...new Set(
+    (tab === "vacantes" ? vacantes : talleres).map((x) => x.area).filter(Boolean)
+  )];
   const uniqueHabilidades = [...new Set(
     tab === "estudiantes"
       ? students.flatMap((s) => s.habilidades || [])
@@ -564,7 +564,7 @@ export default function BuscarPerfiles() {
             )}
 
             {/* Filtro área (vacantes / talleres) */}
-            {(tab === "vacantes" || tab === "talleres") && uniqueAreas.length > 1 && (
+            {(tab === "vacantes" || tab === "talleres") && uniqueAreas.length > 2 && (
               <div className={`border-t ${B} pt-4 mb-4`}>
                 <div className="flex items-center justify-between mb-2">
                   <label className={`text-xs ${M}`}>Área</label>

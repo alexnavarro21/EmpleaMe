@@ -115,9 +115,9 @@ CREATE TABLE IF NOT EXISTS vacantes (
   titulo         VARCHAR(150) NOT NULL,
   descripcion    TEXT NOT NULL,
   requisitos     TEXT,
-  carrera_id     INT          DEFAULT NULL,
   esta_activa    BOOLEAN DEFAULT TRUE,
   tipo           ENUM('practica','puesto_laboral') DEFAULT 'practica',
+  area           VARCHAR(100) DEFAULT NULL,
   modalidad      ENUM('presencial','remoto','hibrido') DEFAULT 'presencial',
   duracion       VARCHAR(100) DEFAULT NULL,
   horario        VARCHAR(150) DEFAULT NULL,
@@ -126,8 +126,7 @@ CREATE TABLE IF NOT EXISTS vacantes (
   beneficios     TEXT DEFAULT NULL,
   fecha_limite   DATE DEFAULT NULL,
   fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (empresa_id)  REFERENCES perfiles_empresas(usuario_id) ON DELETE CASCADE,
-  FOREIGN KEY (carrera_id)  REFERENCES carreras(id)                  ON DELETE SET NULL
+  FOREIGN KEY (empresa_id) REFERENCES perfiles_empresas(usuario_id) ON DELETE CASCADE
 );
 
 -- 9. Postulaciones

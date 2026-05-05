@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, PrimaryButton, SecondaryButton, FormField, TextAreaField, SelectField, PageHeader } from "../../components/ui";
-import { crearVacante, getHabilidades, getCarreras, moderarContenido } from "../../services/api";
+import { crearVacante, getHabilidades, moderarContenido } from "../../services/api";
 import FileUploader from "../../components/FileUploader";
 
 const modalidades = [
@@ -23,8 +23,7 @@ export default function EmpresaPublicarVacante() {
 
   const [tipo, setTipo] = useState("practica");
   const [titulo, setTitulo] = useState("");
-  const [carreraId, setCarreraId] = useState("");
-  const [carreras, setCarreras] = useState([]);
+  const [area, setArea] = useState("Mecánica Automotriz");
   const [duracion, setDuracion] = useState("");
   const [horario, setHorario] = useState("");
   const [remuneracion, setRemuneracion] = useState("");
@@ -47,10 +46,6 @@ export default function EmpresaPublicarVacante() {
 
   useEffect(() => {
     getHabilidades().then(setCatalogoHabilidades).catch(console.error);
-    getCarreras().then((data) => {
-      setCarreras(data);
-      if (data.length > 0) setCarreraId(String(data[0].id));
-    }).catch(console.error);
   }, []);
 
   function toggleHabilidad(id) {
@@ -75,7 +70,7 @@ export default function EmpresaPublicarVacante() {
       }
 
       await crearVacante({
-        tipo, titulo, descripcion, requisitos, carrera_id: carreraId || undefined, modalidad,
+        tipo, titulo, descripcion, requisitos, area, modalidad,
         duracion, horario, remuneracion, direccion, beneficios,
         fecha_limite: fechaLimite || undefined,
         habilidades: habilidadesSeleccionadas,
@@ -133,10 +128,11 @@ export default function EmpresaPublicarVacante() {
               onChange={(e) => setTitulo(e.target.value)}
             />
             <div className="grid grid-cols-2 gap-4">
-              <SelectField label="Área / Carrera" value={carreraId} onChange={(e) => setCarreraId(e.target.value)}>
-                {carreras.map((c) => (
-                  <option key={c.id} value={c.id}>{c.nombre}</option>
-                ))}
+              <SelectField label="Área / Carrera" value={area} onChange={(e) => setArea(e.target.value)}>
+                <option>Mecánica Automotriz</option>
+                <option>Administración</option>
+                <option>Contabilidad</option>
+                <option>Servicio al Cliente</option>
               </SelectField>
               <FormField
                 label="Duración de la práctica"
@@ -352,7 +348,7 @@ export default function EmpresaPublicarVacante() {
                 }`}>
                   {tipo === "practica" ? "Práctica" : "Puesto laboral"}
                 </span>
-                {carreraId && <span className={`text-xs px-2 py-0.5 rounded-full ${isDark ? "bg-[#0F4D8A]/20 text-[#378ADD]" : "bg-[#E6F1FB] text-[#0F4D8A]"}`}>{carreras.find((c) => String(c.id) === String(carreraId))?.nombre}</span>}
+                {area && <span className={`text-xs px-2 py-0.5 rounded-full ${isDark ? "bg-[#0F4D8A]/20 text-[#378ADD]" : "bg-[#E6F1FB] text-[#0F4D8A]"}`}>{area}</span>}
                 <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${isDark ? "bg-[#0F4D8A]/20 text-[#378ADD]" : "bg-[#E6F1FB] text-[#0F4D8A]"}`}>{modalidad}</span>
               </div>
               {habilidadesSeleccionadas.length > 0 && (

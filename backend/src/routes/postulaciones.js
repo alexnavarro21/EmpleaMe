@@ -42,13 +42,11 @@ router.get("/estudiante", verificarToken, soloRol("estudiante"), async (req, res
   try {
     const [rows] = await db.query(
       `SELECT p.id, p.estado, p.fecha_creacion,
-              v.id AS vacante_id, v.titulo, v.modalidad,
-              c.nombre AS area,
+              v.id AS vacante_id, v.titulo, v.area, v.modalidad,
               pe.nombre_empresa
        FROM postulaciones p
        JOIN vacantes v ON v.id = p.vacante_id
        JOIN perfiles_empresas pe ON pe.usuario_id = v.empresa_id
-       LEFT JOIN carreras c ON c.id = v.carrera_id
        WHERE p.estudiante_id = ?
        ORDER BY p.fecha_creacion DESC`,
       [req.usuario.id]

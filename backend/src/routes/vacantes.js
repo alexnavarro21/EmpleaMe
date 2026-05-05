@@ -4,26 +4,24 @@ const { verificarToken, soloRol } = require("../middleware/auth");
 const upload = require("../middleware/multerConfig");
 
 // GET /api/vacantes  — vacantes activas (para estudiantes)
-// Query params opcionales: ?area=nombre&modalidad=&tipo=&carrera_id=
+// Query params opcionales: ?area=&modalidad=&tipo=
 router.get("/", verificarToken, async (req, res) => {
-  const { area, modalidad, tipo, carrera_id } = req.query;
+  const { area, modalidad, tipo } = req.query;
   const tiposValidos = ["practica", "puesto_laboral"];
   const modalidadesValidas = ["presencial", "remoto", "hibrido"];
 
   const condiciones = ["v.esta_activa = TRUE"];
   const params = [];
 
-  if (carrera_id) { condiciones.push("v.carrera_id = ?"); params.push(parseInt(carrera_id)); }
-  else if (area)  { condiciones.push("c.nombre = ?"); params.push(area); }
+  if (area) { condiciones.push("v.area = ?"); params.push(area); }
   if (modalidadesValidas.includes(modalidad)) { condiciones.push("v.modalidad = ?"); params.push(modalidad); }
   if (tiposValidos.includes(tipo)) { condiciones.push("v.tipo = ?"); params.push(tipo); }
 
   try {
     const [rows] = await db.query(
-      `SELECT v.*, c.nombre AS area, c.id AS carrera_id, pe.nombre_empresa
+      `SELECT v.*, pe.nombre_empresa
        FROM vacantes v
        JOIN perfiles_empresas pe ON pe.usuario_id = v.empresa_id
-       LEFT JOIN carreras c ON c.id = v.carrera_id
        WHERE ${condiciones.join(" AND ")}
        ORDER BY v.fecha_creacion DESC`,
       params
@@ -57,10 +55,9 @@ router.get("/", verificarToken, async (req, res) => {
 router.get("/empresa/:id", verificarToken, async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT v.*, c.nombre AS area, c.id AS carrera_id,
+      `SELECT v.*,
               (SELECT COUNT(*) FROM postulaciones p WHERE p.vacante_id = v.id) AS total_postulantes
        FROM vacantes v
-       LEFT JOIN carreras c ON c.id = v.carrera_id
        WHERE v.empresa_id = ?
        ORDER BY v.fecha_creacion DESC`,
       [req.params.id]
@@ -73,19 +70,18 @@ router.get("/empresa/:id", verificarToken, async (req, res) => {
 
 // POST /api/vacantes  — publicar vacante (solo empresa)
 router.post("/", verificarToken, soloRol("empresa"), upload.single("archivo_multimedia"), async (req, res) => {
-  const { titulo, descripcion, requisitos, carrera_id, modalidad, duracion, horario, remuneracion, direccion, beneficios, fecha_limite, habilidades, tipo } = req.body;
+  const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, remuneracion, direccion, beneficios, fecha_limite, habilidades, tipo } = req.body;
   if (!titulo || !descripcion)
     return res.status(400).json({ error: "titulo y descripcion son requeridos" });
   const tipoValido = tipo === "puesto_laboral" ? "puesto_laboral" : "practica";
-  const carreraIdVal = carrera_id ? parseInt(carrera_id) : null;
   try {
     const [result] = await db.query(
       `INSERT INTO vacantes
-         (empresa_id, carrera_id, tipo, titulo, descripcion, requisitos, modalidad, duracion, horario, remuneracion, direccion, beneficios, fecha_limite)
+         (empresa_id, tipo, titulo, descripcion, requisitos, area, modalidad, duracion, horario, remuneracion, direccion, beneficios, fecha_limite)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        req.usuario.id, carreraIdVal, tipoValido, titulo, descripcion,
-        requisitos || null,
+        req.usuario.id, tipoValido, titulo, descripcion,
+        requisitos || null, area || null,
         modalidad || "presencial",
         duracion || null, horario || null,
         remuneracion || null, direccion || null,

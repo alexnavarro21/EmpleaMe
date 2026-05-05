@@ -104,7 +104,7 @@ router.get("/", verificarToken, async (req, res) => {
                 ELSE NULL
               END AS autor_foto_perfil,
               ${likesFields}
-              ${vacanteTipoField}, v.esta_activa AS vacante_activa, vc.nombre AS area, v.modalidad, v.duracion, v.remuneracion, v.direccion
+              ${vacanteTipoField}, v.esta_activa AS vacante_activa, v.area, v.modalidad, v.duracion, v.remuneracion, v.direccion
        FROM publicaciones p
        JOIN tipos_publicacion tp   ON tp.id  = p.tipo_id
        JOIN usuarios u             ON u.id   = p.autor_id
@@ -112,7 +112,6 @@ router.get("/", verificarToken, async (req, res) => {
        LEFT JOIN perfiles_estudiantes est ON est.usuario_id = u.id
        LEFT JOIN perfiles_colegios pc     ON pc.usuario_id  = u.id
        LEFT JOIN vacantes v               ON v.id = p.vacante_id
-       LEFT JOIN carreras vc              ON vc.id = v.carrera_id
        WHERE p.esta_activa = TRUE
        ${autor_id ? "AND p.autor_id = ?" : ""}
        ORDER BY p.publicado_en DESC
