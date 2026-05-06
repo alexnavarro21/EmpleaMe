@@ -1598,61 +1598,61 @@ INSERT INTO perfiles_empresas (usuario_id, nombre_empresa, telefono_contacto, de
 
 -- ── H. Vacantes nuevas (2 por empresa) ──────────────────────
 
-INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, jornada, remuneracion, ubicacion, beneficios, fecha_cierre, esta_activa, creado_en)
+INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, remuneracion, direccion, beneficios, fecha_limite, esta_activa, fecha_creacion)
   VALUES (@emp_norte, 'Práctica Técnico en Mecánica Automotriz',
     'Buscamos practicante para área de taller de mantención preventiva de vehículos livianos y de carga. Trabajará junto a mecánicos certificados con más de 10 años de experiencia.',
     'Estudiante de 4° Medio o egresado de Mecánica Automotriz. Disponibilidad de lunes a viernes.',
-    'presencial', 'completa', '$250.000 mensual',
+    'presencial', '$250.000 mensual',
     'Av. Los Mineros 450, Copiapó',
     'Colación provista. EPP completo. Uniforme. Certificado de práctica detallado.',
     DATE_ADD(CURDATE(), INTERVAL 30 DAY), TRUE, DATE_SUB(NOW(), INTERVAL 5 DAY));
 SET @v_norte1 = LAST_INSERT_ID();
 
-INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, jornada, remuneracion, ubicacion, beneficios, fecha_cierre, esta_activa, creado_en)
+INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, remuneracion, direccion, beneficios, fecha_limite, esta_activa, fecha_creacion)
   VALUES (@emp_norte, 'Técnico Automotriz Junior',
     'Posición permanente para técnico junior en área de diagnóstico electrónico y mantención correctiva. Trabajo en flota de vehículos mineros.',
     'Egresado de Mecánica Automotriz con manejo de OBD-II. Licencia de conducir clase B.',
-    'presencial', 'completa', '$550.000 + bono',
+    'presencial', '$550.000 + bono',
     'Av. Los Mineros 450, Copiapó',
     'Seguro complementario de salud. Bono de productividad mensual. Uniforme y EPP.',
     DATE_ADD(CURDATE(), INTERVAL 45 DAY), TRUE, DATE_SUB(NOW(), INTERVAL 3 DAY));
 SET @v_norte2 = LAST_INSERT_ID();
 
-INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, jornada, remuneracion, ubicacion, beneficios, fecha_cierre, esta_activa, creado_en)
+INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, remuneracion, direccion, beneficios, fecha_limite, esta_activa, fecha_creacion)
   VALUES (@emp_barr, 'Práctica en Contabilidad y Tributación',
     'Practicante para apoyar en registro contable, cuadraturas, emisión de documentos tributarios y atención de clientes empresariales.',
     'Estudiante o egresado de Administración con conocimientos de contabilidad general y SII. Manejo de Excel.',
-    'presencial', 'parcial', '$200.000 mensual',
+    'presencial', '$200.000 mensual',
     'Teniente Cruz 890, Cerro Navia',
     'Colación incluida. Mentoría de contador senior. Evaluación para contratación al término.',
     DATE_ADD(CURDATE(), INTERVAL 25 DAY), TRUE, DATE_SUB(NOW(), INTERVAL 7 DAY));
 SET @v_barr1 = LAST_INSERT_ID();
 
-INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, jornada, remuneracion, ubicacion, beneficios, fecha_cierre, esta_activa, creado_en)
+INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, remuneracion, direccion, beneficios, fecha_limite, esta_activa, fecha_creacion)
   VALUES (@emp_barr, 'Auxiliar Contable',
     'Posición part-time para apoyo en área contable. Responsable de conciliaciones bancarias, libro de compras/ventas y emisión de facturas.',
     'Egresado de Administración con conocimiento de Conta+ o SoftLand. Proactividad y orientación al detalle.',
-    'presencial', 'parcial', '$380.000 mensual',
+    'presencial', '$380.000 mensual',
     'Teniente Cruz 890, Cerro Navia',
     'Horario flexible. Posibilidad de contrato indefinido. Capacitación continua.',
     DATE_ADD(CURDATE(), INTERVAL 35 DAY), TRUE, DATE_SUB(NOW(), INTERVAL 2 DAY));
 SET @v_barr2 = LAST_INSERT_ID();
 
-INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, jornada, remuneracion, ubicacion, beneficios, fecha_cierre, esta_activa, creado_en)
+INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, remuneracion, direccion, beneficios, fecha_limite, esta_activa, fecha_creacion)
   VALUES (@emp_fl, 'Asistente Administrativo de Proyectos',
     'Apoyo en gestión de contratos, coordinación de proveedores y control documental de proyectos de construcción en la zona sur de Santiago.',
     'Egresado o estudiante de Administración. Manejo de Excel y Word. Buena redacción.',
-    'presencial', 'completa', '$420.000 mensual',
+    'presencial', '$420.000 mensual',
     'Av. Vicuña Mackenna Sur 1200, La Florida',
     'Seguro de salud complementario. Bono de desempeño semestral. Estacionamiento.',
     DATE_ADD(CURDATE(), INTERVAL 40 DAY), TRUE, DATE_SUB(NOW(), INTERVAL 4 DAY));
 SET @v_fl1 = LAST_INSERT_ID();
 
-INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, jornada, remuneracion, ubicacion, beneficios, fecha_cierre, esta_activa, creado_en)
+INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, remuneracion, direccion, beneficios, fecha_limite, esta_activa, fecha_creacion)
   VALUES (@emp_fl, 'Técnico en Gestión de Contratos',
     'Revisión y control de contratos con subcontratistas, seguimiento de cumplimiento y archivo documental del área legal-administrativa.',
     'Egresado de Administración con interés en el sector construcción. Capacidad analítica y atención al detalle.',
-    'presencial', 'completa', '$480.000 mensual',
+    'presencial', '$480.000 mensual',
     'Av. Vicuña Mackenna Sur 1200, La Florida',
     'Bono por cumplimiento de hitos. Capacitación en gestión de proyectos BIM.',
     DATE_ADD(CURDATE(), INTERVAL 50 DAY), TRUE, DATE_SUB(NOW(), INTERVAL 1 DAY));
@@ -1716,18 +1716,18 @@ INSERT INTO publicaciones_vacantes (publicacion_id, vacante_id) VALUES (@pub_v_f
 
 -- ── J. Postulaciones ─────────────────────────────────────────
 
-INSERT INTO postulaciones (estudiante_id, vacante_id, estado, mensaje_postulacion, creado_en) VALUES
-  (@nd01, @v_norte1, 'pendiente', 'Me interesa mucho esta oportunidad. Tengo manejo de OBD-II y mantenimiento preventivo. Disponible de inmediato.',         DATE_SUB(NOW(), INTERVAL 4 DAY)),
-  (@nd03, @v_norte1, 'pendiente', 'Egresado de mecánica con experiencia en taller. Me identifico con el enfoque en flotas mineras de su empresa.',             DATE_SUB(NOW(), INTERVAL 3 DAY)),
-  (@nd05, @v_norte1, 'pendiente', 'Busco mi primera práctica formal. Cuento con experiencia en taller familiar y certificado de seguridad industrial.',         DATE_SUB(NOW(), INTERVAL 2 DAY)),
-  (@nd07, @v_norte1, 'pendiente', 'Mi fortaleza es el eléctrico automotriz. Postulo con entusiasmo a esta oportunidad en Copiapó.',                            DATE_SUB(NOW(), INTERVAL 2 DAY)),
-  (@nd02, @v_barr1,  'pendiente', 'Tengo sólida base en contabilidad y manejo de SII. Estoy motivada a aprender en un ambiente profesional como el de ustedes.',DATE_SUB(NOW(), INTERVAL 6 DAY)),
-  (@nd06, @v_barr1,  'pendiente', 'Conozco el ciclo contable completo y tengo experiencia con la contabilidad del negocio familiar. Muy interesada.',          DATE_SUB(NOW(), INTERVAL 5 DAY)),
-  (@nd08, @v_barr2,  'pendiente', 'Busco posición part-time que complemente mis estudios. Manejo Conta+ y he realizado prácticas en OTEC local.',               DATE_SUB(NOW(), INTERVAL 1 DAY)),
-  (@nd12, @v_barr2,  'pendiente', 'Cuento con conocimiento avanzado de software contable y facturación SII. Lista para asumir este desafío.',                  DATE_SUB(NOW(), INTERVAL 1 DAY)),
-  (@nd14, @v_fl1,    'pendiente', 'Me interesa el área de administración de proyectos en construcción. Tengo buenas habilidades de redacción y organización.',  DATE_SUB(NOW(), INTERVAL 3 DAY)),
-  (@nd16, @v_fl1,    'pendiente', 'He organizado eventos y gestionado documentación del colegio. Creo que puedo aportar al área administrativa de su empresa.',  DATE_SUB(NOW(), INTERVAL 2 DAY)),
-  (@nd18, @v_fl2,    'pendiente', 'El análisis de contratos me entusiasma. Tengo bases en gestión financiera y estoy habituada a leer documentación técnica.',   DATE_SUB(NOW(), INTERVAL 1 DAY));
+INSERT INTO postulaciones (estudiante_id, vacante_id, estado, fecha_creacion) VALUES
+  (@nd01, @v_norte1, 'pendiente', DATE_SUB(NOW(), INTERVAL 4 DAY)),
+  (@nd03, @v_norte1, 'pendiente', DATE_SUB(NOW(), INTERVAL 3 DAY)),
+  (@nd05, @v_norte1, 'pendiente', DATE_SUB(NOW(), INTERVAL 2 DAY)),
+  (@nd07, @v_norte1, 'pendiente', DATE_SUB(NOW(), INTERVAL 2 DAY)),
+  (@nd02, @v_barr1,  'pendiente', DATE_SUB(NOW(), INTERVAL 6 DAY)),
+  (@nd06, @v_barr1,  'pendiente', DATE_SUB(NOW(), INTERVAL 5 DAY)),
+  (@nd08, @v_barr2,  'pendiente', DATE_SUB(NOW(), INTERVAL 1 DAY)),
+  (@nd12, @v_barr2,  'pendiente', DATE_SUB(NOW(), INTERVAL 1 DAY)),
+  (@nd14, @v_fl1,    'pendiente', DATE_SUB(NOW(), INTERVAL 3 DAY)),
+  (@nd16, @v_fl1,    'pendiente', DATE_SUB(NOW(), INTERVAL 2 DAY)),
+  (@nd18, @v_fl2,    'pendiente', DATE_SUB(NOW(), INTERVAL 1 DAY));
 
 -- ── K. Publicaciones institucionales con imágenes ────────────
 
