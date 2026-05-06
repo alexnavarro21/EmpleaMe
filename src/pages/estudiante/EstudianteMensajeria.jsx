@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
-import { Badge, PageHeader } from "../../components/ui";
 import {
   getConversaciones, getMensajes, enviarMensaje,
   getMensajesDirectos, getMensajesDeDirecta, enviarMensajeDirecto,
@@ -210,13 +209,7 @@ export default function EstudianteMensajeria() {
   }
 
   return (
-    <div>
-      <PageHeader
-        title="Mis Mensajes"
-        subtitle="Comunícate con empresas, tu colegio y otros estudiantes"
-      />
-
-      <div className={`rounded-xl border ${B} overflow-hidden flex`} style={{ height: "560px" }}>
+    <div className="fixed inset-x-0 bottom-0 flex overflow-hidden" style={{ top: "56px" }}>
         {/* Lista de conversaciones */}
         <div className={`w-72 flex-shrink-0 border-r ${B} flex flex-col ${cardBg}`}>
           <div className="flex-1 overflow-y-auto pt-2">
@@ -384,7 +377,6 @@ export default function EstudianteMensajeria() {
             </>
           )}
         </div>
-      </div>
     </div>
   );
 }

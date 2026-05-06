@@ -2,12 +2,25 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
-import { Badge, PageHeader } from "../../components/ui";
 import {
   getConversaciones, getMensajes, getNotasAdmin, agregarNotaAdmin,
   getMensajesDirectos, getMensajesDeDirecta, enviarMensajeDirecto,
   getSlepInfo, iniciarMensajeDirecto, getMediaUrl,
 } from "../../services/api";
+
+const ROL_LABEL = {
+  empresa: "Empresa", estudiante: "Estudiante", colegio: "Colegio", slep: "SLEP",
+};
+
+function RolTag({ rol, isDark }) {
+  return (
+    <span className={`text-xs px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${
+      isDark ? "bg-[#3a3a38] text-[#888780]" : "bg-[#ECEAE5] text-[#5F5E5A]"
+    }`}>
+      {ROL_LABEL[rol] || rol || "–"}
+    </span>
+  );
+}
 
 function formatTime(ts) {
   if (!ts) return "";
@@ -95,7 +108,7 @@ function SupervisionPanel({ isDark }) {
   const conv = conversations.find((c) => c.id === selected);
 
   return (
-    <div className={`rounded-xl border ${B} overflow-hidden flex`} style={{ height: "600px" }}>
+    <div className="h-full flex overflow-hidden">
       {/* Lista */}
       <div className={`w-72 flex-shrink-0 border-r ${B} flex flex-col ${cardBg}`}>
         <div className={`p-3 border-b ${B}`}>
@@ -290,7 +303,7 @@ function DirectosPanel({ isDark, initialDirectaId }) {
   };
 
   return (
-    <div className={`rounded-xl border ${B} overflow-hidden flex`} style={{ height: "600px" }}>
+    <div className="h-full flex overflow-hidden">
       {/* Lista */}
       <div className={`w-72 flex-shrink-0 border-r ${B} flex flex-col ${cardBg}`}>
         <div className="flex-1 overflow-y-auto pt-2">
@@ -317,9 +330,12 @@ function DirectosPanel({ isDark, initialDirectaId }) {
                     <span className={`text-sm font-semibold ${T} truncate flex-1`}>{c.contraparte || "Sin nombre"}</span>
                     <span className={`text-xs ${M} ml-2 flex-shrink-0`}>{formatTime(c.ultimo_tiempo)}</span>
                   </div>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-1">
                     <p className={`text-xs ${M} truncate flex-1`}>{c.ultimo_mensaje || "Sin mensajes aún"}</p>
-                    {c.no_leidos > 0 && <span className="w-4 h-4 rounded-full bg-[#0F4D8A] text-white text-xs flex items-center justify-center flex-shrink-0 ml-2">{c.no_leidos}</span>}
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <RolTag rol={c.contraparte_rol} isDark={isDark} />
+                      {c.no_leidos > 0 && <span className="w-4 h-4 rounded-full bg-[#0F4D8A] text-white text-xs flex items-center justify-center">{c.no_leidos}</span>}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -415,45 +431,43 @@ export default function AdminMensajeria() {
   };
 
   return (
-    <div>
-      <PageHeader
-        title="Mensajería"
-        subtitle="Supervisión de conversaciones y mensajes directos"
-        action={
-          <button
-            onClick={handleContactarSlep}
-            disabled={contactandoSlep}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
-              isDark
-                ? "bg-[#0F4D8A]/20 text-[#85B7EB] hover:bg-[#0F4D8A]/35 border border-[#0F4D8A]/40"
-                : "bg-[#E6F1FB] text-[#0F4D8A] hover:bg-[#D0E8FA] border border-[#B5D4F4]"
-            }`}
-          >
-            <Icon
-              icon={contactandoSlep ? "mdi:loading" : "mdi:message-arrow-right-outline"}
-              width={16}
-              className={contactandoSlep ? "animate-spin" : ""}
-            />
-            {contactandoSlep ? "Conectando..." : "Contactar mi SLEP"}
-          </button>
-        }
-      />
+    <div className="fixed inset-x-0 bottom-0 flex flex-col" style={{ top: "56px" }}>
+      <div className={`flex items-center gap-4 pl-2 pr-7.5 py-3 border-b ${B} ${cardBg} flex-shrink-0`}>
+        <div className="flex gap-1">
+          {[
+            { id: "supervision", icon: "mdi:eye", label: "Supervisión" },
+            { id: "directos",    icon: "mdi:message-text-outline", label: "Mis Mensajes" },
+          ].map((t) => (
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${tab === t.id ? "bg-[#0F4D8A] text-[#E6F1FB]" : `${M} hover:bg-[#0F4D8A]/10`}`}>
+              <Icon icon={t.icon} width={15} />
+              {t.label}
+            </button>
+          ))}
+        </div>
 
-      <div className={`flex gap-1 mb-2 -mt-4 p-1 rounded-xl w-72 border ${B} ${cardBg}`}>
-        {[
-          { id: "supervision", icon: "mdi:eye", label: "Supervisión" },
-          { id: "directos",    icon: "mdi:message-text-outline", label: "Mis Mensajes" },
-        ].map((t) => (
-          <button key={t.id} onClick={() => setTab(t.id)}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${tab === t.id ? "bg-[#0F4D8A] text-[#E6F1FB]" : `${M} hover:bg-[#0F4D8A]/10`}`}>
-            <Icon icon={t.icon} width={15} />
-            {t.label}
-          </button>
-        ))}
+        <button
+          onClick={handleContactarSlep}
+          disabled={contactandoSlep}
+          className={`ml-auto flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
+            isDark
+              ? "bg-[#0F4D8A]/20 text-[#85B7EB] hover:bg-[#0F4D8A]/35 border border-[#0F4D8A]/40"
+              : "bg-[#E6F1FB] text-[#0F4D8A] hover:bg-[#D0E8FA] border border-[#B5D4F4]"
+          }`}
+        >
+          <Icon
+            icon={contactandoSlep ? "mdi:loading" : "mdi:message-arrow-right-outline"}
+            width={16}
+            className={contactandoSlep ? "animate-spin" : ""}
+          />
+          {contactandoSlep ? "Conectando..." : "Contactar mi SLEP"}
+        </button>
       </div>
 
-      {tab === "supervision" && <SupervisionPanel isDark={isDark} />}
-      {tab === "directos"    && <DirectosPanel    isDark={isDark} initialDirectaId={directaIdSlep} />}
+      <div className="flex-1 overflow-hidden">
+        {tab === "supervision" && <SupervisionPanel isDark={isDark} />}
+        {tab === "directos"    && <DirectosPanel    isDark={isDark} initialDirectaId={directaIdSlep} />}
+      </div>
     </div>
   );
 }
