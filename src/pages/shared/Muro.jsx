@@ -8,6 +8,7 @@ import { calcularCompletitud } from "../../utils/perfilCompletitud";
 import CrearPublicacion from "../../components/CrearPublicacion";
 import VerMasModal from "../../components/VerMasModal";
 import ModalReporteShared from "../../components/ModalReporte";
+import { MascotaFlotante } from "../../components/Mascota";
 
 const AVATAR_COLORS = ["bg-[#0F4D8A]", "bg-red-500", "bg-green-600", "bg-teal-600", "bg-amber-500"];
 
@@ -2017,5 +2018,7 @@ export default function EstudianteDashboard() {
 
       </div>}
     </div>
+
+    <MascotaFlotante />
   );
 }

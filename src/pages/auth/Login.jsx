@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDark } from "../../context/DarkModeContext";
 import { loginUsuario, registrarUsuario, listarColegios } from "../../services/api";
+import Mascota from "../../components/Mascota";
 
 const RUTAS_ROL = {
   estudiante: "/estudiante/muro",
@@ -162,6 +163,9 @@ export default function Login() {
                 </div>
               ))}
             </div>
+
+            {/* Mascota saludando */}
+            <Mascota pose="saludando" className="absolute bottom-0 right-0 w-28 opacity-90" />
           </div>
 
           {/* Right panel */}
