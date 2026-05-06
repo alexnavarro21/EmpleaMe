@@ -152,21 +152,76 @@ INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES
   ('colegio@empleame.cl',    'colegio123',    'colegio'),
   ('slep@empleame.cl',       'slep123',       'slep');
 
-INSERT INTO perfiles_colegios (usuario_id, nombre_institucion, telefono_contacto, descripcion) VALUES
-  (3, 'C.E. Cardenal J.M. Caro', '+56222334455', 'Centro educacional técnico profesional.');
+INSERT INTO perfiles_slep (usuario_id, nombre_organismo, telefono_contacto, descripcion, region)
+  VALUES (4, 'SLEP Santiago Centro', '+56222001122',
+    'Servicio Local de Educación Pública del sector centro de Santiago. Administra establecimientos técnico-profesionales con foco en mecánica automotriz y administración de empresas.',
+    'Región Metropolitana de Santiago');
+
+INSERT INTO perfiles_colegios (usuario_id, slep_id, nombre_institucion, telefono_contacto, descripcion, region, comuna)
+  VALUES (3, 4, 'C.E. Cardenal J.M. Caro', '+56222334455',
+    'Centro educacional técnico profesional con especialidades en Mecánica Automotriz y Administración. Más de 30 años formando técnicos para el mercado laboral de la Región Metropolitana.',
+    'Región Metropolitana de Santiago', 'Santiago');
 
 INSERT INTO perfiles_estudiantes
-  (usuario_id, nombre, apellido_paterno, carrera_id, telefono, biografia, colegio_id)
+  (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, nivel, promedio,
+   calificacion_docente, telefono, biografia, estado_civil, genero, region, comuna, colegio_id)
 VALUES
-  (1, 'Juan', 'Pérez',
+  (1, 'Juan', 'Pérez', 'González', '20.987.654-3',
    (SELECT id FROM carreras WHERE nombre = 'Mecanica Automotriz'),
-   '+56912345678',
-   'Estudiante de tercer año apasionado por la mecánica moderna y los vehículos eléctricos.',
-   3);
+   '3° Medio', 5.9, 6.1, '+56 9 1234 5678',
+   'Técnico en formación en Mecánica Automotriz con especial interés en diagnóstico electrónico y vehículos eléctricos. He participado en talleres de OBD-II, mantenimiento preventivo y reparación de motor en el taller escolar. Busco una práctica profesional donde pueda aplicar mis conocimientos junto a técnicos experimentados.',
+   'soltero', 'masculino', 'Región Metropolitana de Santiago', 'Santiago', 3);
 
-INSERT INTO perfiles_empresas (usuario_id, nombre_empresa, telefono_contacto, descripcion) VALUES
-  (2, 'Taller Automotriz del Sur', '+56922334455',
-   'Empresa dedicada al mantenimiento y reparación de vehículos livianos y pesados.');
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES
+  (1, 'Español', 'Nativo'),
+  (1, 'Inglés',  'Básico');
+
+INSERT INTO historial_academico (estudiante_id, institucion, titulo, area, fecha_inicio, fecha_fin) VALUES
+  (1, 'C.E. Cardenal J.M. Caro',   'Técnico en Mecánica Automotriz', 'Automotriz',  2022, NULL),
+  (1, 'INACAP Santiago Centro',     'Taller OBD-II y Diagnóstico Electrónico', 'Diagnóstico', 2023, 2023),
+  (1, 'Autozone Academy (online)',  'Certificación Mantenimiento Preventivo',  'Automotriz',  2024, 2024);
+
+INSERT INTO historial_laboral (estudiante_id, empresa_nombre, cargo, fecha_inicio, fecha_fin, descripcion, tipo) VALUES
+  (1, 'Taller Mecánico Pérez e Hijo', 'Ayudante mecánico', '2023-07-01', '2023-12-31',
+   'Apoyo en cambios de aceite, filtros, revisión de frenos y diagnóstico básico en vehículos livianos del taller familiar.', 'verificado'),
+  (1, 'Taller Automotriz del Sur',    'Practicante técnico', '2024-03-01', '2024-06-30',
+   'Práctica voluntaria en área de diagnóstico electrónico y mantención preventiva. Uso de scanner OBD-II en vehículos reales.', 'verificado');
+
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+  SELECT 1, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Diagnóstico electrónico OBD-II'          UNION ALL
+  SELECT 1, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Cambio de aceite y filtros'              UNION ALL
+  SELECT 1, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Mantenimiento preventivo'                UNION ALL
+  SELECT 1, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Reparación de motor a gasolina'          UNION ALL
+  SELECT 1, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Sistemas de frenos ABS y convencionales' UNION ALL
+  SELECT 1, id, 'Intermedio', NULL, FALSE FROM habilidades WHERE nombre = 'Sistemas eléctricos y electrónicos'      UNION ALL
+  SELECT 1, id, 'Basico',     NULL, FALSE FROM habilidades WHERE nombre = 'Suspensión y dirección'                  UNION ALL
+  SELECT 1, id, 'Basico',      91,  TRUE  FROM habilidades WHERE nombre = 'Trabajo en equipo'                       UNION ALL
+  SELECT 1, id, 'Basico',      88,  TRUE  FROM habilidades WHERE nombre = 'Responsabilidad y puntualidad'           UNION ALL
+  SELECT 1, id, 'Basico',      85,  TRUE  FROM habilidades WHERE nombre = 'Resolución de problemas'                 UNION ALL
+  SELECT 1, id, 'Basico',      82,  FALSE FROM habilidades WHERE nombre = 'Adaptabilidad al cambio';
+
+INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, publicado_en) VALUES
+  (1, (SELECT id FROM tipos_publicacion WHERE nombre = 'logro'),
+   'Completé mi certificación en diagnóstico OBD-II',
+   'Después de semanas de práctica en el taller escolar, completé el taller de diagnóstico electrónico en INACAP. Aprendí a leer códigos de falla, analizar parámetros en tiempo real y descartar fallas intermitentes. Un paso importante para mi carrera.',
+   DATE_SUB(NOW(), INTERVAL 55 DAY)),
+  (1, (SELECT id FROM tipos_publicacion WHERE nombre = 'general'),
+   'Primera semana de práctica en Taller Automotriz del Sur',
+   'Esta semana arranqué mi práctica voluntaria. El primer día me pusieron a hacer cambios de aceite y revisión de frenos, y al tercer día ya estaba con el scanner en mano. El equipo es increíble y aprendo algo nuevo cada hora.',
+   DATE_SUB(NOW(), INTERVAL 38 DAY)),
+  (1, (SELECT id FROM tipos_publicacion WHERE nombre = 'general'),
+   'Por qué me apasionan los vehículos eléctricos',
+   'Desde que vimos el módulo de sistemas eléctricos me enganché. La idea de que un motor sin combustión pueda generar ese torque es fascinante. Mi meta es especializarme en diagnóstico de EVs una vez que egrese.',
+   DATE_SUB(NOW(), INTERVAL 15 DAY)),
+  (1, (SELECT id FROM tipos_publicacion WHERE nombre = 'logro'),
+   'Diagnostiqué mi primera falla real sin ayuda',
+   'Un Toyota Yaris entró al taller con la luz de check engine encendida. Conecté el scanner, leí el código P0420 (catalizador ineficiente), verifiqué los sensores de O2 y confirmé el diagnóstico. El técnico a cargo me felicitó. Ese momento valió todo el esfuerzo.',
+   DATE_SUB(NOW(), INTERVAL 4 DAY));
+
+INSERT INTO perfiles_empresas (usuario_id, nombre_empresa, telefono_contacto, descripcion, region, comuna)
+  VALUES (2, 'Taller Automotriz del Sur', '+56922334455',
+    'Empresa dedicada al mantenimiento y reparación de vehículos livianos y pesados. Contamos con taller equipado para diagnóstico electrónico, mecánica general y servicio de neumáticos. Ofrecemos prácticas profesionales supervisadas.',
+    'Región Metropolitana de Santiago', 'San Miguel');
 
 -- ── 7. Estudiantes demo ───────────────────────────────────────
 DELETE FROM usuarios WHERE correo IN (
@@ -483,76 +538,76 @@ INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, url_multimedia,
    'Esta foto la tomé antes de ir a la ceremonia. Promedio 6.8, distinción académica y la certeza de que el esfuerzo tiene sentido.',
    '/api/media/uploads/fernanda_escritorio.jpg', DATE_SUB(NOW(), INTERVAL 2 DAY));
 
--- ── 9. Publicaciones recientes (últimas 24 horas) ─────────────
+-- ── 9. Publicaciones distribuidas en el semestre ──────────────
 INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, publicado_en) VALUES
   ((SELECT id FROM usuarios WHERE correo = 'camila.torres@demo.cl'),
    (SELECT id FROM tipos_publicacion WHERE nombre = 'general'),
    'Primer día buscando práctica profesional',
    'Hoy empecé a revisar ofertas de práctica en serio. Tenía el perfil a medias, lo completé todo. Nerviosa pero lista.',
-   DATE_SUB(NOW(), INTERVAL 22 MINUTE)),
+   DATE_SUB(NOW(), INTERVAL 3 DAY)),
   ((SELECT id FROM usuarios WHERE correo = 'matias.sepulveda@demo.cl'),
    (SELECT id FROM tipos_publicacion WHERE nombre = 'logro'),
    'Escaneé mi primer vehículo con falla real',
    'Hoy en el taller escolar llegó un Hyundai con luz de check engine. Código P0301: falla de encendido en cilindro 1. Primera vez que siento que sé lo que hago.',
-   DATE_SUB(NOW(), INTERVAL 1 HOUR)),
+   DATE_SUB(NOW(), INTERVAL 8 DAY)),
   ((SELECT id FROM usuarios WHERE correo = 'valentina.rojas@demo.cl'),
    (SELECT id FROM tipos_publicacion WHERE nombre = 'general'),
    'Terminé mi módulo de contabilidad de costos',
    'Módulo terminado con nota 6.7. Costeo por absorción, costeo variable, punto de equilibrio y análisis de márgenes.',
-   DATE_SUB(NOW(), INTERVAL 2 HOUR)),
+   DATE_SUB(NOW(), INTERVAL 18 DAY)),
   ((SELECT id FROM usuarios WHERE correo = 'diego.castillo@demo.cl'),
    (SELECT id FROM tipos_publicacion WHERE nombre = 'logro'),
    'Motor desmontado y vuelto a armar — lo logramos',
    'Desmontaje y montaje completo de motor a gasolina 1.6L. Cuatro compañeros, cuatro horas, cero piezas sobrando al final.',
-   DATE_SUB(NOW(), INTERVAL 3 HOUR)),
+   DATE_SUB(NOW(), INTERVAL 33 DAY)),
   ((SELECT id FROM usuarios WHERE correo = 'fernanda.munoz@demo.cl'),
    (SELECT id FROM tipos_publicacion WHERE nombre = 'general'),
-   'Hoy aprendí a hacer una conciliación bancaria de verdad',
+   'Aprendí a hacer una conciliación bancaria de verdad',
    'Extracto bancario con 47 movimientos y el libro mayor para cruzar. Encontré tres diferencias. Pequeño logro, gran aprendizaje.',
-   DATE_SUB(NOW(), INTERVAL 5 HOUR)),
+   DATE_SUB(NOW(), INTERVAL 50 DAY)),
   ((SELECT id FROM usuarios WHERE correo = 'camila.torres@demo.cl'),
    (SELECT id FROM tipos_publicacion WHERE nombre = 'logro'),
    'Conseguí mi primera entrevista de práctica',
    'Me llamaron de una empresa de servicios para una entrevista la próxima semana. Sea cual sea el resultado, ya es un avance enorme.',
-   DATE_SUB(NOW(), INTERVAL 8 HOUR)),
+   DATE_SUB(NOW(), INTERVAL 67 DAY)),
   ((SELECT id FROM usuarios WHERE correo = 'valentina.rojas@demo.cl'),
    (SELECT id FROM tipos_publicacion WHERE nombre = 'general'),
    'Presentamos proyecto final de ERP en clases',
    'Hoy expusimos el proyecto de gestión con SAP básico frente a toda la generación. El profe dijo que fue la presentación más completa del año.',
-   DATE_SUB(NOW(), INTERVAL 12 HOUR)),
+   DATE_SUB(NOW(), INTERVAL 82 DAY)),
   ((SELECT id FROM usuarios WHERE correo = 'matias.sepulveda@demo.cl'),
    (SELECT id FROM tipos_publicacion WHERE nombre = 'general'),
    'Por qué elegí Mecánica Automotriz y no me arrepiento',
    'Me gusta resolver problemas que tienen una causa real y una solución concreta. Cada día que entro al taller confirmo que tomé la decisión correcta.',
-   DATE_SUB(NOW(), INTERVAL 18 HOUR));
+   DATE_SUB(NOW(), INTERVAL 105 DAY));
 
--- ── 10. Publicaciones recientes con imagen (últimos 15 min) ───
+-- ── 10. Publicaciones con imagen distribuidas en el semestre ───
 INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, url_multimedia, publicado_en) VALUES
   ((SELECT id FROM usuarios WHERE correo = 'camila.torres@demo.cl'),
    (SELECT id FROM tipos_publicacion WHERE nombre = 'general'),
    'Reunión de equipo antes de la evaluación',
    'Hoy nos juntamos antes de la evaluación modular para repasar juntos. Nerviosa pero lista.',
-   '/api/media/uploads/camila_reunion.jpg', DATE_SUB(NOW(), INTERVAL 2 MINUTE)),
+   '/api/media/uploads/camila_reunion.jpg', DATE_SUB(NOW(), INTERVAL 5 DAY)),
   ((SELECT id FROM usuarios WHERE correo = 'matias.sepulveda@demo.cl'),
    (SELECT id FROM tipos_publicacion WHERE nombre = 'general'),
    'El taller a las 7 AM — así arrancamos',
    'Primera hora en el taller y ya hay tres autos en fila. Me gusta llegar temprano.',
-   '/api/media/uploads/matias_taller2.jpg', DATE_SUB(NOW(), INTERVAL 5 MINUTE)),
+   '/api/media/uploads/matias_taller2.jpg', DATE_SUB(NOW(), INTERVAL 22 DAY)),
   ((SELECT id FROM usuarios WHERE correo = 'valentina.rojas@demo.cl'),
    (SELECT id FROM tipos_publicacion WHERE nombre = 'general'),
    'Presentación bajo presión: lo que aprendí',
    'Exponer frente a 30 personas con 10 minutos de preparación. Cuando no tienes tiempo de pensar demasiado, sale lo que realmente sabes.',
-   '/api/media/uploads/valentina_presion.jpg', DATE_SUB(NOW(), INTERVAL 8 MINUTE)),
+   '/api/media/uploads/valentina_presion.jpg', DATE_SUB(NOW(), INTERVAL 41 DAY)),
   ((SELECT id FROM usuarios WHERE correo = 'diego.castillo@demo.cl'),
    (SELECT id FROM tipos_publicacion WHERE nombre = 'general'),
    'Desarmando el motor de un auto eléctrico',
    'Hoy el profe trajo un motor eléctrico para que lo analizáramos. La cantidad de componentes que reemplazan el sistema de transmisión tradicional es impresionante.',
-   '/api/media/uploads/diego_motor2.jpg', DATE_SUB(NOW(), INTERVAL 11 MINUTE)),
+   '/api/media/uploads/diego_motor2.jpg', DATE_SUB(NOW(), INTERVAL 60 DAY)),
   ((SELECT id FROM usuarios WHERE correo = 'fernanda.munoz@demo.cl'),
    (SELECT id FROM tipos_publicacion WHERE nombre = 'general'),
    'Revisando los números del cierre con el equipo',
    'Última reunión antes de entregar el informe de cierre. Todos alineados, todo cuadrado.',
-   '/api/media/uploads/fernanda_reunion.jpg', DATE_SUB(NOW(), INTERVAL 14 MINUTE));
+   '/api/media/uploads/fernanda_reunion.jpg', DATE_SUB(NOW(), INTERVAL 78 DAY));
 
 -- ── 11. Colegios adicionales y sus estudiantes ────────────────
 DELETE FROM usuarios WHERE correo IN (
