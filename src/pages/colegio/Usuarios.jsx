@@ -190,7 +190,12 @@ function AccionesDropdown({ userId, isDark, onEliminado }) {
   const [error, setError]           = useState("");
   const [nuevaPwd, setNuevaPwd]     = useState("");
   const [pwdMsg, setPwdMsg]         = useState("");
-  const ref = useRef(null);
+  const [menuPos, setMenuPos]       = useState({ top: 0, left: 0 });
+  const ref    = useRef(null);
+  const btnRef = useRef(null);
+
+  const MENU_W = 192;
+  const MENU_H = 160;
 
   const M  = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B  = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
@@ -203,6 +208,17 @@ function AccionesDropdown({ userId, isDark, onEliminado }) {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  const handleToggle = () => {
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const top = spaceBelow < MENU_H ? rect.top - MENU_H - 4 : rect.bottom + 4;
+      const left = Math.min(rect.right - MENU_W, window.innerWidth - MENU_W - 8);
+      setMenuPos({ top, left });
+    }
+    setOpen((v) => !v);
+  };
 
   const handleEgresar = async () => {
     setCargando(true); setError("");
@@ -295,7 +311,8 @@ function AccionesDropdown({ userId, isDark, onEliminado }) {
   return (
     <div className="relative" ref={ref}>
       <button
-        onClick={() => setOpen((v) => !v)}
+        ref={btnRef}
+        onClick={handleToggle}
         className={`p-1.5 rounded-lg transition-colors ${
           isDark ? "text-[#888780] hover:bg-[#313130] hover:text-[#D3D1C7]" : "text-[#888780] hover:bg-[#F7F6F3] hover:text-[#2C2C2A]"
         }`}
@@ -304,7 +321,8 @@ function AccionesDropdown({ userId, isDark, onEliminado }) {
       </button>
 
       {open && (
-        <div className={`absolute right-0 z-20 mt-1 w-47 rounded-xl border shadow-lg py-1 ${B} ${BG}`}>
+        <div className={`fixed z-50 rounded-xl border shadow-lg py-1 ${B} ${BG}`}
+          style={{ top: menuPos.top, left: menuPos.left, width: MENU_W }}>
           <a href={`/admin/candidato/${userId}`}
             className={`flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${isDark ? "text-[#D3D1C7] hover:bg-[#313130]" : "text-[#2C2C2A] hover:bg-[#F7F6F3]"}`}
             onClick={() => setOpen(false)}>
