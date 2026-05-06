@@ -1,10 +1,10 @@
 const router = require("express").Router();
 const db = require("../db");
 const { verificarToken } = require("../middleware/auth");
-const upload = require("../middleware/multerConfig");
+const compressAndUpload = require("../middleware/compressAndUpload");
 
 // POST /api/publicaciones — crear publicación con soporte de archivos
-router.post("/", verificarToken, upload.single("archivo_multimedia"), async (req, res) => {
+router.post("/", verificarToken, compressAndUpload("archivo_multimedia"), async (req, res) => {
   const { titulo, contenido, tipo_nombre, vacante_id, tipo } = req.body;
   const archivo = req.file;
 

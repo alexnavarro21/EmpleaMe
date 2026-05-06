@@ -2,6 +2,7 @@ const router = require("express").Router();
 const db = require("../db");
 const { verificarToken, soloRol } = require("../middleware/auth");
 const upload = require("../middleware/multerConfig");
+const compressAndUpload = require("../middleware/compressAndUpload");
 
 // GET /api/talleres/inscritos/pendientes — admin ve todos los inscritos pendientes
 router.get("/inscritos/pendientes", verificarToken, soloRol("colegio"), async (req, res) => {
@@ -62,7 +63,7 @@ router.get("/", verificarToken, async (req, res) => {
   }
 });
 
-const uploadMulti = upload.single("archivo_multimedia");
+const uploadMulti = compressAndUpload("archivo_multimedia");
 
 const toBool = (v) => v === true || v === "true" || v === "1" || v === 1;
 const toIntOrNull = (v) => (v == null || v === "" ? null : parseInt(v, 10));
