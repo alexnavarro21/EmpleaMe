@@ -214,11 +214,15 @@ router.put("/:id/completar", verificarToken, soloRol("empresa"), async (req, res
     );
 
     // Crear entrada en historial laboral
-    await db.query(
+    const [hlResult] = await db.query(
       `INSERT INTO historial_laboral
-         (estudiante_id, empresa_nombre, cargo, fecha_fin, tipo, postulacion_id)
-       VALUES (?, ?, ?, CURDATE(), 'practica_completada', ?)`,
-      [post.estudiante_id, post.nombre_empresa, post.titulo, post.id]
+         (estudiante_id, empresa_nombre, cargo, fecha_fin, tipo)
+       VALUES (?, ?, ?, CURDATE(), 'practica_completada')`,
+      [post.estudiante_id, post.nombre_empresa, post.titulo]
+    );
+    await db.query(
+      `INSERT INTO historial_laboral_postulaciones (historial_id, postulacion_id) VALUES (?, ?)`,
+      [hlResult.insertId, post.id]
     );
 
     // Notificación al estudiante y al admin

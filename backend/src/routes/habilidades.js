@@ -5,7 +5,12 @@ const { verificarToken, soloRol } = require("../middleware/auth");
 // GET /api/habilidades  — catálogo completo
 router.get("/", verificarToken, async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT * FROM habilidades ORDER BY categoria, nombre");
+    const [rows] = await db.query(
+      `SELECT h.id, h.nombre, ch.nombre AS categoria
+       FROM habilidades h
+       JOIN categorias_habilidades ch ON ch.id = h.categoria_id
+       ORDER BY ch.nombre, h.nombre`
+    );
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
@@ -19,7 +24,8 @@ router.post("/", verificarToken, soloRol("colegio"), async (req, res) => {
     return res.status(400).json({ error: "nombre y categoria son requeridos" });
   try {
     const [result] = await db.query(
-      "INSERT INTO habilidades (nombre, categoria) VALUES (?, ?)",
+      `INSERT INTO habilidades (nombre, categoria_id)
+       SELECT ?, id FROM categorias_habilidades WHERE nombre = ?`,
       [nombre, categoria]
     );
     res.status(201).json({ id: result.insertId, nombre, categoria });
@@ -52,7 +58,9 @@ router.put("/:id", verificarToken, soloRol("colegio"), async (req, res) => {
     return res.status(400).json({ error: "nombre y categoria son requeridos" });
   try {
     await db.query(
-      "UPDATE habilidades SET nombre = ?, categoria = ? WHERE id = ?",
+      `UPDATE habilidades SET nombre = ?,
+         categoria_id = (SELECT id FROM categorias_habilidades WHERE nombre = ?)
+       WHERE id = ?`,
       [nombre, categoria, req.params.id]
     );
     res.json({ id: req.params.id, nombre, categoria });

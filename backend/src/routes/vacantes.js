@@ -31,9 +31,10 @@ router.get("/", verificarToken, async (req, res) => {
     if (rows.length > 0) {
       const ids = rows.map((r) => r.id);
       const [habs] = await db.query(
-        `SELECT vh.vacante_id, h.id, h.nombre, h.categoria
+        `SELECT vh.vacante_id, h.id, h.nombre, ch.nombre AS categoria
          FROM vacante_habilidades vh
          JOIN habilidades h ON h.id = vh.habilidad_id
+         JOIN categorias_habilidades ch ON ch.id = h.categoria_id
          WHERE vh.vacante_id IN (?)`,
         [ids]
       );
@@ -104,9 +105,13 @@ router.post("/", verificarToken, soloRol("empresa"), upload.single("archivo_mult
     const url_multimedia = req.file ? `/uploads/${req.file.filename}` : null;
     const [[tipoVacante]] = await db.query("SELECT id FROM tipos_publicacion WHERE nombre = 'vacante'");
     if (tipoVacante) {
+      const [pubResult] = await db.query(
+        "INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, url_multimedia) VALUES (?, ?, ?, ?, ?)",
+        [req.usuario.id, tipoVacante.id, titulo, descripcion, url_multimedia]
+      );
       await db.query(
-        "INSERT INTO publicaciones (autor_id, tipo_id, vacante_id, titulo, contenido, url_multimedia) VALUES (?, ?, ?, ?, ?, ?)",
-        [req.usuario.id, tipoVacante.id, vacanteId, titulo, descripcion, url_multimedia]
+        "INSERT INTO publicaciones_vacantes (publicacion_id, vacante_id) VALUES (?, ?)",
+        [pubResult.insertId, vacanteId]
       );
     }
 

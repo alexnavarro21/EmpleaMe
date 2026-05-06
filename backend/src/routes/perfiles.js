@@ -24,9 +24,10 @@ router.get("/estudiante/:id", verificarToken, async (req, res) => {
       return res.status(403).json({ error: "No tienes acceso a este perfil" });
 
     const [habilidades] = await db.query(
-      `SELECT h.id, h.nombre, h.categoria, he.nivel_dominio, he.porcentaje, he.esta_validada
+      `SELECT h.id, h.nombre, ch.nombre AS categoria, he.nivel_dominio, he.porcentaje, he.esta_validada
        FROM habilidades_estudiantes he
        JOIN habilidades h ON h.id = he.habilidad_id
+       JOIN categorias_habilidades ch ON ch.id = h.categoria_id
        WHERE he.estudiante_id = ?`,
       [req.params.id]
     );
@@ -46,7 +47,8 @@ router.get("/estudiante/:id", verificarToken, async (req, res) => {
               v.titulo AS vacante_titulo,
               COALESCE(hl.descripcion, v.descripcion) AS descripcion
        FROM historial_laboral hl
-       LEFT JOIN postulaciones p ON p.id = hl.postulacion_id
+       LEFT JOIN historial_laboral_postulaciones hlp ON hlp.historial_id = hl.id
+       LEFT JOIN postulaciones p ON p.id = hlp.postulacion_id
        LEFT JOIN vacantes v ON v.id = p.vacante_id
        WHERE hl.estudiante_id = ?
        ORDER BY hl.fecha_inicio DESC`,

@@ -16,10 +16,22 @@ router.post("/", verificarToken, async (req, res) => {
     return res.status(400).json({ error: "referencia_id es requerido" });
 
   try {
-    const [[existing]] = await db.query(
-      "SELECT id, estado FROM reportes WHERE reportado_por = ? AND tipo = ? AND referencia_id = ?",
-      [req.usuario.id, tipo, referencia_id]
-    );
+    let existingQuery;
+    if (tipo === "publicacion") {
+      existingQuery = `SELECT r.id, r.estado FROM reportes r
+        JOIN reportes_publicaciones rp ON rp.reporte_id = r.id
+        WHERE r.reportado_por = ? AND rp.publicacion_id = ?`;
+    } else if (tipo === "comentario") {
+      existingQuery = `SELECT r.id, r.estado FROM reportes r
+        JOIN reportes_comentarios rc ON rc.reporte_id = r.id
+        WHERE r.reportado_por = ? AND rc.comentario_id = ?`;
+    } else {
+      existingQuery = `SELECT r.id, r.estado FROM reportes r
+        JOIN reportes_perfiles rpf ON rpf.reporte_id = r.id
+        WHERE r.reportado_por = ? AND rpf.usuario_id = ?`;
+    }
+
+    const [[existing]] = await db.query(existingQuery, [req.usuario.id, referencia_id]);
 
     if (existing) {
       if (existing.estado === "pendiente")
@@ -31,14 +43,22 @@ router.post("/", verificarToken, async (req, res) => {
       return res.status(201).json({ mensaje: "Reporte enviado. El equipo lo revisará pronto." });
     }
 
-    await db.query(
-      "INSERT INTO reportes (reportado_por, tipo, referencia_id, motivo, descripcion) VALUES (?, ?, ?, ?, ?)",
-      [req.usuario.id, tipo, referencia_id, motivo, descripcion?.trim() || null]
+    const [result] = await db.query(
+      "INSERT INTO reportes (reportado_por, tipo, motivo, descripcion) VALUES (?, ?, ?, ?)",
+      [req.usuario.id, tipo, motivo, descripcion?.trim() || null]
     );
+    const reporteId = result.insertId;
+
+    if (tipo === "publicacion") {
+      await db.query("INSERT INTO reportes_publicaciones (reporte_id, publicacion_id) VALUES (?, ?)", [reporteId, referencia_id]);
+    } else if (tipo === "comentario") {
+      await db.query("INSERT INTO reportes_comentarios (reporte_id, comentario_id) VALUES (?, ?)", [reporteId, referencia_id]);
+    } else {
+      await db.query("INSERT INTO reportes_perfiles (reporte_id, usuario_id) VALUES (?, ?)", [reporteId, referencia_id]);
+    }
+
     res.status(201).json({ mensaje: "Reporte enviado. El equipo lo revisará pronto." });
   } catch (err) {
-    if (err.code === "ER_DUP_ENTRY")
-      return res.status(409).json({ error: "Ya reportaste este contenido" });
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }
 });
@@ -49,7 +69,9 @@ router.get("/", verificarToken, soloRol("colegio"), async (req, res) => {
   const colegioId = req.usuario.id;
   try {
     const [rows] = await db.query(
-      `SELECT r.id, r.tipo, r.referencia_id, r.motivo, r.descripcion, r.estado, r.creado_en,
+      `SELECT r.id, r.tipo,
+              COALESCE(rp.publicacion_id, rc.comentario_id, rpf.usuario_id) AS referencia_id,
+              r.motivo, r.descripcion, r.estado, r.creado_en,
               COALESCE(pe_rep.nombre_completo, emp_rep.nombre_empresa, 'Usuario') AS reportado_por_nombre,
               CASE r.tipo
                 WHEN 'publicacion' THEN SUBSTRING(pub.contenido, 1, 250)
@@ -62,24 +84,27 @@ router.get("/", verificarToken, soloRol("colegio"), async (req, res) => {
        JOIN usuarios u ON u.id = r.reportado_por
        LEFT JOIN perfiles_estudiantes pe_rep  ON pe_rep.usuario_id  = u.id
        LEFT JOIN perfiles_empresas    emp_rep ON emp_rep.usuario_id = u.id
-       LEFT JOIN publicaciones pub ON pub.id = r.referencia_id AND r.tipo = 'publicacion'
-       LEFT JOIN comentarios   com ON com.id = r.referencia_id AND r.tipo = 'comentario'
-       LEFT JOIN usuarios      u_ref   ON u_ref.id = r.referencia_id AND r.tipo = 'perfil'
+       LEFT JOIN reportes_publicaciones rp  ON rp.reporte_id  = r.id
+       LEFT JOIN reportes_comentarios   rc  ON rc.reporte_id   = r.id
+       LEFT JOIN reportes_perfiles      rpf ON rpf.reporte_id  = r.id
+       LEFT JOIN publicaciones pub ON pub.id = rp.publicacion_id
+       LEFT JOIN comentarios   com ON com.id = rc.comentario_id
+       LEFT JOIN usuarios      u_ref   ON u_ref.id = rpf.usuario_id
        LEFT JOIN perfiles_estudiantes pe_ref  ON pe_ref.usuario_id  = u_ref.id
        LEFT JOIN perfiles_empresas    emp_ref ON emp_ref.usuario_id = u_ref.id
        WHERE r.estado = ?
          AND (
-           (r.tipo = 'publicacion' AND r.referencia_id IN (
+           (r.tipo = 'publicacion' AND rp.publicacion_id IN (
              SELECT p.id FROM publicaciones p
              JOIN perfiles_estudiantes pe ON pe.usuario_id = p.autor_id
              WHERE pe.colegio_id = ?
            ))
-           OR (r.tipo = 'comentario' AND r.referencia_id IN (
+           OR (r.tipo = 'comentario' AND rc.comentario_id IN (
              SELECT c.id FROM comentarios c
              JOIN perfiles_estudiantes pe ON pe.usuario_id = c.autor_id
              WHERE pe.colegio_id = ?
            ))
-           OR (r.tipo = 'perfil' AND r.referencia_id IN (
+           OR (r.tipo = 'perfil' AND rpf.usuario_id IN (
              SELECT pe.usuario_id FROM perfiles_estudiantes pe
              WHERE pe.colegio_id = ?
            ))
@@ -95,26 +120,37 @@ router.get("/", verificarToken, soloRol("colegio"), async (req, res) => {
 
 // Verifica que el reporte es sobre contenido de un estudiante del colegio
 async function esMiReporte(reporteId, colegioId) {
-  const [[reporte]] = await db.query("SELECT tipo, referencia_id FROM reportes WHERE id = ?", [reporteId]);
+  const [[reporte]] = await db.query(
+    `SELECT r.tipo,
+            rp.publicacion_id,
+            rc.comentario_id,
+            rpf.usuario_id
+     FROM reportes r
+     LEFT JOIN reportes_publicaciones rp  ON rp.reporte_id  = r.id
+     LEFT JOIN reportes_comentarios   rc  ON rc.reporte_id   = r.id
+     LEFT JOIN reportes_perfiles      rpf ON rpf.reporte_id  = r.id
+     WHERE r.id = ?`,
+    [reporteId]
+  );
   if (!reporte) return false;
   if (reporte.tipo === "publicacion") {
     const [[row]] = await db.query(
       "SELECT 1 FROM publicaciones p JOIN perfiles_estudiantes pe ON pe.usuario_id = p.autor_id WHERE p.id = ? AND pe.colegio_id = ?",
-      [reporte.referencia_id, colegioId]
+      [reporte.publicacion_id, colegioId]
     );
     return !!row;
   }
   if (reporte.tipo === "comentario") {
     const [[row]] = await db.query(
       "SELECT 1 FROM comentarios c JOIN perfiles_estudiantes pe ON pe.usuario_id = c.autor_id WHERE c.id = ? AND pe.colegio_id = ?",
-      [reporte.referencia_id, colegioId]
+      [reporte.comentario_id, colegioId]
     );
     return !!row;
   }
   if (reporte.tipo === "perfil") {
     const [[row]] = await db.query(
       "SELECT 1 FROM perfiles_estudiantes WHERE usuario_id = ? AND colegio_id = ?",
-      [reporte.referencia_id, colegioId]
+      [reporte.usuario_id, colegioId]
     );
     return !!row;
   }
@@ -124,16 +160,23 @@ async function esMiReporte(reporteId, colegioId) {
 // DELETE /api/reportes/:id/contenido — admin elimina el contenido referenciado y resuelve el reporte
 router.delete("/:id/contenido", verificarToken, soloRol("colegio"), async (req, res) => {
   try {
-    const [[reporte]] = await db.query("SELECT tipo, referencia_id FROM reportes WHERE id = ?", [req.params.id]);
+    const [[reporte]] = await db.query(
+      `SELECT r.tipo, rp.publicacion_id, rc.comentario_id
+       FROM reportes r
+       LEFT JOIN reportes_publicaciones rp ON rp.reporte_id = r.id
+       LEFT JOIN reportes_comentarios   rc ON rc.reporte_id = r.id
+       WHERE r.id = ?`,
+      [req.params.id]
+    );
     if (!reporte) return res.status(404).json({ error: "Reporte no encontrado" });
 
     if (!await esMiReporte(req.params.id, req.usuario.id))
       return res.status(403).json({ error: "No tienes acceso a este reporte" });
 
     if (reporte.tipo === "publicacion") {
-      await db.query("DELETE FROM publicaciones WHERE id = ?", [reporte.referencia_id]);
+      await db.query("DELETE FROM publicaciones WHERE id = ?", [reporte.publicacion_id]);
     } else if (reporte.tipo === "comentario") {
-      await db.query("DELETE FROM comentarios WHERE id = ?", [reporte.referencia_id]);
+      await db.query("DELETE FROM comentarios WHERE id = ?", [reporte.comentario_id]);
     }
     // tipo === "perfil": no eliminamos perfiles automáticamente por seguridad
 
