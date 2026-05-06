@@ -1051,3 +1051,782 @@ SELECT
     END DAY)
 FROM perfiles_empresas pe
 CROSS JOIN (SELECT 1 AS n UNION ALL SELECT 2 UNION ALL SELECT 3) n;
+
+
+-- ============================================================
+-- BLOQUE DEMO EXTENDIDO: 3 SLEPs · 9 colegios · 18 talleres
+--   · 18 estudiantes · 3 empresas · 6 vacantes · publicaciones
+-- ============================================================
+
+-- ── Limpieza idempotente ─────────────────────────────────────
+DELETE FROM usuarios WHERE correo IN (
+  'slep_atacama@demo.cl', 'slep_barrancas@demo.cl', 'slep_gm@demo.cl',
+  'colegio_lgp@demo.cl',  'colegio_da@demo.cl',     'colegio_ta@demo.cl',
+  'colegio_lcn@demo.cl',  'colegio_lp@demo.cl',     'colegio_lip@demo.cl',
+  'colegio_plf@demo.cl',  'colegio_sj@demo.cl',     'colegio_tm@demo.cl',
+  'nd01@demo.cl', 'nd02@demo.cl', 'nd03@demo.cl', 'nd04@demo.cl',
+  'nd05@demo.cl', 'nd06@demo.cl', 'nd07@demo.cl', 'nd08@demo.cl',
+  'nd09@demo.cl', 'nd10@demo.cl', 'nd11@demo.cl', 'nd12@demo.cl',
+  'nd13@demo.cl', 'nd14@demo.cl', 'nd15@demo.cl', 'nd16@demo.cl',
+  'nd17@demo.cl', 'nd18@demo.cl',
+  'emp_norte@demo.cl', 'emp_barr@demo.cl', 'emp_fl@demo.cl'
+);
+
+-- ── A. Tres SLEPs ────────────────────────────────────────────
+
+INSERT INTO usuarios (correo, contrasena_hash, rol)
+  VALUES ('slep_atacama@demo.cl', 'Demo1234', 'slep');
+SET @slep_a = LAST_INSERT_ID();
+INSERT INTO perfiles_slep (usuario_id, nombre_organismo, telefono_contacto, descripcion, region)
+  VALUES (@slep_a, 'SLEP Atacama', '+56521234567',
+    'Servicio Local de Educación Pública de la Provincia de Copiapó. Gestiona establecimientos técnico-profesionales en la Región de Atacama.',
+    'Región de Atacama');
+
+INSERT INTO usuarios (correo, contrasena_hash, rol)
+  VALUES ('slep_barrancas@demo.cl', 'Demo1234', 'slep');
+SET @slep_b = LAST_INSERT_ID();
+INSERT INTO perfiles_slep (usuario_id, nombre_organismo, telefono_contacto, descripcion, region)
+  VALUES (@slep_b, 'SLEP Barrancas', '+56222345678',
+    'Servicio Local de Educación Pública del sector poniente de Santiago. Administra colegios en Cerro Navia, Lo Prado y Pudahuel.',
+    'Región Metropolitana de Santiago');
+
+INSERT INTO usuarios (correo, contrasena_hash, rol)
+  VALUES ('slep_gm@demo.cl', 'Demo1234', 'slep');
+SET @slep_g = LAST_INSERT_ID();
+INSERT INTO perfiles_slep (usuario_id, nombre_organismo, telefono_contacto, descripcion, region)
+  VALUES (@slep_g, 'SLEP Gabriela Mistral', '+56223456789',
+    'Servicio Local de Educación Pública del sector suroriente de Santiago. Cobertura en La Florida, San Joaquín y Macul.',
+    'Región Metropolitana de Santiago');
+
+-- ── B. Colegios — SLEP Atacama (3) ──────────────────────────
+
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('colegio_lgp@demo.cl', 'Demo1234', 'colegio');
+SET @ca1 = LAST_INSERT_ID();
+INSERT INTO perfiles_colegios (usuario_id, slep_id, nombre_institucion, telefono_contacto, descripcion, region, comuna)
+  VALUES (@ca1, @slep_a, 'Liceo Técnico Pedro León Gallo', '+56521112233',
+    'Liceo técnico-profesional con especialidades en Mecánica Automotriz y Administración de Empresas.',
+    'Región de Atacama', 'Copiapó');
+INSERT INTO colegio_carreras (colegio_id, carrera_id) SELECT @ca1, id FROM carreras WHERE nombre IN ('Mecanica Automotriz', 'Administracion');
+
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('colegio_da@demo.cl', 'Demo1234', 'colegio');
+SET @ca2 = LAST_INSERT_ID();
+INSERT INTO perfiles_colegios (usuario_id, slep_id, nombre_institucion, telefono_contacto, descripcion, region, comuna)
+  VALUES (@ca2, @slep_a, 'Liceo Polivalente Diego de Almagro', '+56522223344',
+    'Establecimiento con fuerte énfasis en la formación técnica para la minería y la mecánica industrial.',
+    'Región de Atacama', 'Diego de Almagro');
+INSERT INTO colegio_carreras (colegio_id, carrera_id) SELECT @ca2, id FROM carreras WHERE nombre IN ('Mecanica Automotriz', 'Administracion');
+
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('colegio_ta@demo.cl', 'Demo1234', 'colegio');
+SET @ca3 = LAST_INSERT_ID();
+INSERT INTO perfiles_colegios (usuario_id, slep_id, nombre_institucion, telefono_contacto, descripcion, region, comuna)
+  VALUES (@ca3, @slep_a, 'C.E. Tierra Amarilla', '+56523334455',
+    'Centro educacional rural con especialidad en administración y servicios para la comunidad minera.',
+    'Región de Atacama', 'Tierra Amarilla');
+INSERT INTO colegio_carreras (colegio_id, carrera_id) SELECT @ca3, id FROM carreras WHERE nombre IN ('Mecanica Automotriz', 'Administracion');
+
+-- ── C. Colegios — SLEP Barrancas (3) ────────────────────────
+
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('colegio_lcn@demo.cl', 'Demo1234', 'colegio');
+SET @cb1 = LAST_INSERT_ID();
+INSERT INTO perfiles_colegios (usuario_id, slep_id, nombre_institucion, telefono_contacto, descripcion, region, comuna)
+  VALUES (@cb1, @slep_b, 'Liceo Comercial Cerro Navia', '+56222111222',
+    'Liceo con especialidad en Administración y Contabilidad, enfocado en la empleabilidad local.',
+    'Región Metropolitana de Santiago', 'Cerro Navia');
+INSERT INTO colegio_carreras (colegio_id, carrera_id) SELECT @cb1, id FROM carreras WHERE nombre IN ('Mecanica Automotriz', 'Administracion');
+
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('colegio_lp@demo.cl', 'Demo1234', 'colegio');
+SET @cb2 = LAST_INSERT_ID();
+INSERT INTO perfiles_colegios (usuario_id, slep_id, nombre_institucion, telefono_contacto, descripcion, region, comuna)
+  VALUES (@cb2, @slep_b, 'Complejo Educacional Lo Prado', '+56222333444',
+    'Complejo educacional con modalidad técnico-profesional bimodal: mecánica y administración.',
+    'Región Metropolitana de Santiago', 'Lo Prado');
+INSERT INTO colegio_carreras (colegio_id, carrera_id) SELECT @cb2, id FROM carreras WHERE nombre IN ('Mecanica Automotriz', 'Administracion');
+
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('colegio_lip@demo.cl', 'Demo1234', 'colegio');
+SET @cb3 = LAST_INSERT_ID();
+INSERT INTO perfiles_colegios (usuario_id, slep_id, nombre_institucion, telefono_contacto, descripcion, region, comuna)
+  VALUES (@cb3, @slep_b, 'Liceo Industrial Pudahuel', '+56222444555',
+    'Liceo con especialidad industrial que incluye mecánica automotriz y gestión industrial básica.',
+    'Región Metropolitana de Santiago', 'Pudahuel');
+INSERT INTO colegio_carreras (colegio_id, carrera_id) SELECT @cb3, id FROM carreras WHERE nombre IN ('Mecanica Automotriz', 'Administracion');
+
+-- ── D. Colegios — SLEP Gabriela Mistral (3) ─────────────────
+
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('colegio_plf@demo.cl', 'Demo1234', 'colegio');
+SET @cg1 = LAST_INSERT_ID();
+INSERT INTO perfiles_colegios (usuario_id, slep_id, nombre_institucion, telefono_contacto, descripcion, region, comuna)
+  VALUES (@cg1, @slep_g, 'Liceo Polivalente La Florida', '+56225551122',
+    'Liceo con formación técnico-profesional orientada al sector automotriz y administrativo de la zona sur.',
+    'Región Metropolitana de Santiago', 'La Florida');
+INSERT INTO colegio_carreras (colegio_id, carrera_id) SELECT @cg1, id FROM carreras WHERE nombre IN ('Mecanica Automotriz', 'Administracion');
+
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('colegio_sj@demo.cl', 'Demo1234', 'colegio');
+SET @cg2 = LAST_INSERT_ID();
+INSERT INTO perfiles_colegios (usuario_id, slep_id, nombre_institucion, telefono_contacto, descripcion, region, comuna)
+  VALUES (@cg2, @slep_g, 'C.E. San Joaquín', '+56226662233',
+    'Centro educacional con vocación técnica y conexión activa con empresas de la Región Metropolitana.',
+    'Región Metropolitana de Santiago', 'San Joaquín');
+INSERT INTO colegio_carreras (colegio_id, carrera_id) SELECT @cg2, id FROM carreras WHERE nombre IN ('Mecanica Automotriz', 'Administracion');
+
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('colegio_tm@demo.cl', 'Demo1234', 'colegio');
+SET @cg3 = LAST_INSERT_ID();
+INSERT INTO perfiles_colegios (usuario_id, slep_id, nombre_institucion, telefono_contacto, descripcion, region, comuna)
+  VALUES (@cg3, @slep_g, 'Liceo Técnico Macul', '+56227773344',
+    'Liceo técnico con programas de articulación con universidades e institutos de educación superior.',
+    'Región Metropolitana de Santiago', 'Macul');
+INSERT INTO colegio_carreras (colegio_id, carrera_id) SELECT @cg3, id FROM carreras WHERE nombre IN ('Mecanica Automotriz', 'Administracion');
+
+-- ── E. Talleres (2 por colegio, 18 en total) ─────────────────
+
+INSERT INTO talleres (colegio_id, titulo, descripcion, requisitos, area, modalidad, duracion, horario, costo, cupos, fecha_inicio, fecha_limite) VALUES
+  (@ca1, 'Diagnóstico Electrónico OBD-II Avanzado',
+   'Taller práctico intensivo sobre diagnóstico con scanner. Los participantes trabajarán sobre vehículos reales del taller escolar.',
+   'Haber cursado 2° Medio. Nociones básicas de mecánica.',
+   'Mecánica Automotriz', 'presencial', '40 horas', 'Sábados 9:00–14:00',
+   0.00, 20, DATE_ADD(CURDATE(), INTERVAL 15 DAY), DATE_ADD(CURDATE(), INTERVAL 10 DAY)),
+  (@ca1, 'Emprendimiento y Plan de Negocios',
+   'Taller orientado a desarrollar habilidades de emprendimiento, diseño de modelo canvas y presentación de ideas de negocio.',
+   'Estudiantes de 3° o 4° Medio.',
+   'Administración', 'hibrido', '24 horas', 'Miércoles 15:00–18:00',
+   0.00, 25, DATE_ADD(CURDATE(), INTERVAL 20 DAY), DATE_ADD(CURDATE(), INTERVAL 14 DAY)),
+  (@ca2, 'Sistemas de Suspensión y Dirección',
+   'Taller especializado en diagnóstico y reparación de sistemas de suspensión delantera y trasera en vehículos livianos.',
+   'Segundo ciclo de Mecánica Automotriz.',
+   'Mecánica Automotriz', 'presencial', '32 horas', 'Viernes 14:00–18:00 y Sábado 9:00–13:00',
+   0.00, 18, DATE_ADD(CURDATE(), INTERVAL 12 DAY), DATE_ADD(CURDATE(), INTERVAL 7 DAY)),
+  (@ca2, 'Contabilidad y Tributación Básica',
+   'Aprende los fundamentos contables, el ciclo tributario chileno y el uso del portal del SII para contribuyentes.',
+   'Interés en el área contable. Manejo básico de Excel.',
+   'Administración', 'presencial', '30 horas', 'Lunes y Miércoles 16:00–18:30',
+   0.00, 22, DATE_ADD(CURDATE(), INTERVAL 18 DAY), DATE_ADD(CURDATE(), INTERVAL 12 DAY)),
+  (@ca3, 'Mantenimiento Preventivo Vehicular',
+   'Taller centrado en revisiones técnicas periódicas: aceites, filtros, frenos, neumáticos y sistemas de iluminación.',
+   'Estudiantes de 2° Medio en adelante.',
+   'Mecánica Automotriz', 'presencial', '20 horas', 'Sábados 9:00–13:00',
+   0.00, 15, DATE_ADD(CURDATE(), INTERVAL 8 DAY), DATE_ADD(CURDATE(), INTERVAL 5 DAY)),
+  (@ca3, 'Habilidades Comunicacionales para el Trabajo',
+   'Desarrollo de comunicación efectiva, redacción laboral y manejo de reuniones presenciales y virtuales.',
+   'Abierto a todos los estudiantes del establecimiento.',
+   'Administración', 'hibrido', '16 horas', 'Jueves 15:30–18:00',
+   0.00, 30, DATE_ADD(CURDATE(), INTERVAL 22 DAY), DATE_ADD(CURDATE(), INTERVAL 16 DAY)),
+  (@cb1, 'Reparación de Sistemas Eléctricos Automotrices',
+   'Taller intensivo sobre circuitos eléctricos vehiculares, diagnóstico de fallas y reemplazo de componentes.',
+   'Haber aprobado el módulo de electricidad básica.',
+   'Mecánica Automotriz', 'presencial', '36 horas', 'Martes y Jueves 15:00–18:00',
+   0.00, 20, DATE_ADD(CURDATE(), INTERVAL 10 DAY), DATE_ADD(CURDATE(), INTERVAL 6 DAY)),
+  (@cb1, 'Gestión Documental y Archivística Digital',
+   'Organización y gestión de documentos físicos y digitales, uso de herramientas de nube y normativa archivística.',
+   'Estudiantes de Administración de 3° o 4° Medio.',
+   'Administración', 'presencial', '20 horas', 'Viernes 14:00–17:00',
+   0.00, 25, DATE_ADD(CURDATE(), INTERVAL 14 DAY), DATE_ADD(CURDATE(), INTERVAL 9 DAY)),
+  (@cb2, 'Soldadura MIG/TIG Aplicada al Automóvil',
+   'Técnicas de soldadura aplicadas a carrocería y escape automotriz. Incluye manejo seguro de equipos y EPP.',
+   'Estudiantes de Mecánica Automotriz de 3° Medio en adelante.',
+   'Mecánica Automotriz', 'presencial', '40 horas', 'Sábados 8:30–13:30',
+   0.00, 16, DATE_ADD(CURDATE(), INTERVAL 25 DAY), DATE_ADD(CURDATE(), INTERVAL 18 DAY)),
+  (@cb2, 'Excel para Administración y Finanzas',
+   'Domina tablas dinámicas, funciones VLOOKUP, IF anidado y gráficos para reportes financieros y administrativos.',
+   'Manejo básico de computadora.',
+   'Administración', 'remoto', '24 horas', 'Miércoles 15:00–18:00',
+   0.00, 35, DATE_ADD(CURDATE(), INTERVAL 17 DAY), DATE_ADD(CURDATE(), INTERVAL 11 DAY)),
+  (@cb3, 'Climatización Automotriz y Refrigeración',
+   'Taller sobre sistemas de aire acondicionado vehicular: diagnóstico, carga de gas refrigerante y reparación de componentes.',
+   'Conocimientos previos en mecánica automotriz.',
+   'Mecánica Automotriz', 'presencial', '28 horas', 'Viernes y Sábado 9:00–12:30',
+   0.00, 14, DATE_ADD(CURDATE(), INTERVAL 20 DAY), DATE_ADD(CURDATE(), INTERVAL 14 DAY)),
+  (@cb3, 'Servicio al Cliente y Protocolo Empresarial',
+   'Técnicas de atención al cliente, manejo de reclamos y protocolo en contextos comerciales e institucionales.',
+   'Abierto a estudiantes de 2° a 4° Medio.',
+   'Administración', 'presencial', '18 horas', 'Lunes 15:00–18:00',
+   0.00, 28, DATE_ADD(CURDATE(), INTERVAL 11 DAY), DATE_ADD(CURDATE(), INTERVAL 7 DAY)),
+  (@cg1, 'Frenos ABS y Sistemas de Seguridad Activa',
+   'Taller avanzado sobre sistemas de frenos ABS, EBD y asistencia de frenado en vehículos modernos.',
+   '3° o 4° Medio Mecánica Automotriz.',
+   'Mecánica Automotriz', 'presencial', '32 horas', 'Sábados 8:00–13:00',
+   0.00, 18, DATE_ADD(CURDATE(), INTERVAL 14 DAY), DATE_ADD(CURDATE(), INTERVAL 8 DAY)),
+  (@cg1, 'Recursos Humanos y Legislación Laboral',
+   'Introducción al ciclo de RRHH: selección, contratación, remuneraciones y finiquito según la legislación chilena.',
+   'Estudiantes de Administración.',
+   'Administración', 'hibrido', '26 horas', 'Martes 15:30–18:00',
+   0.00, 24, DATE_ADD(CURDATE(), INTERVAL 19 DAY), DATE_ADD(CURDATE(), INTERVAL 13 DAY)),
+  (@cg2, 'Mecánica de Transmisión y Caja de Cambios',
+   'Diagnóstico y reparación de sistemas de transmisión manual y automática en vehículos de pasajeros.',
+   'Haber completado el módulo de motor.',
+   'Mecánica Automotriz', 'presencial', '38 horas', 'Lunes y Miércoles 15:00–18:30',
+   0.00, 16, DATE_ADD(CURDATE(), INTERVAL 9 DAY), DATE_ADD(CURDATE(), INTERVAL 5 DAY)),
+  (@cg2, 'Marketing Digital para Pymes',
+   'Estrategias de marketing en redes sociales, email marketing y posicionamiento web para pequeñas empresas.',
+   'Estudiantes de Administración de 4° Medio.',
+   'Administración', 'remoto', '20 horas', 'Jueves 15:00–17:30',
+   0.00, 40, DATE_ADD(CURDATE(), INTERVAL 21 DAY), DATE_ADD(CURDATE(), INTERVAL 15 DAY)),
+  (@cg3, 'Introducción a Vehículos Eléctricos e Híbridos',
+   'Fundamentos de la movilidad eléctrica, sistemas de alta tensión, baterías y diagnóstico básico en EVs.',
+   'Estudiantes de 4° Medio Mecánica Automotriz. Obligatorio EPP.',
+   'Mecánica Automotriz', 'presencial', '40 horas', 'Sábados 9:00–14:00',
+   0.00, 14, DATE_ADD(CURDATE(), INTERVAL 28 DAY), DATE_ADD(CURDATE(), INTERVAL 21 DAY)),
+  (@cg3, 'Control de Gestión y Presupuesto Empresarial',
+   'Elaboración de presupuestos, análisis de variaciones, KPIs y cuadro de mando integral para administradores.',
+   'Estudiantes de Administración de 3° o 4° Medio.',
+   'Administración', 'hibrido', '22 horas', 'Viernes 15:30–18:00',
+   0.00, 20, DATE_ADD(CURDATE(), INTERVAL 16 DAY), DATE_ADD(CURDATE(), INTERVAL 10 DAY));
+
+-- ── F. Estudiantes nuevos (2 por colegio, 18 en total) ───────
+
+-- @ca1 – Liceo Técnico Pedro León Gallo
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('nd01@demo.cl', 'Demo1234', 'estudiante');
+SET @nd01 = LAST_INSERT_ID();
+INSERT INTO perfiles_estudiantes (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, nivel, promedio, calificacion_docente, telefono, biografia, genero, region, comuna, colegio_id)
+  VALUES (@nd01, 'Rodrigo', 'Astudillo', 'Figueroa', '21.001.001-1',
+    (SELECT id FROM carreras WHERE nombre = 'Mecanica Automotriz'),
+    '4° Medio', 6.1, 6.3, '+56 9 5001 0001',
+    'Apasionado por los motores desde los doce años. Mi meta es especializarme en vehículos eléctricos e híbridos.',
+    'masculino', 'Región de Atacama', 'Copiapó', @ca1);
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES (@nd01, 'Español', 'Nativo'), (@nd01, 'Inglés', 'Básico');
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+  SELECT @nd01, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Diagnóstico electrónico OBD-II'          UNION ALL
+  SELECT @nd01, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Reparación de motor a gasolina'          UNION ALL
+  SELECT @nd01, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Sistemas de frenos ABS y convencionales' UNION ALL
+  SELECT @nd01, id, 'Intermedio', NULL, FALSE FROM habilidades WHERE nombre = 'Soldadura automotriz'                    UNION ALL
+  SELECT @nd01, id, 'Basico',      92, TRUE   FROM habilidades WHERE nombre = 'Trabajo en equipo'                      UNION ALL
+  SELECT @nd01, id, 'Basico',      88, TRUE   FROM habilidades WHERE nombre = 'Responsabilidad y puntualidad';
+
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('nd02@demo.cl', 'Demo1234', 'estudiante');
+SET @nd02 = LAST_INSERT_ID();
+INSERT INTO perfiles_estudiantes (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, nivel, promedio, calificacion_docente, telefono, biografia, genero, region, comuna, colegio_id)
+  VALUES (@nd02, 'Catalina', 'Valenzuela', 'Pino', '21.002.002-2',
+    (SELECT id FROM carreras WHERE nombre = 'Administracion'),
+    '3° Medio', 6.4, 6.7, '+56 9 5001 0002',
+    'Me apasiona la gestión empresarial y el análisis de datos. Busco una práctica donde pueda aplicar mis conocimientos contables.',
+    'femenino', 'Región de Atacama', 'Copiapó', @ca1);
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES (@nd02, 'Español', 'Nativo'), (@nd02, 'Inglés', 'Intermedio');
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+  SELECT @nd02, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Contabilidad general'                   UNION ALL
+  SELECT @nd02, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Gestión documental y archivo'           UNION ALL
+  SELECT @nd02, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Planillas Excel avanzadas'              UNION ALL
+  SELECT @nd02, id, 'Intermedio', NULL, FALSE FROM habilidades WHERE nombre = 'Manejo de software contable (Conta+)'   UNION ALL
+  SELECT @nd02, id, 'Basico',      91, TRUE   FROM habilidades WHERE nombre = 'Comunicación efectiva'                 UNION ALL
+  SELECT @nd02, id, 'Basico',      89, TRUE   FROM habilidades WHERE nombre = 'Organización y planificación';
+
+-- @ca2 – Liceo Polivalente Diego de Almagro
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('nd03@demo.cl', 'Demo1234', 'estudiante');
+SET @nd03 = LAST_INSERT_ID();
+INSERT INTO perfiles_estudiantes (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, nivel, promedio, calificacion_docente, telefono, biografia, genero, region, comuna, colegio_id)
+  VALUES (@nd03, 'Ignacio', 'Herrera', 'Bravo', '21.003.003-3',
+    (SELECT id FROM carreras WHERE nombre = 'Mecanica Automotriz'),
+    '4° Medio', 5.9, 6.2, '+56 9 5001 0003',
+    'Técnico en formación con fuerte interés en la mecánica industrial. Experiencia en taller de la minería artesanal local.',
+    'masculino', 'Región de Atacama', 'Diego de Almagro', @ca2);
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES (@nd03, 'Español', 'Nativo');
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+  SELECT @nd03, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Mantenimiento preventivo'              UNION ALL
+  SELECT @nd03, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Soldadura automotriz'                  UNION ALL
+  SELECT @nd03, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Reparación de motor diesel'            UNION ALL
+  SELECT @nd03, id, 'Intermedio', NULL, FALSE FROM habilidades WHERE nombre = 'Suspensión y dirección'                UNION ALL
+  SELECT @nd03, id, 'Basico',      87, TRUE   FROM habilidades WHERE nombre = 'Trabajo en equipo'                    UNION ALL
+  SELECT @nd03, id, 'Basico',      82, TRUE   FROM habilidades WHERE nombre = 'Adaptabilidad al cambio';
+
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('nd04@demo.cl', 'Demo1234', 'estudiante');
+SET @nd04 = LAST_INSERT_ID();
+INSERT INTO perfiles_estudiantes (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, nivel, promedio, calificacion_docente, telefono, biografia, genero, region, comuna, colegio_id)
+  VALUES (@nd04, 'Alejandra', 'Saavedra', 'Molina', '21.004.004-4',
+    (SELECT id FROM carreras WHERE nombre = 'Administracion'),
+    '4° Medio', 6.6, 6.8, '+56 9 5001 0004',
+    'Estudiante destacada con vocación por la administración pública. Voluntaria en la municipalidad local en tareas de gestión comunitaria.',
+    'femenino', 'Región de Atacama', 'Diego de Almagro', @ca2);
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES (@nd04, 'Español', 'Nativo'), (@nd04, 'Inglés', 'Básico');
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+  SELECT @nd04, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Redacción de informes y actas'         UNION ALL
+  SELECT @nd04, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Atención al cliente'                   UNION ALL
+  SELECT @nd04, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Gestión de recursos humanos básica'    UNION ALL
+  SELECT @nd04, id, 'Intermedio', NULL, FALSE FROM habilidades WHERE nombre = 'Facturación electrónica SII'           UNION ALL
+  SELECT @nd04, id, 'Basico',      94, TRUE   FROM habilidades WHERE nombre = 'Liderazgo básico'                     UNION ALL
+  SELECT @nd04, id, 'Basico',      90, TRUE   FROM habilidades WHERE nombre = 'Empatía y relaciones interpersonales';
+
+-- @ca3 – C.E. Tierra Amarilla
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('nd05@demo.cl', 'Demo1234', 'estudiante');
+SET @nd05 = LAST_INSERT_ID();
+INSERT INTO perfiles_estudiantes (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, nivel, promedio, calificacion_docente, telefono, biografia, genero, region, comuna, colegio_id)
+  VALUES (@nd05, 'Sebastián', 'Cortés', 'Tapia', '21.005.005-5',
+    (SELECT id FROM carreras WHERE nombre = 'Mecanica Automotriz'),
+    '3° Medio', 5.7, 5.9, '+56 9 5001 0005',
+    'Joven mecánico con ganas de aprender. Mi familia tiene un pequeño taller en Tierra Amarilla, quiero formalizarlo y crecer.',
+    'masculino', 'Región de Atacama', 'Tierra Amarilla', @ca3);
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES (@nd05, 'Español', 'Nativo');
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+  SELECT @nd05, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Cambio de aceite y filtros'             UNION ALL
+  SELECT @nd05, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Mantenimiento preventivo'               UNION ALL
+  SELECT @nd05, id, 'Intermedio', NULL, FALSE FROM habilidades WHERE nombre = 'Sistemas de frenos ABS y convencionales' UNION ALL
+  SELECT @nd05, id, 'Basico',      85, TRUE   FROM habilidades WHERE nombre = 'Resolución de problemas'               UNION ALL
+  SELECT @nd05, id, 'Basico',      80, TRUE   FROM habilidades WHERE nombre = 'Iniciativa y proactividad';
+
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('nd06@demo.cl', 'Demo1234', 'estudiante');
+SET @nd06 = LAST_INSERT_ID();
+INSERT INTO perfiles_estudiantes (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, nivel, promedio, calificacion_docente, telefono, biografia, genero, region, comuna, colegio_id)
+  VALUES (@nd06, 'Sofía', 'Vásquez', 'Reyes', '21.006.006-6',
+    (SELECT id FROM carreras WHERE nombre = 'Administracion'),
+    '4° Medio', 6.3, 6.5, '+56 9 5001 0006',
+    'Interesada en la administración de empresas locales en zonas rurales. He apoyado la contabilidad del pequeño negocio familiar.',
+    'femenino', 'Región de Atacama', 'Tierra Amarilla', @ca3);
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES (@nd06, 'Español', 'Nativo');
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+  SELECT @nd06, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Manejo de caja y fondos'                UNION ALL
+  SELECT @nd06, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Contabilidad general'                   UNION ALL
+  SELECT @nd06, id, 'Intermedio', NULL, FALSE FROM habilidades WHERE nombre = 'Control de inventario'                  UNION ALL
+  SELECT @nd06, id, 'Basico',      88, TRUE   FROM habilidades WHERE nombre = 'Responsabilidad y puntualidad'         UNION ALL
+  SELECT @nd06, id, 'Basico',      83, TRUE   FROM habilidades WHERE nombre = 'Orientación al detalle';
+
+-- @cb1 – Liceo Comercial Cerro Navia
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('nd07@demo.cl', 'Demo1234', 'estudiante');
+SET @nd07 = LAST_INSERT_ID();
+INSERT INTO perfiles_estudiantes (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, nivel, promedio, calificacion_docente, telefono, biografia, genero, region, comuna, colegio_id)
+  VALUES (@nd07, 'Felipe', 'Contreras', 'Mora', '21.007.007-7',
+    (SELECT id FROM carreras WHERE nombre = 'Mecanica Automotriz'),
+    '4° Medio', 6.0, 6.1, '+56 9 5001 0007',
+    'Estudiante de mecánica con especialidad en eléctrico automotriz. Certificado en primeros auxilios y seguridad industrial.',
+    'masculino', 'Región Metropolitana de Santiago', 'Cerro Navia', @cb1);
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES (@nd07, 'Español', 'Nativo'), (@nd07, 'Inglés', 'Básico');
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+  SELECT @nd07, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Sistemas eléctricos y electrónicos'    UNION ALL
+  SELECT @nd07, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Diagnóstico electrónico OBD-II'        UNION ALL
+  SELECT @nd07, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Mantenimiento preventivo'              UNION ALL
+  SELECT @nd07, id, 'Basico',      90, TRUE   FROM habilidades WHERE nombre = 'Trabajo en equipo'                    UNION ALL
+  SELECT @nd07, id, 'Basico',      86, TRUE   FROM habilidades WHERE nombre = 'Manejo del estrés';
+
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('nd08@demo.cl', 'Demo1234', 'estudiante');
+SET @nd08 = LAST_INSERT_ID();
+INSERT INTO perfiles_estudiantes (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, nivel, promedio, calificacion_docente, telefono, biografia, genero, region, comuna, colegio_id)
+  VALUES (@nd08, 'Javiera', 'Espinoza', 'Lazo', '21.008.008-8',
+    (SELECT id FROM carreras WHERE nombre = 'Administracion'),
+    '3° Medio', 6.5, 6.9, '+56 9 5001 0008',
+    'Apasionada por los números y la organización empresarial. Representante de curso y líder del club de finanzas del liceo.',
+    'femenino', 'Región Metropolitana de Santiago', 'Cerro Navia', @cb1);
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES (@nd08, 'Español', 'Nativo'), (@nd08, 'Inglés', 'Intermedio');
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+  SELECT @nd08, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Planillas Excel avanzadas'             UNION ALL
+  SELECT @nd08, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Contabilidad general'                  UNION ALL
+  SELECT @nd08, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Elaboración de presupuestos'           UNION ALL
+  SELECT @nd08, id, 'Basico',      93, TRUE   FROM habilidades WHERE nombre = 'Liderazgo básico'                     UNION ALL
+  SELECT @nd08, id, 'Basico',      89, TRUE   FROM habilidades WHERE nombre = 'Pensamiento crítico';
+
+-- @cb2 – Complejo Educacional Lo Prado
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('nd09@demo.cl', 'Demo1234', 'estudiante');
+SET @nd09 = LAST_INSERT_ID();
+INSERT INTO perfiles_estudiantes (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, nivel, promedio, calificacion_docente, telefono, biografia, genero, region, comuna, colegio_id)
+  VALUES (@nd09, 'Cristóbal', 'Muñoz', 'Gallardo', '21.009.009-9',
+    (SELECT id FROM carreras WHERE nombre = 'Mecanica Automotriz'),
+    '4° Medio', 5.8, 6.0, '+56 9 5001 0009',
+    'Mecánico en formación con énfasis en soldadura y carrocería. Participé en la Olimpiada Técnica Regional 2024.',
+    'masculino', 'Región Metropolitana de Santiago', 'Lo Prado', @cb2);
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES (@nd09, 'Español', 'Nativo');
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+  SELECT @nd09, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Soldadura automotriz'                  UNION ALL
+  SELECT @nd09, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Reparación de motor a gasolina'        UNION ALL
+  SELECT @nd09, id, 'Intermedio', NULL, FALSE FROM habilidades WHERE nombre = 'Sistemas eléctricos y electrónicos'    UNION ALL
+  SELECT @nd09, id, 'Basico',      85, TRUE   FROM habilidades WHERE nombre = 'Resolución de problemas'              UNION ALL
+  SELECT @nd09, id, 'Basico',      81, TRUE   FROM habilidades WHERE nombre = 'Trabajo en equipo';
+
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('nd10@demo.cl', 'Demo1234', 'estudiante');
+SET @nd10 = LAST_INSERT_ID();
+INSERT INTO perfiles_estudiantes (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, nivel, promedio, calificacion_docente, telefono, biografia, genero, region, comuna, colegio_id)
+  VALUES (@nd10, 'Valentina', 'Poblete', 'Cárdenas', '21.010.010-0',
+    (SELECT id FROM carreras WHERE nombre = 'Administracion'),
+    '4° Medio', 6.2, 6.4, '+56 9 5001 0010',
+    'Entusiasta de la gestión de proyectos y recursos humanos. He organizado eventos culturales del colegio por dos años consecutivos.',
+    'femenino', 'Región Metropolitana de Santiago', 'Lo Prado', @cb2);
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES (@nd10, 'Español', 'Nativo'), (@nd10, 'Inglés', 'Intermedio');
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+  SELECT @nd10, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Gestión de recursos humanos básica'    UNION ALL
+  SELECT @nd10, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Redacción de informes y actas'         UNION ALL
+  SELECT @nd10, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Planillas Excel avanzadas'             UNION ALL
+  SELECT @nd10, id, 'Basico',      91, TRUE   FROM habilidades WHERE nombre = 'Organización y planificación'         UNION ALL
+  SELECT @nd10, id, 'Basico',      88, TRUE   FROM habilidades WHERE nombre = 'Comunicación efectiva';
+
+-- @cb3 – Liceo Industrial Pudahuel
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('nd11@demo.cl', 'Demo1234', 'estudiante');
+SET @nd11 = LAST_INSERT_ID();
+INSERT INTO perfiles_estudiantes (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, nivel, promedio, calificacion_docente, telefono, biografia, genero, region, comuna, colegio_id)
+  VALUES (@nd11, 'Nicolás', 'Flores', 'Santander', '21.011.011-1',
+    (SELECT id FROM carreras WHERE nombre = 'Mecanica Automotriz'),
+    '3° Medio', 6.1, 6.3, '+56 9 5001 0011',
+    'Me especializo en climatización automotriz. Mi sueño es montar mi propio taller de aire acondicionado vehicular en Pudahuel.',
+    'masculino', 'Región Metropolitana de Santiago', 'Pudahuel', @cb3);
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES (@nd11, 'Español', 'Nativo');
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+  SELECT @nd11, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Sistemas de climatización automotriz'  UNION ALL
+  SELECT @nd11, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Sistemas eléctricos y electrónicos'    UNION ALL
+  SELECT @nd11, id, 'Intermedio', NULL, FALSE FROM habilidades WHERE nombre = 'Diagnóstico electrónico OBD-II'        UNION ALL
+  SELECT @nd11, id, 'Basico',      87, TRUE   FROM habilidades WHERE nombre = 'Adaptabilidad al cambio'              UNION ALL
+  SELECT @nd11, id, 'Basico',      83, TRUE   FROM habilidades WHERE nombre = 'Iniciativa y proactividad';
+
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('nd12@demo.cl', 'Demo1234', 'estudiante');
+SET @nd12 = LAST_INSERT_ID();
+INSERT INTO perfiles_estudiantes (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, nivel, promedio, calificacion_docente, telefono, biografia, genero, region, comuna, colegio_id)
+  VALUES (@nd12, 'Antonia', 'Gutiérrez', 'Díaz', '21.012.012-2',
+    (SELECT id FROM carreras WHERE nombre = 'Administracion'),
+    '4° Medio', 6.7, 6.9, '+56 9 5001 0012',
+    'Estudiante con excelentes notas y habilidades interpersonales destacadas. Realicé práctica voluntaria en OTEC local como apoyo administrativo.',
+    'femenino', 'Región Metropolitana de Santiago', 'Pudahuel', @cb3);
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES (@nd12, 'Español', 'Nativo'), (@nd12, 'Inglés', 'Avanzado');
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+  SELECT @nd12, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Atención al cliente'                   UNION ALL
+  SELECT @nd12, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Manejo de software contable (Conta+)'  UNION ALL
+  SELECT @nd12, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Facturación electrónica SII'           UNION ALL
+  SELECT @nd12, id, 'Basico',      95, TRUE   FROM habilidades WHERE nombre = 'Comunicación efectiva'                UNION ALL
+  SELECT @nd12, id, 'Basico',      93, TRUE   FROM habilidades WHERE nombre = 'Empatía y relaciones interpersonales';
+
+-- @cg1 – Liceo Polivalente La Florida
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('nd13@demo.cl', 'Demo1234', 'estudiante');
+SET @nd13 = LAST_INSERT_ID();
+INSERT INTO perfiles_estudiantes (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, nivel, promedio, calificacion_docente, telefono, biografia, genero, region, comuna, colegio_id)
+  VALUES (@nd13, 'Andrés', 'Paredes', 'Medina', '21.013.013-3',
+    (SELECT id FROM carreras WHERE nombre = 'Mecanica Automotriz'),
+    '4° Medio', 6.3, 6.4, '+56 9 5001 0013',
+    'Técnico en formación con manejo avanzado de sistemas de frenos y suspensión. Participé como monitor en talleres de mecánica básica.',
+    'masculino', 'Región Metropolitana de Santiago', 'La Florida', @cg1);
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES (@nd13, 'Español', 'Nativo'), (@nd13, 'Inglés', 'Básico');
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+  SELECT @nd13, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Sistemas de frenos ABS y convencionales' UNION ALL
+  SELECT @nd13, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Suspensión y dirección'                  UNION ALL
+  SELECT @nd13, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Mantenimiento preventivo'                UNION ALL
+  SELECT @nd13, id, 'Basico',      89, TRUE   FROM habilidades WHERE nombre = 'Trabajo en equipo'                      UNION ALL
+  SELECT @nd13, id, 'Basico',      85, TRUE   FROM habilidades WHERE nombre = 'Responsabilidad y puntualidad';
+
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('nd14@demo.cl', 'Demo1234', 'estudiante');
+SET @nd14 = LAST_INSERT_ID();
+INSERT INTO perfiles_estudiantes (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, nivel, promedio, calificacion_docente, telefono, biografia, genero, region, comuna, colegio_id)
+  VALUES (@nd14, 'Isidora', 'Castro', 'Fuentes', '21.014.014-4',
+    (SELECT id FROM carreras WHERE nombre = 'Administracion'),
+    '3° Medio', 6.5, 6.7, '+56 9 5001 0014',
+    'Me interesa la dirección de empresas y la gestión de RRHH. Cursé un taller de marketing digital que me abrió nuevas perspectivas.',
+    'femenino', 'Región Metropolitana de Santiago', 'La Florida', @cg1);
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES (@nd14, 'Español', 'Nativo'), (@nd14, 'Inglés', 'Intermedio');
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+  SELECT @nd14, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Gestión de recursos humanos básica'    UNION ALL
+  SELECT @nd14, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Contabilidad general'                  UNION ALL
+  SELECT @nd14, id, 'Intermedio', NULL, FALSE FROM habilidades WHERE nombre = 'Elaboración de presupuestos'           UNION ALL
+  SELECT @nd14, id, 'Basico',      92, TRUE   FROM habilidades WHERE nombre = 'Liderazgo básico'                     UNION ALL
+  SELECT @nd14, id, 'Basico',      88, TRUE   FROM habilidades WHERE nombre = 'Pensamiento crítico';
+
+-- @cg2 – C.E. San Joaquín
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('nd15@demo.cl', 'Demo1234', 'estudiante');
+SET @nd15 = LAST_INSERT_ID();
+INSERT INTO perfiles_estudiantes (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, nivel, promedio, calificacion_docente, telefono, biografia, genero, region, comuna, colegio_id)
+  VALUES (@nd15, 'Tomás', 'Alarcón', 'Navarro', '21.015.015-5',
+    (SELECT id FROM carreras WHERE nombre = 'Mecanica Automotriz'),
+    '4° Medio', 5.9, 6.1, '+56 9 5001 0015',
+    'Especializado en transmisiones y cajas de cambio. He realizado prácticas voluntarias en taller de la zona sur de Santiago.',
+    'masculino', 'Región Metropolitana de Santiago', 'San Joaquín', @cg2);
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES (@nd15, 'Español', 'Nativo');
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+  SELECT @nd15, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Reparación de motor a gasolina'        UNION ALL
+  SELECT @nd15, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Reparación de motor diesel'            UNION ALL
+  SELECT @nd15, id, 'Intermedio', NULL, FALSE FROM habilidades WHERE nombre = 'Diagnóstico electrónico OBD-II'        UNION ALL
+  SELECT @nd15, id, 'Basico',      86, TRUE   FROM habilidades WHERE nombre = 'Resolución de problemas'              UNION ALL
+  SELECT @nd15, id, 'Basico',      82, TRUE   FROM habilidades WHERE nombre = 'Adaptabilidad al cambio';
+
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('nd16@demo.cl', 'Demo1234', 'estudiante');
+SET @nd16 = LAST_INSERT_ID();
+INSERT INTO perfiles_estudiantes (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, nivel, promedio, calificacion_docente, telefono, biografia, genero, region, comuna, colegio_id)
+  VALUES (@nd16, 'Camila', 'Robles', 'Aguilera', '21.016.016-6',
+    (SELECT id FROM carreras WHERE nombre = 'Administracion'),
+    '4° Medio', 6.4, 6.6, '+56 9 5001 0016',
+    'Especialidad en marketing y ventas. Realicé taller de redes sociales y actualmente administro las redes del colegio.',
+    'femenino', 'Región Metropolitana de Santiago', 'San Joaquín', @cg2);
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES (@nd16, 'Español', 'Nativo'), (@nd16, 'Inglés', 'Intermedio');
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+  SELECT @nd16, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Atención al cliente'                   UNION ALL
+  SELECT @nd16, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Redacción de informes y actas'         UNION ALL
+  SELECT @nd16, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Planillas Excel avanzadas'             UNION ALL
+  SELECT @nd16, id, 'Basico',      90, TRUE   FROM habilidades WHERE nombre = 'Comunicación efectiva'                UNION ALL
+  SELECT @nd16, id, 'Basico',      87, TRUE   FROM habilidades WHERE nombre = 'Iniciativa y proactividad';
+
+-- @cg3 – Liceo Técnico Macul
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('nd17@demo.cl', 'Demo1234', 'estudiante');
+SET @nd17 = LAST_INSERT_ID();
+INSERT INTO perfiles_estudiantes (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, nivel, promedio, calificacion_docente, telefono, biografia, genero, region, comuna, colegio_id)
+  VALUES (@nd17, 'Diego', 'Morales', 'Ríos', '21.017.017-7',
+    (SELECT id FROM carreras WHERE nombre = 'Mecanica Automotriz'),
+    '4° Medio', 6.4, 6.6, '+56 9 5001 0017',
+    'Pionero en mi curso en el módulo de vehículos eléctricos. Asistí a la ExpoTech 2024 como representante del liceo.',
+    'masculino', 'Región Metropolitana de Santiago', 'Macul', @cg3);
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES (@nd17, 'Español', 'Nativo'), (@nd17, 'Inglés', 'Intermedio');
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+  SELECT @nd17, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Diagnóstico electrónico OBD-II'         UNION ALL
+  SELECT @nd17, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Sistemas eléctricos y electrónicos'     UNION ALL
+  SELECT @nd17, id, 'Intermedio', NULL, TRUE  FROM habilidades WHERE nombre = 'Lectura de planos y manuales técnicos'  UNION ALL
+  SELECT @nd17, id, 'Basico',      91, TRUE   FROM habilidades WHERE nombre = 'Pensamiento crítico'                   UNION ALL
+  SELECT @nd17, id, 'Basico',      88, TRUE   FROM habilidades WHERE nombre = 'Iniciativa y proactividad';
+
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('nd18@demo.cl', 'Demo1234', 'estudiante');
+SET @nd18 = LAST_INSERT_ID();
+INSERT INTO perfiles_estudiantes (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, nivel, promedio, calificacion_docente, telefono, biografia, genero, region, comuna, colegio_id)
+  VALUES (@nd18, 'Renata', 'Silva', 'Espinoza', '21.018.018-8',
+    (SELECT id FROM carreras WHERE nombre = 'Administracion'),
+    '3° Medio', 6.6, 6.8, '+56 9 5001 0018',
+    'Con vocación por las finanzas corporativas. Participé en el programa "Jóvenes al Mercado" de la Bolsa de Santiago como estudiante observadora.',
+    'femenino', 'Región Metropolitana de Santiago', 'Macul', @cg3);
+INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES (@nd18, 'Español', 'Nativo'), (@nd18, 'Inglés', 'Avanzado'), (@nd18, 'Portugués', 'Básico');
+INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
+  SELECT @nd18, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Elaboración de presupuestos'           UNION ALL
+  SELECT @nd18, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Contabilidad general'                  UNION ALL
+  SELECT @nd18, id, 'Avanzado',   NULL, TRUE  FROM habilidades WHERE nombre = 'Planillas Excel avanzadas'             UNION ALL
+  SELECT @nd18, id, 'Basico',      96, TRUE   FROM habilidades WHERE nombre = 'Pensamiento crítico'                  UNION ALL
+  SELECT @nd18, id, 'Basico',      93, TRUE   FROM habilidades WHERE nombre = 'Organización y planificación';
+
+-- ── G. Nuevas empresas ───────────────────────────────────────
+
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('emp_norte@demo.cl', 'Demo1234', 'empresa');
+SET @emp_norte = LAST_INSERT_ID();
+INSERT INTO perfiles_empresas (usuario_id, nombre_empresa, telefono_contacto, descripcion, region, comuna)
+  VALUES (@emp_norte, 'Automotores del Norte SpA', '+56521887766',
+    'Concesionario y taller de servicio técnico autorizado con presencia en la Región de Atacama. Más de 20 años de experiencia en mantención de flotas mineras.',
+    'Región de Atacama', 'Copiapó');
+
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('emp_barr@demo.cl', 'Demo1234', 'empresa');
+SET @emp_barr = LAST_INSERT_ID();
+INSERT INTO perfiles_empresas (usuario_id, nombre_empresa, telefono_contacto, descripcion, region, comuna)
+  VALUES (@emp_barr, 'Servicios Contables Barrancas Ltda.', '+56222998877',
+    'Empresa de outsourcing contable y tributario orientada a pymes del sector poniente de Santiago. Ofrecemos prácticas supervisadas con posibilidad de contratación.',
+    'Región Metropolitana de Santiago', 'Cerro Navia');
+
+INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('emp_fl@demo.cl', 'Demo1234', 'empresa');
+SET @emp_fl = LAST_INSERT_ID();
+INSERT INTO perfiles_empresas (usuario_id, nombre_empresa, telefono_contacto, descripcion, region, comuna)
+  VALUES (@emp_fl, 'Constructora La Florida S.A.', '+56225667788',
+    'Empresa constructora con división de administración de proyectos y gestión de contratos. Actualizamos nuestra planta de técnicos junior cada año.',
+    'Región Metropolitana de Santiago', 'La Florida');
+
+-- ── H. Vacantes nuevas (2 por empresa) ──────────────────────
+
+INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, jornada, remuneracion, ubicacion, beneficios, fecha_cierre, esta_activa, creado_en)
+  VALUES (@emp_norte, 'Práctica Técnico en Mecánica Automotriz',
+    'Buscamos practicante para área de taller de mantención preventiva de vehículos livianos y de carga. Trabajará junto a mecánicos certificados con más de 10 años de experiencia.',
+    'Estudiante de 4° Medio o egresado de Mecánica Automotriz. Disponibilidad de lunes a viernes.',
+    'presencial', 'completa', '$250.000 mensual',
+    'Av. Los Mineros 450, Copiapó',
+    'Colación provista. EPP completo. Uniforme. Certificado de práctica detallado.',
+    DATE_ADD(CURDATE(), INTERVAL 30 DAY), TRUE, DATE_SUB(NOW(), INTERVAL 5 DAY));
+SET @v_norte1 = LAST_INSERT_ID();
+
+INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, jornada, remuneracion, ubicacion, beneficios, fecha_cierre, esta_activa, creado_en)
+  VALUES (@emp_norte, 'Técnico Automotriz Junior',
+    'Posición permanente para técnico junior en área de diagnóstico electrónico y mantención correctiva. Trabajo en flota de vehículos mineros.',
+    'Egresado de Mecánica Automotriz con manejo de OBD-II. Licencia de conducir clase B.',
+    'presencial', 'completa', '$550.000 + bono',
+    'Av. Los Mineros 450, Copiapó',
+    'Seguro complementario de salud. Bono de productividad mensual. Uniforme y EPP.',
+    DATE_ADD(CURDATE(), INTERVAL 45 DAY), TRUE, DATE_SUB(NOW(), INTERVAL 3 DAY));
+SET @v_norte2 = LAST_INSERT_ID();
+
+INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, jornada, remuneracion, ubicacion, beneficios, fecha_cierre, esta_activa, creado_en)
+  VALUES (@emp_barr, 'Práctica en Contabilidad y Tributación',
+    'Practicante para apoyar en registro contable, cuadraturas, emisión de documentos tributarios y atención de clientes empresariales.',
+    'Estudiante o egresado de Administración con conocimientos de contabilidad general y SII. Manejo de Excel.',
+    'presencial', 'parcial', '$200.000 mensual',
+    'Teniente Cruz 890, Cerro Navia',
+    'Colación incluida. Mentoría de contador senior. Evaluación para contratación al término.',
+    DATE_ADD(CURDATE(), INTERVAL 25 DAY), TRUE, DATE_SUB(NOW(), INTERVAL 7 DAY));
+SET @v_barr1 = LAST_INSERT_ID();
+
+INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, jornada, remuneracion, ubicacion, beneficios, fecha_cierre, esta_activa, creado_en)
+  VALUES (@emp_barr, 'Auxiliar Contable',
+    'Posición part-time para apoyo en área contable. Responsable de conciliaciones bancarias, libro de compras/ventas y emisión de facturas.',
+    'Egresado de Administración con conocimiento de Conta+ o SoftLand. Proactividad y orientación al detalle.',
+    'presencial', 'parcial', '$380.000 mensual',
+    'Teniente Cruz 890, Cerro Navia',
+    'Horario flexible. Posibilidad de contrato indefinido. Capacitación continua.',
+    DATE_ADD(CURDATE(), INTERVAL 35 DAY), TRUE, DATE_SUB(NOW(), INTERVAL 2 DAY));
+SET @v_barr2 = LAST_INSERT_ID();
+
+INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, jornada, remuneracion, ubicacion, beneficios, fecha_cierre, esta_activa, creado_en)
+  VALUES (@emp_fl, 'Asistente Administrativo de Proyectos',
+    'Apoyo en gestión de contratos, coordinación de proveedores y control documental de proyectos de construcción en la zona sur de Santiago.',
+    'Egresado o estudiante de Administración. Manejo de Excel y Word. Buena redacción.',
+    'presencial', 'completa', '$420.000 mensual',
+    'Av. Vicuña Mackenna Sur 1200, La Florida',
+    'Seguro de salud complementario. Bono de desempeño semestral. Estacionamiento.',
+    DATE_ADD(CURDATE(), INTERVAL 40 DAY), TRUE, DATE_SUB(NOW(), INTERVAL 4 DAY));
+SET @v_fl1 = LAST_INSERT_ID();
+
+INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, jornada, remuneracion, ubicacion, beneficios, fecha_cierre, esta_activa, creado_en)
+  VALUES (@emp_fl, 'Técnico en Gestión de Contratos',
+    'Revisión y control de contratos con subcontratistas, seguimiento de cumplimiento y archivo documental del área legal-administrativa.',
+    'Egresado de Administración con interés en el sector construcción. Capacidad analítica y atención al detalle.',
+    'presencial', 'completa', '$480.000 mensual',
+    'Av. Vicuña Mackenna Sur 1200, La Florida',
+    'Bono por cumplimiento de hitos. Capacitación en gestión de proyectos BIM.',
+    DATE_ADD(CURDATE(), INTERVAL 50 DAY), TRUE, DATE_SUB(NOW(), INTERVAL 1 DAY));
+SET @v_fl2 = LAST_INSERT_ID();
+
+-- ── I. Publicaciones de vacantes con imágenes ────────────────
+
+INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, url_multimedia, publicado_en)
+  VALUES (@emp_norte, (SELECT id FROM tipos_publicacion WHERE nombre='vacante'),
+    'Práctica Técnico en Mecánica Automotriz – Copiapó',
+    'Automotores del Norte SpA está en búsqueda de practicantes de Mecánica Automotriz para integrarse a nuestro equipo de taller. Trabajarás junto a mecánicos certificados en mantención preventiva y diagnóstico de vehículos. Postula antes del cierre.',
+    'https://picsum.photos/seed/automotores/800/600',
+    DATE_SUB(NOW(), INTERVAL 5 DAY));
+SET @pub_v_norte1 = LAST_INSERT_ID();
+INSERT INTO publicaciones_vacantes (publicacion_id, vacante_id) VALUES (@pub_v_norte1, @v_norte1);
+
+INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, url_multimedia, publicado_en)
+  VALUES (@emp_norte, (SELECT id FROM tipos_publicacion WHERE nombre='vacante'),
+    'Técnico Automotriz Junior – Posición Permanente en Copiapó',
+    '¡Abrimos vacante permanente! Si eres egresado de Mecánica Automotriz con manejo de OBD-II y licencia clase B, esta oportunidad es para ti. Ofrecemos bono de productividad y seguro complementario.',
+    'https://picsum.photos/seed/tallernorte/800/600',
+    DATE_SUB(NOW(), INTERVAL 3 DAY));
+SET @pub_v_norte2 = LAST_INSERT_ID();
+INSERT INTO publicaciones_vacantes (publicacion_id, vacante_id) VALUES (@pub_v_norte2, @v_norte2);
+
+INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, url_multimedia, publicado_en)
+  VALUES (@emp_barr, (SELECT id FROM tipos_publicacion WHERE nombre='vacante'),
+    'Práctica en Contabilidad – Cerro Navia',
+    'Servicios Contables Barrancas ofrece práctica profesional supervisada en contabilidad y tributación. Colación incluida y mentoría personalizada. Evaluamos contratación al término del período.',
+    'https://picsum.photos/seed/contabilidad/800/600',
+    DATE_SUB(NOW(), INTERVAL 7 DAY));
+SET @pub_v_barr1 = LAST_INSERT_ID();
+INSERT INTO publicaciones_vacantes (publicacion_id, vacante_id) VALUES (@pub_v_barr1, @v_barr1);
+
+INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, url_multimedia, publicado_en)
+  VALUES (@emp_barr, (SELECT id FROM tipos_publicacion WHERE nombre='vacante'),
+    'Auxiliar Contable Part-Time – Horario Flexible',
+    'Buscamos técnico en Administración para rol de auxiliar contable. Horario flexible, capacitación continua y posibilidad de contrato indefinido. Ideal para egresados recientes.',
+    'https://picsum.photos/seed/oficina/800/600',
+    DATE_SUB(NOW(), INTERVAL 2 DAY));
+SET @pub_v_barr2 = LAST_INSERT_ID();
+INSERT INTO publicaciones_vacantes (publicacion_id, vacante_id) VALUES (@pub_v_barr2, @v_barr2);
+
+INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, url_multimedia, publicado_en)
+  VALUES (@emp_fl, (SELECT id FROM tipos_publicacion WHERE nombre='vacante'),
+    'Asistente Administrativo de Proyectos – La Florida',
+    'Constructora La Florida incorpora asistente administrativo para apoyar gestión de contratos y proveedores. Excelente ambiente laboral y beneficios. Envía tu CV actualizado.',
+    'https://picsum.photos/seed/construccion/800/600',
+    DATE_SUB(NOW(), INTERVAL 4 DAY));
+SET @pub_v_fl1 = LAST_INSERT_ID();
+INSERT INTO publicaciones_vacantes (publicacion_id, vacante_id) VALUES (@pub_v_fl1, @v_fl1);
+
+INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, url_multimedia, publicado_en)
+  VALUES (@emp_fl, (SELECT id FROM tipos_publicacion WHERE nombre='vacante'),
+    'Técnico en Gestión de Contratos – Sector Construcción',
+    'Incorporamos técnico para control y seguimiento de contratos con subcontratistas. Capacitación en BIM incluida. Bono por cumplimiento de hitos.',
+    'https://picsum.photos/seed/gestion/800/600',
+    DATE_SUB(NOW(), INTERVAL 1 DAY));
+SET @pub_v_fl2 = LAST_INSERT_ID();
+INSERT INTO publicaciones_vacantes (publicacion_id, vacante_id) VALUES (@pub_v_fl2, @v_fl2);
+
+-- ── J. Postulaciones ─────────────────────────────────────────
+
+INSERT INTO postulaciones (estudiante_id, vacante_id, estado, mensaje_postulacion, creado_en) VALUES
+  (@nd01, @v_norte1, 'pendiente', 'Me interesa mucho esta oportunidad. Tengo manejo de OBD-II y mantenimiento preventivo. Disponible de inmediato.',         DATE_SUB(NOW(), INTERVAL 4 DAY)),
+  (@nd03, @v_norte1, 'pendiente', 'Egresado de mecánica con experiencia en taller. Me identifico con el enfoque en flotas mineras de su empresa.',             DATE_SUB(NOW(), INTERVAL 3 DAY)),
+  (@nd05, @v_norte1, 'pendiente', 'Busco mi primera práctica formal. Cuento con experiencia en taller familiar y certificado de seguridad industrial.',         DATE_SUB(NOW(), INTERVAL 2 DAY)),
+  (@nd07, @v_norte1, 'pendiente', 'Mi fortaleza es el eléctrico automotriz. Postulo con entusiasmo a esta oportunidad en Copiapó.',                            DATE_SUB(NOW(), INTERVAL 2 DAY)),
+  (@nd02, @v_barr1,  'pendiente', 'Tengo sólida base en contabilidad y manejo de SII. Estoy motivada a aprender en un ambiente profesional como el de ustedes.',DATE_SUB(NOW(), INTERVAL 6 DAY)),
+  (@nd06, @v_barr1,  'pendiente', 'Conozco el ciclo contable completo y tengo experiencia con la contabilidad del negocio familiar. Muy interesada.',          DATE_SUB(NOW(), INTERVAL 5 DAY)),
+  (@nd08, @v_barr2,  'pendiente', 'Busco posición part-time que complemente mis estudios. Manejo Conta+ y he realizado prácticas en OTEC local.',               DATE_SUB(NOW(), INTERVAL 1 DAY)),
+  (@nd12, @v_barr2,  'pendiente', 'Cuento con conocimiento avanzado de software contable y facturación SII. Lista para asumir este desafío.',                  DATE_SUB(NOW(), INTERVAL 1 DAY)),
+  (@nd14, @v_fl1,    'pendiente', 'Me interesa el área de administración de proyectos en construcción. Tengo buenas habilidades de redacción y organización.',  DATE_SUB(NOW(), INTERVAL 3 DAY)),
+  (@nd16, @v_fl1,    'pendiente', 'He organizado eventos y gestionado documentación del colegio. Creo que puedo aportar al área administrativa de su empresa.',  DATE_SUB(NOW(), INTERVAL 2 DAY)),
+  (@nd18, @v_fl2,    'pendiente', 'El análisis de contratos me entusiasma. Tengo bases en gestión financiera y estoy habituada a leer documentación técnica.',   DATE_SUB(NOW(), INTERVAL 1 DAY));
+
+-- ── K. Publicaciones institucionales con imágenes ────────────
+
+-- SLEP Atacama
+INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, url_multimedia, publicado_en) VALUES
+  (@slep_a, (SELECT id FROM tipos_publicacion WHERE nombre='general'),
+   'Bienvenidos al nuevo año académico 2025 – SLEP Atacama',
+   'El equipo del SLEP Atacama da la bienvenida a todos los estudiantes, docentes y familias que forman parte de nuestra red educativa en la Región de Atacama. Este año apostamos por la educación técnica como motor del desarrollo regional.',
+   'https://picsum.photos/seed/atacama/800/600',
+   DATE_SUB(NOW(), INTERVAL 60 DAY)),
+  (@slep_a, (SELECT id FROM tipos_publicacion WHERE nombre='general'),
+   'Firma de convenio con empresas mineras de la región',
+   'El SLEP Atacama firmó convenios de práctica profesional con tres empresas del sector minero de Copiapó y Diego de Almagro. Estos acuerdos beneficiarán a más de 80 estudiantes de Mecánica Automotriz de nuestros liceos.',
+   'https://picsum.photos/seed/convenio/800/600',
+   DATE_SUB(NOW(), INTERVAL 30 DAY));
+
+-- SLEP Barrancas
+INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, url_multimedia, publicado_en) VALUES
+  (@slep_b, (SELECT id FROM tipos_publicacion WHERE nombre='general'),
+   'SLEP Barrancas presenta nueva plataforma de empleabilidad',
+   'Lanzamos EmpleaMe en toda nuestra red de colegios del sector poniente. Esta plataforma conecta a nuestros estudiantes con empresas locales para prácticas y empleos técnicos. Los invitamos a explorarla y a completar sus perfiles.',
+   'https://picsum.photos/seed/plataforma/800/600',
+   DATE_SUB(NOW(), INTERVAL 15 DAY)),
+  (@slep_b, (SELECT id FROM tipos_publicacion WHERE nombre='general'),
+   'Feria de Empleabilidad Barrancas 2025',
+   'El próximo mes realizaremos la Feria de Empleabilidad de nuestra red. Más de 20 empresas de los rubros automotriz, contable y servicios estarán presentes. ¡Prepara tu CV y postula a las vacantes disponibles!',
+   'https://picsum.photos/seed/feria/800/600',
+   DATE_SUB(NOW(), INTERVAL 5 DAY));
+
+-- SLEP Gabriela Mistral
+INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, url_multimedia, publicado_en) VALUES
+  (@slep_g, (SELECT id FROM tipos_publicacion WHERE nombre='general'),
+   'Lanzamiento del Programa de Prácticas SLEP Gabriela Mistral',
+   'Estamos emocionados de anunciar el Programa de Prácticas 2025, que conecta a más de 150 estudiantes de nuestra red con empresas del suroriente de Santiago. Inscripciones abiertas hasta el 30 de mayo.',
+   'https://picsum.photos/seed/programa/800/600',
+   DATE_SUB(NOW(), INTERVAL 10 DAY)),
+  (@slep_g, (SELECT id FROM tipos_publicacion WHERE nombre='general'),
+   'Resultados Evaluación Diagnóstica 2025 – Red GM',
+   'Con satisfacción informamos que el 78% de nuestros estudiantes de 4° Medio obtuvo calificaciones sobre 6.0 en la evaluación diagnóstica. Reconocemos el esfuerzo de docentes, familias y alumnos por este resultado.',
+   'https://picsum.photos/seed/resultados/800/600',
+   DATE_SUB(NOW(), INTERVAL 20 DAY));
+
+-- Colegios
+INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, url_multimedia, publicado_en) VALUES
+  (@ca1, (SELECT id FROM tipos_publicacion WHERE nombre='general'),
+   'Taller de Diagnóstico OBD-II: cupos disponibles',
+   'El Liceo Técnico Pedro León Gallo abre inscripciones para el Taller de Diagnóstico Electrónico OBD-II Avanzado. Cupos limitados a 20 participantes. Los interesados deben acercarse a secretaría antes del viernes.',
+   'https://picsum.photos/seed/obd2/800/600',
+   DATE_SUB(NOW(), INTERVAL 8 DAY)),
+  (@cb1, (SELECT id FROM tipos_publicacion WHERE nombre='general'),
+   'Nuestros alumnos en la Feria Tecnológica Metropolitana',
+   'Cinco estudiantes del Liceo Comercial Cerro Navia participaron en la Feria Tecnológica Metropolitana, presentando su proyecto de gestión documental digital. Felicitaciones por representar a nuestro liceo con excelencia.',
+   'https://picsum.photos/seed/feria_tec/800/600',
+   DATE_SUB(NOW(), INTERVAL 18 DAY)),
+  (@cg1, (SELECT id FROM tipos_publicacion WHERE nombre='general'),
+   'Convenio con Automotora para prácticas en La Florida',
+   'Firmamos convenio de práctica profesional con una empresa automotriz de La Florida. Los estudiantes de 4° Medio de Mecánica Automotriz tendrán prioridad en las postulaciones.',
+   'https://picsum.photos/seed/convenio_auto/800/600',
+   DATE_SUB(NOW(), INTERVAL 12 DAY)),
+  (@cg3, (SELECT id FROM tipos_publicacion WHERE nombre='general'),
+   'Inauguración del Laboratorio de Vehículos Eléctricos',
+   'Con gran orgullo inauguramos el primer laboratorio escolar de vehículos eléctricos e híbridos de la Región Metropolitana. Equipado con un EV de prueba y simuladores de diagnóstico de alta tensión.',
+   'https://picsum.photos/seed/ev_lab/800/600',
+   DATE_SUB(NOW(), INTERVAL 25 DAY)),
+  (@cb2, (SELECT id FROM tipos_publicacion WHERE nombre='general'),
+   'Resultados Olimpiada Técnica 2024 – ¡Medalla de oro!',
+   'Nuestro estudiante Cristóbal Muñoz obtuvo medalla de oro en la categoría Soldadura de la Olimpiada Técnica Regional 2024. ¡Todo el establecimiento está orgulloso de este logro!',
+   'https://picsum.photos/seed/olimpiada/800/600',
+   DATE_SUB(NOW(), INTERVAL 45 DAY));
+
+-- Estudiantes nuevos
+INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, url_multimedia, publicado_en) VALUES
+  (@nd01, (SELECT id FROM tipos_publicacion WHERE nombre='logro'),
+   'Certifiqué en diagnóstico OBD-II avanzado',
+   'Acabo de completar el taller de Diagnóstico Electrónico OBD-II en mi liceo. Aprendí a identificar fallas en módulos ECU, sensores de O2 y sistemas de inyección. Un paso más hacia ser técnico automotriz certificado.',
+   'https://picsum.photos/seed/certificado_obd/800/600',
+   DATE_SUB(NOW(), INTERVAL 7 DAY)),
+  (@nd08, (SELECT id FROM tipos_publicacion WHERE nombre='logro'),
+   '¡Primera Feria de Emprendimiento y quedo en 2° lugar!',
+   'Presenté mi proyecto de finanzas personales para jóvenes en la feria de emprendimiento del liceo y quedé en segundo lugar. Aprendí muchísimo sobre comunicar ideas con claridad y confianza.',
+   'https://picsum.photos/seed/emprendimiento/800/600',
+   DATE_SUB(NOW(), INTERVAL 14 DAY)),
+  (@nd12, (SELECT id FROM tipos_publicacion WHERE nombre='general'),
+   'Reflexión: lo que aprendí en mi práctica en OTEC',
+   'Tres semanas de práctica voluntaria en un OTEC me enseñaron más que un semestre de clases. La gestión real, las urgencias tributarias y la atención a clientes son cosas que no se aprenden solo en libros.',
+   'https://picsum.photos/seed/practica_otec/800/600',
+   DATE_SUB(NOW(), INTERVAL 21 DAY)),
+  (@nd17, (SELECT id FROM tipos_publicacion WHERE nombre='logro'),
+   'Representé al liceo en ExpoTech 2024',
+   'Fui seleccionado para representar al Liceo Técnico Macul en la ExpoTech 2024. Presentamos el proyecto de adaptación de un vehículo convencional a sistema híbrido básico. Una experiencia que marcó mi vocación.',
+   'https://picsum.photos/seed/expotech/800/600',
+   DATE_SUB(NOW(), INTERVAL 35 DAY)),
+  (@nd04, (SELECT id FROM tipos_publicacion WHERE nombre='general'),
+   'Voluntariado en la Municipalidad de Diego de Almagro',
+   'Llevo dos meses apoyando el área de gestión documental en la municipalidad de mi ciudad. Un desafío enorme que me dio una visión real de la administración pública.',
+   'https://picsum.photos/seed/municipio/800/600',
+   DATE_SUB(NOW(), INTERVAL 28 DAY)),
+  (@nd18, (SELECT id FROM tipos_publicacion WHERE nombre='logro'),
+   'Jóvenes al Mercado – Bolsa de Santiago',
+   'Participé como estudiante observadora en el programa Jóvenes al Mercado de la Bolsa de Santiago. Ver cómo funcionan los mercados financieros en tiempo real fue inspirador. ¡Mi camino está en las finanzas!',
+   'https://picsum.photos/seed/bolsa/800/600',
+   DATE_SUB(NOW(), INTERVAL 42 DAY));
