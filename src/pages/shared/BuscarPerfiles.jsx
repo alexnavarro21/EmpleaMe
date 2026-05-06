@@ -319,6 +319,7 @@ export default function BuscarPerfiles() {
   const [modalVacante,       setModalVacante]       = useState(null);
   const [modalTaller,        setModalTaller]        = useState(null);
   const [selectedHabilidades, setSelectedHabilidades] = useState([]);
+  const [selectedAreas,       setSelectedAreas]       = useState([]);
   const [habBusqueda,         setHabBusqueda]         = useState("");
   const [selectedModalidad,   setSelectedModalidad]   = useState("");
   const [filtroPrecio,        setFiltroPrecio]        = useState("todas"); // todas | gratuito | pago
@@ -399,7 +400,7 @@ export default function BuscarPerfiles() {
   const filteredVacantes = vacantes.filter((v) => {
     const q = search.toLowerCase();
     if (!(v.titulo?.toLowerCase().includes(q) || v.nombre_empresa?.toLowerCase().includes(q) || v.area?.toLowerCase().includes(q))) return false;
-    if (selectedCareer && selectedCareer !== "Todas" && v.area !== selectedCareer) return false;
+    if (selectedAreas.length > 0 && !selectedAreas.includes(v.area)) return false;
     if (selectedModalidad && v.modalidad?.toLowerCase() !== selectedModalidad) return false;
     if (filtroRemuneracion === "con_paga"  && !v.remuneracion?.trim()) return false;
     if (filtroRemuneracion === "sin_paga"  &&  v.remuneracion?.trim()) return false;
@@ -422,7 +423,7 @@ export default function BuscarPerfiles() {
   const filteredTalleres = talleres.filter((t) => {
     const q = search.toLowerCase();
     if (!(t.titulo?.toLowerCase().includes(q) || t.area?.toLowerCase().includes(q) || t.descripcion?.toLowerCase().includes(q))) return false;
-    if (selectedCareer && selectedCareer !== "Todas" && t.area !== selectedCareer) return false;
+    if (selectedAreas.length > 0 && !selectedAreas.includes(t.area)) return false;
     if (selectedModalidad && t.modalidad?.toLowerCase() !== selectedModalidad) return false;
     const costo = parseFloat(t.costo) || 0;
     if (filtroPrecio === "gratuito" && costo > 0) return false;
@@ -448,6 +449,7 @@ export default function BuscarPerfiles() {
   const limpiarFiltros = () => {
     setSearch(""); setSelectedCareer("Todas"); setMinGpa(1); setMinEvalDocente(1);
     setSelectedRegion(""); setSelectedComuna(""); setSelectedHabilidades([]);
+    setSelectedAreas([]);
     setHabBusqueda(""); setSelectedModalidad(""); setFiltroPrecio("todas"); setFiltroRemuneracion("todas");
     const params = new URLSearchParams(location.search);
     params.delete("q");
@@ -562,19 +564,43 @@ export default function BuscarPerfiles() {
             )}
 
             {/* Filtro área (vacantes / talleres) */}
-            {(tab === "vacantes" || tab === "talleres") && uniqueAreas.length > 1 && (
+            {(tab === "vacantes" || tab === "talleres") && uniqueAreas.length > 2 && (
               <div className={`border-t ${B} pt-4 mb-4`}>
-                <label className={`block text-xs mb-2 ${M}`}>Área</label>
-                {uniqueAreas.map((a) => (
-                  <button key={a} onClick={() => setSelectedCareer(a)}
-                    className={`w-full text-left text-sm px-3 py-1.5 rounded-lg mb-1 transition-colors flex items-center gap-2 ${
-                      selectedCareer === a || (!selectedCareer && a === "Todas") ? "bg-[#0F4D8A] text-[#E6F1FB]" : `${T} hover:bg-[#0F4D8A]/10`
-                    }`}
-                  >
-                    <Icon icon={a === "Todas" ? "mdi:view-grid-outline" : "mdi:tag-outline"} width={14} />
-                    {a}
-                  </button>
-                ))}
+                <div className="flex items-center justify-between mb-2">
+                  <label className={`text-xs ${M}`}>Área</label>
+                  {selectedAreas.length > 0 && (
+                    <button onClick={() => setSelectedAreas([])} className="text-xs text-[#378ADD] hover:underline">
+                      Limpiar
+                    </button>
+                  )}
+                </div>
+                {selectedAreas.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {selectedAreas.map((a) => (
+                      <button key={a} onClick={() => setSelectedAreas((prev) => prev.filter((x) => x !== a))}
+                        className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-[#0F4D8A] text-white"
+                      >
+                        {a} <Icon icon="mdi:close" width={10} />
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="flex flex-col gap-0.5 max-h-48 overflow-y-auto pr-1">
+                  {uniqueAreas.filter((a) => a !== "Todas").map((a) => {
+                    const active = selectedAreas.includes(a);
+                    return (
+                      <button key={a}
+                        onClick={() => setSelectedAreas((prev) => active ? prev.filter((x) => x !== a) : [...prev, a])}
+                        className={`w-full text-left text-sm px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 ${
+                          active ? "bg-[#0F4D8A] text-[#E6F1FB]" : `${T} hover:bg-[#0F4D8A]/10`
+                        }`}
+                      >
+                        <Icon icon={active ? "mdi:checkbox-marked" : "mdi:checkbox-blank-outline"} width={14} className="flex-shrink-0" />
+                        {a}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
@@ -877,7 +903,7 @@ export default function BuscarPerfiles() {
           {tab === "colegios" && canSeeColegios && (
             <div className="grid grid-cols-2 gap-4">
               {filteredColegios.map((c) => (
-                <Card key={c.usuario_id} className="hover:border-[#378ADD] transition-colors">
+                <Card key={c.usuario_id} className="hover:border-[#378ADD] transition-colors flex flex-col">
                   <div className="flex items-start gap-3 mb-3">
                     {c.foto_perfil ? (
                       <img src={getMediaUrl(c.foto_perfil)} className="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
@@ -907,27 +933,22 @@ export default function BuscarPerfiles() {
                       <Icon icon="mdi:phone-outline" width={13} />{c.telefono_contacto}
                     </div>
                   )}
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex gap-2 mt-auto pt-2">
                     <Link to={`/colegio-publico/${c.usuario_id}`} className="flex-1">
-                      <button className={`w-full py-2 rounded-lg text-xs font-semibold border transition-colors flex items-center justify-center gap-1.5 ${
-                        isDark ? "border-[#3a3a38] text-[#D3D1C7] hover:border-[#378ADD] hover:text-[#378ADD]" : "border-[#D3D1C7] text-[#2C2C2A] hover:border-[#378ADD] hover:text-[#378ADD]"
-                      }`}>
-                        <Icon icon="mdi:eye-outline" width={14} />
-                        Ver perfil
-                      </button>
+                      <PrimaryButton className="w-full">Ver perfil</PrimaryButton>
                     </Link>
                     {(role === "slep" || role === "empresa") && (
                       <button
                         onClick={() => handleContactarColegio(c.usuario_id)}
                         disabled={contactandoId === c.usuario_id}
-                        className="flex-1 py-2 rounded-lg text-xs font-semibold bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                        title="Contactar"
+                        className="px-3 py-2 rounded-lg border border-[#378ADD] text-[#378ADD] hover:bg-[#378ADD] hover:text-white transition-colors disabled:opacity-50 flex items-center"
                       >
                         <Icon
                           icon={contactandoId === c.usuario_id ? "mdi:loading" : "mdi:message-outline"}
-                          width={14}
+                          width={16}
                           className={contactandoId === c.usuario_id ? "animate-spin" : ""}
                         />
-                        {contactandoId === c.usuario_id ? "Conectando..." : "Contactar"}
                       </button>
                     )}
                   </div>

@@ -1,0 +1,143 @@
+========================================================
+  EMPLEAME — LISTA DE TAREAS ORDENADA POR PRIORIDAD
+========================================================
+
+CRITERIO DE DIVISIÓN:
+  • INTEGRANTE A — backend + su frontend asociado (rama backend fija)
+  • INTEGRANTE B — solo frontend, sin tocar backend ni archivos de A
+
+ARCHIVOS QUE SOLO TOCA A:
+  - backend/src/routes/admin.js, slep.js, conversaciones.js, publicaciones.js
+  - src/pages/colegio/Panel.jsx  (tab habilidades, editar perfil, muro)
+  - src/pages/slep/Panel.jsx
+  - src/services/api.js
+
+ARCHIVOS QUE SOLO TOCA B:
+  - src/pages/colegio/Usuarios.jsx
+  - src/pages/estudiante/* (perfil, edición)
+  - src/pages/*/Muro.jsx  — solo CSS/filtros frontend, sin tocar llamadas API
+  - Componentes de chat/mensajes
+  - Estilos globales / responsividad / dark mode
+
+========================================================
+  INTEGRANTE A — CON BACKEND
+========================================================
+
+[PRIORIDAD ALTA]
+
+1.  Cambiar contraseña de estudiantes desde perfil colegio
+    Backend: PUT /admin/usuarios/:id/contrasena (nuevo endpoint)
+    Frontend: botón + modal en tab Usuarios del colegio (Panel.jsx)
+
+2.  Cambiar contraseña de colegios y empresas desde perfil SLEP
+    Backend: verificar/extender PUT /slep/colegios/:id y /slep/empresas/:id
+    Frontend: campo contraseña en modal de edición SLEP
+
+3.  Buscador debe aceptar palabras sin tilde
+    Backend: normalizar con COLLATE utf8_general_ci en queries de búsqueda
+    Frontend: strip de tildes en input antes de enviar
+
+4.  Formulario contacto desde Login para cambio de contraseña
+    (rut + email + teléfono → notificación al colegio)
+    Backend: POST /auth/solicitud-contrasena
+    Frontend: modal en página de Login
+
+[PRIORIDAD MEDIA]
+
+5.  Filtro tipo de publicación en el muro (general, vacante, logro)
+    Backend: agregar param ?tipo= a GET /publicaciones
+    Frontend: reemplazar filtro actual en Muro (Panel.jsx del colegio)
+    NOTA: B no toca Muro.jsx hasta que A termine esta tarea
+
+6.  Solicitud de habilidad: estudiante pide al colegio que le asigne habilidad
+    Backend: POST /habilidades/solicitud → genera mensaje al colegio
+    Frontend: botón en perfil del estudiante
+
+7.  Colegio puede seleccionar las carreras que imparte (multi-select con buscador)
+    Backend: tabla colegio_carreras (colegio_id, carrera_id) + GET/PUT endpoints
+    Frontend: componente multi-select en Editar Perfil del colegio (Panel.jsx)
+
+8.  Paginación de habilidades en tab del colegio (10 por página) + buscador
+    Backend: paginación y ?q= en GET /habilidades
+    Frontend: paginador + input buscador en tab habilidades (Panel.jsx)
+    IMPORTANTE: esta tarea es SOLO de A — B no toca la tab de habilidades
+
+[PRIORIDAD BAJA]
+
+9.  Registro masivo con formato Excel actualizado
+    Backend: parsear Excel, validar, bulk INSERT con transacción
+    Frontend: pantalla de importación con preview y errores
+
+10. Resúmenes de chats con IA y sacar notas
+    Backend: POST /conversaciones/:id/resumen → llamada a IA
+    Frontend: botón "Resumir" + panel de notas en el chat
+
+
+========================================================
+  INTEGRANTE B — SOLO FRONTEND
+========================================================
+
+VERIFICADO: las tareas de abajo NO requieren backend.
+  - B-3: el backend ya marca mensajes como leídos al abrir conversación;
+    el bug es que el badge no se actualiza en el estado local del frontend.
+  - B-4: el backend ya retorna autor_nombre y autor_foto_perfil en comentarios;
+    el bug es que el componente no está usando esos campos.
+
+[PRIORIDAD ALTA — bugs]
+
+1.  Fix: dropdown de acciones en tabla Usuarios se corta con pocos registros
+    Usar position fixed o flip hacia arriba si no hay espacio
+    Archivo: src/pages/colegio/Usuarios.jsx
+
+2.  Fix: dropdown de publicaciones del muro no se cierra al clic fuera
+    Agregar listener en document para cerrar (no tocar lógica de API)
+    ESPERAR a que A termine tarea A-5 antes de tocar este archivo
+
+3.  Fix: badge de mensajes no desaparece al abrir conversación
+    El backend ya hace UPDATE leido=TRUE al fetchear mensajes
+    Bug: el estado local no se resetea; limpiar no_leidos en el estado al montar el chat
+
+4.  Fix: nombre y foto del comentarista no se muestran correctamente
+    El backend ya retorna autor_nombre y autor_foto_perfil
+    Bug: el componente de comentarios no usa esos campos; ajustar render
+
+5.  Fix: campo RUT editable en perfil estudiante (no debe editarse)
+    Deshabilitar input de RUT en formulario de edición
+    Archivo: src/pages/estudiante/*
+
+6.  Fix: campo colegio editable en perfil estudiante (no debe editarse)
+    Remover o deshabilitar selector de colegio en edición de perfil
+    Archivo: src/pages/estudiante/*
+
+[PRIORIDAD MEDIA]
+
+7.  Mover sección idiomas a la tab Habilidades en perfil estudiante
+    Reubicar componente, no crear tab nueva
+    Archivo: src/pages/estudiante/*
+
+8.  Botón modo oscuro: texto siempre fijo "Modo oscuro", solo toggle on/off
+    No cambiar label según estado
+
+9.  Quitar badge "activo" en todos los chats
+
+10. Ver más detalle en vacantes: botón/expand donde aparece una vacante
+    Usar modal o link a /vacante/:id (endpoint ya existe)
+
+11. Más palabras clave en filtroMensajes y verificar en todos los perfiles
+    Ampliar array de keywords en componente de mensajería
+
+12. En Usuarios (colegio), agregar opción "Editar estudiante" en menú de acciones
+    Redirigir a tab edición con estudiante ya seleccionado
+    Archivo: src/pages/colegio/Usuarios.jsx
+    NOTA: NO tocar Panel.jsx del colegio (es territorio de A)
+
+[PRIORIDAD BAJA]
+
+13. Revisar y corregir fondos incorrectos en modo oscuro (recorrer todas las vistas)
+    Solo modificar clases Tailwind dark: en componentes que B ya posee
+
+14. Responsividad en toda la página
+    Revisar breakpoints en vistas que B posee: perfil estudiante, chat, usuarios
+
+15. Actualizar README
+    Setup, roles, variables de entorno, rutas principales

@@ -367,7 +367,7 @@ export default function Login() {
                   disabled={regLoading}
                   className="w-full py-2.5 bg-[#0F4D8A] hover:bg-[#0A3A6A] disabled:opacity-60 text-[#E6F1FB] rounded-lg text-sm font-medium transition-colors mt-1"
                 >
-                  {regLoading ? "Creando cuenta..." : "Crear cuenta gratis"}
+                  {regLoading ? "Creando cuenta..." : "Crear cuenta"}
                 </button>
                 <p className="text-xs text-[#888780] text-center mt-3 leading-relaxed">
                   Al registrarte aceptas nuestros{" "}
