@@ -250,44 +250,49 @@ export default function EmpresaPublicarVacante() {
                   )}
                 </div>
 
-                {/* Resultados filtrados por categoría */}
-                {["tecnica", "blanda"].map((cat) => {
-                  const termino = busquedaHab.toLowerCase().trim();
-                  const grupo = catalogoHabilidades.filter(
-                    (h) => h.categoria === cat &&
-                    !habilidadesSeleccionadas.includes(h.id) &&
-                    (!termino || h.nombre.toLowerCase().includes(termino))
-                  );
-                  if (grupo.length === 0) return null;
-                  return (
-                    <div key={cat} className="mb-3">
-                      <p className={`text-xs font-medium ${M} mb-1.5`}>
-                        {cat === "tecnica" ? "Técnicas" : "Socioemocionales"}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {grupo.map((h) => (
-                          <button
-                            key={h.id}
-                            type="button"
-                            onClick={() => toggleHabilidad(h.id)}
-                            className={`text-xs px-3 py-1 rounded-full border transition-colors ${B} ${M} hover:border-[#378ADD] hover:text-[#378ADD]`}
-                          >
-                            {h.nombre}
-                          </button>
-                        ))}
+                {/* Dos listas por categoría */}
+                <div className="grid grid-cols-2 gap-3">
+                  {["tecnica", "blanda"].map((cat) => {
+                    const termino = busquedaHab.toLowerCase().trim();
+                    const grupo = catalogoHabilidades.filter(
+                      (h) => h.categoria === cat &&
+                      (!termino || h.nombre.toLowerCase().includes(termino))
+                    );
+                    return (
+                      <div key={cat}>
+                        <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1.5 ${M}`}>
+                          {cat === "tecnica" ? "Técnicas" : "Socioemocionales"}
+                        </p>
+                        <div className={`max-h-48 overflow-y-auto rounded-lg border ${B}`}>
+                          {grupo.length === 0 ? (
+                            <p className={`text-xs ${M} px-3 py-4 text-center`}>Sin resultados</p>
+                          ) : grupo.map((h) => {
+                            const sel = habilidadesSeleccionadas.includes(h.id);
+                            return (
+                              <button
+                                key={h.id}
+                                type="button"
+                                onClick={() => toggleHabilidad(h.id)}
+                                className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors border-b last:border-0 ${isDark ? "border-[#3a3a38]" : "border-[#E8E6E1]"} ${
+                                  sel
+                                    ? isDark ? "bg-[#0F4D8A]/20 text-[#85B7EB]" : "bg-[#E6F1FB] text-[#0F4D8A]"
+                                    : isDark ? "hover:bg-[#313130] text-[#D3D1C7]" : "hover:bg-[#F7F6F3] text-[#2C2C2A]"
+                                }`}
+                              >
+                                <Icon
+                                  icon={sel ? "mdi:checkbox-marked" : "mdi:checkbox-blank-outline"}
+                                  width={15}
+                                  className={sel ? "text-[#0F4D8A] flex-shrink-0" : `${M} flex-shrink-0`}
+                                />
+                                {h.nombre}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-
-                {/* Sin resultados */}
-                {busquedaHab.trim() &&
-                  catalogoHabilidades.filter(
-                    (h) => !habilidadesSeleccionadas.includes(h.id) &&
-                    h.nombre.toLowerCase().includes(busquedaHab.toLowerCase().trim())
-                  ).length === 0 && (
-                  <p className={`text-xs ${M}`}>Sin resultados para "{busquedaHab}"</p>
-                )}
+                    );
+                  })}
+                </div>
               </div>
             )}
 

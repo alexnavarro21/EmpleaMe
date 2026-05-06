@@ -6,6 +6,7 @@ import { Badge, PageHeader } from "../../components/ui";
 import {
   getConversaciones, getMensajes, getNotasAdmin, agregarNotaAdmin,
   getMensajesDirectos, getMensajesDeDirecta, enviarMensajeDirecto,
+  getSlepInfo, iniciarMensajeDirecto, getMediaUrl,
 } from "../../services/api";
 
 function formatTime(ts) {
@@ -45,6 +46,7 @@ function SupervisionPanel({ isDark }) {
   const [agregando, setAgregando] = useState(false);
   const [agregadoOk, setAgregadoOk] = useState(false);
   const messagesEndRef = useRef(null);
+  const lastMsgIdRef = useRef(null);
   const pollRef = useRef(null);
 
   useEffect(() => {
@@ -64,7 +66,14 @@ function SupervisionPanel({ isDark }) {
     return () => clearInterval(pollRef.current);
   }, [selected]);
 
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+  useEffect(() => {
+    if (messages.length === 0) return;
+    const lastId = messages[messages.length - 1].id;
+    if (lastId !== lastMsgIdRef.current) {
+      lastMsgIdRef.current = lastId;
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
   async function handleAgregarNota() {
     if (!selected || !notaTexto.trim()) return;
@@ -294,14 +303,25 @@ function DirectosPanel({ isDark, initialDirectaId }) {
             </div>
           ) : convs.map((c) => (
             <button key={c.id} onClick={() => { setSelected(c.id); setConvs((prev) => prev.map((x) => x.id === c.id ? { ...x, no_leidos: 0 } : x)); }}
-              className={`w-full text-left px-4 py-3 border-b ${B} transition-colors ${selected === c.id ? (isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]") : (isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]")}`}>
-              <div className="flex items-center justify-between mb-0.5">
-                <span className={`text-sm font-semibold ${T} truncate flex-1`}>{c.contraparte}</span>
-                <span className={`text-xs ${M} ml-2 flex-shrink-0`}>{formatTime(c.ultimo_tiempo)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <p className={`text-xs ${M} truncate flex-1`}>{c.ultimo_mensaje || "Sin mensajes aún"}</p>
-                {c.no_leidos > 0 && <span className="w-4 h-4 rounded-full bg-[#0F4D8A] text-white text-xs flex items-center justify-center flex-shrink-0 ml-2">{c.no_leidos}</span>}
+              className={`w-full text-left px-3 py-3 border-b ${B} transition-colors ${selected === c.id ? (isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]") : (isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]")}`}>
+              <div className="flex items-center gap-2.5">
+                {c.foto_contraparte ? (
+                  <img src={getMediaUrl(c.foto_contraparte)} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-[#0F4D8A] flex items-center justify-center flex-shrink-0 text-white text-sm font-semibold">
+                    {(c.contraparte || "?")[0].toUpperCase()}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className={`text-sm font-semibold ${T} truncate flex-1`}>{c.contraparte || "Sin nombre"}</span>
+                    <span className={`text-xs ${M} ml-2 flex-shrink-0`}>{formatTime(c.ultimo_tiempo)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className={`text-xs ${M} truncate flex-1`}>{c.ultimo_mensaje || "Sin mensajes aún"}</p>
+                    {c.no_leidos > 0 && <span className="w-4 h-4 rounded-full bg-[#0F4D8A] text-white text-xs flex items-center justify-center flex-shrink-0 ml-2">{c.no_leidos}</span>}
+                  </div>
+                </div>
               </div>
             </button>
           ))}
@@ -315,9 +335,18 @@ function DirectosPanel({ isDark, initialDirectaId }) {
         ) : (
           <>
             <div className={`px-5 py-3 border-b ${B} ${cardBg} flex items-center justify-between flex-shrink-0`}>
-              <div>
-                <p className={`text-sm font-semibold ${T}`}>{conv.contraparte}</p>
-                <p className={`text-xs ${M}`}>Mensaje directo</p>
+              <div className="flex items-center gap-3">
+                {conv.foto_contraparte ? (
+                  <img src={getMediaUrl(conv.foto_contraparte)} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-[#0F4D8A] flex items-center justify-center flex-shrink-0 text-white text-sm font-semibold">
+                    {(conv.contraparte || "?")[0].toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <p className={`text-sm font-semibold ${T}`}>{conv.contraparte || "Sin nombre"}</p>
+                  <p className={`text-xs ${M}`}>Mensaje directo</p>
+                </div>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
@@ -368,10 +397,47 @@ export default function AdminMensajeria() {
 
   const initialDirectaId = location.state?.directaId ?? null;
   const [tab, setTab] = useState(initialDirectaId ? "directos" : "supervision");
+  const [contactandoSlep, setContactandoSlep] = useState(false);
+  const [directaIdSlep, setDirectaIdSlep] = useState(initialDirectaId);
+
+  const handleContactarSlep = async () => {
+    setContactandoSlep(true);
+    try {
+      const info = await getSlepInfo();
+      const conv = await iniciarMensajeDirecto(info.id);
+      setDirectaIdSlep(conv.id);
+      setTab("directos");
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setContactandoSlep(false);
+    }
+  };
 
   return (
     <div>
-      <PageHeader title="Mensajería" subtitle="Supervisión de conversaciones y mensajes directos" />
+      <PageHeader
+        title="Mensajería"
+        subtitle="Supervisión de conversaciones y mensajes directos"
+        action={
+          <button
+            onClick={handleContactarSlep}
+            disabled={contactandoSlep}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
+              isDark
+                ? "bg-[#0F4D8A]/20 text-[#85B7EB] hover:bg-[#0F4D8A]/35 border border-[#0F4D8A]/40"
+                : "bg-[#E6F1FB] text-[#0F4D8A] hover:bg-[#D0E8FA] border border-[#B5D4F4]"
+            }`}
+          >
+            <Icon
+              icon={contactandoSlep ? "mdi:loading" : "mdi:message-arrow-right-outline"}
+              width={16}
+              className={contactandoSlep ? "animate-spin" : ""}
+            />
+            {contactandoSlep ? "Conectando..." : "Contactar mi SLEP"}
+          </button>
+        }
+      />
 
       <div className={`flex gap-1 mb-2 -mt-4 p-1 rounded-xl w-72 border ${B} ${cardBg}`}>
         {[
@@ -387,7 +453,7 @@ export default function AdminMensajeria() {
       </div>
 
       {tab === "supervision" && <SupervisionPanel isDark={isDark} />}
-      {tab === "directos"    && <DirectosPanel    isDark={isDark} initialDirectaId={initialDirectaId} />}
+      {tab === "directos"    && <DirectosPanel    isDark={isDark} initialDirectaId={directaIdSlep} />}
     </div>
   );
 }

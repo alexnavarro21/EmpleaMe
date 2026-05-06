@@ -30,19 +30,7 @@ CREATE TABLE IF NOT EXISTS carreras (
   nombre VARCHAR(150) NOT NULL UNIQUE
 );
 
--- 3a. Perfiles de colegios (debe definirse antes de perfiles_estudiantes para FK)
-CREATE TABLE IF NOT EXISTS perfiles_colegios (
-  usuario_id          INT PRIMARY KEY,
-  nombre_institucion  VARCHAR(150) NOT NULL,
-  telefono_contacto   VARCHAR(20)  DEFAULT NULL,
-  descripcion         TEXT,
-  region              VARCHAR(80)  DEFAULT NULL,
-  comuna              VARCHAR(80)  DEFAULT NULL,
-  foto_perfil         VARCHAR(500) DEFAULT NULL,
-  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
-);
-
--- 3b. Perfiles SLEP
+-- 3a. Perfiles SLEP (debe definirse antes de perfiles_colegios para FK)
 CREATE TABLE IF NOT EXISTS perfiles_slep (
   usuario_id          INT PRIMARY KEY,
   nombre_organismo    VARCHAR(150) NOT NULL DEFAULT 'SLEP',
@@ -51,6 +39,20 @@ CREATE TABLE IF NOT EXISTS perfiles_slep (
   region              VARCHAR(80)  DEFAULT NULL,
   foto_perfil         VARCHAR(500) DEFAULT NULL,
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+);
+
+-- 3b. Perfiles de colegios (debe definirse antes de perfiles_estudiantes para FK)
+CREATE TABLE IF NOT EXISTS perfiles_colegios (
+  usuario_id          INT PRIMARY KEY,
+  slep_id             INT          DEFAULT NULL,
+  nombre_institucion  VARCHAR(150) NOT NULL,
+  telefono_contacto   VARCHAR(20)  DEFAULT NULL,
+  descripcion         TEXT,
+  region              VARCHAR(80)  DEFAULT NULL,
+  comuna              VARCHAR(80)  DEFAULT NULL,
+  foto_perfil         VARCHAR(500) DEFAULT NULL,
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+  FOREIGN KEY (slep_id)    REFERENCES perfiles_slep(usuario_id) ON DELETE SET NULL
 );
 
 -- 3. Perfiles de estudiantes

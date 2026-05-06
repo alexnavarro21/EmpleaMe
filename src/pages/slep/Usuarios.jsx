@@ -5,7 +5,7 @@ import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PageHeader, Paginacion } from "../../components/ui";
 import {
   getSlepEmpresas, crearSlepEmpresa, editarSlepEmpresa, eliminarSlepEmpresa,
-  getSlepColegios, crearSlepColegio, editarSlepColegio,
+  getSlepColegios, crearSlepColegio, editarSlepColegio, getMediaUrl,
 } from "../../services/api";
 
 function formatDate(iso) {
@@ -298,9 +298,13 @@ export default function SlepUsuarios() {
                     <tr key={e.usuario_id} className={`border-b ${B} last:border-0 transition-colors ${isDark ? "hover:bg-[#313130]/50" : "hover:bg-[#F7F6F3]"}`}>
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
-                            <Icon icon="cuida:building-outline" width={16} className="text-[#378ADD]" />
-                          </div>
+                            {e.foto_perfil ? (
+                            <img src={getMediaUrl(e.foto_perfil)} className="w-8 h-8 rounded-full object-cover flex-shrink-0" alt="" />
+                          ) : (
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
+                              <Icon icon="cuida:building-outline" width={16} className="text-[#378ADD]" />
+                            </div>
+                          )}
                           <div>
                             <div className="flex items-center gap-2">
                               <p className={`text-sm font-medium ${T}`}>{e.nombre_empresa || "Sin nombre"}</p>
@@ -367,9 +371,13 @@ export default function SlepUsuarios() {
                     <tr key={c.usuario_id} className={`border-b ${B} last:border-0 transition-colors ${isDark ? "hover:bg-[#313130]/50" : "hover:bg-[#F7F6F3]"}`}>
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
-                            <Icon icon="mdi:school-outline" width={16} className="text-[#378ADD]" />
-                          </div>
+                            {c.foto_perfil ? (
+                            <img src={getMediaUrl(c.foto_perfil)} className="w-8 h-8 rounded-full object-cover flex-shrink-0" alt="" />
+                          ) : (
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
+                              <Icon icon="mdi:school-outline" width={16} className="text-[#378ADD]" />
+                            </div>
+                          )}
                           <div>
                             <div className="flex items-center gap-2">
                               <Link to={`/colegio-publico/${c.usuario_id}`} className={`text-sm font-medium ${T} hover:text-[#378ADD] transition-colors`}>

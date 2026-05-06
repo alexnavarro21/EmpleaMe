@@ -6,6 +6,7 @@ import { Badge, PageHeader } from "../../components/ui";
 import {
   getConversaciones, getMensajes, enviarMensaje,
   getMensajesDirectos, getMensajesDeDirecta, enviarMensajeDirecto,
+  getMediaUrl,
 } from "../../services/api";
 
 function MensajeBurbuja({ contenido }) {
@@ -39,23 +40,35 @@ function formatTime(ts) {
   return d.toLocaleDateString([], { day: "2-digit", month: "short" });
 }
 
+const ROL_LABEL = {
+  empresa:    "Empresa",
+  estudiante: "Estudiante",
+  colegio:    "Colegio",
+  slep:       "SLEP",
+};
+
+function RolTag({ rol, isDark }) {
+  const label = ROL_LABEL[rol] || rol;
+  return (
+    <span className={`text-xs px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${
+      isDark ? "bg-[#3a3a38] text-[#888780]" : "bg-[#ECEAE5] text-[#5F5E5A]"
+    }`}>
+      {label}
+    </span>
+  );
+}
+
 export default function EstudianteMensajeria() {
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
   const { isDark } = useDark();
   const location = useLocation();
 
-  // Tab: "empresas" | "estudiantes"
-  const [tab, setTab] = useState("empresas");
-
-  // Conversaciones con empresas
   const [convEmpresas, setConvEmpresas] = useState([]);
-  const [selectedEmpresa, setSelectedEmpresa] = useState(null);
-  const [mensajesEmpresa, setMensajesEmpresa] = useState([]);
-
-  // Conversaciones directas (estudiante↔estudiante)
   const [convDirectas, setConvDirectas] = useState([]);
-  const [selectedDirecta, setSelectedDirecta] = useState(null);
-  const [mensajesDirecta, setMensajesDirecta] = useState([]);
+
+  // conv unificada seleccionada: { id, esDirecta }
+  const [selected, setSelected] = useState(null);
+  const [mensajes, setMensajes] = useState([]);
 
   const [newMessage, setNewMessage] = useState("");
   const [loadingConvs, setLoadingConvs] = useState(true);
@@ -70,115 +83,110 @@ export default function EstudianteMensajeria() {
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
   const cardBg = isDark ? "bg-[#262624]" : "bg-white";
 
-  // Cargar conversaciones iniciales
   useEffect(() => {
     const targetEmpresa = location.state?.conversacionId;
     const targetDirecta = location.state?.directaId;
 
     Promise.allSettled([getConversaciones(), getMensajesDirectos()])
       .then(([empRes, dirRes]) => {
-        if (empRes.status === "fulfilled") {
-          setConvEmpresas(empRes.value);
-          if (targetEmpresa) {
-            setTab("empresas");
-            setSelectedEmpresa(targetEmpresa);
-          } else if (!targetDirecta && empRes.value.length > 0) {
-            setSelectedEmpresa(empRes.value[0].id);
-          }
-        }
-        if (dirRes.status === "fulfilled") {
-          setConvDirectas(dirRes.value);
-          if (targetDirecta) {
-            setTab("estudiantes");
-            setSelectedDirecta(targetDirecta);
-          }
+        const empresas = empRes.status === "fulfilled" ? empRes.value : [];
+        const directas = dirRes.status === "fulfilled" ? dirRes.value : [];
+        setConvEmpresas(empresas);
+        setConvDirectas(directas);
+
+        if (targetEmpresa) {
+          setSelected({ id: targetEmpresa, esDirecta: false });
+        } else if (targetDirecta) {
+          setSelected({ id: targetDirecta, esDirecta: true });
+        } else if (empresas.length > 0 || directas.length > 0) {
+          // Seleccionar la más reciente entre ambas listas
+          const todas = [
+            ...empresas.map((c) => ({ ...c, esDirecta: false })),
+            ...directas.map((c) => ({ ...c, esDirecta: true })),
+          ].sort((a, b) => new Date(b.ultimo_tiempo || 0) - new Date(a.ultimo_tiempo || 0));
+          if (todas.length > 0) setSelected({ id: todas[0].id, esDirecta: todas[0].esDirecta });
         }
       })
       .finally(() => setLoadingConvs(false));
   }, []);
 
-  // Cargar mensajes de empresa seleccionada
+  // Cargar mensajes cuando cambia la conversación seleccionada
   useEffect(() => {
-    if (!selectedEmpresa) return;
+    if (!selected) return;
     setLoadingMsgs(true);
-    getMensajes(selectedEmpresa)
-      .then(setMensajesEmpresa)
+    const loader = selected.esDirecta
+      ? getMensajesDeDirecta(selected.id)
+      : getMensajes(selected.id);
+    loader
+      .then(setMensajes)
       .catch(console.error)
       .finally(() => setLoadingMsgs(false));
-  }, [selectedEmpresa]);
+  }, [selected?.id, selected?.esDirecta]);
 
-  // Cargar mensajes de directa seleccionada
+  // Scroll al último mensaje nuevo
   useEffect(() => {
-    if (!selectedDirecta) return;
-    setLoadingMsgs(true);
-    getMensajesDeDirecta(selectedDirecta)
-      .then(setMensajesDirecta)
-      .catch(console.error)
-      .finally(() => setLoadingMsgs(false));
-  }, [selectedDirecta]);
-
-  // Scroll al último mensaje solo cuando llega uno nuevo
-  useEffect(() => {
-    const msgs = tab === "empresas" ? mensajesEmpresa : mensajesDirecta;
-    if (msgs.length === 0) return;
-    const lastId = msgs[msgs.length - 1].id;
+    if (mensajes.length === 0) return;
+    const lastId = mensajes[mensajes.length - 1].id;
     if (lastId !== lastMsgIdRef.current) {
       lastMsgIdRef.current = lastId;
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [mensajesEmpresa, mensajesDirecta, tab]);
+  }, [mensajes]);
 
-  // Polling mensajes empresa
+  // Polling
   useEffect(() => {
-    if (!selectedEmpresa || tab !== "empresas") return;
+    if (!selected) return;
     const interval = setInterval(() => {
-      getMensajes(selectedEmpresa).then(setMensajesEmpresa).catch(() => {});
+      const loader = selected.esDirecta
+        ? getMensajesDeDirecta(selected.id)
+        : getMensajes(selected.id);
+      loader.then(setMensajes).catch(() => {});
     }, 5000);
     return () => clearInterval(interval);
-  }, [selectedEmpresa, tab]);
+  }, [selected?.id, selected?.esDirecta]);
 
-  // Polling mensajes directos
-  useEffect(() => {
-    if (!selectedDirecta || tab !== "estudiantes") return;
-    const interval = setInterval(() => {
-      getMensajesDeDirecta(selectedDirecta).then(setMensajesDirecta).catch(() => {});
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [selectedDirecta, tab]);
+  // Lista unificada ordenada por recencia
+  const todasLasConvs = [
+    ...convEmpresas.map((c) => ({ ...c, esDirecta: false, contraparte_rol: "empresa", foto: c.contraparte_foto })),
+    ...convDirectas.map((c) => ({ ...c, esDirecta: true, foto: c.foto_contraparte })),
+  ].sort((a, b) => new Date(b.ultimo_tiempo || 0) - new Date(a.ultimo_tiempo || 0));
 
-  const convEmpresa = convEmpresas.find((c) => c.id === selectedEmpresa);
-  const convDirecta = convDirectas.find((c) => c.id === selectedDirecta);
-  const activeConv = tab === "empresas" ? convEmpresa : convDirecta;
-  const activeMessages = tab === "empresas" ? mensajesEmpresa : mensajesDirecta;
-  const totalNoLeidos = [...convEmpresas, ...convDirectas].reduce((n, c) => n + (c.no_leidos || 0), 0);
+  const activeConv = selected
+    ? todasLasConvs.find((c) => c.id === selected.id && c.esDirecta === selected.esDirecta)
+    : null;
+
+  const profileLink = activeConv
+    ? activeConv.contraparte_rol === "empresa"
+      ? `/empresa-publica/${activeConv.contraparte_id}`
+      : activeConv.contraparte_rol === "colegio"
+      ? `/colegio-publico/${activeConv.contraparte_id}`
+      : `/estudiante/candidato/${activeConv.contraparte_id}`
+    : "#";
 
   const handleSend = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || sending) return;
-    const selected = tab === "empresas" ? selectedEmpresa : selectedDirecta;
-    if (!selected) return;
-
+    if (!newMessage.trim() || sending || !selected) return;
     setSending(true);
     setErrorEnvio("");
     try {
-      if (tab === "empresas") {
-        await enviarMensaje(selected, newMessage.trim());
-        const updated = await getMensajes(selected);
-        setMensajesEmpresa(updated);
-        setConvEmpresas((prev) =>
+      if (selected.esDirecta) {
+        await enviarMensajeDirecto(selected.id, newMessage.trim());
+        const updated = await getMensajesDeDirecta(selected.id);
+        setMensajes(updated);
+        setConvDirectas((prev) =>
           prev.map((c) =>
-            c.id === selected
+            c.id === selected.id
               ? { ...c, ultimo_mensaje: newMessage.trim(), ultimo_tiempo: new Date().toISOString(), no_leidos: 0 }
               : c
           )
         );
       } else {
-        await enviarMensajeDirecto(selected, newMessage.trim());
-        const updated = await getMensajesDeDirecta(selected);
-        setMensajesDirecta(updated);
-        setConvDirectas((prev) =>
+        await enviarMensaje(selected.id, newMessage.trim());
+        const updated = await getMensajes(selected.id);
+        setMensajes(updated);
+        setConvEmpresas((prev) =>
           prev.map((c) =>
-            c.id === selected
+            c.id === selected.id
               ? { ...c, ultimo_mensaje: newMessage.trim(), ultimo_tiempo: new Date().toISOString(), no_leidos: 0 }
               : c
           )
@@ -201,95 +209,80 @@ export default function EstudianteMensajeria() {
     );
   }
 
-  const conversations = tab === "empresas" ? convEmpresas : convDirectas;
-  const selected = tab === "empresas" ? selectedEmpresa : selectedDirecta;
-  const setSelected = tab === "empresas" ? setSelectedEmpresa : setSelectedDirecta;
-
   return (
     <div>
       <PageHeader
         title="Mis Mensajes"
-        subtitle="Comunícate con empresas y otros estudiantes"
+        subtitle="Comunícate con empresas, tu colegio y otros estudiantes"
       />
 
-      {/* Tabs */}
-      <div className={`flex gap-1 mb-2 -mt-4 p-1 rounded-xl w-72 border ${B} ${cardBg}`}>
-        {[
-          { id: "empresas", icon: "mdi:office-building-outline", label: "Empresas",
-            badge: convEmpresas.reduce((n, c) => n + (c.no_leidos || 0), 0) },
-          { id: "estudiantes", icon: "mynaui:user-solid", label: "Estudiantes",
-            badge: convDirectas.reduce((n, c) => n + (c.no_leidos || 0), 0) },
-        ].map((t) => (
-          <button
-            key={t.id}
-            onClick={() => { setTab(t.id); setNewMessage(""); }}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-              tab === t.id
-                ? "bg-[#0F4D8A] text-[#E6F1FB]"
-                : `${M} hover:bg-[#0F4D8A]/10`
-            }`}
-          >
-            <Icon icon={t.icon} width={15} />
-            {t.label}
-            {t.badge > 0 && (
-              <span className={`w-4 h-4 rounded-full text-xs flex items-center justify-center ${
-                tab === t.id ? "bg-white text-[#0F4D8A]" : "bg-[#0F4D8A] text-white"
-              }`}>
-                {t.badge}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
       <div className={`rounded-xl border ${B} overflow-hidden flex`} style={{ height: "560px" }}>
-        {/* Lista de Conversaciones */}
+        {/* Lista de conversaciones */}
         <div className={`w-72 flex-shrink-0 border-r ${B} flex flex-col ${cardBg}`}>
           <div className="flex-1 overflow-y-auto pt-2">
-            {conversations.length === 0 ? (
+            {todasLasConvs.length === 0 ? (
               <p className={`text-xs ${M} text-center py-8 px-4`}>
-                {tab === "empresas"
-                  ? "Aún no tienes conversaciones con empresas."
-                  : "Aún no tienes conversaciones con otros estudiantes."}
+                Aún no tienes conversaciones.
               </p>
             ) : (
-              conversations.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => { setSelected(c.id); (tab === "empresas" ? setConvEmpresas : setConvDirectas)((prev) => prev.map((x) => x.id === c.id ? { ...x, no_leidos: 0 } : x)); }}
-                  className={`w-full text-left px-4 py-3 border-b ${B} transition-colors ${
-                    selected === c.id
-                      ? isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]"
-                      : isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-0.5">
-                    <span className={`text-sm font-semibold truncate flex-1 ${
-                      tab === "empresas" ? "text-[#378ADD]" : T
-                    }`}>
-                      {c.contraparte}
-                    </span>
-                    <span className={`text-xs ${M} flex-shrink-0 ml-2`}>
-                      {formatTime(c.ultimo_tiempo)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className={`text-xs ${M} truncate flex-1`}>
-                      {c.ultimo_mensaje || "Sin mensajes aún"}
-                    </p>
-                    {c.no_leidos > 0 && (
-                      <span className="w-4 h-4 rounded-full bg-[#0F4D8A] text-white text-xs flex items-center justify-center flex-shrink-0 ml-2">
-                        {c.no_leidos}
-                      </span>
-                    )}
-                  </div>
-                </button>
-              ))
+              todasLasConvs.map((c) => {
+                const isActive = selected?.id === c.id && selected?.esDirecta === c.esDirecta;
+                return (
+                  <button
+                    key={`${c.esDirecta ? "d" : "e"}-${c.id}`}
+                    onClick={() => {
+                      setSelected({ id: c.id, esDirecta: c.esDirecta });
+                      setNewMessage("");
+                      (c.esDirecta ? setConvDirectas : setConvEmpresas)((prev) =>
+                        prev.map((x) => x.id === c.id ? { ...x, no_leidos: 0 } : x)
+                      );
+                    }}
+                    className={`w-full text-left px-3 py-3 border-b ${B} transition-colors ${
+                      isActive
+                        ? isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]"
+                        : isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      {c.foto ? (
+                        <img src={getMediaUrl(c.foto)} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-[#0F4D8A] flex items-center justify-center flex-shrink-0 text-white text-sm font-semibold">
+                          {(c.contraparte || "?")[0].toUpperCase()}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <span className={`text-sm font-semibold truncate flex-1 ${T}`}>
+                            {c.contraparte}
+                          </span>
+                          <span className={`text-xs ${M} flex-shrink-0`}>
+                            {formatTime(c.ultimo_tiempo)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between gap-1">
+                          <p className={`text-xs ${M} truncate flex-1`}>
+                            {c.ultimo_mensaje || "Sin mensajes aún"}
+                          </p>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <RolTag rol={c.contraparte_rol} isDark={isDark} />
+                            {c.no_leidos > 0 && (
+                              <span className="w-4 h-4 rounded-full bg-[#0F4D8A] text-white text-xs flex items-center justify-center">
+                                {c.no_leidos}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })
             )}
           </div>
         </div>
 
-        {/* Hilo del Chat */}
+        {/* Hilo del chat */}
         <div className="flex-1 flex flex-col min-w-0">
           {!activeConv ? (
             <div className={`flex-1 flex items-center justify-center ${M}`}>
@@ -297,21 +290,32 @@ export default function EstudianteMensajeria() {
             </div>
           ) : (
             <>
+              {/* Header del chat */}
               <div className={`px-5 py-3 border-b ${B} ${cardBg} flex items-center justify-between flex-shrink-0`}>
-                <div>
-                  <Link
-                    to={tab === "empresas"
-                      ? `/empresa-publica/${activeConv.contraparte_id}`
-                      : `/estudiante/candidato/${activeConv.contraparte_id}`}
-                    className={`text-sm font-semibold hover:underline hover:text-[#378ADD] transition-colors ${T}`}
-                  >
-                    {activeConv.contraparte}
-                  </Link>
-                  <p className={`text-xs ${M}`}>{tab === "empresas" ? "Empresa" : "Estudiante"}</p>
+                <div className="flex items-center gap-3">
+                  {activeConv.foto ? (
+                    <img src={getMediaUrl(activeConv.foto)} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-[#0F4D8A] flex items-center justify-center flex-shrink-0 text-white text-sm font-semibold">
+                      {(activeConv.contraparte || "?")[0].toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        to={profileLink}
+                        className={`text-sm font-semibold hover:underline hover:text-[#378ADD] transition-colors ${T}`}
+                      >
+                        {activeConv.contraparte}
+                      </Link>
+                      <RolTag rol={activeConv.contraparte_rol} isDark={isDark} />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {tab === "empresas" && (
+              {/* Aviso privacidad solo para empresa */}
+              {!activeConv.esDirecta && (
                 <div className={`px-5 py-2 text-xs flex items-center gap-2 flex-shrink-0 ${
                   isDark ? "bg-[#2a2416] text-[#e5b34a]" : "bg-[#fff8e6] text-[#b38600]"
                 }`}>
@@ -320,18 +324,19 @@ export default function EstudianteMensajeria() {
                 </div>
               )}
 
+              {/* Mensajes */}
               <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
                 {loadingMsgs ? (
                   <div className={`flex items-center justify-center py-8 ${M}`}>
                     <Icon icon="mdi:loading" width={20} className="animate-spin mr-2" />
                     Cargando...
                   </div>
-                ) : activeMessages.length === 0 ? (
+                ) : mensajes.length === 0 ? (
                   <p className={`text-xs ${M} text-center py-8`}>
                     No hay mensajes aún. ¡Inicia la conversación!
                   </p>
                 ) : (
-                  activeMessages.map((msg) => {
+                  mensajes.map((msg) => {
                     const isMe = Number(msg.remitente_id) === Number(usuario.id);
                     return (
                       <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>

@@ -6,6 +6,7 @@ import { Badge, PageHeader } from "../../components/ui";
 import {
   getConversaciones, getMensajes, enviarMensaje,
   getMensajesDirectos, getMensajesDeDirecta, enviarMensajeDirecto,
+  getMediaUrl,
 } from "../../services/api";
 
 function MensajeBurbuja({ contenido }) {
@@ -131,23 +132,34 @@ function CandidatosPanel({ isDark, initialConvId }) {
             <button
               key={c.id}
               onClick={() => { setSelected(c.id); setConversations((prev) => prev.map((x) => x.id === c.id ? { ...x, no_leidos: 0 } : x)); }}
-              className={`w-full text-left px-4 py-3 border-b ${B} transition-colors ${
+              className={`w-full text-left px-3 py-3 border-b ${B} transition-colors ${
                 selected === c.id
                   ? isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]"
                   : isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"
               }`}
             >
-              <div className="flex items-center justify-between mb-0.5">
-                <span className={`text-sm font-semibold ${T} truncate flex-1`}>{c.contraparte}</span>
-                <span className={`text-xs ${M} flex-shrink-0 ml-2`}>{formatTime(c.ultimo_tiempo)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <p className={`text-xs ${M} truncate flex-1`}>{c.ultimo_mensaje || "Sin mensajes aún"}</p>
-                {c.no_leidos > 0 && (
-                  <span className="w-4 h-4 rounded-full bg-[#0F4D8A] text-white text-xs flex items-center justify-center flex-shrink-0 ml-2">
-                    {c.no_leidos}
-                  </span>
+              <div className="flex items-center gap-2.5">
+                {c.contraparte_foto ? (
+                  <img src={getMediaUrl(c.contraparte_foto)} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-[#0F4D8A] flex items-center justify-center flex-shrink-0 text-white text-sm font-semibold">
+                    {(c.contraparte || "?")[0].toUpperCase()}
+                  </div>
                 )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className={`text-sm font-semibold ${T} truncate flex-1`}>{c.contraparte}</span>
+                    <span className={`text-xs ${M} flex-shrink-0 ml-2`}>{formatTime(c.ultimo_tiempo)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className={`text-xs ${M} truncate flex-1`}>{c.ultimo_mensaje || "Sin mensajes aún"}</p>
+                    {c.no_leidos > 0 && (
+                      <span className="w-4 h-4 rounded-full bg-[#0F4D8A] text-white text-xs flex items-center justify-center flex-shrink-0 ml-2">
+                        {c.no_leidos}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
             </button>
           ))}
@@ -162,14 +174,23 @@ function CandidatosPanel({ isDark, initialConvId }) {
         ) : (
           <>
             <div className={`px-5 py-3 border-b ${B} ${cardBg} flex items-center justify-between flex-shrink-0`}>
-              <div>
-                <Link
-                  to={`/empresa/candidato/${conv.contraparte_id}`}
-                  className={`text-sm font-semibold hover:underline hover:text-[#378ADD] transition-colors ${T}`}
-                >
-                  {conv.contraparte}
-                </Link>
-                <p className={`text-xs ${M}`}>Candidato</p>
+              <div className="flex items-center gap-3">
+                {conv.contraparte_foto ? (
+                  <img src={getMediaUrl(conv.contraparte_foto)} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-[#0F4D8A] flex items-center justify-center flex-shrink-0 text-white text-sm font-semibold">
+                    {(conv.contraparte || "?")[0].toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <Link
+                    to={`/empresa/candidato/${conv.contraparte_id}`}
+                    className={`text-sm font-semibold hover:underline hover:text-[#378ADD] transition-colors ${T}`}
+                  >
+                    {conv.contraparte}
+                  </Link>
+                  <p className={`text-xs ${M}`}>Candidato</p>
+                </div>
               </div>
             </div>
 
@@ -319,23 +340,34 @@ function InstitucionesPanel({ isDark, initialDirectaId }) {
             <button
               key={c.id}
               onClick={() => { setSelected(c.id); setConvs((prev) => prev.map((x) => x.id === c.id ? { ...x, no_leidos: 0 } : x)); }}
-              className={`w-full text-left px-4 py-3 border-b ${B} transition-colors ${
+              className={`w-full text-left px-3 py-3 border-b ${B} transition-colors ${
                 selected === c.id
                   ? isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]"
                   : isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"
               }`}
             >
-              <div className="flex items-center justify-between mb-0.5">
-                <span className={`text-sm font-semibold ${T} truncate flex-1`}>{c.contraparte}</span>
-                <span className={`text-xs ${M} ml-2 flex-shrink-0`}>{formatTime(c.ultimo_tiempo)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <p className={`text-xs ${M} truncate flex-1`}>{c.ultimo_mensaje || "Sin mensajes aún"}</p>
-                {c.no_leidos > 0 && (
-                  <span className="w-4 h-4 rounded-full bg-[#0F4D8A] text-white text-xs flex items-center justify-center flex-shrink-0 ml-2">
-                    {c.no_leidos}
-                  </span>
+              <div className="flex items-center gap-2.5">
+                {c.foto_contraparte ? (
+                  <img src={getMediaUrl(c.foto_contraparte)} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-[#0F4D8A] flex items-center justify-center flex-shrink-0 text-white text-sm font-semibold">
+                    {(c.contraparte || "?")[0].toUpperCase()}
+                  </div>
                 )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className={`text-sm font-semibold ${T} truncate flex-1`}>{c.contraparte}</span>
+                    <span className={`text-xs ${M} ml-2 flex-shrink-0`}>{formatTime(c.ultimo_tiempo)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className={`text-xs ${M} truncate flex-1`}>{c.ultimo_mensaje || "Sin mensajes aún"}</p>
+                    {c.no_leidos > 0 && (
+                      <span className="w-4 h-4 rounded-full bg-[#0F4D8A] text-white text-xs flex items-center justify-center flex-shrink-0 ml-2">
+                        {c.no_leidos}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
             </button>
           ))}
@@ -350,9 +382,18 @@ function InstitucionesPanel({ isDark, initialDirectaId }) {
         ) : (
           <>
             <div className={`px-5 py-3 border-b ${B} ${cardBg} flex items-center justify-between flex-shrink-0`}>
-              <div>
-                <p className={`text-sm font-semibold ${T}`}>{conv.contraparte}</p>
-                <p className={`text-xs ${M}`}>Mensaje directo</p>
+              <div className="flex items-center gap-3">
+                {conv.foto_contraparte ? (
+                  <img src={getMediaUrl(conv.foto_contraparte)} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-[#0F4D8A] flex items-center justify-center flex-shrink-0 text-white text-sm font-semibold">
+                    {(conv.contraparte || "?")[0].toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <p className={`text-sm font-semibold ${T}`}>{conv.contraparte}</p>
+                  <p className={`text-xs ${M}`}>Mensaje directo</p>
+                </div>
               </div>
             </div>
 

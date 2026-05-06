@@ -14,6 +14,7 @@ const profilePaths = {
 const navLinks = {
   estudiante: [
     { to: "/estudiante/muro", label: "Inicio" },
+    { to: "/estudiante/postulaciones", label: "Mis postulaciones" },
   ],
   empresa: [
     { to: "/empresa/muro", label: "Inicio" },
@@ -410,14 +411,6 @@ export default function Layout() {
                     <Link to={profilePaths[role]} onClick={() => setMenuOpen(false)} className={dropdownItemCls}>
                       <Icon icon="mynaui:user-solid" width={18} className="text-[#378ADD]" />
                       Mi perfil
-                    </Link>
-                  )}
-
-                  {/* Mis postulaciones (solo estudiante) */}
-                  {role === "estudiante" && (
-                    <Link to="/estudiante/postulaciones" onClick={() => setMenuOpen(false)} className={dropdownItemCls}>
-                      <Icon icon="mdi:clipboard-list-outline" width={18} className="text-[#378ADD]" />
-                      Mis postulaciones
                     </Link>
                   )}
 

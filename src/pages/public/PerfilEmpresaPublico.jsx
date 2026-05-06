@@ -4,7 +4,7 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, SecondaryButton, PrimaryButton, PageHeader, Paginacion } from "../../components/ui";
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
-import { getEmpresaById, getVacantesEmpresa, postularAVacante, iniciarConversacionConEmpresa, getEstudianteById, getMediaUrl, toggleSeguir, getEstadoSeguimiento } from "../../services/api";
+import { getEmpresaById, getVacantesEmpresa, postularAVacante, iniciarConversacionConEmpresa, iniciarMensajeDirecto, getEstudianteById, getMediaUrl, toggleSeguir, getEstadoSeguimiento } from "../../services/api";
 import { calcularCompletitud } from "../../utils/perfilCompletitud";
 import ModalReporte from "../../components/ModalReporte";
 
@@ -194,6 +194,27 @@ export default function PerfilEmpresaPublico() {
               >
                 <Icon icon={contactando ? "mdi:loading" : "mdi:message-outline"} width={16} className={contactando ? "animate-spin" : ""} />
                 {contactando ? "Abriendo chat..." : "Contactar empresa"}
+              </button>
+            )}
+
+            {usuario.rol === "slep" && (
+              <button
+                onClick={async () => {
+                  setContactando(true);
+                  try {
+                    const conv = await iniciarMensajeDirecto(id);
+                    navigate("/slep/mensajeria", { state: { directaId: conv.id } });
+                  } catch (err) {
+                    console.error("Error al contactar:", err);
+                  } finally {
+                    setContactando(false);
+                  }
+                }}
+                disabled={contactando}
+                className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB] text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                <Icon icon={contactando ? "mdi:loading" : "mdi:message-outline"} width={16} className={contactando ? "animate-spin" : ""} />
+                {contactando ? "Abriendo chat..." : "Iniciar conversación"}
               </button>
             )}
 

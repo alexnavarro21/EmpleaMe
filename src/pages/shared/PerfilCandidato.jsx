@@ -215,36 +215,37 @@ export default function EmpresaPerfilCandidato() {
             )}
 
             <div className="flex flex-col gap-2 mt-4">
-              {viewer.rol !== "slep" && (
-                <PrimaryButton
-                  className="w-full flex items-center justify-center gap-2"
-                  disabled={contactando}
-                  onClick={async () => {
-                    setContactando(true);
-                    try {
-                      if (viewer.rol === "estudiante") {
-                        const conv = await iniciarMensajeDirecto(id);
-                        navigate("/estudiante/mensajeria", { state: { directaId: conv.id } });
-                      } else if (viewer.rol === "colegio") {
-                        const conv = await iniciarMensajeDirecto(id);
-                        navigate("/admin/mensajeria", { state: { directaId: conv.id } });
-                      } else {
-                        const conv = await iniciarConversacion(id);
-                        navigate("/empresa/mensajeria", { state: { conversacionId: conv.id } });
-                      }
-                    } catch (err) {
-                      console.error("Error al contactar:", err);
-                    } finally {
-                      setContactando(false);
+              <PrimaryButton
+                className="w-full flex items-center justify-center gap-2"
+                disabled={contactando}
+                onClick={async () => {
+                  setContactando(true);
+                  try {
+                    if (viewer.rol === "estudiante") {
+                      const conv = await iniciarMensajeDirecto(id);
+                      navigate("/estudiante/mensajeria", { state: { directaId: conv.id } });
+                    } else if (viewer.rol === "colegio") {
+                      const conv = await iniciarMensajeDirecto(id);
+                      navigate("/admin/mensajeria", { state: { directaId: conv.id } });
+                    } else if (viewer.rol === "slep") {
+                      const conv = await iniciarMensajeDirecto(id);
+                      navigate("/slep/mensajeria", { state: { directaId: conv.id } });
+                    } else {
+                      const conv = await iniciarConversacion(id);
+                      navigate("/empresa/mensajeria", { state: { conversacionId: conv.id } });
                     }
-                  }}
-                >
-                  {contactando
-                    ? <Icon icon="mdi:loading" width={16} className="animate-spin" />
-                    : <Icon icon="mdi:message-outline" width={16} />}
-                  {contactando ? "Abriendo chat..." : "Contactar estudiante"}
-                </PrimaryButton>
-              )}
+                  } catch (err) {
+                    console.error("Error al contactar:", err);
+                  } finally {
+                    setContactando(false);
+                  }
+                }}
+              >
+                {contactando
+                  ? <Icon icon="mdi:loading" width={16} className="animate-spin" />
+                  : <Icon icon="mdi:message-outline" width={16} />}
+                {contactando ? "Abriendo chat..." : "Contactar estudiante"}
+              </PrimaryButton>
               {viewer.rol === "empresa" && (
                 <SecondaryButton
                   className="w-full flex items-center justify-center gap-2"

@@ -253,7 +253,7 @@ export default function AdminPanel() {
             </ChartCard>
           </div>
 
-          <ChartCard title="Top empresas" loading={loadingTopEmp}>
+          <ChartCard title="Top empresas más postuladas" loading={loadingTopEmp}>
             {topEmpData.length === 0
               ? <p className={`text-xs text-center py-10 ${M}`}>Sin datos aún</p>
               : <MouseTracked>

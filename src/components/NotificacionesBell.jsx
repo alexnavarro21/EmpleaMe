@@ -100,10 +100,10 @@ export default function NotificacionesBell({ role }) {
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
-  // Fetch unread count on mount + every 60s
+  // Fetch unread count on mount + every 5s
   useEffect(() => {
     fetchCount();
-    const interval = setInterval(fetchCount, 60000);
+    const interval = setInterval(fetchCount, 5000);
     return () => clearInterval(interval);
   }, []);
 

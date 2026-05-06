@@ -4,7 +4,7 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card } from "../../components/ui";
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
-import { getColegioById, getMediaUrl } from "../../services/api";
+import { getColegioById, getMediaUrl, iniciarMensajeDirecto } from "../../services/api";
 
 export default function PerfilColegioPublico() {
   const { isDark } = useDark();
@@ -14,6 +14,7 @@ export default function PerfilColegioPublico() {
   const [colegio, setColegio] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [contactando, setContactando] = useState(false);
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
@@ -79,6 +80,26 @@ export default function PerfilColegioPublico() {
             )}
             <p className={`text-xs ${M} mt-1 mb-3`}>Institución educativa en EmpleaMe</p>
 
+            {usuario.rol === "slep" && (
+              <button
+                onClick={async () => {
+                  setContactando(true);
+                  try {
+                    const conv = await iniciarMensajeDirecto(id);
+                    navigate("/slep/mensajeria", { state: { directaId: conv.id } });
+                  } catch (err) {
+                    console.error("Error al contactar:", err);
+                  } finally {
+                    setContactando(false);
+                  }
+                }}
+                disabled={contactando}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB] text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                <Icon icon={contactando ? "mdi:loading" : "mdi:message-outline"} width={16} className={contactando ? "animate-spin" : ""} />
+                {contactando ? "Abriendo chat..." : "Iniciar conversación"}
+              </button>
+            )}
 
             <div className={`mt-4 pt-4 border-t ${B} flex flex-col gap-2.5 text-left`}>
               {colegio.telefono_contacto && (
