@@ -26,7 +26,8 @@
       "Bash(sed -n '125,145p' /Users/alex/Documents/development/empleame/src/pages/colegio/Mensajeria.jsx)",
       "Bash(sed -n '208,217p' /Users/alex/Documents/development/empleame/src/pages/estudiante/EstudianteMensajeria.jsx)",
       "Bash(sed -n '373,380p' /Users/alex/Documents/development/empleame/src/pages/colegio/Mensajeria.jsx)",
-      "Bash(mysql -h shinkansen.proxy.rlwy.net -P 30383 -u root -pwpmVfypuioXyCjFfcvkkQMSyeadqXTUT railway -e ' *)"
+      "Bash(mysql -h shinkansen.proxy.rlwy.net -P 30383 -u root -pwpmVfypuioXyCjFfcvkkQMSyeadqXTUT railway -e ' *)",
+      "Bash(grep -E \"\\\\.\\(jsx|js\\)$\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\rikis\\.claude\\projects\\c--Users-rikis-Desktop-Proyecto-IS-EmpleaMe\\memory",

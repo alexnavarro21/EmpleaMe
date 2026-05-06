@@ -1379,7 +1379,7 @@ export default function EstudianteDashboard() {
 
       {/* ── CENTER FEED ── */}
       <div className="flex flex-col gap-4">
-        {(isEstudiante || isEmpresa || isAdmin) && <CrearPublicacion onPublicado={cargarPublicaciones} />}
+        {(isEstudiante || isEmpresa || isAdmin || isSlep) && <CrearPublicacion onPublicado={cargarPublicaciones} />}
 
         {/* Tabs del feed + botón filtros */}
         {(isEstudiante || isEmpresa) && (
