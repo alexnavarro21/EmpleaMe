@@ -294,7 +294,7 @@ function DirectosPanel({ isDark, initialDirectaId }) {
               <p className="text-xs">Sin mensajes directos aún</p>
             </div>
           ) : convs.map((c) => (
-            <button key={c.id} onClick={() => setSelected(c.id)}
+            <button key={c.id} onClick={() => { setSelected(c.id); setConvs((prev) => prev.map((x) => x.id === c.id ? { ...x, no_leidos: 0 } : x)); }}
               className={`w-full text-left px-4 py-3 border-b ${B} transition-colors ${selected === c.id ? (isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]") : (isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]")}`}>
               <div className="flex items-center justify-between mb-0.5">
                 <span className={`text-sm font-semibold ${T} truncate flex-1`}>{c.contraparte}</span>
