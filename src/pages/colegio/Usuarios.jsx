@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import {
@@ -182,7 +183,7 @@ function formatDate(iso) {
 }
 const NIVELES_FILTER = ["1° Medio", "2° Medio", "3° Medio", "4° Medio"];
 
-function AccionesDropdown({ userId, isDark, onEliminado }) {
+function AccionesDropdown({ userId, isDark, onEliminado, onEditarEstudiante }) {
   const [open, setOpen]             = useState(false);
   const [modo, setModo]             = useState("idle"); // idle | egresar | eliminar | pwd
   const [cargando, setCargando]     = useState(false);
@@ -338,6 +339,13 @@ function AccionesDropdown({ userId, isDark, onEliminado }) {
             onClick={() => { setModo("pwd"); setNuevaPwd(""); setPwdMsg(""); setOpen(false); }}>
             <Icon icon="mdi:key-outline" width={15} className="text-[#378ADD]" />Cambiar contraseña
           </button>
+          {onEditarEstudiante && (
+            <button
+              className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${isDark ? "text-[#D3D1C7] hover:bg-[#313130]" : "text-[#2C2C2A] hover:bg-[#F7F6F3]"}`}
+              onClick={() => { onEditarEstudiante(userId); setOpen(false); }}>
+              <Icon icon="mdi:account-edit-outline" width={15} className="text-[#378ADD]" />Editar estudiante
+            </button>
+          )}
           <div className={`my-1 border-t ${B}`} />
           <button
             className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${isDark ? "text-red-400 hover:bg-[#313130]" : "text-red-500 hover:bg-[#F7F6F3]"}`}
@@ -352,7 +360,7 @@ function AccionesDropdown({ userId, isDark, onEliminado }) {
 }
 const PAGE_SIZE = 10;
 
-function TabUsuarios({ rawUsers, isDark }) {
+function TabUsuarios({ rawUsers, isDark, onEditarEstudiante }) {
   const [search, setSearch]               = useState("");
   const [carreraFilter, setCarreraFilter] = useState("todas");
   const [nivelFilter, setNivelFilter]     = useState("todos");
@@ -483,7 +491,7 @@ function TabUsuarios({ rawUsers, isDark }) {
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${S}`}>
                         <Icon icon="mynaui:user-solid" width={16} className="text-[#378ADD]" />
                       </div>
-                      <span className={`text-sm font-medium ${T}`}>{u.nombre || u.correo}</span>
+                      <Link to={`/admin/candidato/${u.id}`} className={`text-sm font-medium hover:text-[#378ADD] hover:underline transition-colors ${T}`}>{u.nombre || u.correo}</Link>
                     </div>
                   </td>
                   <td className="px-5 py-3"><span className={`text-sm ${M}`}>{u.rut || "—"}</span></td>
@@ -495,7 +503,7 @@ function TabUsuarios({ rawUsers, isDark }) {
                       : <span className={`text-sm ${M}`}>—</span>}
                   </td>
                   <td className="px-5 py-3">
-                    <AccionesDropdown userId={u.id} isDark={isDark} onEliminado={handleEliminado} />
+                    <AccionesDropdown userId={u.id} isDark={isDark} onEliminado={handleEliminado} onEditarEstudiante={onEditarEstudiante} />
                   </td>
                 </tr>
               ))}
@@ -574,13 +582,13 @@ function TabUsuarios({ rawUsers, isDark }) {
 }
 
 // TAB 1: Editar estudiante (técnicas, blandas, idiomas, historial)
-function TabEditarEstudiante({ estudiantes, habilidades, isDark }) {
+function TabEditarEstudiante({ estudiantes, habilidades, isDark, initialId }) {
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
   const S = isDark ? "bg-[#313130]" : "bg-[#F7F6F3]";
 
-  const [selectedId, setSelectedId]       = useState("");
+  const [selectedId, setSelectedId]       = useState(initialId || "");
   const [subTab, setSubTab]               = useState("tecnicas");
   const [selected, setSelected]           = useState({});
   const [selectedBlandas2, setSelectedBlandas2] = useState({});
@@ -1888,10 +1896,16 @@ const TABS = [
 export default function GestionEstudiantes() {
   const { isDark } = useDark();
   const [tab, setTab] = useState("usuarios");
+  const [editarId, setEditarId]         = useState(null);
   const [rawUsers, setRawUsers]         = useState([]);
   const [estudiantes, setEstudiantes]   = useState([]);
   const [habilidades, setHabilidades]   = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const handleEditarEstudiante = (userId) => {
+    setEditarId(String(userId));
+    setTab("editar_estudiante");
+  };
 
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -1943,8 +1957,8 @@ export default function GestionEstudiantes() {
         </div>
       ) : (
         <>
-          {tab === "usuarios"          && <TabUsuarios        rawUsers={rawUsers} isDark={isDark} />}
-          {tab === "editar_estudiante" && <TabEditarEstudiante estudiantes={estudiantes} habilidades={habilidades} isDark={isDark} />}
+          {tab === "usuarios"          && <TabUsuarios        rawUsers={rawUsers} isDark={isDark} onEditarEstudiante={handleEditarEstudiante} />}
+          {tab === "editar_estudiante" && <TabEditarEstudiante estudiantes={estudiantes} habilidades={habilidades} isDark={isDark} initialId={editarId} />}
           {tab === "evaluacion"        && <TabEvaluacion      estudiantes={estudiantes} habilidades={habilidades} isDark={isDark} />}
           {tab === "tests"             && <TabTests  isDark={isDark} />}
           {tab === "promedios"         && <TabPromedios isDark={isDark} />}

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
-import { Card, Badge, PrimaryButton, SecondaryButton, PageHeader, SoftSkillBar } from "../../components/ui";
+import { Card, Badge, PrimaryButton, SecondaryButton, SoftSkillBar } from "../../components/ui";
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
 import { getEstudianteById, iniciarConversacion, iniciarMensajeDirecto, getVacantesEmpresa, enviarMensaje, getMediaUrl, toggleSeguir, getEstadoSeguimiento } from "../../services/api";
 import { generarCV } from "../../utils/generarCV";
@@ -139,11 +139,13 @@ export default function EmpresaPerfilCandidato() {
 
   return (
     <div>
-      <PageHeader
-        title="Perfil del Candidato"
-        subtitle="Vista detallada para evaluación"
-        action={<SecondaryButton onClick={() => navigate(-1)}>← Volver</SecondaryButton>}
-      />
+      <button
+        onClick={() => navigate(-1)}
+        className={`mb-4 flex items-center gap-1.5 text-sm transition-colors ${M} hover:text-[#378ADD]`}
+      >
+        <Icon icon="mdi:arrow-left" width={18} />
+        Volver
+      </button>
 
       <div className="grid grid-cols-3 gap-6">
         {/* Left sidebar */}
