@@ -55,7 +55,7 @@ function MascotaSVG({ pose }) {
             <rect x="-3" y="-18" width="4.4" height="13" rx="1.6" fill="#BFD9F2"/>
             <rect x="3" y="-17" width="4.4" height="12" rx="1.6" fill="#BFD9F2"/>
             <rect x="9" y="-14" width="4.2" height="9" rx="1.6" fill="#BFD9F2"/>
-            <ellipse cx="-12" cy="3" rx="3.6" ry="5.4" fill="#BFD9F2"/>
+            <ellipse cx="12" cy="3" rx="3.6" ry="5.4" fill="#BFD9F2"/>
           </g>
         </g>
       ) : (
