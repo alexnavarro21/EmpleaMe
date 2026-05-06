@@ -386,7 +386,18 @@ router.put("/colegios/:id", ...auth, async (req, res) => {
 
 // Verifica que el reporte esté dentro del scope del SLEP actual
 async function esReporteDeSlep(reporteId, slepId) {
-  const [[reporte]] = await db.query("SELECT tipo, referencia_id FROM reportes WHERE id = ?", [reporteId]);
+  const [[reporte]] = await db.query(
+    `SELECT r.tipo,
+            rp.publicacion_id,
+            rc.comentario_id,
+            rpf.usuario_id
+     FROM reportes r
+     LEFT JOIN reportes_publicaciones rp  ON rp.reporte_id  = r.id
+     LEFT JOIN reportes_comentarios   rc  ON rc.reporte_id   = r.id
+     LEFT JOIN reportes_perfiles      rpf ON rpf.reporte_id  = r.id
+     WHERE r.id = ?`,
+    [reporteId]
+  );
   if (!reporte) return false;
 
   // Usuarios gestionados por este SLEP: colegios del SLEP + estudiantes de esos colegios
@@ -404,7 +415,7 @@ async function esReporteDeSlep(reporteId, slepId) {
       `SELECT 1 FROM publicaciones p
        WHERE p.id = ?
          AND p.autor_id IN (${colegiosDelSlep} UNION ${estudiantesDelSlep})`,
-      [reporte.referencia_id, slepId, slepId]
+      [reporte.publicacion_id, slepId, slepId]
     );
     return !!row;
   }
@@ -413,7 +424,7 @@ async function esReporteDeSlep(reporteId, slepId) {
       `SELECT 1 FROM comentarios c
        WHERE c.id = ?
          AND c.autor_id IN (${colegiosDelSlep} UNION ${estudiantesDelSlep})`,
-      [reporte.referencia_id, slepId, slepId]
+      [reporte.comentario_id, slepId, slepId]
     );
     return !!row;
   }
@@ -422,7 +433,7 @@ async function esReporteDeSlep(reporteId, slepId) {
       `SELECT 1 FROM usuarios
        WHERE id = ?
          AND id IN (${colegiosDelSlep} UNION ${estudiantesDelSlep})`,
-      [reporte.referencia_id, slepId, slepId]
+      [reporte.usuario_id, slepId, slepId]
     );
     return !!row;
   }
@@ -435,7 +446,9 @@ router.get("/reportes", ...auth, async (req, res) => {
   const slepId = req.usuario.id;
   try {
     const [rows] = await db.query(
-      `SELECT r.id, r.tipo, r.referencia_id, r.motivo, r.descripcion, r.estado, r.creado_en,
+      `SELECT r.id, r.tipo,
+              COALESCE(rp.publicacion_id, rc.comentario_id, rpf.usuario_id) AS referencia_id,
+              r.motivo, r.descripcion, r.estado, r.creado_en,
               COALESCE(pe_rep.nombre_completo, emp_rep.nombre_empresa, 'Usuario') AS reportado_por_nombre,
               CASE r.tipo
                 WHEN 'publicacion' THEN SUBSTRING(pub.contenido, 1, 250)
@@ -448,15 +461,18 @@ router.get("/reportes", ...auth, async (req, res) => {
        JOIN usuarios u ON u.id = r.reportado_por
        LEFT JOIN perfiles_estudiantes pe_rep  ON pe_rep.usuario_id  = u.id
        LEFT JOIN perfiles_empresas    emp_rep ON emp_rep.usuario_id = u.id
-       LEFT JOIN publicaciones pub ON pub.id = r.referencia_id AND r.tipo = 'publicacion'
-       LEFT JOIN comentarios   com ON com.id = r.referencia_id AND r.tipo = 'comentario'
-       LEFT JOIN usuarios      u_ref   ON u_ref.id = r.referencia_id AND r.tipo = 'perfil'
+       LEFT JOIN reportes_publicaciones rp  ON rp.reporte_id  = r.id
+       LEFT JOIN reportes_comentarios   rc  ON rc.reporte_id   = r.id
+       LEFT JOIN reportes_perfiles      rpf ON rpf.reporte_id  = r.id
+       LEFT JOIN publicaciones pub ON pub.id = rp.publicacion_id
+       LEFT JOIN comentarios   com ON com.id = rc.comentario_id
+       LEFT JOIN usuarios      u_ref   ON u_ref.id = rpf.usuario_id
        LEFT JOIN perfiles_colegios  pc      ON pc.usuario_id      = u_ref.id
        LEFT JOIN perfiles_empresas  emp_ref ON emp_ref.usuario_id = u_ref.id
        WHERE r.estado = ?
          AND (
            -- Publicaciones de colegios del SLEP o estudiantes de esos colegios
-           (r.tipo = 'publicacion' AND r.referencia_id IN (
+           (r.tipo = 'publicacion' AND rp.publicacion_id IN (
              SELECT p.id FROM publicaciones p
              WHERE p.autor_id IN (
                SELECT usuario_id FROM perfiles_colegios WHERE slep_id = ?
@@ -468,7 +484,7 @@ router.get("/reportes", ...auth, async (req, res) => {
            ))
            OR
            -- Comentarios de colegios del SLEP o estudiantes de esos colegios
-           (r.tipo = 'comentario' AND r.referencia_id IN (
+           (r.tipo = 'comentario' AND rc.comentario_id IN (
              SELECT c.id FROM comentarios c
              WHERE c.autor_id IN (
                SELECT usuario_id FROM perfiles_colegios WHERE slep_id = ?
@@ -480,7 +496,7 @@ router.get("/reportes", ...auth, async (req, res) => {
            ))
            OR
            -- Perfiles de colegios del SLEP o estudiantes de esos colegios
-           (r.tipo = 'perfil' AND r.referencia_id IN (
+           (r.tipo = 'perfil' AND rpf.usuario_id IN (
              SELECT usuario_id FROM perfiles_colegios WHERE slep_id = ?
              UNION
              SELECT pe2.usuario_id FROM perfiles_estudiantes pe2
@@ -500,15 +516,22 @@ router.get("/reportes", ...auth, async (req, res) => {
 // DELETE /api/slep/reportes/:id/contenido
 router.delete("/reportes/:id/contenido", ...auth, async (req, res) => {
   try {
-    const [[reporte]] = await db.query("SELECT tipo, referencia_id FROM reportes WHERE id = ?", [req.params.id]);
+    const [[reporte]] = await db.query(
+      `SELECT r.tipo, rp.publicacion_id, rc.comentario_id
+       FROM reportes r
+       LEFT JOIN reportes_publicaciones rp ON rp.reporte_id = r.id
+       LEFT JOIN reportes_comentarios   rc ON rc.reporte_id = r.id
+       WHERE r.id = ?`,
+      [req.params.id]
+    );
     if (!reporte) return res.status(404).json({ error: "Reporte no encontrado" });
     if (!await esReporteDeSlep(req.params.id, req.usuario.id))
       return res.status(403).json({ error: "Este reporte no pertenece a tu scope" });
 
     if (reporte.tipo === "publicacion") {
-      await db.query("DELETE FROM publicaciones WHERE id = ?", [reporte.referencia_id]);
+      await db.query("DELETE FROM publicaciones WHERE id = ?", [reporte.publicacion_id]);
     } else if (reporte.tipo === "comentario") {
-      await db.query("DELETE FROM comentarios WHERE id = ?", [reporte.referencia_id]);
+      await db.query("DELETE FROM comentarios WHERE id = ?", [reporte.comentario_id]);
     }
 
     await db.query(

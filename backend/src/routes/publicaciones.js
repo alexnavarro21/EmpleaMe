@@ -21,9 +21,15 @@ router.post("/", verificarToken, upload.single("archivo_multimedia"), async (req
     const url_multimedia = archivo ? `/api/media/${archivo.key}` : null;
 
     const [result] = await db.query(
-      "INSERT INTO publicaciones (autor_id, tipo_id, vacante_id, titulo, contenido, url_multimedia) VALUES (?, ?, ?, ?, ?, ?)",
-      [req.usuario.id, tipoId, vacante_id || null, tituloFinal, contenido || null, url_multimedia]
+      "INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, url_multimedia) VALUES (?, ?, ?, ?, ?)",
+      [req.usuario.id, tipoId, tituloFinal, contenido || null, url_multimedia]
     );
+    if (vacante_id) {
+      await db.query(
+        "INSERT INTO publicaciones_vacantes (publicacion_id, vacante_id) VALUES (?, ?)",
+        [result.insertId, vacante_id]
+      );
+    }
 
     res.status(201).json({ id: result.insertId, mensaje: "Publicación creada con éxito", url_multimedia });
   } catch (err) {
@@ -87,7 +93,7 @@ router.get("/", verificarToken, async (req, res) => {
     params.push(limitNum, offsetNum);
 
     const [rows] = await db.query(
-      `SELECT p.id, p.titulo, p.contenido, p.publicado_en, p.vacante_id, p.url_multimedia,
+      `SELECT p.id, p.titulo, p.contenido, p.publicado_en, pv.vacante_id, p.url_multimedia,
               p.autor_id,
               tp.nombre AS tipo,
               u.rol AS autor_rol,
@@ -111,7 +117,8 @@ router.get("/", verificarToken, async (req, res) => {
        LEFT JOIN perfiles_empresas pe     ON pe.usuario_id  = u.id
        LEFT JOIN perfiles_estudiantes est ON est.usuario_id = u.id
        LEFT JOIN perfiles_colegios pc     ON pc.usuario_id  = u.id
-       LEFT JOIN vacantes v               ON v.id = p.vacante_id
+       LEFT JOIN publicaciones_vacantes pv ON pv.publicacion_id = p.id
+       LEFT JOIN vacantes v               ON v.id = pv.vacante_id
        WHERE p.esta_activa = TRUE
        ${autor_id ? "AND p.autor_id = ?" : ""}
        ORDER BY p.publicado_en DESC

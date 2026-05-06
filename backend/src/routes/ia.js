@@ -109,7 +109,7 @@ router.get("/resumen/:estudiante_id/:vacante_id", verificarToken, soloRol("empre
     );
     if (!vacante) return res.status(404).json({ error: "Vacante no encontrada" });
 
-    const [habilidades]        = await db.query(`SELECT h.nombre, h.categoria, he.nivel_dominio FROM habilidades_estudiantes he JOIN habilidades h ON h.id = he.habilidad_id WHERE he.estudiante_id = ?`, [estudiante_id]);
+    const [habilidades]        = await db.query(`SELECT h.nombre, ch.nombre AS categoria, he.nivel_dominio FROM habilidades_estudiantes he JOIN habilidades h ON h.id = he.habilidad_id JOIN categorias_habilidades ch ON ch.id = h.categoria_id WHERE he.estudiante_id = ?`, [estudiante_id]);
     const [idiomas]            = await db.query("SELECT idioma, nivel FROM idiomas_estudiantes WHERE estudiante_id = ?", [estudiante_id]);
     const [historial_academico]= await db.query("SELECT titulo, institucion, fecha_inicio, fecha_fin FROM historial_academico WHERE estudiante_id = ? ORDER BY fecha_inicio DESC", [estudiante_id]);
     const [historial_laboral]  = await db.query("SELECT cargo, empresa_nombre, descripcion, fecha_inicio, fecha_fin FROM historial_laboral WHERE estudiante_id = ? ORDER BY fecha_inicio DESC", [estudiante_id]);
@@ -209,7 +209,7 @@ router.get("/ranking/:vacante_id", verificarToken, soloRol("empresa"), async (re
         const [[perfil]]              = await db.query(`SELECT pe.*, c.nombre AS carrera FROM perfiles_estudiantes pe LEFT JOIN carreras c ON c.id = pe.carrera_id WHERE pe.usuario_id = ?`, [estudianteId]);
         if (!perfil) { resultados.push({ estudiante_id: estudianteId, compatibilidad: "Baja" }); continue; }
 
-        const [habilidades]           = await db.query(`SELECT h.nombre, h.categoria, he.nivel_dominio FROM habilidades_estudiantes he JOIN habilidades h ON h.id = he.habilidad_id WHERE he.estudiante_id = ?`, [estudianteId]);
+        const [habilidades]           = await db.query(`SELECT h.nombre, ch.nombre AS categoria, he.nivel_dominio FROM habilidades_estudiantes he JOIN habilidades h ON h.id = he.habilidad_id JOIN categorias_habilidades ch ON ch.id = h.categoria_id WHERE he.estudiante_id = ?`, [estudianteId]);
         const [idiomas]               = await db.query("SELECT idioma, nivel FROM idiomas_estudiantes WHERE estudiante_id = ?", [estudianteId]);
         const [historial_academico]   = await db.query("SELECT titulo, institucion, fecha_inicio, fecha_fin FROM historial_academico WHERE estudiante_id = ? ORDER BY fecha_inicio DESC", [estudianteId]);
         const [historial_laboral]     = await db.query("SELECT cargo, empresa_nombre, descripcion, fecha_inicio, fecha_fin FROM historial_laboral WHERE estudiante_id = ? ORDER BY fecha_inicio DESC", [estudianteId]);

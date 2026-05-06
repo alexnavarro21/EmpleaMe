@@ -86,13 +86,14 @@ router.get("/evaluaciones", ...auth, async (req, res) => {
     const [rows] = await db.query(`
       SELECT e.id, e.periodo, e.observaciones, e.creada_en,
              pe.nombre_completo AS nombre_estudiante, c.nombre AS carrera,
-             AVG(CASE WHEN h.categoria = 'tecnica' THEN eh.puntaje END) AS avg_tecnica,
-             AVG(CASE WHEN h.categoria = 'blanda'  THEN eh.puntaje END) AS avg_blanda
+             AVG(CASE WHEN ch.nombre = 'tecnica' THEN eh.puntaje END) AS avg_tecnica,
+             AVG(CASE WHEN ch.nombre = 'blanda'  THEN eh.puntaje END) AS avg_blanda
       FROM evaluaciones e
       JOIN perfiles_estudiantes pe ON pe.usuario_id = e.estudiante_id
       LEFT JOIN carreras c ON c.id = pe.carrera_id
       LEFT JOIN evaluacion_habilidades eh ON eh.evaluacion_id = e.id
       LEFT JOIN habilidades h ON h.id = eh.habilidad_id
+      LEFT JOIN categorias_habilidades ch ON ch.id = h.categoria_id
       WHERE pe.colegio_id = ?
       GROUP BY e.id
       ORDER BY e.creada_en DESC
@@ -188,7 +189,8 @@ router.post("/habilidades/asignar", ...auth, async (req, res) => {
       await db.query(
         `DELETE he FROM habilidades_estudiantes he
          JOIN habilidades h ON h.id = he.habilidad_id
-         WHERE he.estudiante_id = ? AND h.categoria = 'blanda'`,
+         JOIN categorias_habilidades ch ON ch.id = h.categoria_id
+         WHERE he.estudiante_id = ? AND ch.nombre = 'blanda'`,
         [estudiante_id]
       );
       for (const h of habilidades) {
@@ -261,7 +263,10 @@ router.get("/tests/template", ...auth, async (req, res) => {
       ORDER BY pe.nombre_completo
     `, [colegioId]);
     const [habilidades] = await db.query(
-      "SELECT nombre FROM habilidades WHERE categoria = 'blanda' ORDER BY nombre"
+      `SELECT h.nombre FROM habilidades h
+       JOIN categorias_habilidades ch ON ch.id = h.categoria_id
+       WHERE ch.nombre = 'blanda'
+       ORDER BY h.nombre`
     );
 
     const nombresCols = habilidades.map((h) => h.nombre);
@@ -343,7 +348,9 @@ router.post("/tests/excel", ...auth, upload.single("archivo"), async (req, res) 
         }
 
         const [[habilidad]] = await db.query(
-          "SELECT id FROM habilidades WHERE nombre = ? AND categoria = 'blanda'",
+          `SELECT h.id FROM habilidades h
+           JOIN categorias_habilidades ch ON ch.id = h.categoria_id
+           WHERE h.nombre = ? AND ch.nombre = 'blanda'`,
           [habilidadNombre]
         );
         if (!habilidad) { errores.push(`Habilidad no encontrada: "${habilidadNombre}"`); continue; }
@@ -647,7 +654,8 @@ router.get("/historial-laboral/:estudiante_id", ...auth, async (req, res) => {
               v.titulo AS vacante_titulo,
               COALESCE(hl.descripcion, v.descripcion) AS descripcion
        FROM historial_laboral hl
-       LEFT JOIN postulaciones p ON p.id = hl.postulacion_id
+       LEFT JOIN historial_laboral_postulaciones hlp ON hlp.historial_id = hl.id
+       LEFT JOIN postulaciones p ON p.id = hlp.postulacion_id
        LEFT JOIN vacantes v ON v.id = p.vacante_id
        WHERE hl.estudiante_id = ?
        ORDER BY hl.fecha_inicio DESC`,
@@ -774,7 +782,7 @@ router.post("/alumnos/excel", ...auth, upload.single("archivo"), async (req, res
           [correoRaw, rutRaw, hash]
         );
         await conn.query(
-          "INSERT INTO perfiles_estudiantes (usuario_id, nombre_completo, rut, telefono, colegio_id) VALUES (?, ?, ?, ?, ?)",
+          "INSERT INTO perfiles_estudiantes (usuario_id, nombre, apellido_paterno, rut, telefono, colegio_id) VALUES (?, ?, '', ?, ?, ?)",
           [result.insertId, nombre, rutRaw, telefono, req.usuario.id]
         );
         await conn.commit();
