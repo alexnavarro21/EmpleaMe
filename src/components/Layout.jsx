@@ -437,11 +437,11 @@ export default function Layout() {
                   <div className={`flex items-center justify-between px-4 py-3 text-sm ${isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]"}`}>
                     <div className="flex items-center gap-3">
                       <Icon
-                        icon={isDark ? "ph:moon-fill" : "ph:sun-fill"}
-                        width={18}
-                        className={isDark ? "text-[#85B7EB]" : "text-yellow-400"}
+                        icon="ix:light-dark"
+                        width={22}
+                        className={isDark ? "text-[#85B7EB]" : "text-[#5F5E5A]"}
                       />
-                      {isDark ? "Modo oscuro" : "Modo claro"}
+                      Modo oscuro
                     </div>
                     <button
                       onClick={() => setIsDark(!isDark)}

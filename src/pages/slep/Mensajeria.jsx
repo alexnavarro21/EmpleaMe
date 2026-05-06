@@ -173,7 +173,6 @@ export default function SlepMensajeria() {
                     <p className={`text-xs ${M}`}>Mensaje directo</p>
                   </div>
                 </div>
-                <Badge color="green">activa</Badge>
               </div>
 
               <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">

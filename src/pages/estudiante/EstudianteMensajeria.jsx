@@ -230,7 +230,13 @@ export default function EstudianteMensajeria() {
                 return (
                   <button
                     key={`${c.esDirecta ? "d" : "e"}-${c.id}`}
-                    onClick={() => { setSelected({ id: c.id, esDirecta: c.esDirecta }); setNewMessage(""); }}
+                    onClick={() => {
+                      setSelected({ id: c.id, esDirecta: c.esDirecta });
+                      setNewMessage("");
+                      (c.esDirecta ? setConvDirectas : setConvEmpresas)((prev) =>
+                        prev.map((x) => x.id === c.id ? { ...x, no_leidos: 0 } : x)
+                      );
+                    }}
                     className={`w-full text-left px-3 py-3 border-b ${B} transition-colors ${
                       isActive
                         ? isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]"
@@ -306,7 +312,6 @@ export default function EstudianteMensajeria() {
                     </div>
                   </div>
                 </div>
-                <Badge color="green">activa</Badge>
               </div>
 
               {/* Aviso privacidad solo para empresa */}

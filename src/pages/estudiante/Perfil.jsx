@@ -9,7 +9,7 @@ import { REGIONES_COMUNAS, REGIONES } from "../../data/regionesComunas";
 import { validarRut, formatearRut } from "../../utils/validarRut";
 import { calcularCompletitud } from "../../utils/perfilCompletitud";
 
-const tabs = ["Personal", "Habilidades", "Idiomas & Historial", "Postulaciones"];
+const tabs = ["Personal", "Habilidades", "Historial", "Postulaciones"];
 
 const careerDisplay = {
   "Administracion": "Administración",
@@ -349,7 +349,7 @@ export default function EstudiantePerfil() {
                       value={rut}
                       onChange={(e) => setRut(formatearRut(e.target.value))}
                       maxLength={12}
-                      disabled={!editMode}
+                      disabled
                       className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] disabled:opacity-60 ${
                         rut && !rutValido
                           ? "border-red-400 focus:border-red-400"
@@ -488,28 +488,12 @@ export default function EstudiantePerfil() {
                   </div>
                   <div className="col-span-2 mb-4">
                     <label className={`block text-xs mb-1.5 ${M}`}>Centro educacional</label>
-                    {editMode ? (
-                      <select
-                        value={colegioId}
-                        onChange={(e) => setColegioId(e.target.value)}
-                        className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
-                          isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
-                                 : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
-                        }`}
-                      >
-                        <option value="">Sin centro asignado</option>
-                        {colegios.map((c) => (
-                          <option key={c.id} value={c.id}>{c.nombre_institucion}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <div className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border ${B} ${S}`}>
-                        <Icon icon="mdi:school-outline" width={16} className="text-[#378ADD] flex-shrink-0" />
-                        <span className={`text-sm ${colegioNombre ? T : M}`}>
-                          {colegioNombre || "Sin centro asignado"}
-                        </span>
-                      </div>
-                    )}
+                    <div className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border ${B} ${S}`}>
+                      <Icon icon="mdi:school-outline" width={16} className="text-[#378ADD] flex-shrink-0" />
+                      <span className={`text-sm ${colegioNombre ? T : M}`}>
+                        {colegioNombre || "Sin centro asignado"}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="col-span-2 mb-4">
@@ -576,13 +560,8 @@ export default function EstudiantePerfil() {
                       ))}
                     </div>
                   )}
-                </div>
-              )}
 
-              {activeTab === "Idiomas & Historial" && (
-                <div className="flex flex-col gap-6">
-                  {/* Idiomas */}
-                  <div>
+                  <div className={`pt-5 border-t ${B}`}>
                     <div className="flex items-center gap-2 mb-3">
                       <Icon icon="mdi:translate" width={16} className="text-[#378ADD]" />
                       <p className={`text-xs font-semibold ${T}`}>Idiomas</p>
@@ -600,7 +579,11 @@ export default function EstudiantePerfil() {
                       </div>
                     )}
                   </div>
+                </div>
+              )}
 
+              {activeTab === "Historial" && (
+                <div className="flex flex-col gap-6">
                   {/* Historial académico */}
                   <div className={`pt-5 border-t ${B}`}>
                     <div className="flex items-center gap-2 mb-3">

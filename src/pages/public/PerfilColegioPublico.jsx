@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
-import { Card, SecondaryButton, PageHeader } from "../../components/ui";
+import { Card } from "../../components/ui";
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
 import { getColegioById, getMediaUrl, iniciarMensajeDirecto } from "../../services/api";
 
@@ -52,11 +52,13 @@ export default function PerfilColegioPublico() {
 
   return (
     <div>
-      <PageHeader
-        title={colegio.nombre_institucion}
-        subtitle="Perfil de institución educativa"
-        action={<SecondaryButton onClick={() => navigate(-1)}>← Volver</SecondaryButton>}
-      />
+      <button
+        onClick={() => navigate(-1)}
+        className={`mb-4 flex items-center gap-1.5 text-sm transition-colors ${M} hover:text-[#378ADD]`}
+      >
+        <Icon icon="mdi:arrow-left" width={18} />
+        Volver
+      </button>
 
       <div className="grid grid-cols-3 gap-6">
         {/* Sidebar */}

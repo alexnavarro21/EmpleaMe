@@ -131,7 +131,7 @@ function CandidatosPanel({ isDark, initialConvId }) {
           ) : conversations.map((c) => (
             <button
               key={c.id}
-              onClick={() => setSelected(c.id)}
+              onClick={() => { setSelected(c.id); setConversations((prev) => prev.map((x) => x.id === c.id ? { ...x, no_leidos: 0 } : x)); }}
               className={`w-full text-left px-3 py-3 border-b ${B} transition-colors ${
                 selected === c.id
                   ? isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]"
@@ -192,7 +192,6 @@ function CandidatosPanel({ isDark, initialConvId }) {
                   <p className={`text-xs ${M}`}>Candidato</p>
                 </div>
               </div>
-              <Badge color="green">activa</Badge>
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
@@ -340,7 +339,7 @@ function InstitucionesPanel({ isDark, initialDirectaId }) {
           ) : convs.map((c) => (
             <button
               key={c.id}
-              onClick={() => setSelected(c.id)}
+              onClick={() => { setSelected(c.id); setConvs((prev) => prev.map((x) => x.id === c.id ? { ...x, no_leidos: 0 } : x)); }}
               className={`w-full text-left px-3 py-3 border-b ${B} transition-colors ${
                 selected === c.id
                   ? isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]"
@@ -396,7 +395,6 @@ function InstitucionesPanel({ isDark, initialDirectaId }) {
                   <p className={`text-xs ${M}`}>Mensaje directo</p>
                 </div>
               </div>
-              <Badge color="green">activa</Badge>
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">

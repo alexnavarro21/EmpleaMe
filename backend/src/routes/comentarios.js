@@ -10,11 +10,15 @@ router.get("/", verificarToken, async (req, res) => {
               CASE u.rol
                 WHEN 'empresa'    THEN pe.nombre_empresa
                 WHEN 'estudiante' THEN est.nombre_completo
-                ELSE 'Centro Educacional'
+                WHEN 'colegio'    THEN pc.nombre_institucion
+                WHEN 'slep'       THEN ps.nombre_organismo
+                ELSE 'Usuario'
               END AS autor_nombre,
               CASE u.rol
                 WHEN 'empresa'    THEN pe.foto_perfil
                 WHEN 'estudiante' THEN est.foto_perfil
+                WHEN 'colegio'    THEN pc.foto_perfil
+                WHEN 'slep'       THEN ps.foto_perfil
                 ELSE NULL
               END AS autor_foto_perfil,
               u.rol AS autor_rol
@@ -22,6 +26,8 @@ router.get("/", verificarToken, async (req, res) => {
        JOIN usuarios u ON u.id = c.autor_id
        LEFT JOIN perfiles_empresas pe      ON pe.usuario_id  = u.id
        LEFT JOIN perfiles_estudiantes est  ON est.usuario_id = u.id
+       LEFT JOIN perfiles_colegios pc      ON pc.usuario_id  = u.id
+       LEFT JOIN perfiles_slep ps          ON ps.usuario_id  = u.id
        WHERE c.publicacion_id = ?
        ORDER BY c.creado_en ASC`,
       [req.params.id]
