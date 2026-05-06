@@ -1,10 +1,10 @@
 const router = require("express").Router();
 const db = require("../db");
 const { verificarToken } = require("../middleware/auth");
-const upload = require("../middleware/multerConfig");
+const compressAndUpload = require("../middleware/compressAndUpload");
 
 // POST /api/publicaciones — crear publicación con soporte de archivos
-router.post("/", verificarToken, upload.single("archivo_multimedia"), async (req, res) => {
+router.post("/", verificarToken, compressAndUpload("archivo_multimedia"), async (req, res) => {
   const { titulo, contenido, tipo_nombre, vacante_id, tipo } = req.body;
   const archivo = req.file;
 
@@ -101,12 +101,14 @@ router.get("/", verificarToken, async (req, res) => {
                 WHEN 'empresa'    THEN pe.nombre_empresa
                 WHEN 'estudiante' THEN est.nombre_completo
                 WHEN 'colegio'    THEN pc.nombre_institucion
+                WHEN 'slep'       THEN ps.nombre_organismo
                 ELSE 'Centro Educacional'
               END AS autor_nombre,
               CASE u.rol
                 WHEN 'empresa'    THEN pe.foto_perfil
                 WHEN 'estudiante' THEN est.foto_perfil
                 WHEN 'colegio'    THEN pc.foto_perfil
+                WHEN 'slep'       THEN ps.foto_perfil
                 ELSE NULL
               END AS autor_foto_perfil,
               ${likesFields}
@@ -117,6 +119,7 @@ router.get("/", verificarToken, async (req, res) => {
        LEFT JOIN perfiles_empresas pe     ON pe.usuario_id  = u.id
        LEFT JOIN perfiles_estudiantes est ON est.usuario_id = u.id
        LEFT JOIN perfiles_colegios pc     ON pc.usuario_id  = u.id
+       LEFT JOIN perfiles_slep ps         ON ps.usuario_id  = u.id
        LEFT JOIN publicaciones_vacantes pv ON pv.publicacion_id = p.id
        LEFT JOIN vacantes v               ON v.id = pv.vacante_id
        WHERE p.esta_activa = TRUE

@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
-import { Badge, PageHeader } from "../../components/ui";
 import { getMensajesDirectos, getMensajesDeDirecta, enviarMensajeDirecto, getMediaUrl } from "../../services/api";
 
 function formatTime(ts) {
@@ -93,13 +92,7 @@ export default function SlepMensajeria() {
   };
 
   return (
-    <div>
-      <PageHeader
-        title="Mensajería"
-        subtitle="Mensajes directos con empresas, colegios y estudiantes"
-      />
-
-      <div className={`rounded-xl border ${B} overflow-hidden flex`} style={{ height: "600px" }}>
+    <div className="fixed inset-x-0 bottom-0 flex overflow-hidden" style={{ top: "56px" }}>
         {/* Lista */}
         <div className={`w-72 flex-shrink-0 border-r ${B} flex flex-col ${cardBg}`}>
           <div className="flex-1 overflow-y-auto pt-2">
@@ -227,7 +220,6 @@ export default function SlepMensajeria() {
             </>
           )}
         </div>
-      </div>
     </div>
   );
 }
