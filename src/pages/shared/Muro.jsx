@@ -1204,7 +1204,7 @@ export default function EstudianteDashboard() {
             {[
               { icon: "mdi:account-group-outline",   label: "Gestión de usuarios",  to: "/admin/usuarios"     },
               { icon: "mdi:school-outline",           label: "Talleres",             to: "/admin/talleres"     },
-              { icon: "mdi:clipboard-check-outline",  label: "Evaluaciones",         to: "/admin/usuarios" },
+              { icon: "mdi:clipboard-check-outline",  label: "Evaluaciones",         to: "/admin/usuarios", state: { tab: "evaluacion" } },
               { icon: "mdi:message-outline",          label: "Mensajería",           to: "/admin/mensajeria"   },
               { icon: "mdi:account-search-outline",   label: "Buscar perfiles",      to: "/admin/buscar"       },
               { icon: "mdi:flag-outline",             label: "Reportes",             to: "/admin/reportes"     },
@@ -1212,6 +1212,7 @@ export default function EstudianteDashboard() {
               <Link
                 key={link.label}
                 to={link.to}
+                state={link.state}
                 className={`flex items-center gap-2.5 py-2 text-xs rounded-lg px-2 -mx-2 transition-colors ${isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"} ${M}`}
               >
                 <Icon icon={link.icon} width={15} className="flex-shrink-0" />

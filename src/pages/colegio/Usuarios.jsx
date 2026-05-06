@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import {
@@ -1900,7 +1900,8 @@ const TABS = [
 
 export default function GestionEstudiantes() {
   const { isDark } = useDark();
-  const [tab, setTab] = useState("usuarios");
+  const location = useLocation();
+  const [tab, setTab] = useState(location.state?.tab || "usuarios");
   const [editarId, setEditarId]         = useState(null);
   const [rawUsers, setRawUsers]         = useState([]);
   const [estudiantes, setEstudiantes]   = useState([]);
