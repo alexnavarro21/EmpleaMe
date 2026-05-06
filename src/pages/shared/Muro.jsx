@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
@@ -179,6 +179,15 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [confirmarEliminar, setConfirmarEliminar] = useState(false);
   const [eliminando, setEliminando] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    function handler(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuAbierto(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
   const [modalReporte, setModalReporte] = useState(false);
   const [siguiendo, setSiguiendo] = useState(false);
   const [toggleandoSeguir, setToggleandoSeguir] = useState(false);
@@ -281,7 +290,7 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
           )}
           <Badge color={badge.color}>{badge.label}</Badge>
           {(canDelete || pub.autor_id !== usuario.id) && (
-            <div className="relative">
+            <div className="relative" ref={menuRef}>
               <button
                 onClick={() => { setMenuAbierto((v) => !v); setConfirmarEliminar(false); }}
                 className={`p-1 rounded-lg transition-colors ${HV} ${M}`}
@@ -671,6 +680,15 @@ function TallerCard({ taller, isDark, perfilCompleto, onDeleted }) {
   const [eliminando, setEliminando] = useState(false);
   const [verMas, setVerMas] = useState(false);
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    function handler(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuAbierto(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const T  = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M  = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -724,7 +742,7 @@ function TallerCard({ taller, isDark, perfilCompleto, onDeleted }) {
         <div className="flex items-center gap-2">
           <Badge color="purple">Taller</Badge>
           {usuario.rol === "colegio" && (
-            <div className="relative">
+            <div className="relative" ref={menuRef}>
               <button
                 onClick={() => { setMenuAbierto((v) => !v); setConfirmarEliminar(false); }}
                 className={`p-1 rounded-lg transition-colors ${HV} ${M}`}

@@ -171,7 +171,6 @@ function CandidatosPanel({ isDark, initialConvId }) {
                 </Link>
                 <p className={`text-xs ${M}`}>Candidato</p>
               </div>
-              <Badge color="green">activa</Badge>
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
@@ -355,7 +354,6 @@ function InstitucionesPanel({ isDark, initialDirectaId }) {
                 <p className={`text-sm font-semibold ${T}`}>{conv.contraparte}</p>
                 <p className={`text-xs ${M}`}>Mensaje directo</p>
               </div>
-              <Badge color="green">activa</Badge>
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">

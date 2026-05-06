@@ -448,7 +448,7 @@ export default function Layout() {
                         width={18}
                         className={isDark ? "text-[#85B7EB]" : "text-yellow-400"}
                       />
-                      {isDark ? "Modo oscuro" : "Modo claro"}
+                      Modo oscuro
                     </div>
                     <button
                       onClick={() => setIsDark(!isDark)}

@@ -309,7 +309,6 @@ export default function EstudianteMensajeria() {
                   </Link>
                   <p className={`text-xs ${M}`}>{tab === "empresas" ? "Empresa" : "Estudiante"}</p>
                 </div>
-                <Badge color="green">activa</Badge>
               </div>
 
               {tab === "empresas" && (
