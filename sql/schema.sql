@@ -511,7 +511,20 @@ CREATE TABLE IF NOT EXISTS rankings_ia (
   FOREIGN KEY (vacante_id) REFERENCES vacantes(id) ON DELETE CASCADE
 );
 
--- 41. Reportes de contenido (sin referencia_id — extraído a tablas tipo-específicas)
+-- 41. Resúmenes IA de conversaciones supervisadas por colegio
+CREATE TABLE IF NOT EXISTS resumenes_conversacion (
+  id                INT AUTO_INCREMENT PRIMARY KEY,
+  conversacion_id   INT NOT NULL,
+  admin_id          INT NOT NULL,
+  resumen           TEXT NOT NULL,
+  ultimo_mensaje_id INT NOT NULL,
+  generado_en       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_resumen_conv (conversacion_id),
+  FOREIGN KEY (conversacion_id) REFERENCES conversaciones(id) ON DELETE CASCADE,
+  FOREIGN KEY (admin_id)        REFERENCES usuarios(id)       ON DELETE CASCADE
+);
+
+-- 42. Reportes de contenido (sin referencia_id — extraído a tablas tipo-específicas)
 CREATE TABLE IF NOT EXISTS reportes (
   id            INT AUTO_INCREMENT PRIMARY KEY,
   reportado_por INT NOT NULL,

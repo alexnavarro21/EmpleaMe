@@ -3,7 +3,8 @@ import { useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import {
-  getConversaciones, getMensajes, getNotasAdmin, agregarNotaAdmin,
+  getConversaciones, getMensajes,
+  getResumenConversacion, generarResumenConversacion,
   getMensajesDirectos, getMensajesDeDirecta, enviarMensajeDirecto,
   getSlepInfo, iniciarMensajeDirecto, getMediaUrl,
 } from "../../services/api";
@@ -54,10 +55,9 @@ function SupervisionPanel({ isDark }) {
   const [loading, setLoading] = useState(true);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [search, setSearch] = useState("");
-  const [todasNotas, setTodasNotas] = useState([]);
-  const [notaTexto, setNotaTexto] = useState("");
-  const [agregando, setAgregando] = useState(false);
-  const [agregadoOk, setAgregadoOk] = useState(false);
+  const [resumenData, setResumenData] = useState(null); // { resumen, generado_en, mensajes_nuevos }
+  const [generando, setGenerando] = useState(false);
+  const [errorResumen, setErrorResumen] = useState(null);
   const messagesEndRef = useRef(null);
   const lastMsgIdRef = useRef(null);
   const pollRef = useRef(null);
@@ -72,8 +72,10 @@ function SupervisionPanel({ isDark }) {
   useEffect(() => {
     if (!selected) return;
     setLoadingMsgs(true);
+    setResumenData(null);
+    setErrorResumen(null);
     getMensajes(selected).then(setMessages).catch(() => {}).finally(() => setLoadingMsgs(false));
-    getNotasAdmin(selected).then(setTodasNotas).catch(() => {});
+    getResumenConversacion(selected).then(setResumenData).catch(() => {});
     clearInterval(pollRef.current);
     pollRef.current = setInterval(() => getMensajes(selected).then(setMessages).catch(() => {}), 10000);
     return () => clearInterval(pollRef.current);
@@ -88,17 +90,18 @@ function SupervisionPanel({ isDark }) {
     }
   }, [messages]);
 
-  async function handleAgregarNota() {
-    if (!selected || !notaTexto.trim()) return;
-    setAgregando(true);
+  async function handleGenerarResumen() {
+    if (!selected || generando) return;
+    setGenerando(true);
+    setErrorResumen(null);
     try {
-      await agregarNotaAdmin(selected, notaTexto);
-      setNotaTexto("");
-      setAgregadoOk(true);
-      setTimeout(() => setAgregadoOk(false), 2000);
-      const data = await getNotasAdmin(selected);
-      setTodasNotas(data);
-    } catch { /* silently fail */ } finally { setAgregando(false); }
+      const data = await generarResumenConversacion(selected);
+      setResumenData(data);
+    } catch (err) {
+      setErrorResumen(err.message || "Error al generar el resumen");
+    } finally {
+      setGenerando(false);
+    }
   }
 
   const filteredConvs = conversations.filter((c) => {
@@ -185,45 +188,70 @@ function SupervisionPanel({ isDark }) {
         )}
       </div>
 
-      {/* Notas */}
-      <div className={`w-64 flex-shrink-0 border-l ${B} flex flex-col ${cardBg}`}>
+      {/* Resumen IA */}
+      <div className={`w-72 flex-shrink-0 border-l ${B} flex flex-col ${cardBg}`}>
         <div className={`px-4 py-3 border-b ${B} flex items-center gap-2`}>
-          <Icon icon="mdi:note-edit-outline" width={16} className="text-[#378ADD]" />
-          <span className={`text-sm font-semibold ${T}`}>Notas internas</span>
+          <Icon icon="mdi:sparkles" width={16} className="text-[#378ADD]" />
+          <span className={`text-sm font-semibold ${T}`}>Resumen IA</span>
         </div>
         {!selected ? (
           <div className={`flex-1 flex flex-col items-center justify-center gap-2 ${M} px-4 text-center`}>
-            <Icon icon="mdi:note-outline" width={28} className="opacity-30" />
+            <Icon icon="mdi:sparkles" width={28} className="opacity-30" />
             <p className="text-xs">Selecciona una conversación</p>
           </div>
         ) : (
           <div className="flex-1 flex flex-col overflow-hidden">
             <div className={`p-4 flex flex-col gap-2 flex-shrink-0 border-b ${B}`}>
-              <textarea value={notaTexto} onChange={(e) => setNotaTexto(e.target.value)} placeholder="Escribe una nota..." rows={4}
-                onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleAgregarNota(); }}
-                className={`w-full px-3 py-2 rounded-lg text-xs outline-none border resize-none focus:border-[#378ADD] ${isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"}`}
-              />
-              <button onClick={handleAgregarNota} disabled={agregando || !notaTexto.trim()}
-                className={`w-full py-1.5 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 ${agregadoOk ? "bg-green-600 text-white" : notaTexto.trim() ? "bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB]" : (isDark ? "bg-[#313130] text-[#5F5E5A] cursor-not-allowed" : "bg-[#F7F6F3] text-[#B4B2A9] cursor-not-allowed")}`}>
-                {agregando ? <><Icon icon="mdi:loading" width={13} className="animate-spin" />Agregando...</> : agregadoOk ? <><Icon icon="mdi:check" width={13} />Nota agregada</> : <><Icon icon="mdi:plus" width={13} />Agregar nota</>}
+              {resumenData?.mensajes_nuevos > 0 && (
+                <div className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg ${isDark ? "bg-[#0F4D8A]/20 text-[#85B7EB]" : "bg-[#E6F1FB] text-[#0F4D8A]"}`}>
+                  <Icon icon="mdi:message-badge-outline" width={13} />
+                  {resumenData.mensajes_nuevos} mensaje{resumenData.mensajes_nuevos !== 1 ? "s" : ""} sin resumir
+                </div>
+              )}
+              {resumenData?.resumen && resumenData?.mensajes_nuevos === 0 && (
+                <div className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg ${isDark ? "bg-green-900/20 text-green-400" : "bg-green-50 text-green-700"}`}>
+                  <Icon icon="mdi:check-circle-outline" width={13} />
+                  Resumen al día
+                </div>
+              )}
+              <button
+                onClick={handleGenerarResumen}
+                disabled={generando}
+                className={`w-full py-1.5 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors ${
+                  generando
+                    ? (isDark ? "bg-[#313130] text-[#5F5E5A] cursor-not-allowed" : "bg-[#F7F6F3] text-[#B4B2A9] cursor-not-allowed")
+                    : "bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB]"
+                }`}
+              >
+                {generando
+                  ? <><Icon icon="mdi:loading" width={13} className="animate-spin" />Generando...</>
+                  : resumenData?.resumen
+                    ? <><Icon icon="mdi:refresh" width={13} />Actualizar resumen</>
+                    : <><Icon icon="mdi:sparkles" width={13} />Generar resumen</>
+                }
               </button>
-              <p className={`text-xs ${M} opacity-60 text-center`}>Ctrl+Enter para agregar</p>
+              {resumenData?.generado_en && (
+                <p className={`text-xs ${M} opacity-60 text-center`}>
+                  Generado {formatFecha(resumenData.generado_en)}
+                </p>
+              )}
+              {errorResumen && (
+                <p className="text-xs text-red-500 text-center">{errorResumen}</p>
+              )}
             </div>
-            <div className="flex-1 overflow-y-auto">
-              {todasNotas.length === 0 ? (
-                <div className={`px-4 py-8 text-center ${M}`}>
-                  <Icon icon="mdi:note-outline" width={28} className="mx-auto mb-2 opacity-30" />
-                  <p className="text-xs">Sin notas aún</p>
+            <div className="flex-1 overflow-y-auto p-4">
+              {!resumenData?.resumen ? (
+                <div className={`flex flex-col items-center justify-center h-full gap-2 ${M} text-center`}>
+                  <Icon icon="mdi:text-box-outline" width={28} className="opacity-30" />
+                  <p className="text-xs">Presiona "Generar resumen" para obtener un resumen diario de esta conversación usando IA.</p>
                 </div>
-              ) : todasNotas.map((nota) => (
-                <div key={nota.id} className={`px-4 py-3 border-b ${B} last:border-0 ${nota.es_propia ? (isDark ? "bg-[#0F4D8A]/10" : "bg-[#EFF6FF]") : ""}`}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className={`text-xs font-semibold ${nota.es_propia ? "text-[#378ADD]" : T}`}>{nota.es_propia ? "Tú" : nota.admin_nombre}</span>
-                    <span className={`text-xs ${M} opacity-60`}>{formatFecha(nota.actualizado_en)}</span>
-                  </div>
-                  <p className={`text-xs ${M} leading-relaxed`}>{nota.contenido}</p>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {resumenData.resumen.split("\n").filter(l => l.trim()).map((linea, i) => (
+                    <p key={i} className={`text-xs ${T} leading-relaxed`}>{linea}</p>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           </div>
         )}
