@@ -1885,3 +1885,29 @@ INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, url_multimedia,
    'Participé como estudiante observadora en el programa Jóvenes al Mercado de la Bolsa de Santiago. Ver cómo funcionan los mercados financieros en tiempo real fue inspirador. ¡Mi camino está en las finanzas!',
    'https://picsum.photos/seed/bolsa/800/600',
    DATE_SUB(NOW(), INTERVAL 42 DAY));
+
+-- ── Conversación Juan Pérez ↔ Taller Automotriz del Sur ──────
+INSERT IGNORE INTO conversaciones (empresa_id, estudiante_id)
+  VALUES (2, 1);
+SET @conv_jp = (SELECT id FROM conversaciones WHERE empresa_id = 2 AND estudiante_id = 1);
+
+INSERT INTO mensajes (conversacion_id, remitente_id, contenido, enviado_en) VALUES
+  -- Día 1: primer contacto
+  (@conv_jp, 2, 'Hola Juan, vimos tu perfil en EmpleaMe y nos interesa tu postulación para la práctica. ¿Tienes disponibilidad para conversar esta semana?', DATE_SUB(NOW(), INTERVAL 6 DAY) + INTERVAL 9 HOUR),
+  (@conv_jp, 1, 'Hola, muchas gracias por contactarme. Sí, tengo disponibilidad de lunes a viernes desde las 14:00 en adelante.', DATE_SUB(NOW(), INTERVAL 6 DAY) + INTERVAL 10 HOUR),
+  (@conv_jp, 2, 'Perfecto. La práctica es en el área de diagnóstico electrónico, turno de 08:00 a 17:00. ¿Te acomoda ese horario?', DATE_SUB(NOW(), INTERVAL 6 DAY) + INTERVAL 10 HOUR + INTERVAL 30 MINUTE),
+  (@conv_jp, 1, 'Sí, me acomoda. Tengo experiencia con scanner OBD-II y diagnóstico de fallas eléctricas básicas. Me interesa mucho esa área.', DATE_SUB(NOW(), INTERVAL 6 DAY) + INTERVAL 11 HOUR),
+  -- Día 2: requisitos
+  (@conv_jp, 2, 'Buenas Juan. Necesitamos que traigas carta de presentación del colegio, tu currículum y el convenio de práctica firmado. ¿Los tienes listos?', DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 9 HOUR),
+  (@conv_jp, 1, 'Buenos días. La carta y el convenio los pido hoy en la secretaría del colegio. El CV ya lo tengo actualizado. ¿Se los puedo enviar por aquí o los llevo en persona?', DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 9 HOUR + INTERVAL 45 MINUTE),
+  (@conv_jp, 2, 'Tráelos en persona el día que vengas a la entrevista, así también te mostramos el taller. Tiene equipos nuevos de diagnóstico que te van a gustar.', DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 10 HOUR),
+  (@conv_jp, 1, 'Genial, con gusto. ¿Qué día me citarían para la entrevista?', DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 10 HOUR + INTERVAL 20 MINUTE),
+  -- Día 3: coordinación entrevista
+  (@conv_jp, 2, 'Quedamos para el próximo lunes a las 10:00. ¿Te parece bien?', DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 8 HOUR + INTERVAL 30 MINUTE),
+  (@conv_jp, 1, 'Perfecto, el lunes a las 10:00 estaré ahí. ¿La dirección es la misma que aparece en su perfil de EmpleaMe, en San Miguel?', DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR),
+  (@conv_jp, 2, 'Exacto, misma dirección. Preguntas por don Rodrigo en recepción, él te atenderá.', DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR + INTERVAL 15 MINUTE),
+  (@conv_jp, 1, 'Anotado. Muchas gracias, ahí estaré puntual con todos los documentos.', DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE),
+  -- Día 4: confirmación post entrevista
+  (@conv_jp, 2, 'Hola Juan, fue un gusto conocerte hoy. Quedamos muy conformes con la entrevista. Te confirmamos que quedaste seleccionado para la práctica. Comienzas el próximo lunes.', DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 14 HOUR),
+  (@conv_jp, 1, '¡Muchas gracias! Estoy muy contento. El lunes estaré puntual con todo listo. Quedé muy impresionado con el taller y el equipo.', DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 14 HOUR + INTERVAL 30 MINUTE),
+  (@conv_jp, 2, 'Excelente actitud Juan. Bienvenido al equipo. Cualquier duda antes del lunes, escríbenos aquí.', DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 15 HOUR);
