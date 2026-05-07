@@ -573,8 +573,12 @@ VALUES (@u6, 'Andrés', 'Fuentes', 'Tapia', '21.111.222-3',
   'soltero', 'masculino', 'Región de Valparaíso', 'Valparaíso', @c2);
 INSERT INTO idiomas_estudiantes (estudiante_id, idioma, nivel) VALUES (@u6, 'Español', 'Nativo'), (@u6, 'Inglés', 'Básico');
 INSERT INTO historial_academico (estudiante_id, institucion, titulo, area, fecha_inicio, fecha_fin) VALUES
-  (@u6, 'Liceo Técnico Arturo Prat', 'Técnico en Mecánica Automotriz', 'Automotriz', 2023, NULL);
+  (@u6, 'Liceo Técnico Arturo Prat',   'Técnico en Mecánica Automotriz',            'Automotriz',  2023, NULL),
+  (@u6, 'INACAP Valparaíso',            'Taller OBD-II y Diagnóstico Electrónico',   'Diagnóstico', 2024, 2024),
+  (@u6, 'Autozone Academy (online)',    'Certificación en Mantenimiento Preventivo', 'Automotriz',  2024, 2024);
 INSERT INTO historial_laboral (estudiante_id, empresa_nombre, cargo, fecha_inicio, fecha_fin, descripcion, tipo) VALUES
+  (@u6, 'Taller Mecánico Fuentes e Hijos', 'Asistente de mecánico', '2024-01-01', '2024-03-31',
+   'Apoyo en mantención preventiva, cambio de aceite, revisión de frenos y atención al cliente en taller familiar.', 'verificado'),
   (@u6, 'Taller Automotriz Prat', 'Ayudante diagnóstico', '2024-07-01', '2024-09-30',
    'Apoyo en diagnóstico electrónico y mantenimiento preventivo de vehículos livianos.', 'practica_completada');
 INSERT INTO habilidades_estudiantes (estudiante_id, habilidad_id, nivel_dominio, porcentaje, esta_validada)
