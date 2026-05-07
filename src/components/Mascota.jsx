@@ -122,7 +122,7 @@ export function MascotaFlotante() {
         timerRef.current = setTimeout(() => {
           setBurbuja(null);
           setPose("neutral");
-        }, 5000);
+        }, 10000);
       }
     } catch (_) {}
   }
@@ -153,12 +153,7 @@ export function MascotaFlotante() {
       </AnimatePresence>
 
       <div className="relative pointer-events-auto w-20">
-        {noLeidas > 0 && (
-          <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center z-10 pointer-events-none">
-            {noLeidas > 9 ? "9+" : noLeidas}
-          </div>
-        )}
-        <motion.div
+<motion.div
           animate={{ y: [0, -6, 0] }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           onClick={cerrarBurbuja}
