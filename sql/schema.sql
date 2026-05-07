@@ -257,16 +257,6 @@ CREATE TABLE IF NOT EXISTS publicaciones_vacantes (
   FOREIGN KEY (vacante_id)     REFERENCES vacantes(id)      ON DELETE CASCADE
 );
 
--- 19. Etiquetas de habilidades en publicaciones
-CREATE TABLE IF NOT EXISTS publicacion_etiquetas (
-  publicacion_id INT NOT NULL,
-  habilidad_id   INT NOT NULL,
-  relevancia     TINYINT NOT NULL DEFAULT 3,
-  PRIMARY KEY (publicacion_id, habilidad_id),
-  FOREIGN KEY (publicacion_id) REFERENCES publicaciones(id) ON DELETE CASCADE,
-  FOREIGN KEY (habilidad_id)   REFERENCES habilidades(id)   ON DELETE CASCADE
-);
-
 -- 20. Likes en publicaciones
 CREATE TABLE IF NOT EXISTS publicacion_likes (
   publicacion_id INT NOT NULL,
@@ -309,17 +299,6 @@ CREATE TABLE IF NOT EXISTS mensajes (
   leido           BOOLEAN DEFAULT FALSE,
   FOREIGN KEY (conversacion_id) REFERENCES conversaciones(id) ON DELETE CASCADE,
   FOREIGN KEY (remitente_id)    REFERENCES usuarios(id)       ON DELETE CASCADE
-);
-
--- 24. Supervisión de conversaciones por el admin
-CREATE TABLE IF NOT EXISTS supervision_mensajes (
-  id              INT AUTO_INCREMENT PRIMARY KEY,
-  conversacion_id INT NOT NULL,
-  admin_id        INT NOT NULL,
-  revisado_en     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  nota_admin      TEXT,
-  FOREIGN KEY (conversacion_id) REFERENCES conversaciones(id) ON DELETE CASCADE,
-  FOREIGN KEY (admin_id)        REFERENCES usuarios(id)       ON DELETE CASCADE
 );
 
 -- 25. Notas del admin sobre conversaciones
@@ -481,13 +460,6 @@ CREATE TABLE IF NOT EXISTS seguidores (
   FOREIGN KEY (seguidor_id) REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
--- 38. Palabras prohibidas (moderación)
-CREATE TABLE IF NOT EXISTS palabras_prohibidas (
-  id        INT AUTO_INCREMENT PRIMARY KEY,
-  palabra   VARCHAR(100) NOT NULL UNIQUE,
-  creada_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
 -- 39. Resúmenes IA de postulantes por vacante
 CREATE TABLE IF NOT EXISTS resumenes_ia (
   id            INT AUTO_INCREMENT PRIMARY KEY,
@@ -511,7 +483,20 @@ CREATE TABLE IF NOT EXISTS rankings_ia (
   FOREIGN KEY (vacante_id) REFERENCES vacantes(id) ON DELETE CASCADE
 );
 
--- 41. Reportes de contenido (sin referencia_id — extraído a tablas tipo-específicas)
+-- 41. Resúmenes IA de conversaciones supervisadas por colegio
+CREATE TABLE IF NOT EXISTS resumenes_conversacion (
+  id                INT AUTO_INCREMENT PRIMARY KEY,
+  conversacion_id   INT NOT NULL,
+  admin_id          INT NOT NULL,
+  resumen           TEXT NOT NULL,
+  ultimo_mensaje_id INT NOT NULL,
+  generado_en       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_resumen_conv (conversacion_id),
+  FOREIGN KEY (conversacion_id) REFERENCES conversaciones(id) ON DELETE CASCADE,
+  FOREIGN KEY (admin_id)        REFERENCES usuarios(id)       ON DELETE CASCADE
+);
+
+-- 42. Reportes de contenido (sin referencia_id — extraído a tablas tipo-específicas)
 CREATE TABLE IF NOT EXISTS reportes (
   id            INT AUTO_INCREMENT PRIMARY KEY,
   reportado_por INT NOT NULL,

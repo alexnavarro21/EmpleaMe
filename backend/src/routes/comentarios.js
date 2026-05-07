@@ -1,6 +1,7 @@
 const router = require("express").Router({ mergeParams: true });
 const db = require("../db");
 const { verificarToken } = require("../middleware/auth");
+const { esMensajeInapropiado } = require("../filtroMensajes");
 
 // GET /api/publicaciones/:id/comentarios
 router.get("/", verificarToken, async (req, res) => {
@@ -43,6 +44,8 @@ router.post("/", verificarToken, async (req, res) => {
   const { contenido } = req.body;
   if (!contenido?.trim())
     return res.status(400).json({ error: "El contenido es requerido" });
+  if (esMensajeInapropiado(contenido.trim()))
+    return res.status(400).json({ error: "Tu comentario contiene contenido inapropiado y no pudo ser enviado." });
   try {
     const [result] = await db.query(
       "INSERT INTO comentarios (publicacion_id, autor_id, contenido) VALUES (?, ?, ?)",

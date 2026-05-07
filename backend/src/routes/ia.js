@@ -275,6 +275,152 @@ router.get("/ranking/:vacante_id", verificarToken, soloRol("empresa"), async (re
   }
 });
 
+// ── Helpers resumen conversación ────────────────────────────────────────────
+function agruparMensajesPorDia(mensajes) {
+  const grupos = {};
+  for (const msg of mensajes) {
+    const fecha = new Date(msg.enviado_en).toLocaleDateString("es-CL", {
+      weekday: "long", day: "numeric", month: "long", year: "numeric",
+    });
+    if (!grupos[fecha]) grupos[fecha] = [];
+    grupos[fecha].push(`[${msg.remitente_nombre}]: ${msg.contenido}`);
+  }
+  return Object.entries(grupos)
+    .map(([fecha, msgs]) => `${fecha}:\n${msgs.join("\n")}`)
+    .join("\n\n");
+}
+
+// ── GET /api/ia/resumen-conversacion/:conversacion_id ────────────────────────
+router.get("/resumen-conversacion/:conversacion_id", verificarToken, soloRol("colegio"), async (req, res) => {
+  const conversacion_id = parseInt(req.params.conversacion_id);
+  const colegioId = req.usuario.id;
+  try {
+    const [[conv]] = await db.query(
+      `SELECT c.id FROM conversaciones c
+       JOIN perfiles_estudiantes pe ON pe.usuario_id = c.estudiante_id
+       WHERE c.id = ? AND pe.colegio_id = ?`,
+      [conversacion_id, colegioId]
+    );
+    if (!conv) return res.status(403).json({ error: "Sin acceso a esta conversación" });
+
+    const [[existente]] = await db.query(
+      "SELECT resumen, ultimo_mensaje_id, generado_en FROM resumenes_conversacion WHERE conversacion_id = ?",
+      [conversacion_id]
+    );
+
+    const ultimoId = existente?.ultimo_mensaje_id ?? 0;
+    const [[{ nuevos }]] = await db.query(
+      "SELECT COUNT(*) AS nuevos FROM mensajes WHERE conversacion_id = ? AND id > ?",
+      [conversacion_id, ultimoId]
+    );
+
+    res.json({
+      resumen: existente?.resumen ?? null,
+      generado_en: existente?.generado_en ?? null,
+      mensajes_nuevos: nuevos,
+    });
+  } catch (err) {
+    console.error("Error obteniendo resumen conversación:", err.message);
+    res.status(500).json({ error: "Error al obtener el resumen." });
+  }
+});
+
+// ── POST /api/ia/resumen-conversacion/:conversacion_id ───────────────────────
+router.post("/resumen-conversacion/:conversacion_id", verificarToken, soloRol("colegio"), async (req, res) => {
+  const conversacion_id = parseInt(req.params.conversacion_id);
+  const colegioId = req.usuario.id;
+
+  if (!process.env.GEMINI_API_KEY)
+    return res.status(503).json({ error: "Servicio de IA no configurado." });
+
+  try {
+    const [[conv]] = await db.query(
+      `SELECT c.id, pe.nombre_completo AS nombre_estudiante, emp.nombre_empresa
+       FROM conversaciones c
+       JOIN perfiles_estudiantes pe ON pe.usuario_id = c.estudiante_id
+       JOIN perfiles_empresas emp ON emp.usuario_id = c.empresa_id
+       WHERE c.id = ? AND pe.colegio_id = ?`,
+      [conversacion_id, colegioId]
+    );
+    if (!conv) return res.status(403).json({ error: "Sin acceso a esta conversación" });
+
+    const [[existente]] = await db.query(
+      "SELECT resumen, ultimo_mensaje_id FROM resumenes_conversacion WHERE conversacion_id = ?",
+      [conversacion_id]
+    );
+
+    const ultimoId = existente?.ultimo_mensaje_id ?? 0;
+
+    const [mensajesNuevos] = await db.query(
+      `SELECT m.id, m.contenido, m.enviado_en,
+              COALESCE(pe.nombre_completo, emp.nombre_empresa) AS remitente_nombre
+       FROM mensajes m
+       LEFT JOIN perfiles_estudiantes pe ON pe.usuario_id = m.remitente_id
+       LEFT JOIN perfiles_empresas emp ON emp.usuario_id = m.remitente_id
+       WHERE m.conversacion_id = ? AND m.id > ?
+       ORDER BY m.enviado_en ASC`,
+      [conversacion_id, ultimoId]
+    );
+
+    // Sin mensajes nuevos y ya existe resumen → devolver caché
+    if (mensajesNuevos.length === 0 && existente) {
+      const [[fresh]] = await db.query(
+        "SELECT resumen, generado_en FROM resumenes_conversacion WHERE conversacion_id = ?",
+        [conversacion_id]
+      );
+      return res.json({ resumen: fresh.resumen, generado_en: fresh.generado_en, mensajes_nuevos: 0, desde_cache: true });
+    }
+
+    // Sin ningún mensaje en el chat
+    if (mensajesNuevos.length === 0) {
+      return res.json({ resumen: null, mensajes_nuevos: 0, desde_cache: true });
+    }
+
+    const mensajesAgrupados = agruparMensajesPorDia(mensajesNuevos);
+
+    let prompt;
+    if (existente) {
+      prompt = `Eres un asistente de supervisión escolar en EmpleaMe, una plataforma de prácticas profesionales.
+La conversación supervisada es entre ${conv.nombre_estudiante} (estudiante) y ${conv.nombre_empresa} (empresa).
+
+Resumen actual de la conversación:
+---
+${existente.resumen}
+---
+
+Mensajes nuevos desde el último resumen, agrupados por día:
+${mensajesAgrupados}
+
+Actualiza el resumen añadiendo los días nuevos o completando días existentes si llegaron más mensajes. Mantén el formato de una línea por día: "📅 [fecha]: [descripción breve de los temas tratados]". Responde solo con el resumen completo actualizado, sin texto adicional.`;
+    } else {
+      prompt = `Eres un asistente de supervisión escolar en EmpleaMe, una plataforma de prácticas profesionales.
+La conversación supervisada es entre ${conv.nombre_estudiante} (estudiante) y ${conv.nombre_empresa} (empresa).
+
+Genera un resumen diario de esta conversación. Una línea por día con el formato: "📅 [fecha]: [descripción breve de los temas tratados ese día]". Si en un día se trató más de un tema, mencionálos en la misma línea separados por punto y coma. Responde solo con el resumen, sin texto adicional.
+
+Mensajes:
+${mensajesAgrupados}`;
+    }
+
+    const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+    const result = await model.generateContent(prompt);
+    const resumen = result.response.text().trim();
+    const nuevoUltimoId = mensajesNuevos[mensajesNuevos.length - 1].id;
+
+    await db.query(
+      `INSERT INTO resumenes_conversacion (conversacion_id, admin_id, resumen, ultimo_mensaje_id)
+       VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE resumen = VALUES(resumen), ultimo_mensaje_id = VALUES(ultimo_mensaje_id), admin_id = VALUES(admin_id), generado_en = NOW()`,
+      [conversacion_id, colegioId, resumen, nuevoUltimoId]
+    );
+
+    res.json({ resumen, generado_en: new Date().toISOString(), mensajes_nuevos: 0, desde_cache: false });
+  } catch (err) {
+    console.error("Error generando resumen conversación:", err.message);
+    res.status(500).json({ error: "Error al generar el resumen. Intenta de nuevo." });
+  }
+});
+
 // POST /api/ia/moderar — verifica si un contenido es apropiado para la plataforma
 router.post("/moderar", verificarToken, async (req, res) => {
   const { contenido } = req.body;

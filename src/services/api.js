@@ -989,6 +989,25 @@ export async function agregarNotaAdmin(conversacionId, contenido) {
 
 // ── IA ────────────────────────────────────────────────────────────────────────
 
+export async function getResumenConversacion(conversacionId) {
+  const res = await fetch(`${BASE_URL}/ia/resumen-conversacion/${conversacionId}`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener el resumen");
+  return data; // { resumen, generado_en, mensajes_nuevos }
+}
+
+export async function generarResumenConversacion(conversacionId) {
+  const res = await fetch(`${BASE_URL}/ia/resumen-conversacion/${conversacionId}`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al generar el resumen");
+  return data; // { resumen, generado_en, mensajes_nuevos, desde_cache }
+}
+
 export async function getResumenIA(estudianteId, vacanteId) {
   const res = await fetch(`${BASE_URL}/ia/resumen/${estudianteId}/${vacanteId}`, {
     headers: authHeaders(),
