@@ -11,7 +11,7 @@ import {
   marcarEgresado, eliminarUsuario, cambiarContrasenaEstudiante,
   guardarEvaluacion, getEvaluaciones, getEvaluacionEstudiante,
   asignarHabilidadesTecnicas,
-  subirExcelTests, subirExcelPromedios, subirExcelAlumnos,
+  subirExcelTests, subirExcelPromedios, subirExcelAlumnos, subirNominaAlumnos,
   getIdiomasEstudiante, agregarIdioma, eliminarIdioma,
   getHistorialAcademico, agregarHistorialAcademico, eliminarHistorialAcademico,
   getHistorialLaboral, agregarHistorialLaboral, eliminarHistorialLaboral,
@@ -1755,11 +1755,16 @@ function TabCrearAlumnos({ isDark }) {
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
-  const [dragging, setDragging]   = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [result, setResult]       = useState(null);
-  const [dlError, setDlError]     = useState("");
-  const fileRef                   = useRef();
+  const [dragging, setDragging]     = useState(false);
+  const [uploading, setUploading]   = useState(false);
+  const [result, setResult]         = useState(null);
+  const [dlError, setDlError]       = useState("");
+  const fileRef                     = useRef();
+
+  const [draggingN, setDraggingN]   = useState(false);
+  const [uploadingN, setUploadingN] = useState(false);
+  const [resultN, setResultN]       = useState(null);
+  const fileRefN                    = useRef();
 
   async function handleFile(file) {
     if (!file) return;
@@ -1770,6 +1775,17 @@ function TabCrearAlumnos({ isDark }) {
     } catch (e) {
       setResult({ error: e.message });
     } finally { setUploading(false); }
+  }
+
+  async function handleNomina(file) {
+    if (!file) return;
+    setUploadingN(true); setResultN(null);
+    try {
+      const res = await subirNominaAlumnos(file);
+      setResultN(res);
+    } catch (e) {
+      setResultN({ error: e.message });
+    } finally { setUploadingN(false); }
   }
 
   return (
@@ -1882,6 +1898,80 @@ function TabCrearAlumnos({ isDark }) {
           <li>· Los alumnos completan carrera, nivel y demás datos al iniciar sesión.</li>
         </ul>
       </Card>
+
+      {/* ── Nómina del colegio ── */}
+      <div className="col-span-2">
+        <Card>
+          <h3 className={`text-sm font-semibold ${T} mb-1`}>Importar nómina del colegio</h3>
+          <p className={`text-xs ${M} mb-4`}>
+            Sube el archivo de nómina exportado desde la base de datos del colegio (.xls, .xlsx o .csv).
+            El sistema extrae el <strong>RUN</strong>, nombre y datos de contacto de cada fila.
+            Los estudiantes ya registrados se omiten automáticamente.
+            La contraseña inicial de cada alumno es su RUN sin puntuación (ej. <code>25399679K</code>).
+          </p>
+
+          <div
+            onDragOver={(e) => { e.preventDefault(); setDraggingN(true); }}
+            onDragLeave={() => setDraggingN(false)}
+            onDrop={(e) => { e.preventDefault(); setDraggingN(false); handleNomina(e.dataTransfer.files[0]); }}
+            onClick={() => fileRefN.current?.click()}
+            className={`rounded-xl border-2 border-dashed py-12 flex flex-col items-center cursor-pointer transition-colors mb-4 ${
+              draggingN ? "border-[#378ADD] bg-[#E6F1FB]/20"
+                        : isDark ? "border-[#3a3a38] hover:border-[#378ADD]"
+                                 : "border-[#D3D1C7] hover:border-[#378ADD]"
+            }`}
+          >
+            <Icon icon="mdi:file-table-outline" width={44} className="text-blue-400 mb-3" />
+            <p className={`text-sm ${T} mb-1`}>{uploadingN ? "Procesando..." : "Arrastra la nómina o haz clic para seleccionar"}</p>
+            <p className={`text-xs ${M}`}>.xlsx, .xls, .csv</p>
+            <input ref={fileRefN} type="file" accept=".xlsx,.xls,.csv" className="hidden"
+              onChange={(e) => handleNomina(e.target.files[0])} />
+          </div>
+
+          {resultN && !resultN.error && (
+            <div className={`rounded-xl border ${B} overflow-hidden`}>
+              <div className={`px-4 py-2.5 flex items-center gap-4 ${isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]"}`}>
+                <span className="flex items-center gap-1.5 text-sm font-medium text-green-500">
+                  <Icon icon="mdi:check-circle" width={16} />
+                  {resultN.creados} cuenta{resultN.creados !== 1 ? "s" : ""} creada{resultN.creados !== 1 ? "s" : ""}
+                </span>
+                {resultN.omitidos?.length > 0 && (
+                  <span className={`text-xs ${M}`}>{resultN.omitidos.length} omitido{resultN.omitidos.length !== 1 ? "s" : ""} (ya existían)</span>
+                )}
+              </div>
+              {resultN.errores?.length > 0 && (
+                <div className="px-4 py-3">
+                  <p className={`text-xs font-medium ${M} mb-1`}>Advertencias:</p>
+                  {resultN.errores.map((e, i) => (
+                    <p key={i} className="text-xs text-orange-400 mb-0.5">· {e}</p>
+                  ))}
+                </div>
+              )}
+              {resultN.filas?.length > 0 && (
+                <div className={`border-t ${B}`}>
+                  <table className="w-full">
+                    <thead>
+                      <tr className={`${isDark ? "bg-[#313130]" : "bg-[#F7F6F3]"}`}>
+                        <th className={`text-left text-xs font-medium ${M} px-4 py-2`}>Nombre</th>
+                        <th className={`text-left text-xs font-medium ${M} px-4 py-2`}>RUT</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {resultN.filas.map((f, i) => (
+                        <tr key={i} className={`border-t ${B}`}>
+                          <td className={`px-4 py-2 text-xs ${T}`}>{f.nombre}</td>
+                          <td className={`px-4 py-2 text-xs ${M}`}>{f.rut}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+          {resultN?.error && <p className="text-sm text-red-400 mt-2">Error: {resultN.error}</p>}
+        </Card>
+      </div>
     </div>
   );
 }

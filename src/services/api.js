@@ -576,6 +576,20 @@ export async function subirExcelAlumnos(archivo) {
   return data;
 }
 
+// Subir nómina del colegio  →  POST /api/admin/alumnos/nomina
+export async function subirNominaAlumnos(archivo) {
+  const formData = new FormData();
+  formData.append("archivo", archivo);
+  const res = await fetch(`${BASE_URL}/admin/alumnos/nomina`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${getToken()}` },
+    body: formData,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al procesar el archivo");
+  return data;
+}
+
 // KPIs del panel  →  GET /api/admin/stats
 export async function getAdminStats() {
   const res = await fetch(`${BASE_URL}/admin/stats`, { headers: authHeaders() });
