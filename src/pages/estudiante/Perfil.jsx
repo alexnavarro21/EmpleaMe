@@ -48,8 +48,12 @@ export default function EstudiantePerfil() {
   const [colegios, setColegios] = useState([]);
   const [fotoPerfil, setFotoPerfil] = useState(null);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
-  const [paginaLaboral, setPaginaLaboral]     = useState(1);
-  const [porPaginaLaboral, setPorPaginaLaboral] = useState(5);
+  const [paginaAcademico, setPaginaAcademico]           = useState(1);
+  const [porPaginaAcademico, setPorPaginaAcademico]     = useState(2);
+  const [paginaLaboral, setPaginaLaboral]               = useState(1);
+  const [porPaginaLaboral, setPorPaginaLaboral]         = useState(2);
+  const [paginaPostulaciones, setPaginaPostulaciones]   = useState(1);
+  const [porPaginaPostulaciones, setPorPaginaPostulaciones] = useState(5);
 
   const [favoritosLaboral, setFavoritosLaboral] = useState(() => {
     try {
@@ -317,213 +321,118 @@ export default function EstudiantePerfil() {
             </div>
 
             <div className="p-5">
-              {activeTab === "Personal" && (
-                <div className="grid grid-cols-2 gap-x-6">
-                  <FormField
-                    label="Nombre"
-                    placeholder="Tu nombre"
-                    value={nombre}
-                    onChange={(e) => setNombre(e.target.value)}
-                    disabled={!editMode}
-                  />
-                  <FormField
-                    label="Apellido paterno"
-                    placeholder="Apellido paterno"
-                    value={apellidoPaterno}
-                    onChange={(e) => setApellidoPaterno(e.target.value)}
-                    disabled={!editMode}
-                  />
-                  <FormField
-                    label="Apellido materno"
-                    placeholder="Apellido materno (opcional)"
-                    value={apellidoMaterno}
-                    onChange={(e) => setApellidoMaterno(e.target.value)}
-                    disabled={!editMode}
-                    className="col-span-2"
-                  />
-                  <div className="mb-4">
-                    <label className={`block text-xs mb-1.5 ${M}`}>RUT</label>
-                    <input
-                      type="text"
-                      placeholder="12.345.678-9"
-                      value={rut}
-                      onChange={(e) => setRut(formatearRut(e.target.value))}
-                      maxLength={12}
-                      disabled
-                      className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] disabled:opacity-60 ${
-                        rut && !rutValido
-                          ? "border-red-400 focus:border-red-400"
-                          : rut && rutValido
-                          ? "border-green-500 focus:border-green-500"
-                          : isDark
-                          ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder:text-[#888780]"
-                          : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder:text-[#888780]"
-                      } ${isDark ? "bg-[#313130] text-[#D3D1C7] placeholder:text-[#888780]" : "bg-[#F7F6F3] text-[#2C2C2A] placeholder:text-[#888780]"}`}
-                    />
-                    {rut && !rutValido && (
-                      <p className="text-xs text-red-400 mt-1">RUT inválido</p>
-                    )}
-                    {rut && rutValido && (
-                      <p className="text-xs text-green-500 mt-1">RUT válido</p>
+              {activeTab === "Personal" && (() => {
+                const generoDisplay = { masculino: "Masculino", femenino: "Femenino", otro: "Otro", no_especifica: "Prefiero no especificar" };
+                const estadoCivilDisplay = { soltero: "Soltero/a", casado: "Casado/a", divorciado: "Divorciado/a", viudo: "Viudo/a", "conviviente civil": "Conviviente civil" };
+                const VF = ({ label, value, className = "" }) => (
+                  <div className={`mb-4 ${className}`}>
+                    <p className={`text-xs mb-0.5 ${M}`}>{label}</p>
+                    <p className={`text-sm font-medium ${value ? T : M}`}>{value || "—"}</p>
+                  </div>
+                );
+                if (!editMode) return (
+                  <div className="grid grid-cols-2 gap-x-6">
+                    <VF label="Nombre" value={nombre} />
+                    <VF label="Apellido paterno" value={apellidoPaterno} />
+                    <VF label="Apellido materno" value={apellidoMaterno} className="col-span-2" />
+                    <VF label="RUT" value={rut} />
+                    <VF label="Teléfono" value={telefono} />
+                    <VF label="Correo electrónico" value={usuario.correo} />
+                    <VF label="Género" value={generoDisplay[genero]} />
+                    <VF label="Estado civil" value={estadoCivilDisplay[estadoCivil]} />
+                    <VF label="Carrera técnica" value={careerDisplay[carrera] || carrera} />
+                    <VF label="Nivel / Curso" value={nivel} />
+                    <VF label="Región" value={region} />
+                    <VF label="Comuna" value={comuna} />
+                    <div className="col-span-2 mb-4">
+                      <p className={`text-xs mb-1 ${M}`}>Centro educacional</p>
+                      <div className="flex items-center gap-2">
+                        <Icon icon="mdi:school-outline" width={16} className="text-[#378ADD]" />
+                        <p className={`text-sm font-medium ${colegioNombre ? T : M}`}>{colegioNombre || "Sin centro asignado"}</p>
+                      </div>
+                    </div>
+                    {biografia && (
+                      <div className="col-span-2 mb-4">
+                        <p className={`text-xs mb-1 ${M}`}>Sobre mí / Presentación</p>
+                        <p className={`text-sm ${T} leading-relaxed`}>{biografia}</p>
+                      </div>
                     )}
                   </div>
-                  <FormField
-                    label="Teléfono"
-                    type="tel"
-                    placeholder="+56 9 1234 5678"
-                    value={telefono}
-                    onChange={(e) => setTelefono(e.target.value)}
-                    disabled={!editMode}
-                  />
-                  <FormField
-                    label="Correo electrónico"
-                    type="email"
-                    placeholder={usuario.correo || "tucorreo@email.com"}
-                    value={usuario.correo || ""}
-                    disabled
-                  />
-                  <div className="mb-4">
-                    <label className={`block text-xs mb-1.5 ${M}`}>Género</label>
-                    <select
-                      value={genero}
-                      onChange={(e) => setGenero(e.target.value)}
-                      disabled={!editMode}
-                      className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
-                        isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
-                               : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
-                      } disabled:opacity-60`}
-                    >
-                      <option value="no_especifica">Prefiero no especificar</option>
-                      <option value="masculino">Masculino</option>
-                      <option value="femenino">Femenino</option>
-                      <option value="otro">Otro</option>
-                    </select>
-                  </div>
-                  <div className="mb-4">
-                    <label className={`block text-xs mb-1.5 ${M}`}>Estado civil</label>
-                    <select
-                      value={estadoCivil}
-                      onChange={(e) => setEstadoCivil(e.target.value)}
-                      disabled={!editMode}
-                      className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
-                        isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
-                               : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
-                      } disabled:opacity-60`}
-                    >
-                      <option value="">Sin especificar</option>
-                      <option value="soltero">Soltero/a</option>
-                      <option value="casado">Casado/a</option>
-                      <option value="divorciado">Divorciado/a</option>
-                      <option value="viudo">Viudo/a</option>
-                      <option value="conviviente civil">Conviviente civil</option>
-                    </select>
-                  </div>
-                  <div className="mb-4">
-                    <label className={`block text-xs mb-1.5 ${M}`}>Carrera técnica</label>
-                    <select
-                      value={carrera}
-                      onChange={(e) => setCarrera(e.target.value)}
-                      disabled={!editMode}
-                      className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
-                        isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
-                               : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
-                      } disabled:opacity-60`}
-                    >
-                      <option value="">Selecciona tu carrera</option>
-                      <option value="Administracion">Administración</option>
-                      <option value="Mecanica Automotriz">Mecánica Automotriz</option>
-                    </select>
-                  </div>
-                  <div className="mb-4">
-                    <label className={`block text-xs mb-1.5 ${M}`}>Nivel / Curso</label>
-                    <select
-                      value={nivel}
-                      onChange={(e) => setNivel(e.target.value)}
-                      disabled={!editMode}
-                      className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
-                        isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
-                               : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
-                      } disabled:opacity-60`}
-                    >
-                      <option value="">Sin especificar</option>
-                      <option value="1° Medio">1° Medio</option>
-                      <option value="2° Medio">2° Medio</option>
-                      <option value="3° Medio">3° Medio</option>
-                      <option value="4° Medio">4° Medio</option>
-                    </select>
-                  </div>
-                  <div className="mb-4">
-                    <label className={`block text-xs mb-1.5 ${M}`}>Región</label>
-                    <select
-                      value={region}
-                      onChange={(e) => { setRegion(e.target.value); setComuna(""); }}
-                      disabled={!editMode}
-                      className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
-                        isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
-                               : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
-                      } disabled:opacity-60`}
-                    >
-                      <option value="">Selecciona tu región</option>
-                      {REGIONES.map((r) => (
-                        <option key={r} value={r}>{r}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="mb-4">
-                    <label className={`block text-xs mb-1.5 ${M}`}>Comuna</label>
-                    <select
-                      value={comuna}
-                      onChange={(e) => setComuna(e.target.value)}
-                      disabled={!editMode || !region}
-                      className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
-                        isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
-                               : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
-                      } disabled:opacity-60`}
-                    >
-                      <option value="">{region ? "Selecciona tu comuna" : "Primero selecciona región"}</option>
-                      {(REGIONES_COMUNAS[region] || []).map((c) => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="col-span-2 mb-4">
-                    <label className={`block text-xs mb-1.5 ${M}`}>Centro educacional</label>
-                    <div className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border ${B} ${S}`}>
-                      <Icon icon="mdi:school-outline" width={16} className="text-[#378ADD] flex-shrink-0" />
-                      <span className={`text-sm ${colegioNombre ? T : M}`}>
-                        {colegioNombre || "Sin centro asignado"}
-                      </span>
+                );
+                return (
+                  <div className="grid grid-cols-2 gap-x-6">
+                    <FormField label="Nombre" placeholder="Tu nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} />
+                    <FormField label="Apellido paterno" placeholder="Apellido paterno" value={apellidoPaterno} onChange={(e) => setApellidoPaterno(e.target.value)} />
+                    <FormField label="Apellido materno" placeholder="Apellido materno (opcional)" value={apellidoMaterno} onChange={(e) => setApellidoMaterno(e.target.value)} className="col-span-2" />
+                    <div className="mb-4">
+                      <label className={`block text-xs mb-1.5 ${M}`}>RUT</label>
+                      <input
+                        type="text" placeholder="12.345.678-9" value={rut}
+                        onChange={(e) => setRut(formatearRut(e.target.value))} maxLength={12} disabled
+                        className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] disabled:opacity-60 ${
+                          rut && !rutValido ? "border-red-400" : rut && rutValido ? "border-green-500" : isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
+                        }`}
+                      />
+                      {rut && !rutValido && <p className="text-xs text-red-400 mt-1">RUT inválido</p>}
+                      {rut && rutValido  && <p className="text-xs text-green-500 mt-1">RUT válido</p>}
                     </div>
-                  </div>
-
-                  <div className="col-span-2 mb-4">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className={`block text-xs ${M}`}>Sobre mí / Presentación</label>
-                      <span className={`text-xs ${biografia.length > 450 ? "text-red-400" : M}`}>{biografia.length}/500</span>
+                    <FormField label="Teléfono" type="tel" placeholder="+56 9 1234 5678" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
+                    <FormField label="Correo electrónico" type="email" placeholder={usuario.correo || ""} value={usuario.correo || ""} disabled />
+                    {[
+                      { label: "Género",         value: genero,      setter: setGenero,      opts: [["no_especifica","Prefiero no especificar"],["masculino","Masculino"],["femenino","Femenino"],["otro","Otro"]] },
+                      { label: "Estado civil",   value: estadoCivil, setter: setEstadoCivil, opts: [["","Sin especificar"],["soltero","Soltero/a"],["casado","Casado/a"],["divorciado","Divorciado/a"],["viudo","Viudo/a"],["conviviente civil","Conviviente civil"]] },
+                      { label: "Carrera técnica",value: carrera,     setter: setCarrera,     opts: [["","Selecciona tu carrera"],["Administracion","Administración"],["Mecanica Automotriz","Mecánica Automotriz"]] },
+                      { label: "Nivel / Curso",  value: nivel,       setter: setNivel,       opts: [["","Sin especificar"],["1° Medio","1° Medio"],["2° Medio","2° Medio"],["3° Medio","3° Medio"],["4° Medio","4° Medio"]] },
+                    ].map(({ label, value, setter, opts }) => (
+                      <div key={label} className="mb-4">
+                        <label className={`block text-xs mb-1.5 ${M}`}>{label}</label>
+                        <select value={value} onChange={(e) => setter(e.target.value)}
+                          className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"}`}>
+                          {opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                        </select>
+                      </div>
+                    ))}
+                    <div className="mb-4">
+                      <label className={`block text-xs mb-1.5 ${M}`}>Región</label>
+                      <select value={region} onChange={(e) => { setRegion(e.target.value); setComuna(""); }}
+                        className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"}`}>
+                        <option value="">Selecciona tu región</option>
+                        {REGIONES.map((r) => <option key={r} value={r}>{r}</option>)}
+                      </select>
                     </div>
-                    <textarea
-                      placeholder="Cuéntale a las empresas quién eres, qué buscas y cuáles son tus fortalezas..."
-                      rows={7}
-                      maxLength={500}
-                      value={biografia}
-                      onChange={(e) => setBiografia(e.target.value)}
-                      disabled={!editMode}
-                      className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] resize-none disabled:opacity-60 ${
-                        isDark
-                          ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
-                          : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#888780]"
-                      }`}
-                    />
-                  </div>
-                  {editMode && (
+                    <div className="mb-4">
+                      <label className={`block text-xs mb-1.5 ${M}`}>Comuna</label>
+                      <select value={comuna} onChange={(e) => setComuna(e.target.value)} disabled={!region}
+                        className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"} disabled:opacity-60`}>
+                        <option value="">{region ? "Selecciona tu comuna" : "Primero selecciona región"}</option>
+                        {(REGIONES_COMUNAS[region] || []).map((c) => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div className="col-span-2 mb-4">
+                      <label className={`block text-xs mb-1.5 ${M}`}>Centro educacional</label>
+                      <div className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border ${B} ${S}`}>
+                        <Icon icon="mdi:school-outline" width={16} className="text-[#378ADD] flex-shrink-0" />
+                        <span className={`text-sm ${colegioNombre ? T : M}`}>{colegioNombre || "Sin centro asignado"}</span>
+                      </div>
+                    </div>
+                    <div className="col-span-2 mb-4">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className={`block text-xs ${M}`}>Sobre mí / Presentación</label>
+                        <span className={`text-xs ${biografia.length > 450 ? "text-red-400" : M}`}>{biografia.length}/500</span>
+                      </div>
+                      <textarea placeholder="Cuéntale a las empresas quién eres..." rows={7} maxLength={500}
+                        value={biografia} onChange={(e) => setBiografia(e.target.value)}
+                        className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] resize-none ${isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#888780]"}`}
+                      />
+                    </div>
                     <div className="col-span-2 mt-2">
                       <PrimaryButton className="w-full" onClick={handleGuardar} disabled={saving}>
                         {saving ? "Guardando..." : "Guardar cambios"}
                       </PrimaryButton>
                     </div>
-                  )}
-                </div>
-              )}
+                  </div>
+                );
+              })()}
 
               {activeTab === "Habilidades" && (
                 <div>
@@ -592,19 +501,35 @@ export default function EstudiantePerfil() {
                     </div>
                     {historialAcademico.length === 0 ? (
                       <p className={`text-xs ${M}`}>Sin registros académicos. El docente puede agregarlos desde el panel de gestión.</p>
-                    ) : (
-                      <div className="flex flex-col gap-3">
-                        {historialAcademico.map((a) => (
-                          <div key={a.id} className={`p-3 rounded-lg border ${B}`}>
-                            <p className={`text-sm font-semibold ${T}`}>{a.titulo}</p>
-                            <p className={`text-xs ${M}`}>{a.institucion}{a.area ? ` · ${a.area}` : ""}</p>
-                            {(a.fecha_inicio || a.fecha_fin) && (
-                              <p className={`text-xs ${M} mt-0.5`}>{a.fecha_inicio || "?"} – {a.fecha_fin || "En curso"}</p>
-                            )}
+                    ) : (() => {
+                      const totalPagsAcad = Math.ceil(historialAcademico.length / porPaginaAcademico);
+                      const paginaAcad    = Math.min(paginaAcademico, totalPagsAcad);
+                      const inicioAcad    = (paginaAcad - 1) * porPaginaAcademico;
+                      const itemsAcad     = historialAcademico.slice(inicioAcad, inicioAcad + porPaginaAcademico);
+                      return (
+                        <>
+                          <div className="flex flex-col gap-3">
+                            {itemsAcad.map((a) => (
+                              <div key={a.id} className={`p-3 rounded-lg border ${B}`}>
+                                <p className={`text-sm font-semibold ${T}`}>{a.titulo}</p>
+                                <p className={`text-xs ${M}`}>{a.institucion}{a.area ? ` · ${a.area}` : ""}</p>
+                                {(a.fecha_inicio || a.fecha_fin) && (
+                                  <p className={`text-xs ${M} mt-0.5`}>{a.fecha_inicio || "?"} – {a.fecha_fin || "En curso"}</p>
+                                )}
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    )}
+                          <Paginacion
+                            paginaActual={paginaAcad}
+                            totalPaginas={totalPagsAcad}
+                            onCambiar={(p) => setPaginaAcademico(p)}
+                            porPagina={porPaginaAcademico}
+                            opciones={[2, 5, 10]}
+                            onCambiarPorPagina={(n) => { setPorPaginaAcademico(n); setPaginaAcademico(1); }}
+                          />
+                        </>
+                      );
+                    })()}
                   </div>
 
                   {/* Historial laboral */}
@@ -674,7 +599,7 @@ export default function EstudiantePerfil() {
                             totalPaginas={totalPags}
                             onCambiar={(p) => setPaginaLaboral(p)}
                             porPagina={porPaginaLaboral}
-                            opciones={[5, 10, 20]}
+                            opciones={[2, 5, 10]}
                             onCambiarPorPagina={(n) => { setPorPaginaLaboral(n); setPaginaLaboral(1); }}
                           />
                         </>
@@ -692,33 +617,49 @@ export default function EstudiantePerfil() {
                       <p className={`text-sm font-medium ${T}`}>Aún no has postulado a ninguna práctica</p>
                       <p className="text-xs mt-1">Busca empresas y postula desde sus perfiles</p>
                     </div>
-                  ) : (
-                    postulaciones.map((p) => {
-                      const estadoConfig = {
-                        pendiente:  { color: "blue",  icon: "mdi:clock-outline",        label: "Pendiente"   },
-                        aceptado:   { color: "green", icon: "mdi:check-circle-outline", label: "Aceptado"    },
-                        rechazado:  { color: "red",   icon: "mdi:close-circle-outline", label: "Rechazado"   },
-                        completado: { color: "green", icon: "mdi:briefcase-check",      label: "Completado"  },
-                      }[p.estado] || { color: "gray", icon: "mdi:help-circle-outline", label: p.estado };
+                  ) : (() => {
+                    const totalPagsPost = Math.ceil(postulaciones.length / porPaginaPostulaciones);
+                    const paginaPost    = Math.min(paginaPostulaciones, totalPagsPost);
+                    const inicioPost    = (paginaPost - 1) * porPaginaPostulaciones;
+                    const itemsPost     = postulaciones.slice(inicioPost, inicioPost + porPaginaPostulaciones);
+                    return (
+                      <>
+                        {itemsPost.map((p) => {
+                          const estadoConfig = {
+                            pendiente:  { color: "blue",  icon: "mdi:clock-outline",        label: "Pendiente"   },
+                            aceptado:   { color: "green", icon: "mdi:check-circle-outline", label: "Aceptado"    },
+                            rechazado:  { color: "red",   icon: "mdi:close-circle-outline", label: "Rechazado"   },
+                            completado: { color: "green", icon: "mdi:briefcase-check",      label: "Completado"  },
+                          }[p.estado] || { color: "gray", icon: "mdi:help-circle-outline", label: p.estado };
 
-                      return (
-                        <div key={p.id} className={`flex items-start gap-4 p-4 rounded-lg border ${B}`}>
-                          <Icon icon={estadoConfig.icon} width={22} className={
-                            estadoConfig.color === "green" ? "text-green-500 flex-shrink-0 mt-0.5" :
-                            estadoConfig.color === "red"   ? "text-red-500 flex-shrink-0 mt-0.5"   :
-                            estadoConfig.color === "blue"  ? "text-[#378ADD] flex-shrink-0 mt-0.5" :
-                            `${M} flex-shrink-0 mt-0.5`
-                          } />
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-sm font-semibold ${T}`}>{p.titulo}</p>
-                            <p className={`text-xs ${M}`}>{p.nombre_empresa}{p.area ? ` · ${p.area}` : ""}{p.modalidad ? ` · ${p.modalidad}` : ""}</p>
-                            <p className={`text-xs ${M} mt-1`}>{new Date(p.fecha_creacion).toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" })}</p>
-                          </div>
-                          <Badge color={estadoConfig.color}>{estadoConfig.label}</Badge>
-                        </div>
-                      );
-                    })
-                  )}
+                          return (
+                            <div key={p.id} className={`flex items-start gap-4 p-4 rounded-lg border ${B}`}>
+                              <Icon icon={estadoConfig.icon} width={22} className={
+                                estadoConfig.color === "green" ? "text-green-500 flex-shrink-0 mt-0.5" :
+                                estadoConfig.color === "red"   ? "text-red-500 flex-shrink-0 mt-0.5"   :
+                                estadoConfig.color === "blue"  ? "text-[#378ADD] flex-shrink-0 mt-0.5" :
+                                `${M} flex-shrink-0 mt-0.5`
+                              } />
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-sm font-semibold ${T}`}>{p.titulo}</p>
+                                <p className={`text-xs ${M}`}>{p.nombre_empresa}{p.area ? ` · ${p.area}` : ""}{p.modalidad ? ` · ${p.modalidad}` : ""}</p>
+                                <p className={`text-xs ${M} mt-1`}>{new Date(p.fecha_creacion).toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" })}</p>
+                              </div>
+                              <Badge color={estadoConfig.color}>{estadoConfig.label}</Badge>
+                            </div>
+                          );
+                        })}
+                        <Paginacion
+                          paginaActual={paginaPost}
+                          totalPaginas={totalPagsPost}
+                          onCambiar={(p) => setPaginaPostulaciones(p)}
+                          porPagina={porPaginaPostulaciones}
+                          opciones={[5, 10, 20]}
+                          onCambiarPorPagina={(n) => { setPorPaginaPostulaciones(n); setPaginaPostulaciones(1); }}
+                        />
+                      </>
+                    );
+                  })()}
                 </div>
               )}
 

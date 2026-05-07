@@ -415,6 +415,34 @@ INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, publicado_en) V
    'En Constructora Andina trabajé con Conta+, hice conciliaciones bancarias y controlé inventario de materiales. La contabilidad real es mucho más dinámica que la del aula.',
    DATE_SUB(NOW(), INTERVAL 40 DAY));
 
+-- ── 8. Vacantes y postulaciones de la empresa base (id=2) ──────
+INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, esta_activa, tipo, area, modalidad, duracion, remuneracion, fecha_limite, fecha_creacion) VALUES
+  (2, 'Practicante en Mecánica Automotriz',
+   'Buscamos practicante para apoyar en mantención preventiva, diagnóstico electrónico y reparación de vehículos livianos. Trabajará junto a mecánicos certificados en un taller moderno y equipado.',
+   'Estudiante de Mecánica Automotriz en 3° o 4° Medio. Conocimientos básicos en diagnóstico OBD-II y mantenimiento preventivo.',
+   TRUE, 'practica', 'Automotriz', 'presencial', '6 meses', '$250.000',
+   DATE_ADD(CURDATE(), INTERVAL 60 DAY), DATE_SUB(NOW(), INTERVAL 15 DAY)),
+  (2, 'Técnico Automotriz Junior',
+   'Posición permanente para técnico junior en área de diagnóstico y reparación de vehículos livianos y semipesados. Incluye capacitación continua y posibilidad de crecimiento interno.',
+   'Egresado o estudiante en último año de Mecánica Automotriz. Deseable experiencia en taller.',
+   TRUE, 'puesto_laboral', 'Automotriz', 'presencial', 'Indefinido', '$480.000',
+   DATE_ADD(CURDATE(), INTERVAL 90 DAY), DATE_SUB(NOW(), INTERVAL 20 DAY));
+
+SET @v_taller_prac = (SELECT id FROM vacantes WHERE empresa_id = 2 AND tipo = 'practica'       LIMIT 1);
+SET @v_taller_plab = (SELECT id FROM vacantes WHERE empresa_id = 2 AND tipo = 'puesto_laboral' LIMIT 1);
+
+INSERT INTO postulaciones (vacante_id, estudiante_id, estado, fecha_creacion) VALUES
+  (@v_taller_prac, (SELECT id FROM usuarios WHERE correo = 'estudiante@empleame.cl'),   'pendiente', DATE_SUB(NOW(), INTERVAL 10 DAY)),
+  (@v_taller_prac, (SELECT id FROM usuarios WHERE correo = 'matias.sepulveda@demo.cl'), 'pendiente', DATE_SUB(NOW(), INTERVAL 8  DAY)),
+  (@v_taller_prac, (SELECT id FROM usuarios WHERE correo = 'diego.castillo@demo.cl'),   'pendiente', DATE_SUB(NOW(), INTERVAL 6  DAY)),
+  (@v_taller_prac, (SELECT id FROM usuarios WHERE correo = 'andres.fuentes@demo.cl'),   'pendiente', DATE_SUB(NOW(), INTERVAL 12 DAY)),
+  (@v_taller_prac, (SELECT id FROM usuarios WHERE correo = 'nicolas.vargas@demo.cl'),   'pendiente', DATE_SUB(NOW(), INTERVAL 4  DAY)),
+  (@v_taller_prac, (SELECT id FROM usuarios WHERE correo = 'benjamin.soto@demo.cl'),    'pendiente', DATE_SUB(NOW(), INTERVAL 3  DAY)),
+  (@v_taller_plab, (SELECT id FROM usuarios WHERE correo = 'matias.sepulveda@demo.cl'), 'pendiente', DATE_SUB(NOW(), INTERVAL 7  DAY)),
+  (@v_taller_plab, (SELECT id FROM usuarios WHERE correo = 'diego.castillo@demo.cl'),   'pendiente', DATE_SUB(NOW(), INTERVAL 5  DAY)),
+  (@v_taller_plab, (SELECT id FROM usuarios WHERE correo = 'andres.fuentes@demo.cl'),   'pendiente', DATE_SUB(NOW(), INTERVAL 9  DAY)),
+  (@v_taller_plab, (SELECT id FROM usuarios WHERE correo = 'estudiante@empleame.cl'),   'pendiente', DATE_SUB(NOW(), INTERVAL 14 DAY));
+
 -- ── 8. Publicaciones con imágenes ─────────────────────────────
 INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, url_multimedia, publicado_en) VALUES
   ((SELECT id FROM usuarios WHERE correo = 'camila.torres@demo.cl'),

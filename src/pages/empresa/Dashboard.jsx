@@ -58,6 +58,8 @@ export default function EmpresaDashboard() {
 
   const [vacantes, setVacantes] = useState([]);
   const [postulantes, setPostulantes] = useState([]);
+  const [paginaPost, setPaginaPost]       = useState(1);
+  const porPaginaPost                     = 5;
   const [aceptados, setAceptados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [contactandoId, setContactandoId] = useState(null);
@@ -354,9 +356,14 @@ export default function EmpresaDashboard() {
 
           {postulantes.length === 0 ? (
             <p className={`text-xs ${M} text-center py-8`}>No hay postulantes pendientes.</p>
-          ) : (
+          ) : (() => {
+            const totalPags  = Math.ceil(postulantes.length / porPaginaPost);
+            const pagina     = Math.min(paginaPost, totalPags);
+            const items      = postulantes.slice((pagina - 1) * porPaginaPost, pagina * porPaginaPost);
+            return (
+            <>
             <div className="flex flex-col gap-3">
-              {postulantes.slice(0, 6).map((p) => (
+              {items.map((p) => (
                 <div key={p.id} className={`flex items-center gap-3 p-3 rounded-lg border ${B}`}>
                   <Link to={`/empresa/candidato/${p.estudiante_id}`} className="flex-shrink-0">
                     {p.foto_perfil ? (
@@ -423,7 +430,17 @@ export default function EmpresaDashboard() {
                 </div>
               ))}
             </div>
-          )}
+            <Paginacion
+              paginaActual={pagina}
+              totalPaginas={totalPags}
+              onCambiar={(p) => setPaginaPost(p)}
+              porPagina={porPaginaPost}
+              opciones={[5, 10, 20]}
+              onCambiarPorPagina={() => {}}
+            />
+            </>
+            );
+          })()}
         </Card>
       </div>
 
