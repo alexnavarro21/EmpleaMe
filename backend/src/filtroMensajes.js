@@ -2,7 +2,7 @@ const leoProfanity = require("leo-profanity");
 
 // Diccionarios adicionales
 leoProfanity.loadDictionary("fr");
-leoProfanity.loadDictionary("de");
+leoProfanity.loadDictionary("es");
 leoProfanity.loadDictionary("pt");
 
 // Chilenismos, español general y abreviaciones
