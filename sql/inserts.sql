@@ -75,76 +75,6 @@ INSERT INTO habilidades (nombre, categoria_id) VALUES
   ('Organización y planificación',            @cat_blanda),
   ('Pensamiento crítico',                     @cat_blanda);
 
--- ── 5. Palabras prohibidas ────────────────────────────────────
-INSERT IGNORE INTO palabras_prohibidas (palabra) VALUES
--- === ESPAÑOL GENERAL ===
-('mierda'), ('mierd'), ('mrd'),
-('puta'), ('put4'), ('perra'), ('zorra'),
-('puto'), ('put0'),
-('culo'), ('cul0'),
-('coño'), ('con0'),
-('idiota'), ('idiot4'),
-('imbécil'), ('imbecil'),
-('estúpido'), ('estupido'),
-('gilipollas'),
-('cabrón'), ('cabron'),
-('hijueputa'),
-('hijo de puta'), ('hp'),
-('maricón'), ('maricon'), ('marica'),
-('prostituta'),
--- === CHILENISMOS Y ABREVIACIONES ===
-('huevón'), ('huevon'), ('weon'), ('weón'), ('wn'),
-('concha'), ('conch4'),
-('culiao'), ('culi4o'), ('culiado'),
-('ctm'), ('conchatumadre'), ('concha de tu madre'),
-('chucha'), ('chuch4'),
-('aweonao'), ('aweoná'), ('aweonado'),
-('saco de wea'), ('sacowea'), ('scw'), ('saco wea'),
-('weá'), ('hueá'),
-('maraco'), ('maracón'),
-('conchetumare'), ('conchetumadre'),
-('conchadesumadre'),
-('qlia'), ('qliado'), ('qliao'), ('ql'),
-('pichula'),
-('raja'),
-('mamahuevo'), ('mama huevo'),
-('come mierda'), ('comemierda'),
-('andate a la chucha'),
-('cagón'), ('cagon'),
-('cagada'),
-('pechoño'), ('pechono'),
-('flaite'),
-('choro de mierda'),
-('pico'), ('pico pal'),
-('chupa'), ('chupalo'), ('chúpalo'),
-('ándate a la chucha'), ('andate ala chucha'),
-('la chucha de tu madre'), ('chuchatu madre'), ('chuchatumare'),
-('hueón'), ('hue0n'),
--- === INSULTOS Y DISCRIMINACIÓN ===
-('retrasado'), ('mongólico'), ('mongoloide'),
-('subnormal'), ('inútil'),
-('travesti'),
-('gordo de mierda'), ('gordo inútil'),
--- === RACISMO ===
-('nigger'), ('nigga'), ('n-word'),
-('negro de mierda'),
-('indio culiao'),
--- === AMENAZAS ===
-('te voy a matar'), ('te mato'), ('voy a matarte'),
-('te voy a cagar'), ('te cago'),
-('te voy a romper'), ('te rompo la cara'),
--- === INGLÉS ===
-('fuck'), ('f*ck'), ('fck'), ('fuk'),
-('shit'), ('sh1t'),
-('bitch'), ('b1tch'),
-('asshole'), ('ass hole'),
-('bastard'),
-('cunt'),
-('dick'),
-('pussy'),
-('faggot'), ('fag'),
-('motherfucker'), ('mf');
-
 -- ── 6. Usuarios base de prueba ────────────────────────────────
 INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES
   ('estudiante@empleame.cl', 'estudiante123', 'estudiante'),
@@ -1886,28 +1816,21 @@ INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, url_multimedia,
    'https://picsum.photos/seed/bolsa/800/600',
    DATE_SUB(NOW(), INTERVAL 42 DAY));
 
--- ── Conversación Juan Pérez ↔ Taller Automotriz del Sur ──────
-INSERT IGNORE INTO conversaciones (empresa_id, estudiante_id)
-  VALUES (2, 1);
-SET @conv_jp = (SELECT id FROM conversaciones WHERE empresa_id = 2 AND estudiante_id = 1);
-
+-- ── Conversación Juan Pérez (id=1) ↔ Taller Automotriz del Sur (id=2) ────────
+-- Nota: la conversacion entre empresa_id=2 y estudiante_id=1 debe existir (id=1)
 INSERT INTO mensajes (conversacion_id, remitente_id, contenido, enviado_en) VALUES
-  -- Día 1: primer contacto
-  (@conv_jp, 2, 'Hola Juan, vimos tu perfil en EmpleaMe y nos interesa tu postulación para la práctica. ¿Tienes disponibilidad para conversar esta semana?', DATE_SUB(NOW(), INTERVAL 6 DAY) + INTERVAL 9 HOUR),
-  (@conv_jp, 1, 'Hola, muchas gracias por contactarme. Sí, tengo disponibilidad de lunes a viernes desde las 14:00 en adelante.', DATE_SUB(NOW(), INTERVAL 6 DAY) + INTERVAL 10 HOUR),
-  (@conv_jp, 2, 'Perfecto. La práctica es en el área de diagnóstico electrónico, turno de 08:00 a 17:00. ¿Te acomoda ese horario?', DATE_SUB(NOW(), INTERVAL 6 DAY) + INTERVAL 10 HOUR + INTERVAL 30 MINUTE),
-  (@conv_jp, 1, 'Sí, me acomoda. Tengo experiencia con scanner OBD-II y diagnóstico de fallas eléctricas básicas. Me interesa mucho esa área.', DATE_SUB(NOW(), INTERVAL 6 DAY) + INTERVAL 11 HOUR),
-  -- Día 2: requisitos
-  (@conv_jp, 2, 'Buenas Juan. Necesitamos que traigas carta de presentación del colegio, tu currículum y el convenio de práctica firmado. ¿Los tienes listos?', DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 9 HOUR),
-  (@conv_jp, 1, 'Buenos días. La carta y el convenio los pido hoy en la secretaría del colegio. El CV ya lo tengo actualizado. ¿Se los puedo enviar por aquí o los llevo en persona?', DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 9 HOUR + INTERVAL 45 MINUTE),
-  (@conv_jp, 2, 'Tráelos en persona el día que vengas a la entrevista, así también te mostramos el taller. Tiene equipos nuevos de diagnóstico que te van a gustar.', DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 10 HOUR),
-  (@conv_jp, 1, 'Genial, con gusto. ¿Qué día me citarían para la entrevista?', DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 10 HOUR + INTERVAL 20 MINUTE),
-  -- Día 3: coordinación entrevista
-  (@conv_jp, 2, 'Quedamos para el próximo lunes a las 10:00. ¿Te parece bien?', DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 8 HOUR + INTERVAL 30 MINUTE),
-  (@conv_jp, 1, 'Perfecto, el lunes a las 10:00 estaré ahí. ¿La dirección es la misma que aparece en su perfil de EmpleaMe, en San Miguel?', DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR),
-  (@conv_jp, 2, 'Exacto, misma dirección. Preguntas por don Rodrigo en recepción, él te atenderá.', DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR + INTERVAL 15 MINUTE),
-  (@conv_jp, 1, 'Anotado. Muchas gracias, ahí estaré puntual con todos los documentos.', DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE),
-  -- Día 4: confirmación post entrevista
-  (@conv_jp, 2, 'Hola Juan, fue un gusto conocerte hoy. Quedamos muy conformes con la entrevista. Te confirmamos que quedaste seleccionado para la práctica. Comienzas el próximo lunes.', DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 14 HOUR),
-  (@conv_jp, 1, '¡Muchas gracias! Estoy muy contento. El lunes estaré puntual con todo listo. Quedé muy impresionado con el taller y el equipo.', DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 14 HOUR + INTERVAL 30 MINUTE),
-  (@conv_jp, 2, 'Excelente actitud Juan. Bienvenido al equipo. Cualquier duda antes del lunes, escríbenos aquí.', DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 15 HOUR);
+  (1, 2, 'Hola Juan, vimos tu perfil en EmpleaMe y nos interesa tu postulación para la práctica. ¿Tienes disponibilidad para conversar esta semana?',    DATE_SUB(NOW(), INTERVAL 143 HOUR)),
+  (1, 1, 'Hola, muchas gracias por contactarme. Sí, tengo disponibilidad de lunes a viernes desde las 14:00 en adelante.',                              DATE_SUB(NOW(), INTERVAL 142 HOUR)),
+  (1, 2, 'Perfecto. La práctica es en el área de diagnóstico electrónico, turno de 08:00 a 17:00. ¿Te acomoda ese horario?',                             DATE_SUB(NOW(), INTERVAL 141 HOUR)),
+  (1, 1, 'Sí, me acomoda. Tengo experiencia con scanner OBD-II y diagnóstico de fallas eléctricas básicas. Me interesa mucho esa área.',                  DATE_SUB(NOW(), INTERVAL 140 HOUR)),
+  (1, 2, 'Buenas Juan. Necesitamos que traigas carta de presentación del colegio, tu currículum y el convenio de práctica firmado. ¿Los tienes listos?',  DATE_SUB(NOW(), INTERVAL 95 HOUR)),
+  (1, 1, 'Buenos días. La carta y el convenio los pido hoy en la secretaría. El CV ya lo tengo actualizado. ¿Se los puedo enviar por aquí o los llevo?', DATE_SUB(NOW(), INTERVAL 94 HOUR)),
+  (1, 2, 'Tráelos en persona el día de la entrevista, así también te mostramos el taller. Tiene equipos nuevos de diagnóstico que te van a gustar.',      DATE_SUB(NOW(), INTERVAL 93 HOUR)),
+  (1, 1, '¿Qué día me citarían para la entrevista?',                                                                                                     DATE_SUB(NOW(), INTERVAL 92 HOUR)),
+  (1, 2, 'Quedamos para el próximo lunes a las 10:00. ¿Te parece bien?',                                                                                  DATE_SUB(NOW(), INTERVAL 47 HOUR)),
+  (1, 1, 'Perfecto, estaré ahí. ¿La dirección es la misma que aparece en su perfil, en San Miguel?',                                                      DATE_SUB(NOW(), INTERVAL 46 HOUR)),
+  (1, 2, 'Exacto. Preguntas por don Rodrigo en recepción, él te atenderá.',                                                                               DATE_SUB(NOW(), INTERVAL 45 HOUR)),
+  (1, 1, 'Anotado, muchas gracias. Ahí estaré puntual con todos los documentos.',                                                                         DATE_SUB(NOW(), INTERVAL 44 HOUR)),
+  (1, 2, 'Hola Juan, fue un gusto conocerte hoy. Quedamos muy conformes. Quedaste seleccionado para la práctica, comienzas el próximo lunes.',            DATE_SUB(NOW(), INTERVAL 22 HOUR)),
+  (1, 1, '¡Muchas gracias! Estoy muy contento. El lunes estaré puntual con todo listo.',                                                                  DATE_SUB(NOW(), INTERVAL 21 HOUR)),
+  (1, 2, 'Excelente actitud Juan. Bienvenido al equipo. Cualquier duda antes del lunes, escríbenos aquí.',                                                DATE_SUB(NOW(), INTERVAL 20 HOUR));

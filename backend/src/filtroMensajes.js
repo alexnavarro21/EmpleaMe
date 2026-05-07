@@ -8,34 +8,59 @@ leoProfanity.loadDictionary("pt");
 // Chilenismos, español general y abreviaciones
 const palabrasLocales = [
   // Insultos directos
-  "ctm", "conchetumare", "conchatumadre", "conchatumadre",
-  "hdp", "hijodeputa", "hijodeputas", "hijaputa",
-  "chucha", "lachucha", "rechucha",
-  "puta", "puto", "putear", "puteado",
-  "mierda", "mierdas",
-  "culiao", "culiado", "culiar", "culia",
-  "maricon", "maricón", "marica",
-  "aweonao", "aweonada", "aweonado",
-  "ql", "qlo", "qliao", "qliaa", "qliaoo",
-
+  "ctm", "conchetumare", "conchatumadre", "conchetumadre", "conchadesumadre",
+  "hdp", "hijodeputa", "hijodeputas", "hijaputa", "hijueputa", "hijo de puta",
+  "chucha", "lachucha", "rechucha", "chuchatu madre", "chuchatumare",
+  "la chucha de tu madre",
+  "puta", "puto", "putear", "puteado", "put4", "put0",
+  "mierda", "mierdas", "mierd", "mrd",
+  "culiao", "culiado", "culiar", "culia", "culi4o",
+  "culo", "cul0",
+  "coño", "con0",
+  "maricon", "maricón", "marica", "maraco", "maracón",
+  "aweonao", "aweonada", "aweonado", "aweoná",
+  "ql", "qlo", "qliao", "qliaa", "qliaoo", "qlia", "qliado",
+  "pichula",
+  "chupa", "chupalo", "chúpalo",
 
   // Weon y variantes
-  "weon", "weón", "weonas", "weonazo", "weonaza",
+  "weon", "weón", "weonas", "weonazo", "weonaza", "wn",
+  "hueón", "hue0n", "weá", "hueá",
   "huevon", "huevón", "huevonazo",
 
+  // Saco de wea y variantes
+  "saco de wea", "sacowea", "scw", "saco wea",
+
   // Insultos generales español
-  "idiota", "imbecil", "imbécil", "estupido", "estúpido",
+  "idiota", "idiot4", "imbecil", "imbécil", "estupido", "estúpido",
   "pendejo", "pendeja", "pelotudo", "pelotuda",
-  "cabrón", "cabron", "perra", "perro",
-  "mogolico", "mogólico", "retrasado","retrasada", "mongolico", "mongólico",
-  "subnormal", "tarado", "tarada",
+  "cabrón", "cabron", "perra", "zorra",
+  "gilipollas", "prostituta",
+  "mogolico", "mogólico", "retrasado", "retrasada", "mongolico", "mongólico",
+  "mongoloide", "subnormal", "tarado", "tarada", "inútil",
+  "cagón", "cagon", "cagada",
+  "come mierda", "comemierda",
+  "choro de mierda",
+  "mamahuevo", "mama huevo",
+
+  // Discriminación y body shaming
+  "gordo de mierda", "gordo inútil",
+
+  // Racismo
+  "nigger", "nigga", "n-word",
+  "negro de mierda",
+  "indio culiao",
 
   // Amenazas / acoso
-  "matate", "muérete", "muerate", "andate a la mierda",
-  "anda a la mierda", "vayase a la mierda",
+  "matate", "muérete", "muerate",
+  "andate a la mierda", "anda a la mierda", "vayase a la mierda",
+  "andate a la chucha", "ándate a la chucha", "andate ala chucha",
+  "te voy a matar", "te mato", "voy a matarte",
+  "te voy a cagar", "te cago",
+  "te voy a romper", "te rompo la cara",
 
   // Abreviaciones comunes
-  "stfu", "wtf", "kys",
+  "stfu", "wtf", "kys", "mf",
 ];
 
 leoProfanity.add(palabrasLocales);
