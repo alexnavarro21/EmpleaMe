@@ -163,70 +163,53 @@ export default function SlepPerfil() {
         {/* Formulario + Contraseña */}
         <div className="col-span-2 flex flex-col gap-4">
           <Card>
-            <div className="grid grid-cols-2 gap-x-6">
-              <FormField
-                label="Nombre del organismo"
-                placeholder="Ej: SLEP Atacama"
-                value={nombreOrganismo}
-                onChange={(e) => setNombreOrganismo(e.target.value)}
-                disabled={!editMode}
-                className="col-span-2"
-              />
-              <FormField
-                label="Teléfono de contacto"
-                type="tel"
-                placeholder="+56 9 1234 5678"
-                value={telefono}
-                onChange={(e) => setTelefono(e.target.value)}
-                disabled={!editMode}
-              />
-              <FormField
-                label="Correo electrónico"
-                type="email"
-                value={usuario.correo || ""}
-                disabled
-              />
-              <div className="mb-3 col-span-2">
-                <label className={`block text-xs mb-1.5 ${M}`}>Región</label>
-                <select
-                  value={region}
-                  onChange={(e) => setRegion(e.target.value)}
-                  disabled={!editMode}
-                  className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
-                    isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
-                           : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
-                  } disabled:opacity-60`}
-                >
-                  <option value="">Selecciona la región</option>
-                  {REGIONES.map((r) => (
-                    <option key={r} value={r}>{r}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-span-2 mb-3">
-                <label className={`block text-xs mb-1.5 ${M}`}>Descripción del organismo</label>
-                <textarea
-                  rows={4}
-                  placeholder="Describe el organismo y su misión..."
-                  value={descripcion}
-                  onChange={(e) => setDescripcion(e.target.value)}
-                  disabled={!editMode}
-                  className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all resize-none
-                    focus:border-[#378ADD] focus:ring-2 focus:ring-[#B5D4F4] disabled:opacity-60
-                    ${isDark
-                      ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
-                      : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
-                    }`}
-                />
-              </div>
-              {editMode && (
-                <div className="col-span-2 mt-2">
-                  <PrimaryButton className="w-full" onClick={handleGuardar} disabled={saving}>
-                    {saving ? "Guardando..." : "Guardar cambios"}
-                  </PrimaryButton>
+            {(() => {
+              const VF = ({ label, value, className = "" }) => (
+                <div className={`mb-4 ${className}`}>
+                  <p className={`text-xs mb-0.5 ${M}`}>{label}</p>
+                  <p className={`text-sm font-medium ${value ? T : M}`}>{value || "—"}</p>
                 </div>
-              )}
-            </div>
+              );
+              if (!editMode) return (
+                <div className="grid grid-cols-2 gap-x-6">
+                  <VF label="Nombre del organismo" value={nombreOrganismo} className="col-span-2" />
+                  <VF label="Teléfono de contacto" value={telefono} />
+                  <VF label="Correo electrónico" value={usuario.correo} />
+                  <VF label="Región" value={region} className="col-span-2" />
+                  {descripcion && (
+                    <div className="col-span-2 mb-4">
+                      <p className={`text-xs mb-0.5 ${M}`}>Descripción del organismo</p>
+                      <p className={`text-sm ${T} leading-relaxed`}>{descripcion}</p>
+                    </div>
+                  )}
+                </div>
+              );
+              return (
+                <div className="grid grid-cols-2 gap-x-6">
+                  <FormField label="Nombre del organismo" placeholder="Ej: SLEP Atacama" value={nombreOrganismo} onChange={(e) => setNombreOrganismo(e.target.value)} className="col-span-2" />
+                  <FormField label="Teléfono de contacto" type="tel" placeholder="+56 9 1234 5678" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
+                  <FormField label="Correo electrónico" type="email" value={usuario.correo || ""} disabled />
+                  <div className="mb-3 col-span-2">
+                    <label className={`block text-xs mb-1.5 ${M}`}>Región</label>
+                    <select value={region} onChange={(e) => setRegion(e.target.value)}
+                      className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"}`}>
+                      <option value="">Selecciona la región</option>
+                      {REGIONES.map((r) => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  </div>
+                  <div className="col-span-2 mb-3">
+                    <label className={`block text-xs mb-1.5 ${M}`}>Descripción del organismo</label>
+                    <textarea rows={4} placeholder="Describe el organismo y su misión..." value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
+                      className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all resize-none focus:border-[#378ADD] ${isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"}`} />
+                  </div>
+                  <div className="col-span-2 mt-2">
+                    <PrimaryButton className="w-full" onClick={handleGuardar} disabled={saving}>
+                      {saving ? "Guardando..." : "Guardar cambios"}
+                    </PrimaryButton>
+                  </div>
+                </div>
+              );
+            })()}
           </Card>
 
         </div>

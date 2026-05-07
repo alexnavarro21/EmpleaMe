@@ -193,125 +193,89 @@ export default function AdminPerfil() {
         {/* Formulario */}
         <div className="col-span-2">
           <Card>
-            <div className="grid grid-cols-2 gap-x-6">
-              <FormField
-                label="Nombre de la institución"
-                placeholder="Ej: Colegio San Ignacio"
-                value={nombreInstitucion}
-                onChange={(e) => setNombreInstitucion(e.target.value)}
-                disabled={!editMode}
-                className="col-span-2"
-              />
-              <FormField
-                label="Teléfono de contacto"
-                type="tel"
-                placeholder="+56 9 1234 5678"
-                value={telefono}
-                onChange={(e) => setTelefono(e.target.value)}
-                disabled={!editMode}
-              />
-              <FormField
-                label="Correo electrónico"
-                type="email"
-                value={usuario.correo || ""}
-                disabled
-              />
-              <div className="mb-3">
-                <label className={`block text-xs mb-1.5 ${M}`}>Región</label>
-                <select
-                  value={region}
-                  onChange={(e) => { setRegion(e.target.value); setComuna(""); }}
-                  disabled={!editMode}
-                  className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
-                    isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
-                           : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
-                  } disabled:opacity-60`}
-                >
-                  <option value="">Selecciona la región</option>
-                  {REGIONES.map((r) => (
-                    <option key={r} value={r}>{r}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="mb-3">
-                <label className={`block text-xs mb-1.5 ${M}`}>Comuna</label>
-                <select
-                  value={comuna}
-                  onChange={(e) => setComuna(e.target.value)}
-                  disabled={!editMode || !region}
-                  className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${
-                    isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
-                           : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
-                  } disabled:opacity-60`}
-                >
-                  <option value="">{region ? "Selecciona la comuna" : "Primero selecciona región"}</option>
-                  {(REGIONES_COMUNAS[region] || []).map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-span-2 mb-3">
-                <label className={`block text-xs mb-1.5 ${M}`}>Descripción de la institución</label>
-                <textarea
-                  rows={4}
-                  placeholder="Cuéntales a los estudiantes y empresas sobre tu institución..."
-                  value={descripcion}
-                  onChange={(e) => setDescripcion(e.target.value)}
-                  disabled={!editMode}
-                  className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all resize-none
-                    focus:border-[#378ADD] focus:ring-2 focus:ring-[#B5D4F4] disabled:opacity-60
-                    ${isDark
-                      ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
-                      : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
-                    }`}
-                />
-              </div>
-              <div className="col-span-2 mb-3">
-                <label className={`block text-xs mb-2 ${M}`}>Carreras impartidas</label>
-                <div className="flex flex-wrap gap-2">
-                  {CARRERAS_DISPONIBLES.map((c) => {
-                    const activa = carrerasImpartidas.includes(c);
-                    return editMode ? (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() =>
-                          setCarrerasImpartidas((prev) =>
-                            activa ? prev.filter((x) => x !== c) : [...prev, c]
-                          )
-                        }
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                          activa
-                            ? "bg-[#0F4D8A] text-white border-[#0F4D8A]"
-                            : isDark
-                            ? "border-[#3a3a38] text-[#888780] hover:border-[#378ADD]"
-                            : "border-[#D3D1C7] text-[#5F5E5A] hover:border-[#378ADD]"
-                        }`}
-                      >
-                        {CARRERAS_DISPLAY[c] || c}
-                      </button>
-                    ) : activa ? (
-                      <span
-                        key={c}
-                        className="px-3 py-1 rounded-full text-xs font-medium bg-[#0F4D8A]/10 text-[#378ADD] border border-[#378ADD]/30"
-                      >
-                        {CARRERAS_DISPLAY[c] || c}
-                      </span>
-                    ) : null;
-                  })}
-                  {!editMode && carrerasImpartidas.length === 0 && (
-                    <span className={`text-xs ${M}`}>Sin carreras registradas</span>
+            {(() => {
+              const VF = ({ label, value, className = "" }) => (
+                <div className={`mb-4 ${className}`}>
+                  <p className={`text-xs mb-0.5 ${M}`}>{label}</p>
+                  <p className={`text-sm font-medium ${value ? T : M}`}>{value || "—"}</p>
+                </div>
+              );
+              if (!editMode) return (
+                <div className="grid grid-cols-2 gap-x-6">
+                  <VF label="Nombre de la institución" value={nombreInstitucion} className="col-span-2" />
+                  <VF label="Teléfono de contacto" value={telefono} />
+                  <VF label="Correo electrónico" value={usuario.correo} />
+                  <VF label="Región" value={region} />
+                  <VF label="Comuna" value={comuna} />
+                  {descripcion && (
+                    <div className="col-span-2 mb-4">
+                      <p className={`text-xs mb-0.5 ${M}`}>Descripción de la institución</p>
+                      <p className={`text-sm ${T} leading-relaxed`}>{descripcion}</p>
+                    </div>
                   )}
+                  <div className="col-span-2 mb-3">
+                    <p className={`text-xs mb-2 ${M}`}>Carreras impartidas</p>
+                    <div className="flex flex-wrap gap-2">
+                      {carrerasImpartidas.length === 0
+                        ? <span className={`text-xs ${M}`}>Sin carreras registradas</span>
+                        : carrerasImpartidas.map((c) => (
+                          <span key={c} className="px-3 py-1 rounded-full text-xs font-medium bg-[#0F4D8A]/10 text-[#378ADD] border border-[#378ADD]/30">
+                            {CARRERAS_DISPLAY[c] || c}
+                          </span>
+                        ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              {editMode && (
-                <div className="col-span-2 mt-2">
-                  <PrimaryButton className="w-full" onClick={handleGuardar} disabled={saving}>
-                    {saving ? "Guardando..." : "Guardar cambios"}
-                  </PrimaryButton>
+              );
+              return (
+                <div className="grid grid-cols-2 gap-x-6">
+                  <FormField label="Nombre de la institución" placeholder="Ej: Colegio San Ignacio" value={nombreInstitucion} onChange={(e) => setNombreInstitucion(e.target.value)} className="col-span-2" />
+                  <FormField label="Teléfono de contacto" type="tel" placeholder="+56 9 1234 5678" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
+                  <FormField label="Correo electrónico" type="email" value={usuario.correo || ""} disabled />
+                  <div className="mb-3">
+                    <label className={`block text-xs mb-1.5 ${M}`}>Región</label>
+                    <select value={region} onChange={(e) => { setRegion(e.target.value); setComuna(""); }}
+                      className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"}`}>
+                      <option value="">Selecciona la región</option>
+                      {REGIONES.map((r) => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  </div>
+                  <div className="mb-3">
+                    <label className={`block text-xs mb-1.5 ${M}`}>Comuna</label>
+                    <select value={comuna} onChange={(e) => setComuna(e.target.value)} disabled={!region}
+                      className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] ${isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"} disabled:opacity-60`}>
+                      <option value="">{region ? "Selecciona la comuna" : "Primero selecciona región"}</option>
+                      {(REGIONES_COMUNAS[region] || []).map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div className="col-span-2 mb-3">
+                    <label className={`block text-xs mb-1.5 ${M}`}>Descripción de la institución</label>
+                    <textarea rows={4} placeholder="Cuéntales a los estudiantes y empresas sobre tu institución..." value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
+                      className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all resize-none focus:border-[#378ADD] ${isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"}`} />
+                  </div>
+                  <div className="col-span-2 mb-3">
+                    <label className={`block text-xs mb-2 ${M}`}>Carreras impartidas</label>
+                    <div className="flex flex-wrap gap-2">
+                      {CARRERAS_DISPONIBLES.map((c) => {
+                        const activa = carrerasImpartidas.includes(c);
+                        return (
+                          <button key={c} type="button"
+                            onClick={() => setCarrerasImpartidas((prev) => activa ? prev.filter((x) => x !== c) : [...prev, c])}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${activa ? "bg-[#0F4D8A] text-white border-[#0F4D8A]" : isDark ? "border-[#3a3a38] text-[#888780] hover:border-[#378ADD]" : "border-[#D3D1C7] text-[#5F5E5A] hover:border-[#378ADD]"}`}>
+                            {CARRERAS_DISPLAY[c] || c}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="col-span-2 mt-2">
+                    <PrimaryButton className="w-full" onClick={handleGuardar} disabled={saving}>
+                      {saving ? "Guardando..." : "Guardar cambios"}
+                    </PrimaryButton>
+                  </div>
                 </div>
-              )}
-            </div>
+              );
+            })()}
           </Card>
         </div>
       </div>
