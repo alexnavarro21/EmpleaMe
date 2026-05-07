@@ -218,8 +218,6 @@ export default function Login() {
                 >
                   Iniciar sesión
                 </button>
-                <Divider isDark={isDark} />
-                <GoogleButton isDark={isDark} />
               </form>
             )}
 
@@ -453,22 +451,4 @@ function SelectField({ label, value, onChange, isDark, children }) {
   );
 }
 
-function Divider({ isDark }) {
-  return (
-    <div className="relative my-4 text-center">
-      <div className={`absolute inset-y-1/2 left-0 right-0 h-px ${isDark ? "bg-[#3a3a38]" : "bg-[#D3D1C7]"}`} />
-      <span className={`relative px-3 text-xs ${isDark ? "bg-[#262624] text-[#888780]" : "bg-white text-[#888780]"}`}>
-        o continúa con
-      </span>
-    </div>
-  );
-}
-
-function GoogleButton({ isDark }) {
-  return (
-    <button className={`w-full py-2.5 rounded-lg text-sm border transition-colors ${isDark ? "border-[#3a3a38] text-[#D3D1C7] hover:bg-[#313130]" : "border-[#D3D1C7] text-[#2C2C2A] hover:bg-[#F7F6F3]"}`}>
-      Google
-    </button>
-  );
-}
 
