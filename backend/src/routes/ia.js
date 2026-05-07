@@ -335,10 +335,9 @@ router.post("/resumen-conversacion/:conversacion_id", verificarToken, soloRol("c
 
   try {
     const [[conv]] = await db.query(
-      `SELECT c.id, u_est.nombre AS nombre_estudiante, emp.nombre_empresa
+      `SELECT c.id, pe.nombre_completo AS nombre_estudiante, emp.nombre_empresa
        FROM conversaciones c
        JOIN perfiles_estudiantes pe ON pe.usuario_id = c.estudiante_id
-       JOIN usuarios u_est ON u_est.id = c.estudiante_id
        JOIN perfiles_empresas emp ON emp.usuario_id = c.empresa_id
        WHERE c.id = ? AND pe.colegio_id = ?`,
       [conversacion_id, colegioId]
@@ -353,9 +352,11 @@ router.post("/resumen-conversacion/:conversacion_id", verificarToken, soloRol("c
     const ultimoId = existente?.ultimo_mensaje_id ?? 0;
 
     const [mensajesNuevos] = await db.query(
-      `SELECT m.id, m.contenido, m.enviado_en, u.nombre AS remitente_nombre
+      `SELECT m.id, m.contenido, m.enviado_en,
+              COALESCE(pe.nombre_completo, emp.nombre_empresa) AS remitente_nombre
        FROM mensajes m
-       JOIN usuarios u ON u.id = m.remitente_id
+       LEFT JOIN perfiles_estudiantes pe ON pe.usuario_id = m.remitente_id
+       LEFT JOIN perfiles_empresas emp ON emp.usuario_id = m.remitente_id
        WHERE m.conversacion_id = ? AND m.id > ?
        ORDER BY m.enviado_en ASC`,
       [conversacion_id, ultimoId]
