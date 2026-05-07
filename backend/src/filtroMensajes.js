@@ -34,6 +34,9 @@ const palabrasLocales = [
   // Insultos generales español
   "idiota", "idiot4", "imbecil", "imbécil", "estupido", "estúpido",
   "pendejo", "pendeja", "pelotudo", "pelotuda",
+  "tonto", "tonta", "tontos", "tontas", "tontito", "tontita",
+  "burro", "burra", "animal", "bestia",
+  "feo", "fea", "feo", "feísimo", "feísima",
   "cabrón", "cabron", "perra", "zorra",
   "gilipollas", "prostituta",
   "mogolico", "mogólico", "retrasado", "retrasada", "mongolico", "mongólico",
