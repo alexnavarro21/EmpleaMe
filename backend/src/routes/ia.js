@@ -80,7 +80,7 @@ Genera un resumen en español con estas secciones (sin markdown, texto plano):
 1. PERFIL GENERAL: 2 oraciones describiendo al estudiante.
 2. PUNTOS FUERTES: 2-3 fortalezas relevantes para esta vacante.
 3. ÁREAS DE MEJORA: 1-2 aspectos a considerar.
-4. COMPATIBILIDAD: Una frase final indicando qué tan compatible es con la vacante (Alta / Media / Baja) y por qué.
+4. COMPATIBILIDAD: Escribe ÚNICAMENTE la palabra "Alta", "Media" o "Baja" seguida de punto y coma y la explicación. Ejemplo exacto: "Alta; el candidato cumple con todos los requisitos." No uses la palabra Alta, Media o Baja en ninguna otra parte de esta sección.
 `;
 }
 
@@ -237,7 +237,7 @@ router.get("/ranking/:vacante_id", verificarToken, soloRol("empresa"), async (re
           );
         }
 
-        const match = resumen.match(/COMPATIBILIDAD[^\n]*\n?\s*(Alta|Media|Baja)/i);
+        const match = resumen.match(/COMPATIBILIDAD\s*:\s*\n?\s*(Alta|Media|Baja)/i);
         const compatibilidad = match
           ? match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase()
           : "Baja";
