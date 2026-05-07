@@ -801,6 +801,89 @@ router.post("/alumnos/excel", ...auth, upload.single("archivo"), async (req, res
   }
 });
 
+// POST /api/admin/alumnos/nomina
+// Formato: exportación de nómina del colegio (CSV/XLS)
+// Columnas relevantes: Run(6), Dígito Ver.(7), Genero(8), Nombres(9),
+//   Apellido Paterno(10), Apellido Materno(11), Email(15), Telefono(16), Celular(17), Comuna(13)
+// Contraseña por defecto: run+dígito sin puntuación (ej. 25399679K)
+router.post("/alumnos/nomina", ...auth, upload.single("archivo"), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "Se requiere un archivo" });
+
+  const bcrypt = require("bcrypt");
+
+  try {
+    const wb   = XLSX.read(req.file.buffer, { type: "buffer" });
+    const ws   = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+
+    if (rows.length < 2) return res.status(400).json({ error: "El archivo no contiene datos" });
+
+    const creados  = [];
+    const omitidos = [];
+    const errores  = [];
+
+    for (let i = 1; i < rows.length; i++) {
+      const fila = rows[i];
+
+      const runRaw = String(fila[6] ?? "").trim().replace(/\./g, "").replace(/-/g, "");
+      const dvRaw  = String(fila[7] ?? "").trim().toUpperCase();
+
+      if (!runRaw || !dvRaw) continue;
+
+      const rut    = `${runRaw}-${dvRaw}`;
+      const nombre = String(fila[9] ?? "").trim();
+
+      if (!nombre) { errores.push(`Fila ${i + 1} (${rut}): nombre vacío`); continue; }
+
+      const [[existente]] = await db.query(
+        "SELECT id FROM usuarios WHERE rut IS NOT NULL AND rut = ?",
+        [rut]
+      );
+      if (existente) { omitidos.push(rut); continue; }
+
+      const apellidoPaterno = String(fila[10] ?? "").trim();
+      const apellidoMaterno = String(fila[11] ?? "").trim() || null;
+      const correoRaw       = String(fila[15] ?? "").trim().toLowerCase() || null;
+      const correo          = correoRaw && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoRaw) ? correoRaw : null;
+      const celular         = String(fila[17] ?? "").trim().replace(/\.0$/, "") || null;
+      const telefonoFijo    = String(fila[16] ?? "").trim().replace(/\.0$/, "") || null;
+      const telefono        = celular || telefonoFijo || null;
+      const generoRaw       = String(fila[8] ?? "").trim().toUpperCase();
+      const genero          = generoRaw === "M" ? "masculino" : generoRaw === "F" ? "femenino" : "no_especifica";
+      const comuna          = String(fila[13] ?? "").trim() || null;
+
+      const contrasena = `${runRaw}${dvRaw}`;
+
+      const conn = await db.getConnection();
+      try {
+        await conn.beginTransaction();
+        const hash = await bcrypt.hash(contrasena, 10);
+        const [result] = await conn.query(
+          "INSERT INTO usuarios (correo, rut, contrasena_hash, rol) VALUES (?, ?, ?, 'estudiante')",
+          [correo, rut, hash]
+        );
+        await conn.query(
+          `INSERT INTO perfiles_estudiantes
+           (usuario_id, nombre, apellido_paterno, apellido_materno, rut, telefono, colegio_id, genero, comuna)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [result.insertId, nombre, apellidoPaterno, apellidoMaterno, rut, telefono, req.usuario.id, genero, comuna]
+        );
+        await conn.commit();
+        creados.push({ rut, nombre: `${nombre} ${apellidoPaterno}`.trim() });
+      } catch (e) {
+        await conn.rollback();
+        errores.push(`Fila ${i + 1} (${rut}): ${e.message}`);
+      } finally {
+        conn.release();
+      }
+    }
+
+    res.json({ creados: creados.length, filas: creados, omitidos, errores });
+  } catch (err) {
+    res.status(500).json({ error: "Error procesando el archivo", detalle: err.message });
+  }
+});
+
 // PUT /api/admin/usuarios/:id/contrasena — colegio cambia contraseña de un alumno suyo
 router.put("/usuarios/:id/contrasena", ...auth, async (req, res) => {
   const estudianteId = parseInt(req.params.id);

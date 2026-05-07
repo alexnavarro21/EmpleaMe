@@ -85,6 +85,7 @@ export function MascotaFlotante() {
   const { isDark } = useDark();
   const [noLeidas, setNoLeidas] = useState(0);
   const [burbuja, setBurbuja] = useState(null);
+  const [pose, setPose] = useState("neutral");
   const lastIdRef = useRef(null);
   const initializedRef = useRef(false);
   const timerRef = useRef(null);
@@ -97,6 +98,11 @@ export function MascotaFlotante() {
       clearTimeout(timerRef.current);
     };
   }, []);
+
+  function cerrarBurbuja() {
+    setBurbuja(null);
+    setPose("neutral");
+  }
 
   async function fetchNotifs() {
     try {
@@ -111,8 +117,13 @@ export function MascotaFlotante() {
       if (latest && latest.id !== lastIdRef.current && n > 0) {
         lastIdRef.current = latest.id;
         setBurbuja(latest.titulo);
+        setPose("saludando");
         clearTimeout(timerRef.current);
-        timerRef.current = setTimeout(() => setBurbuja(null), 5000);
+        timerRef.current = setTimeout(() => {
+          setBurbuja(null);
+          setPose("neutral");
+        }, 10000);
+        window.dispatchEvent(new CustomEvent("nueva-notificacion", { detail: { tipo: latest.tipo } }));
       }
     } catch (_) {}
   }
@@ -131,7 +142,7 @@ export function MascotaFlotante() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.92 }}
             transition={{ duration: 0.18 }}
-            onClick={() => setBurbuja(null)}
+            onClick={cerrarBurbuja}
             className={`pointer-events-auto max-w-[200px] ${bg} border ${border} rounded-2xl rounded-br-sm px-3 py-2 shadow-lg text-xs ${text} leading-snug cursor-pointer select-none`}
           >
             {burbuja}
@@ -143,18 +154,13 @@ export function MascotaFlotante() {
       </AnimatePresence>
 
       <div className="relative pointer-events-auto w-20">
-        {noLeidas > 0 && (
-          <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center z-10 pointer-events-none">
-            {noLeidas > 9 ? "9+" : noLeidas}
-          </div>
-        )}
-        <motion.div
+<motion.div
           animate={{ y: [0, -6, 0] }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          onClick={() => setBurbuja(null)}
+          onClick={cerrarBurbuja}
           className="cursor-pointer"
         >
-          <MascotaSVG pose="neutral" />
+          <MascotaSVG pose={pose} />
         </motion.div>
       </div>
     </div>
