@@ -123,6 +123,7 @@ export function MascotaFlotante() {
           setBurbuja(null);
           setPose("neutral");
         }, 10000);
+        window.dispatchEvent(new CustomEvent("nueva-notificacion", { detail: { tipo: latest.tipo } }));
       }
     } catch (_) {}
   }

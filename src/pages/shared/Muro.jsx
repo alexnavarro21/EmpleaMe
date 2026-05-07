@@ -1058,6 +1058,24 @@ export default function EstudianteDashboard() {
     }
   }, [usuario.id]);
 
+  useEffect(() => {
+    if (!usuario.id) return;
+    function onNuevaNotificacion(e) {
+      const tipo = e.detail?.tipo;
+      if (tipo !== "mensaje") return;
+      if (usuario.rol === "estudiante") {
+        getConversaciones().then(setEstudianteConversaciones).catch(() => {});
+        getMensajesDirectos().then(setEstudianteDirectas).catch(() => {});
+      } else if (usuario.rol === "empresa") {
+        getConversaciones().then(setEmpresaConversaciones).catch(() => {});
+      } else if (usuario.rol === "slep") {
+        getMensajesDirectos().then(setSlepMensajes).catch(() => {});
+      }
+    }
+    window.addEventListener("nueva-notificacion", onNuevaNotificacion);
+    return () => window.removeEventListener("nueva-notificacion", onNuevaNotificacion);
+  }, [usuario.id, usuario.rol]);
+
   const nombre = perfil?.nombre_completo || "";
   const carrera = perfil?.carrera || "";
   const nivel = perfil?.nivel || "";
