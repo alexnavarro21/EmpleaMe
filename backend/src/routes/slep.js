@@ -410,11 +410,13 @@ async function esReporteDeSlep(reporteId, slepId) {
     WHERE pc.slep_id = ?
   `;
 
+  const empresas = `SELECT usuario_id FROM perfiles_empresas`;
+
   if (reporte.tipo === "publicacion") {
     const [[row]] = await db.query(
       `SELECT 1 FROM publicaciones p
        WHERE p.id = ?
-         AND p.autor_id IN (${colegiosDelSlep} UNION ${estudiantesDelSlep})`,
+         AND p.autor_id IN (${colegiosDelSlep} UNION ${estudiantesDelSlep} UNION ${empresas})`,
       [reporte.publicacion_id, slepId, slepId]
     );
     return !!row;
@@ -423,7 +425,7 @@ async function esReporteDeSlep(reporteId, slepId) {
     const [[row]] = await db.query(
       `SELECT 1 FROM comentarios c
        WHERE c.id = ?
-         AND c.autor_id IN (${colegiosDelSlep} UNION ${estudiantesDelSlep})`,
+         AND c.autor_id IN (${colegiosDelSlep} UNION ${estudiantesDelSlep} UNION ${empresas})`,
       [reporte.comentario_id, slepId, slepId]
     );
     return !!row;
@@ -432,7 +434,7 @@ async function esReporteDeSlep(reporteId, slepId) {
     const [[row]] = await db.query(
       `SELECT 1 FROM usuarios
        WHERE id = ?
-         AND id IN (${colegiosDelSlep} UNION ${estudiantesDelSlep})`,
+         AND id IN (${colegiosDelSlep} UNION ${estudiantesDelSlep} UNION ${empresas})`,
       [reporte.usuario_id, slepId, slepId]
     );
     return !!row;
@@ -471,7 +473,7 @@ router.get("/reportes", ...auth, async (req, res) => {
        LEFT JOIN perfiles_empresas  emp_ref ON emp_ref.usuario_id = u_ref.id
        WHERE r.estado = ?
          AND (
-           -- Publicaciones de colegios del SLEP o estudiantes de esos colegios
+           -- Publicaciones de colegios, estudiantes o empresas
            (r.tipo = 'publicacion' AND rp.publicacion_id IN (
              SELECT p.id FROM publicaciones p
              WHERE p.autor_id IN (
@@ -480,10 +482,12 @@ router.get("/reportes", ...auth, async (req, res) => {
                SELECT pe2.usuario_id FROM perfiles_estudiantes pe2
                JOIN perfiles_colegios pc2 ON pc2.usuario_id = pe2.colegio_id
                WHERE pc2.slep_id = ?
+               UNION
+               SELECT usuario_id FROM perfiles_empresas
              )
            ))
            OR
-           -- Comentarios de colegios del SLEP o estudiantes de esos colegios
+           -- Comentarios de colegios, estudiantes o empresas
            (r.tipo = 'comentario' AND rc.comentario_id IN (
              SELECT c.id FROM comentarios c
              WHERE c.autor_id IN (
@@ -492,16 +496,20 @@ router.get("/reportes", ...auth, async (req, res) => {
                SELECT pe2.usuario_id FROM perfiles_estudiantes pe2
                JOIN perfiles_colegios pc2 ON pc2.usuario_id = pe2.colegio_id
                WHERE pc2.slep_id = ?
+               UNION
+               SELECT usuario_id FROM perfiles_empresas
              )
            ))
            OR
-           -- Perfiles de colegios del SLEP o estudiantes de esos colegios
+           -- Perfiles de colegios, estudiantes o empresas
            (r.tipo = 'perfil' AND rpf.usuario_id IN (
              SELECT usuario_id FROM perfiles_colegios WHERE slep_id = ?
              UNION
              SELECT pe2.usuario_id FROM perfiles_estudiantes pe2
              JOIN perfiles_colegios pc2 ON pc2.usuario_id = pe2.colegio_id
              WHERE pc2.slep_id = ?
+             UNION
+             SELECT usuario_id FROM perfiles_empresas
            ))
          )
        ORDER BY r.creado_en DESC`,
