@@ -4,7 +4,7 @@ Plataforma web que conecta estudiantes técnicos con empresas que ofrecen práct
 
 ---
 
-## Tecnologías:
+## Tecnologías
 
 ### Frontend
 - **React 19** + **Vite**
