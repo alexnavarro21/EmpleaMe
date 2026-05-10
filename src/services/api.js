@@ -44,6 +44,17 @@ export async function registrarUsuario({ correo, rut, contrasena, rol, nombre, a
   return data; // { mensaje, id }
 }
 
+export async function solicitarRecuperacion(datos) {
+  const res = await fetch(`${BASE_URL}/auth/solicitar-recuperacion`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al enviar la solicitud");
+  return data; // { mensaje }
+}
+
 export async function listarColegios() {
   const res = await fetch(`${BASE_URL}/auth/colegios`);
   const data = await res.json();

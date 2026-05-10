@@ -42,22 +42,24 @@ function getNotifLink(tipo, role, referenciaId) {
       practica_completada:   "/empresa/dashboard",
     },
     admin: {
-      mensaje:               "/admin/mensajeria",
-      comentario:            "/admin/muro",
-      postulacion_nueva:     "/admin/talleres",
-      postulacion_aceptada:  "/admin/panel",
-      postulacion_rechazada: "/admin/panel",
-      vacante_cerrada:       "/admin/panel",
-      practica_completada:   "/admin/panel",
+      mensaje:                  "/admin/mensajeria",
+      comentario:               "/admin/muro",
+      postulacion_nueva:        "/admin/talleres",
+      postulacion_aceptada:     "/admin/panel",
+      postulacion_rechazada:    "/admin/panel",
+      vacante_cerrada:          "/admin/panel",
+      practica_completada:      "/admin/panel",
+      recuperacion_contrasena:  "/admin/usuarios",
     },
     slep: {
-      mensaje:               "/slep/mensajeria",
-      comentario:            "/slep/muro",
-      postulacion_nueva:     "/slep/usuarios",
-      postulacion_aceptada:  "/slep/panel",
-      postulacion_rechazada: "/slep/panel",
-      vacante_cerrada:       "/slep/panel",
-      practica_completada:   "/slep/panel",
+      mensaje:                  "/slep/mensajeria",
+      comentario:               "/slep/muro",
+      postulacion_nueva:        "/slep/usuarios",
+      postulacion_aceptada:     "/slep/panel",
+      postulacion_rechazada:    "/slep/panel",
+      vacante_cerrada:          "/slep/panel",
+      practica_completada:      "/slep/panel",
+      recuperacion_contrasena:  "/slep/usuarios",
     },
   };
   return links[role]?.[tipo] || null;
@@ -72,6 +74,7 @@ const TIPO_CFG = {
   vacante_cerrada:       { icon: "mdi:close-circle-outline",     color: "text-orange-500", colorDark: "text-orange-400", bg: "bg-orange-100",  bgDark: "bg-orange-500/15",  label: "Vacante"     },
   practica_completada:   { icon: "mdi:star-circle-outline",      color: "text-yellow-500", colorDark: "text-yellow-400", bg: "bg-yellow-100",  bgDark: "bg-yellow-500/15",  label: "Completado"  },
   seguidor:              { icon: "mdi:account-plus-outline",     color: "text-sky-500",    colorDark: "text-sky-400",    bg: "bg-sky-100",     bgDark: "bg-sky-500/15",     label: "Seguidor"    },
+  recuperacion_contrasena: { icon: "mdi:lock-reset",            color: "text-amber-600",  colorDark: "text-amber-400",  bg: "bg-amber-100",   bgDark: "bg-amber-500/15",   label: "Recuperación" },
 };
 
 const FILTROS = [
@@ -82,7 +85,8 @@ const FILTROS = [
   { key: "postulacion_aceptada", label: "Aceptadas"    },
   { key: "postulacion_rechazada",label: "Rechazadas"   },
   { key: "postulacion_nueva",    label: "Postulaciones"},
-  { key: "practica_completada",  label: "Completadas"  },
+  { key: "practica_completada",     label: "Completadas"    },
+  { key: "recuperacion_contrasena", label: "Recuperaciones" },
 ];
 
 function tiempoRelativo(fecha) {

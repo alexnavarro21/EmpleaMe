@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDark } from "../../context/DarkModeContext";
-import { loginUsuario, registrarUsuario, listarColegios } from "../../services/api";
+import { loginUsuario, registrarUsuario, listarColegios, solicitarRecuperacion } from "../../services/api";
 import Mascota from "../../components/Mascota";
 
 const RUTAS_ROL = {
@@ -38,6 +38,9 @@ export default function Login() {
   const [regConfirm, setRegConfirm] = useState("");
   const [regError, setRegError] = useState("");
   const [regLoading, setRegLoading] = useState(false);
+
+  // Recovery modal state
+  const [showRecovery, setShowRecovery] = useState(false);
 
   const navigate = useNavigate();
 
@@ -210,7 +213,13 @@ export default function Login() {
                   <p className="text-xs text-red-500 mt-1">{loginError}</p>
                 )}
                 <div className="text-right mb-3">
-                  <a href="#" className="text-xs text-[#378ADD]">¿Olvidaste tu contraseña?</a>
+                  <button
+                    type="button"
+                    onClick={() => setShowRecovery(true)}
+                    className="text-xs text-[#378ADD] hover:underline"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
                 </div>
                 <button
                   type="submit"
@@ -381,6 +390,188 @@ export default function Login() {
           </div>
           </div>
         </div>
+      </div>
+
+      {showRecovery && (
+        <ModalRecuperacion isDark={isDark} onClose={() => setShowRecovery(false)} />
+      )}
+    </div>
+  );
+}
+
+function ModalRecuperacion({ isDark, onClose }) {
+  const [paso, setPaso] = useState(1);
+  const [tipoPerfil, setTipoPerfil] = useState("");
+  const [rut, setRut] = useState("");
+  const [correoContacto, setCorreoContacto] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [mensajeExtra, setMensajeExtra] = useState("");
+  const [error, setError] = useState("");
+  const [cargando, setCargando] = useState(false);
+
+  const handleSeleccionarTipo = (tipo) => {
+    setTipoPerfil(tipo);
+    setPaso(2);
+    setError("");
+  };
+
+  const handleEnviar = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (tipoPerfil === "estudiante") {
+      if (!rut || !correoContacto || !telefono)
+        return setError("RUT, correo de contacto y teléfono son obligatorios.");
+    } else {
+      if (!correoContacto || !telefono)
+        return setError("Correo y teléfono son obligatorios.");
+    }
+
+    setCargando(true);
+    try {
+      await solicitarRecuperacion({
+        tipo_perfil: tipoPerfil,
+        rut: tipoPerfil === "estudiante" ? rut : undefined,
+        correo_contacto: tipoPerfil === "estudiante" ? correoContacto : undefined,
+        correo: tipoPerfil !== "estudiante" ? correoContacto : undefined,
+        telefono,
+        mensaje: tipoPerfil === "estudiante" ? mensajeExtra : undefined,
+      });
+      setPaso(3);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  const overlayClass = "fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4";
+  const cardClass = `relative w-full max-w-md rounded-2xl shadow-xl p-7 ${isDark ? "bg-[#262624] text-[#D3D1C7]" : "bg-white text-[#2C2C2A]"}`;
+  const labelClass = `block text-xs mb-1.5 ${isDark ? "text-[#B4B2A9]" : "text-[#5F5E5A]"}`;
+  const inputClass = `w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all focus:border-[#378ADD] focus:ring-2 focus:ring-[#B5D4F4] ${isDark ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]" : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"}`;
+
+  return (
+    <div className={overlayClass} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className={cardClass}>
+        <button
+          onClick={onClose}
+          className={`absolute top-4 right-4 text-lg font-bold ${isDark ? "text-[#888780] hover:text-[#D3D1C7]" : "text-[#888780] hover:text-[#2C2C2A]"}`}
+        >
+          ✕
+        </button>
+
+        <h2 className="text-lg font-semibold mb-1">Recuperar contraseña</h2>
+
+        {/* PASO 1: Selección de tipo de perfil */}
+        {paso === 1 && (
+          <>
+            <p className={`text-sm mb-5 ${isDark ? "text-[#B4B2A9]" : "text-[#5F5E5A]"}`}>
+              Selecciona el tipo de cuenta para continuar con la recuperación.
+            </p>
+            <div className="flex flex-col gap-3">
+              {[
+                { id: "estudiante", label: "Estudiante", desc: "Enviaré una solicitud a mi colegio" },
+                { id: "empresa",    label: "Empresa",    desc: "Enviaré una solicitud al SLEP" },
+                { id: "colegio",    label: "Colegio",    desc: "Enviaré una solicitud a mi SLEP asignado" },
+              ].map((tipo) => (
+                <button
+                  key={tipo.id}
+                  type="button"
+                  onClick={() => handleSeleccionarTipo(tipo.id)}
+                  className={`w-full rounded-xl p-4 text-left border transition-all hover:border-[#378ADD] ${isDark ? "border-[#3a3a38] hover:bg-[#1a2e42]" : "border-[#D3D1C7] hover:bg-[#E6F1FB]"}`}
+                >
+                  <p className="text-sm font-semibold">{tipo.label}</p>
+                  <p className={`text-xs mt-0.5 ${isDark ? "text-[#888780]" : "text-[#888780]"}`}>{tipo.desc}</p>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* PASO 2: Formulario según tipo */}
+        {paso === 2 && (
+          <form onSubmit={handleEnviar} className="flex flex-col gap-1 mt-4">
+            <p className={`text-xs mb-3 ${isDark ? "text-[#B4B2A9]" : "text-[#5F5E5A]"}`}>
+              {tipoPerfil === "estudiante"
+                ? "Completa los datos para que tu colegio pueda identificarte y restablecer tu contraseña."
+                : tipoPerfil === "empresa"
+                ? "Completa los datos para que el SLEP pueda identificar tu cuenta y restablecer tu contraseña."
+                : "Completa los datos para que tu SLEP asignado pueda identificar tu cuenta y restablecer tu contraseña."}
+            </p>
+
+            {tipoPerfil === "estudiante" && (
+              <div className="mb-3">
+                <label className={labelClass}>RUT *</label>
+                <input className={inputClass} type="text" placeholder="12.345.678-9" value={rut} onChange={(e) => setRut(e.target.value)} />
+              </div>
+            )}
+
+            <div className="mb-3">
+              <label className={labelClass}>Correo de contacto *</label>
+              <input className={inputClass} type="email" placeholder="tucorreo@email.com" value={correoContacto} onChange={(e) => setCorreoContacto(e.target.value)} />
+            </div>
+
+            <div className="mb-3">
+              <label className={labelClass}>Teléfono de contacto *</label>
+              <input className={inputClass} type="tel" placeholder="+56 9 1234 5678" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
+            </div>
+
+            {tipoPerfil === "estudiante" && (
+              <div className="mb-3">
+                <label className={labelClass}>Mensaje adicional (opcional)</label>
+                <textarea
+                  className={`${inputClass} resize-none h-20`}
+                  placeholder="Escribe un mensaje para tu colegio si lo necesitas..."
+                  value={mensajeExtra}
+                  onChange={(e) => setMensajeExtra(e.target.value)}
+                />
+              </div>
+            )}
+
+            {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
+
+            <div className="flex gap-2 mt-1">
+              <button
+                type="button"
+                onClick={() => { setPaso(1); setError(""); }}
+                className={`flex-1 py-2.5 rounded-lg text-sm border transition-colors ${isDark ? "border-[#3a3a38] text-[#B4B2A9] hover:bg-[#313130]" : "border-[#D3D1C7] text-[#5F5E5A] hover:bg-[#F7F6F3]"}`}
+              >
+                Volver
+              </button>
+              <button
+                type="submit"
+                disabled={cargando}
+                className="flex-1 py-2.5 bg-[#0F4D8A] hover:bg-[#0A3A6A] disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                {cargando ? "Enviando..." : "Enviar solicitud"}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* PASO 3: Confirmación */}
+        {paso === 3 && (
+          <div className="flex flex-col items-center text-center mt-4 gap-4">
+            <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
+              <svg className="w-7 h-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p className="text-sm">
+              {tipoPerfil === "estudiante"
+                ? "Tu solicitud fue enviada a tu colegio. Ellos recibirán una notificación y se comunicarán contigo para restablecer tu contraseña."
+                : tipoPerfil === "empresa"
+                ? "Tu solicitud fue enviada al SLEP. Un administrador recibirá la notificación y se comunicará contigo."
+                : "Tu solicitud fue enviada a tu SLEP asignado. Ellos recibirán la notificación y se comunicarán contigo."}
+            </p>
+            <button
+              onClick={onClose}
+              className="py-2.5 px-6 bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              Entendido
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

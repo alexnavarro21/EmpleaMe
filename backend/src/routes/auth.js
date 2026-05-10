@@ -139,6 +139,107 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// POST /api/auth/solicitar-recuperacion — sin autenticación
+// tipo_perfil: "estudiante" | "empresa" | "colegio"
+// estudiante: rut, correo_contacto, telefono, mensaje (opcional)
+// empresa/colegio: correo, telefono
+router.post("/solicitar-recuperacion", async (req, res) => {
+  const { tipo_perfil, rut, correo_contacto, correo, telefono, mensaje } = req.body;
+
+  if (!["estudiante", "empresa", "colegio"].includes(tipo_perfil))
+    return res.status(400).json({ error: "tipo_perfil inválido" });
+
+  try {
+    if (tipo_perfil === "estudiante") {
+      if (!rut || !correo_contacto || !telefono)
+        return res.status(400).json({ error: "rut, correo_contacto y telefono son requeridos" });
+
+      // Buscar estudiante por RUT (en usuarios o en perfiles_estudiantes)
+      const [[estudiante]] = await db.query(
+        `SELECT u.id, pe.nombre, pe.apellido_paterno, pe.colegio_id
+         FROM usuarios u
+         JOIN perfiles_estudiantes pe ON pe.usuario_id = u.id
+         WHERE u.rut = ? OR pe.rut = ?`,
+        [rut.trim(), rut.trim()]
+      );
+      if (!estudiante)
+        return res.status(404).json({ error: "No se encontró un estudiante con ese RUT" });
+
+      if (!estudiante.colegio_id)
+        return res.status(400).json({ error: "El estudiante no tiene un colegio asignado. Comuníquese directamente con su institución." });
+
+      const contenido = `El estudiante ${estudiante.nombre} ${estudiante.apellido_paterno} (RUT: ${rut.trim()}) solicita recuperar su contraseña.\nCorreo de contacto: ${correo_contacto}\nTeléfono: ${telefono}${mensaje ? `\nMensaje: ${mensaje}` : ""}`;
+
+      await db.query(
+        "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido) VALUES (?, ?, ?, ?)",
+        [estudiante.colegio_id, "recuperacion_contrasena", "Solicitud de recuperación de contraseña", contenido]
+      );
+
+      return res.json({ mensaje: "Solicitud enviada. Tu colegio recibirá la notificación y se comunicará contigo." });
+    }
+
+    if (tipo_perfil === "empresa") {
+      if (!correo || !telefono)
+        return res.status(400).json({ error: "correo y telefono son requeridos" });
+
+      const [[empresa]] = await db.query(
+        `SELECT u.id, pe.nombre_empresa
+         FROM usuarios u
+         JOIN perfiles_empresas pe ON pe.usuario_id = u.id
+         WHERE u.correo = ?`,
+        [correo.trim().toLowerCase()]
+      );
+      if (!empresa)
+        return res.status(404).json({ error: "No se encontró una empresa con ese correo" });
+
+      // Enviar a cualquier cuenta SLEP
+      const [[slep]] = await db.query(
+        "SELECT id FROM usuarios WHERE rol = 'slep' LIMIT 1"
+      );
+      if (!slep)
+        return res.status(500).json({ error: "No hay administradores SLEP disponibles" });
+
+      const contenido = `La empresa "${empresa.nombre_empresa}" (correo: ${correo.trim()}) solicita recuperar su contraseña.\nTeléfono de contacto: ${telefono}`;
+
+      await db.query(
+        "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido) VALUES (?, ?, ?, ?)",
+        [slep.id, "recuperacion_contrasena", "Solicitud de recuperación de contraseña", contenido]
+      );
+
+      return res.json({ mensaje: "Solicitud enviada. Un administrador SLEP la revisará y se comunicará contigo." });
+    }
+
+    if (tipo_perfil === "colegio") {
+      if (!correo || !telefono)
+        return res.status(400).json({ error: "correo y telefono son requeridos" });
+
+      const [[colegio]] = await db.query(
+        `SELECT u.id, pc.nombre_institucion, pc.slep_id
+         FROM usuarios u
+         JOIN perfiles_colegios pc ON pc.usuario_id = u.id
+         WHERE u.correo = ?`,
+        [correo.trim().toLowerCase()]
+      );
+      if (!colegio)
+        return res.status(404).json({ error: "No se encontró un colegio con ese correo" });
+
+      if (!colegio.slep_id)
+        return res.status(400).json({ error: "El colegio no tiene un SLEP asignado. Comuníquese directamente con su organismo." });
+
+      const contenido = `El colegio "${colegio.nombre_institucion}" (correo: ${correo.trim()}) solicita recuperar su contraseña.\nTeléfono de contacto: ${telefono}`;
+
+      await db.query(
+        "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido) VALUES (?, ?, ?, ?)",
+        [colegio.slep_id, "recuperacion_contrasena", "Solicitud de recuperación de contraseña", contenido]
+      );
+
+      return res.json({ mensaje: "Solicitud enviada. Tu SLEP asignado recibirá la notificación y se comunicará contigo." });
+    }
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
 // PUT /api/auth/cambiar-contrasena — cualquier usuario autenticado
 router.put("/cambiar-contrasena", require("../middleware/auth").verificarToken, async (req, res) => {
   const { contrasena_actual, contrasena_nueva } = req.body;
