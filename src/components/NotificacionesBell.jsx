@@ -223,7 +223,8 @@ export default function NotificacionesBell({ role }) {
                         const correoM = (n.contenido || "").match(/\(correo:\s*([^)]+)\)/);
                         const buscar  = (rutM?.[1] || correoM?.[1] || "").trim();
                         const tabM    = link.match(/[?&]tab=([^&]+)/);
-                        navigate(link.split("?")[0], { state: { buscar, tab: tabM?.[1] } });
+                        sessionStorage.setItem("_buscarRecuperacion", JSON.stringify({ buscar, tab: tabM?.[1] || null }));
+                        navigate(link.split("?")[0]);
                       } else {
                         navigate(link);
                       }

@@ -212,7 +212,19 @@ export default function Notificaciones() {
             return (
               <div
                 key={n.id}
-                onClick={() => link && navigate(link)}
+                onClick={() => {
+                  if (!link) return;
+                  if (n.tipo === "recuperacion_contrasena") {
+                    const rutM    = (n.contenido || "").match(/\(RUT:\s*([^)]+)\)/);
+                    const correoM = (n.contenido || "").match(/\(correo:\s*([^)]+)\)/);
+                    const buscar  = (rutM?.[1] || correoM?.[1] || "").trim();
+                    const tabM    = link.match(/[?&]tab=([^&]+)/);
+                    sessionStorage.setItem("_buscarRecuperacion", JSON.stringify({ buscar, tab: tabM?.[1] || null }));
+                    navigate(link.split("?")[0]);
+                  } else {
+                    navigate(link);
+                  }
+                }}
                 className={`flex items-start gap-4 px-5 py-4 transition-colors ${
                   i < paginadas.length - 1 ? `border-b ${B}` : ""
                 } ${!n.leida ? (isDark ? "bg-[#0F4D8A]/10" : "bg-[#EFF6FF]") : (isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]")}

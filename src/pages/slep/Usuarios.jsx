@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useSearchParams, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PageHeader, Paginacion } from "../../components/ui";
@@ -19,48 +19,42 @@ const FORM_COL_VACIO = { nombre_institucion: "", correo: "", contrasena: "", reg
 export default function SlepUsuarios() {
   const { isDark } = useDark();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
-  const tabParam    = location.state?.tab    || searchParams.get("tab")    || "empresas";
-  const buscarParam = location.state?.buscar || searchParams.get("buscar") || "";
-  const [tab, setTab] = useState(tabParam === "colegios" ? "colegios" : "empresas");
 
-  // ── Empresas ──────────────────────────────────────────────
-  const [empresas, setEmpresas]       = useState([]);
-  const [loadingEmp, setLoadingEmp]   = useState(true);
-  const [searchEmp, setSearchEmp]     = useState(tabParam === "empresas" ? buscarParam : "");
-  const [paginaEmp, setPaginaEmp]     = useState(1);
-  const [porPaginaEmp, setPorPaginaEmp] = useState(12);
+  // ── Estado ───────────────────────────────────────────────
+  const [tab, setTab] = useState("empresas");
 
+  // Empresas
+  const [empresas, setEmpresas]             = useState([]);
+  const [loadingEmp, setLoadingEmp]         = useState(true);
+  const [searchEmp, setSearchEmp]           = useState("");
+  const [paginaEmp, setPaginaEmp]           = useState(1);
+  const [porPaginaEmp, setPorPaginaEmp]     = useState(12);
   const [showCrearEmp, setShowCrearEmp]     = useState(false);
   const [formCrearEmp, setFormCrearEmp]     = useState(FORM_EMP_VACIO);
   const [creandoEmp, setCreandoEmp]         = useState(false);
   const [errorCrearEmp, setErrorCrearEmp]   = useState("");
   const [exitoCrearEmp, setExitoCrearEmp]   = useState(false);
-
   const [showEditarEmp, setShowEditarEmp]   = useState(false);
   const [editEmpTarget, setEditEmpTarget]   = useState(null);
   const [formEditarEmp, setFormEditarEmp]   = useState({});
   const [editandoEmp, setEditandoEmp]       = useState(false);
   const [errorEditarEmp, setErrorEditarEmp] = useState("");
-
   const [showEliminarEmp, setShowEliminarEmp] = useState(false);
   const [elimEmpTarget, setElimEmpTarget]     = useState(null);
   const [eliminandoEmp, setEliminandoEmp]     = useState(false);
   const [errorEliminarEmp, setErrorEliminarEmp] = useState("");
 
-  // ── Colegios ─────────────────────────────────────────────
-  const [colegios, setColegios]       = useState([]);
-  const [loadingCol, setLoadingCol]   = useState(true);
-  const [searchCol, setSearchCol]     = useState(tabParam === "colegios"  ? buscarParam : "");
-  const [paginaCol, setPaginaCol]     = useState(1);
-  const [porPaginaCol, setPorPaginaCol] = useState(12);
-
+  // Colegios
+  const [colegios, setColegios]             = useState([]);
+  const [loadingCol, setLoadingCol]         = useState(true);
+  const [searchCol, setSearchCol]           = useState("");
+  const [paginaCol, setPaginaCol]           = useState(1);
+  const [porPaginaCol, setPorPaginaCol]     = useState(12);
   const [showCrearCol, setShowCrearCol]     = useState(false);
   const [formCrearCol, setFormCrearCol]     = useState(FORM_COL_VACIO);
   const [creandoCol, setCreandoCol]         = useState(false);
   const [errorCrearCol, setErrorCrearCol]   = useState("");
   const [exitoCrearCol, setExitoCrearCol]   = useState(false);
-
   const [showEditarCol, setShowEditarCol]   = useState(false);
   const [editColTarget, setEditColTarget]   = useState(null);
   const [formEditarCol, setFormEditarCol]   = useState({});
@@ -90,18 +84,16 @@ export default function SlepUsuarios() {
   useEffect(() => { cargarColegios().finally(() => setLoadingCol(false)); }, []);
 
   useEffect(() => {
-    const b = location.state?.buscar || searchParams.get("buscar") || "";
-    const t = location.state?.tab    || searchParams.get("tab")    || "empresas";
-    if (!b) return;
-    setTab(t === "colegios" ? "colegios" : "empresas");
-    if (t === "colegios") {
-      setSearchCol(b);
-      setPaginaCol(1);
-    } else {
-      setSearchEmp(b);
-      setPaginaEmp(1);
-    }
-  }, [location.state?.buscar, location.state?.tab, searchParams.get("buscar"), searchParams.get("tab")]);
+    const stored = sessionStorage.getItem("_buscarRecuperacion");
+    if (!stored) return;
+    const { buscar, tab: t } = JSON.parse(stored);
+    sessionStorage.removeItem("_buscarRecuperacion");
+    if (!buscar) return;
+    const destTab = t === "colegios" ? "colegios" : "empresas";
+    setTab(destTab);
+    if (destTab === "colegios") { setSearchCol(buscar); setPaginaCol(1); }
+    else { setSearchEmp(buscar); setPaginaEmp(1); }
+  }, [location.key]);
 
   // ── Filtrado empresas ────────────────────────────────────
   const filteredEmp = empresas.filter((e) =>

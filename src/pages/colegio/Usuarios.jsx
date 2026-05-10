@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import {
@@ -363,9 +363,7 @@ const PAGE_SIZE = 10;
 
 function TabUsuarios({ rawUsers, isDark, onEditarEstudiante }) {
   const location = useLocation();
-  const [searchParams] = useSearchParams();
-  const buscarParam = location.state?.buscar || searchParams.get("buscar") || "";
-  const [search, setSearch]               = useState(buscarParam);
+  const [search, setSearch]               = useState("");
   const [carreraFilter, setCarreraFilter] = useState("todas");
   const [nivelFilter, setNivelFilter]     = useState("todos");
   const [users, setUsers]                 = useState(rawUsers);
@@ -374,9 +372,12 @@ function TabUsuarios({ rawUsers, isDark, onEditarEstudiante }) {
   const [page, setPage]                   = useState(1);
 
   useEffect(() => {
-    setSearch(location.state?.buscar || searchParams.get("buscar") || "");
-    setPage(1);
-  }, [location.state?.buscar, searchParams.get("buscar")]);
+    const stored = sessionStorage.getItem("_buscarRecuperacion");
+    if (!stored) return;
+    const { buscar } = JSON.parse(stored);
+    sessionStorage.removeItem("_buscarRecuperacion");
+    if (buscar) { setSearch(buscar); setPage(1); }
+  }, [location.key]);
 
   const handleEliminado = (id) => setUsers((prev) => prev.filter((u) => u.id !== id));
 
