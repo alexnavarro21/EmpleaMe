@@ -139,6 +139,30 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// Helper: find-or-create conversación directa y enviar mensaje
+async function enviarMensajeDirecto(remitenteId, destinatarioId, contenidoMsg) {
+  const u1 = Math.min(remitenteId, destinatarioId);
+  const u2 = Math.max(remitenteId, destinatarioId);
+  const [existing] = await db.query(
+    "SELECT id FROM conversaciones_directas WHERE usuario1_id = ? AND usuario2_id = ?",
+    [u1, u2]
+  );
+  let convId;
+  if (existing.length > 0) {
+    convId = existing[0].id;
+  } else {
+    const [result] = await db.query(
+      "INSERT INTO conversaciones_directas (usuario1_id, usuario2_id) VALUES (?, ?)",
+      [u1, u2]
+    );
+    convId = result.insertId;
+  }
+  await db.query(
+    "INSERT INTO mensajes_directos (conversacion_id, remitente_id, contenido) VALUES (?, ?, ?)",
+    [convId, remitenteId, contenidoMsg]
+  );
+}
+
 // POST /api/auth/solicitar-recuperacion — sin autenticación
 // tipo_perfil: "estudiante" | "empresa" | "colegio"
 // estudiante: rut, correo_contacto, telefono, mensaje (opcional)
@@ -154,7 +178,6 @@ router.post("/solicitar-recuperacion", async (req, res) => {
       if (!rut || !correo_contacto || !telefono)
         return res.status(400).json({ error: "rut, correo_contacto y telefono son requeridos" });
 
-      // Buscar estudiante por RUT (en usuarios o en perfiles_estudiantes)
       const [[estudiante]] = await db.query(
         `SELECT u.id, pe.nombre, pe.apellido_paterno, pe.colegio_id
          FROM usuarios u
@@ -171,8 +194,16 @@ router.post("/solicitar-recuperacion", async (req, res) => {
       const contenido = `El estudiante ${estudiante.nombre} ${estudiante.apellido_paterno} (RUT: ${rut.trim()}) solicita recuperar su contraseña.\nCorreo de contacto: ${correo_contacto}\nTeléfono: ${telefono}${mensaje ? `\nMensaje: ${mensaje}` : ""}`;
 
       await db.query(
-        "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido) VALUES (?, ?, ?, ?)",
-        [estudiante.colegio_id, "recuperacion_contrasena", "Solicitud de recuperación de contraseña", contenido]
+        "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido, referencia_id) VALUES (?, ?, ?, ?, ?)",
+        [estudiante.colegio_id, "recuperacion_contrasena", "Solicitud de recuperación de contraseña", contenido, estudiante.id]
+      );
+
+      const msgContenido = `Solicitud de recuperación de contraseña\n\nRUT: ${rut.trim()}\nCorreo de contacto: ${correo_contacto}\nTeléfono: ${telefono}${mensaje ? `\n\nMensaje: ${mensaje}` : ""}`;
+      await enviarMensajeDirecto(estudiante.id, estudiante.colegio_id, msgContenido);
+
+      await db.query(
+        "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido) VALUES (?, 'mensaje', ?, ?)",
+        [estudiante.colegio_id, `Nuevo mensaje de ${estudiante.nombre} ${estudiante.apellido_paterno}`, msgContenido.substring(0, 150)]
       );
 
       return res.json({ mensaje: "Solicitud enviada. Tu colegio recibirá la notificación y se comunicará contigo." });
@@ -192,7 +223,6 @@ router.post("/solicitar-recuperacion", async (req, res) => {
       if (!empresa)
         return res.status(404).json({ error: "No se encontró una empresa con ese correo" });
 
-      // Enviar a cualquier cuenta SLEP
       const [[slep]] = await db.query(
         "SELECT id FROM usuarios WHERE rol = 'slep' LIMIT 1"
       );
@@ -202,8 +232,16 @@ router.post("/solicitar-recuperacion", async (req, res) => {
       const contenido = `La empresa "${empresa.nombre_empresa}" (correo: ${correo.trim()}) solicita recuperar su contraseña.\nTeléfono de contacto: ${telefono}`;
 
       await db.query(
-        "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido) VALUES (?, ?, ?, ?)",
-        [slep.id, "recuperacion_contrasena", "Solicitud de recuperación de contraseña", contenido]
+        "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido, referencia_id) VALUES (?, ?, ?, ?, ?)",
+        [slep.id, "recuperacion_contrasena", "Solicitud de recuperación de contraseña", contenido, empresa.id]
+      );
+
+      const msgContenido = `Solicitud de recuperación de contraseña\n\nEmpresa: ${empresa.nombre_empresa}\nCorreo: ${correo.trim()}\nTeléfono: ${telefono}`;
+      await enviarMensajeDirecto(empresa.id, slep.id, msgContenido);
+
+      await db.query(
+        "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido) VALUES (?, 'mensaje', ?, ?)",
+        [slep.id, `Nuevo mensaje de ${empresa.nombre_empresa}`, msgContenido.substring(0, 150)]
       );
 
       return res.json({ mensaje: "Solicitud enviada. Un administrador SLEP la revisará y se comunicará contigo." });
@@ -229,8 +267,16 @@ router.post("/solicitar-recuperacion", async (req, res) => {
       const contenido = `El colegio "${colegio.nombre_institucion}" (correo: ${correo.trim()}) solicita recuperar su contraseña.\nTeléfono de contacto: ${telefono}`;
 
       await db.query(
-        "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido) VALUES (?, ?, ?, ?)",
-        [colegio.slep_id, "recuperacion_contrasena", "Solicitud de recuperación de contraseña", contenido]
+        "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido, referencia_id) VALUES (?, ?, ?, ?, ?)",
+        [colegio.slep_id, "recuperacion_contrasena", "Solicitud de recuperación de contraseña", contenido, colegio.id]
+      );
+
+      const msgContenido = `Solicitud de recuperación de contraseña\n\nColegio: ${colegio.nombre_institucion}\nCorreo: ${correo.trim()}\nTeléfono: ${telefono}`;
+      await enviarMensajeDirecto(colegio.id, colegio.slep_id, msgContenido);
+
+      await db.query(
+        "INSERT INTO notificaciones (usuario_id, tipo, titulo, contenido) VALUES (?, 'mensaje', ?, ?)",
+        [colegio.slep_id, `Nuevo mensaje de ${colegio.nombre_institucion}`, msgContenido.substring(0, 150)]
       );
 
       return res.json({ mensaje: "Solicitud enviada. Tu SLEP asignado recibirá la notificación y se comunicará contigo." });

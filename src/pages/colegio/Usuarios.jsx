@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import {
@@ -361,8 +361,8 @@ function AccionesDropdown({ userId, isDark, onEliminado, onEditarEstudiante }) {
 }
 const PAGE_SIZE = 10;
 
-function TabUsuarios({ rawUsers, isDark, onEditarEstudiante }) {
-  const [search, setSearch]               = useState("");
+function TabUsuarios({ rawUsers, isDark, onEditarEstudiante, initialSearch = "" }) {
+  const [search, setSearch]               = useState(initialSearch);
   const [carreraFilter, setCarreraFilter] = useState("todas");
   const [nivelFilter, setNivelFilter]     = useState("todos");
   const [users, setUsers]                 = useState(rawUsers);
@@ -1991,6 +1991,7 @@ const TABS = [
 export default function GestionEstudiantes() {
   const { isDark } = useDark();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [tab, setTab] = useState(location.state?.tab || "usuarios");
   const [editarId, setEditarId]         = useState(null);
   const [rawUsers, setRawUsers]         = useState([]);
@@ -2053,7 +2054,7 @@ export default function GestionEstudiantes() {
         </div>
       ) : (
         <>
-          {tab === "usuarios"          && <TabUsuarios        rawUsers={rawUsers} isDark={isDark} onEditarEstudiante={handleEditarEstudiante} />}
+          {tab === "usuarios"          && <TabUsuarios        rawUsers={rawUsers} isDark={isDark} onEditarEstudiante={handleEditarEstudiante} initialSearch={searchParams.get("buscar") || ""} />}
           {tab === "editar_estudiante" && <TabEditarEstudiante estudiantes={estudiantes} habilidades={habilidades} isDark={isDark} initialId={editarId} />}
           {tab === "evaluacion"        && <TabEvaluacion      estudiantes={estudiantes} habilidades={habilidades} isDark={isDark} />}
           {tab === "tests"             && <TabTests  isDark={isDark} />}

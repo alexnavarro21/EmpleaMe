@@ -12,7 +12,18 @@ function getRoleFromPath(pathname) {
   return "estudiante";
 }
 
-function getNotifLink(tipo, role, referenciaId) {
+function getNotifLink(tipo, role, referenciaId, contenido = "") {
+  if (tipo === "recuperacion_contrasena") {
+    if (role === "admin") {
+      const m = contenido.match(/\(RUT:\s*([^)]+)\)/);
+      return `/admin/usuarios?buscar=${encodeURIComponent(m ? m[1].trim() : "")}`;
+    }
+    if (role === "slep") {
+      const m = contenido.match(/\(correo:\s*([^)]+)\)/);
+      const tab = contenido.startsWith("La empresa") ? "empresas" : "colegios";
+      return `/slep/usuarios?tab=${tab}&buscar=${encodeURIComponent(m ? m[1].trim() : "")}`;
+    }
+  }
   // Notificación de seguidor: navegar al perfil del usuario que te siguió
   if (tipo === "seguidor" && referenciaId) {
     const prefix = role === "empresa" ? "empresa" : role === "admin" ? "admin" : role === "slep" ? "slep" : "estudiante";
@@ -197,7 +208,7 @@ export default function Notificaciones() {
             const cfg  = TIPO_CFG[n.tipo] || { icon: "mdi:bell-outline", color: "text-blue-500", colorDark: "text-blue-400", bg: "bg-blue-100", bgDark: "bg-blue-500/15", label: n.tipo };
             const cfgBg    = isDark ? cfg.bgDark    : cfg.bg;
             const cfgColor = isDark ? cfg.colorDark : cfg.color;
-            const link = getNotifLink(n.tipo, role, n.referencia_id);
+            const link = getNotifLink(n.tipo, role, n.referencia_id, n.contenido || "");
             return (
               <div
                 key={n.id}

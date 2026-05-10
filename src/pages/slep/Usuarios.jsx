@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PageHeader, Paginacion } from "../../components/ui";
@@ -18,12 +18,16 @@ const FORM_COL_VACIO = { nombre_institucion: "", correo: "", contrasena: "", reg
 
 export default function SlepUsuarios() {
   const { isDark } = useDark();
-  const [tab, setTab] = useState("empresas");
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState(() => {
+    const t = searchParams.get("tab");
+    return t === "colegios" ? "colegios" : "empresas";
+  });
 
   // ── Empresas ──────────────────────────────────────────────
   const [empresas, setEmpresas]       = useState([]);
   const [loadingEmp, setLoadingEmp]   = useState(true);
-  const [searchEmp, setSearchEmp]     = useState("");
+  const [searchEmp, setSearchEmp]     = useState(() => tab === "empresas" ? (searchParams.get("buscar") || "") : "");
   const [paginaEmp, setPaginaEmp]     = useState(1);
   const [porPaginaEmp, setPorPaginaEmp] = useState(12);
 
@@ -47,7 +51,7 @@ export default function SlepUsuarios() {
   // ── Colegios ─────────────────────────────────────────────
   const [colegios, setColegios]       = useState([]);
   const [loadingCol, setLoadingCol]   = useState(true);
-  const [searchCol, setSearchCol]     = useState("");
+  const [searchCol, setSearchCol]     = useState(() => tab === "colegios" ? (searchParams.get("buscar") || "") : "");
   const [paginaCol, setPaginaCol]     = useState(1);
   const [porPaginaCol, setPorPaginaCol] = useState(12);
 
