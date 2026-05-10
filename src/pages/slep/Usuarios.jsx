@@ -19,15 +19,14 @@ const FORM_COL_VACIO = { nombre_institucion: "", correo: "", contrasena: "", reg
 export default function SlepUsuarios() {
   const { isDark } = useDark();
   const [searchParams] = useSearchParams();
-  const [tab, setTab] = useState(() => {
-    const t = searchParams.get("tab");
-    return t === "colegios" ? "colegios" : "empresas";
-  });
+  const tabParam    = searchParams.get("tab")    || "empresas";
+  const buscarParam = searchParams.get("buscar") || "";
+  const [tab, setTab] = useState(tabParam === "colegios" ? "colegios" : "empresas");
 
   // ── Empresas ──────────────────────────────────────────────
   const [empresas, setEmpresas]       = useState([]);
   const [loadingEmp, setLoadingEmp]   = useState(true);
-  const [searchEmp, setSearchEmp]     = useState(() => tab === "empresas" ? (searchParams.get("buscar") || "") : "");
+  const [searchEmp, setSearchEmp]     = useState(tabParam === "empresas" ? buscarParam : "");
   const [paginaEmp, setPaginaEmp]     = useState(1);
   const [porPaginaEmp, setPorPaginaEmp] = useState(12);
 
@@ -51,7 +50,7 @@ export default function SlepUsuarios() {
   // ── Colegios ─────────────────────────────────────────────
   const [colegios, setColegios]       = useState([]);
   const [loadingCol, setLoadingCol]   = useState(true);
-  const [searchCol, setSearchCol]     = useState(() => tab === "colegios" ? (searchParams.get("buscar") || "") : "");
+  const [searchCol, setSearchCol]     = useState(tabParam === "colegios" ? buscarParam : "");
   const [paginaCol, setPaginaCol]     = useState(1);
   const [porPaginaCol, setPorPaginaCol] = useState(12);
 
@@ -88,6 +87,18 @@ export default function SlepUsuarios() {
 
   useEffect(() => { cargarEmpresas().finally(() => setLoadingEmp(false)); }, []);
   useEffect(() => { cargarColegios().finally(() => setLoadingCol(false)); }, []);
+
+  useEffect(() => {
+    if (!buscarParam) return;
+    setTab(tabParam === "colegios" ? "colegios" : "empresas");
+    if (tabParam === "colegios") {
+      setSearchCol(buscarParam);
+      setPaginaCol(1);
+    } else {
+      setSearchEmp(buscarParam);
+      setPaginaEmp(1);
+    }
+  }, [buscarParam, tabParam]);
 
   // ── Filtrado empresas ────────────────────────────────────
   const filteredEmp = empresas.filter((e) =>

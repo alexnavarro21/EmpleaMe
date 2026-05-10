@@ -361,14 +361,21 @@ function AccionesDropdown({ userId, isDark, onEliminado, onEditarEstudiante }) {
 }
 const PAGE_SIZE = 10;
 
-function TabUsuarios({ rawUsers, isDark, onEditarEstudiante, initialSearch = "" }) {
-  const [search, setSearch]               = useState(initialSearch);
+function TabUsuarios({ rawUsers, isDark, onEditarEstudiante }) {
+  const [searchParams] = useSearchParams();
+  const buscarParam = searchParams.get("buscar") || "";
+  const [search, setSearch]               = useState(buscarParam);
   const [carreraFilter, setCarreraFilter] = useState("todas");
   const [nivelFilter, setNivelFilter]     = useState("todos");
   const [users, setUsers]                 = useState(rawUsers);
   const [sortCol, setSortCol]             = useState(null);
   const [sortDir, setSortDir]             = useState("asc");
   const [page, setPage]                   = useState(1);
+
+  useEffect(() => {
+    setSearch(buscarParam);
+    setPage(1);
+  }, [buscarParam]);
 
   const handleEliminado = (id) => setUsers((prev) => prev.filter((u) => u.id !== id));
 
@@ -1991,7 +1998,6 @@ const TABS = [
 export default function GestionEstudiantes() {
   const { isDark } = useDark();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
   const [tab, setTab] = useState(location.state?.tab || "usuarios");
   const [editarId, setEditarId]         = useState(null);
   const [rawUsers, setRawUsers]         = useState([]);
@@ -2054,7 +2060,7 @@ export default function GestionEstudiantes() {
         </div>
       ) : (
         <>
-          {tab === "usuarios"          && <TabUsuarios        rawUsers={rawUsers} isDark={isDark} onEditarEstudiante={handleEditarEstudiante} initialSearch={searchParams.get("buscar") || ""} />}
+          {tab === "usuarios"          && <TabUsuarios        rawUsers={rawUsers} isDark={isDark} onEditarEstudiante={handleEditarEstudiante} />}
           {tab === "editar_estudiante" && <TabEditarEstudiante estudiantes={estudiantes} habilidades={habilidades} isDark={isDark} initialId={editarId} />}
           {tab === "evaluacion"        && <TabEvaluacion      estudiantes={estudiantes} habilidades={habilidades} isDark={isDark} />}
           {tab === "tests"             && <TabTests  isDark={isDark} />}
