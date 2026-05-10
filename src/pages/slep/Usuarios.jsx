@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, Badge, PageHeader, Paginacion } from "../../components/ui";
@@ -18,9 +18,10 @@ const FORM_COL_VACIO = { nombre_institucion: "", correo: "", contrasena: "", reg
 
 export default function SlepUsuarios() {
   const { isDark } = useDark();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
-  const tabParam    = searchParams.get("tab")    || "empresas";
-  const buscarParam = searchParams.get("buscar") || "";
+  const tabParam    = location.state?.tab    || searchParams.get("tab")    || "empresas";
+  const buscarParam = location.state?.buscar || searchParams.get("buscar") || "";
   const [tab, setTab] = useState(tabParam === "colegios" ? "colegios" : "empresas");
 
   // ── Empresas ──────────────────────────────────────────────
@@ -50,7 +51,7 @@ export default function SlepUsuarios() {
   // ── Colegios ─────────────────────────────────────────────
   const [colegios, setColegios]       = useState([]);
   const [loadingCol, setLoadingCol]   = useState(true);
-  const [searchCol, setSearchCol]     = useState(tabParam === "colegios" ? buscarParam : "");
+  const [searchCol, setSearchCol]     = useState(tabParam === "colegios"  ? buscarParam : "");
   const [paginaCol, setPaginaCol]     = useState(1);
   const [porPaginaCol, setPorPaginaCol] = useState(12);
 
@@ -89,16 +90,18 @@ export default function SlepUsuarios() {
   useEffect(() => { cargarColegios().finally(() => setLoadingCol(false)); }, []);
 
   useEffect(() => {
-    if (!buscarParam) return;
-    setTab(tabParam === "colegios" ? "colegios" : "empresas");
-    if (tabParam === "colegios") {
-      setSearchCol(buscarParam);
+    const b = location.state?.buscar || searchParams.get("buscar") || "";
+    const t = location.state?.tab    || searchParams.get("tab")    || "empresas";
+    if (!b) return;
+    setTab(t === "colegios" ? "colegios" : "empresas");
+    if (t === "colegios") {
+      setSearchCol(b);
       setPaginaCol(1);
     } else {
-      setSearchEmp(buscarParam);
+      setSearchEmp(b);
       setPaginaEmp(1);
     }
-  }, [buscarParam, tabParam]);
+  }, [location.state?.buscar, location.state?.tab, searchParams.get("buscar"), searchParams.get("tab")]);
 
   // ── Filtrado empresas ────────────────────────────────────
   const filteredEmp = empresas.filter((e) =>

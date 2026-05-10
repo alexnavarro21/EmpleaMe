@@ -215,7 +215,19 @@ export default function NotificacionesBell({ role }) {
                 return (
                   <div
                     key={n.id}
-                    onClick={() => { if (link) { setOpen(false); navigate(link); } }}
+                    onClick={() => {
+                      if (!link) return;
+                      setOpen(false);
+                      if (n.tipo === "recuperacion_contrasena") {
+                        const rutM    = (n.contenido || "").match(/\(RUT:\s*([^)]+)\)/);
+                        const correoM = (n.contenido || "").match(/\(correo:\s*([^)]+)\)/);
+                        const buscar  = (rutM?.[1] || correoM?.[1] || "").trim();
+                        const tabM    = link.match(/[?&]tab=([^&]+)/);
+                        navigate(link.split("?")[0], { state: { buscar, tab: tabM?.[1] } });
+                      } else {
+                        navigate(link);
+                      }
+                    }}
                     className={`flex items-start gap-3 px-4 py-3 border-b ${B} last:border-0 transition-colors
                       ${!n.leida ? (isDark ? "bg-[#0F4D8A]/10" : "bg-[#EFF6FF]") : ""}
                       ${link ? (isDark ? "hover:bg-[#0F4D8A]/20 cursor-pointer" : "hover:bg-[#DBEAFE] cursor-pointer") : ""}`}

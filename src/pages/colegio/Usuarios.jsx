@@ -362,8 +362,9 @@ function AccionesDropdown({ userId, isDark, onEliminado, onEditarEstudiante }) {
 const PAGE_SIZE = 10;
 
 function TabUsuarios({ rawUsers, isDark, onEditarEstudiante }) {
+  const location = useLocation();
   const [searchParams] = useSearchParams();
-  const buscarParam = searchParams.get("buscar") || "";
+  const buscarParam = location.state?.buscar || searchParams.get("buscar") || "";
   const [search, setSearch]               = useState(buscarParam);
   const [carreraFilter, setCarreraFilter] = useState("todas");
   const [nivelFilter, setNivelFilter]     = useState("todos");
@@ -373,9 +374,9 @@ function TabUsuarios({ rawUsers, isDark, onEditarEstudiante }) {
   const [page, setPage]                   = useState(1);
 
   useEffect(() => {
-    setSearch(buscarParam);
+    setSearch(location.state?.buscar || searchParams.get("buscar") || "");
     setPage(1);
-  }, [buscarParam]);
+  }, [location.state?.buscar, searchParams.get("buscar")]);
 
   const handleEliminado = (id) => setUsers((prev) => prev.filter((u) => u.id !== id));
 
