@@ -24,7 +24,7 @@ Plataforma web que conecta estudiantes técnicos con empresas que ofrecen práct
 
 ### Infraestructura
 - **Railway** — backend, base de datos MySQL y almacenamiento de archivos (bucket S3-compatible)
-- **Vercel** — despliegue del frontend
+- **Netlify** — despliegue del frontend
 
 ---
 
@@ -285,7 +285,7 @@ La aplicación estará disponible en `http://localhost:5173`.
 
 ## Despliegue
 
-- **Frontend:** desplegado en [Vercel](https://vercel.com). Configurado con `vercel.json` en la raíz.
+- **Frontend:** desplegado en [Netlify](https://netlify.com), (https://empleame.netlify.app/).
 - **Backend:** desplegado en [Railway](https://railway.app). Root directory: `/backend`.
 - **Base de datos:** MySQL en Railway.
 - **Almacenamiento de archivos:** Railway Bucket (API S3-compatible). Los archivos se sirven a través de `/api/media/uploads/:filename`.
