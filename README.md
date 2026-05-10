@@ -1,27 +1,41 @@
 # EmpleaMe
 
-Plataforma web que conecta estudiantes técnicos con empresas que ofrecen prácticas laborales. Permite a los estudiantes explorar y postular a vacantes, y a las empresas publicar oportunidades y gestionar candidatos.
+Plataforma web que conecta estudiantes técnicos con empresas que ofrecen prácticas laborales. Gestiona el proceso completo: desde el registro de estudiantes y empresas, publicación y postulación a vacantes, hasta el seguimiento y gestión por parte de colegios técnicos y el SLEP (Servicio Local de Educación Pública).
 
 ---
 
 ## Tecnologías
 
 ### Frontend
-- **React 19** + **Vite 8**
+- **React 19** + **Vite**
 - **Tailwind CSS v4**
 - **React Router DOM v7**
 - **Framer Motion** — animaciones
 - **Iconify** — íconos
+- **html2canvas + jsPDF** — generación de CV en PDF
 
 ### Backend
 - **Node.js** + **Express 4**
 - **MySQL 2** — base de datos relacional
 - **JWT (jsonwebtoken)** — autenticación por tokens
 - **bcrypt** — hash de contraseñas
-- **dotenv** — variables de entorno
+- **multer + sharp + ffmpeg** — subida y compresión de archivos multimedia
+- **Google Gemini AI** — moderación de contenido y análisis de compatibilidad
 
 ### Infraestructura
-- **Railway** — backend y base de datos MySQL desplegados en la nube
+- **Railway** — backend, base de datos MySQL y almacenamiento de archivos (bucket S3-compatible)
+- **Vercel** — despliegue del frontend
+
+---
+
+## Roles
+
+| Rol | Descripción |
+|-----|-------------|
+| `estudiante` | Crea perfil, postula a vacantes, sube documentos, usa mensajería |
+| `empresa` | Publica vacantes, gestiona postulaciones, busca candidatos |
+| `colegio` | Administra estudiantes de su establecimiento, talleres, evaluaciones y estadísticas |
+| `slep` | Supervisa colegios y empresas de la región, visualiza reportes y estadísticas regionales |
 
 ---
 
@@ -29,55 +43,89 @@ Plataforma web que conecta estudiantes técnicos con empresas que ofrecen práct
 
 ```
 empleame/
-├── src/                        # Frontend (React)
+├── src/                            # Frontend (React)
 │   ├── pages/
-│   │   ├── Login.jsx           # Autenticación
-│   │   ├── estudiante/         # Vistas del rol estudiante
-│   │   │   ├── Dashboard.jsx
-│   │   │   ├── Perfil.jsx
-│   │   │   ├── Evidencias.jsx
+│   │   ├── auth/
+│   │   │   └── Login.jsx           # Autenticación (login y registro)
+│   │   ├── estudiante/
+│   │   │   ├── Perfil.jsx          # Perfil editable, generación de CV PDF
+│   │   │   ├── MisPostulaciones.jsx
 │   │   │   └── EstudianteMensajeria.jsx
-│   │   ├── empresa/            # Vistas del rol empresa
-│   │   │   ├── Dashboard.jsx
+│   │   ├── empresa/
+│   │   │   ├── Dashboard.jsx       # Panel con vacantes publicadas
+│   │   │   ├── Perfil.jsx
 │   │   │   ├── PublicarVacante.jsx
 │   │   │   ├── BuscadorEstudiantes.jsx
-│   │   │   ├── PerfilCandidato.jsx
 │   │   │   └── EmpresaMensajeria.jsx
-│   │   └── admin/              # Vistas del rol admin/docente
-│   │       ├── Panel.jsx
-│   │       ├── Usuarios.jsx
-│   │       ├── Monitoreo.jsx
-│   │       ├── Evaluaciones.jsx
-│   │       ├── ImportarNotas.jsx
-│   │       ├── Tests.jsx
-│   │       └── Mensajeria.jsx
-│   └── services/
-│       └── api.js              # Cliente HTTP hacia el backend
-├── backend/                    # Backend (Express)
-│   ├── index.js                # Punto de entrada, configuración Express
+│   │   ├── colegio/
+│   │   │   ├── Panel.jsx           # KPIs, habilidades, muro del colegio
+│   │   │   ├── Perfil.jsx
+│   │   │   ├── Usuarios.jsx        # Gestión de estudiantes y empresas
+│   │   │   ├── Talleres.jsx
+│   │   │   ├── Reportes.jsx
+│   │   │   └── Mensajeria.jsx
+│   │   ├── slep/
+│   │   │   ├── Panel.jsx           # Panel regional SLEP
+│   │   │   ├── Perfil.jsx
+│   │   │   ├── Usuarios.jsx
+│   │   │   ├── Colegios.jsx
+│   │   │   ├── Empresas.jsx
+│   │   │   ├── Reportes.jsx
+│   │   │   └── Mensajeria.jsx
+│   │   ├── shared/
+│   │   │   ├── Muro.jsx            # Feed de publicaciones (todos los roles)
+│   │   │   ├── BuscarPerfiles.jsx
+│   │   │   ├── PerfilCandidato.jsx
+│   │   │   ├── Notificaciones.jsx
+│   │   │   └── Seguidores.jsx
+│   │   └── public/
+│   │       ├── PerfilEmpresaPublico.jsx
+│   │       └── PerfilColegioPublico.jsx
+│   ├── components/                 # Componentes reutilizables (Layout, modales, UI)
+│   ├── context/
+│   │   └── DarkModeContext.jsx     # Tema claro / oscuro / alto contraste
+│   ├── services/
+│   │   └── api.js                  # Cliente HTTP con JWT hacia el backend
+│   ├── utils/
+│   │   ├── generarCV.js            # Generación de CV en PDF
+│   │   ├── perfilCompletitud.js    # Cálculo % completitud del perfil
+│   │   └── validarRut.js           # Validación y formato de RUT chileno
+│   └── data/
+│       └── regionesComunas.js      # Regiones y comunas de Chile
+├── backend/
+│   ├── index.js                    # Entrada Express, registro de routers
+│   ├── scripts/
+│   │   └── set-bucket-public.js    # Script de configuración del bucket
 │   └── src/
-│       ├── db.js               # Pool de conexiones MySQL
+│       ├── db.js                   # Pool de conexiones MySQL
 │       ├── middleware/
-│       │   └── auth.js         # Middleware JWT
+│       │   ├── auth.js             # Verificación JWT y control de roles
+│       │   ├── multerConfig.js     # Subida directa al bucket Railway
+│       │   └── compressAndUpload.js # Compresión de imagen/video antes de subir
 │       └── routes/
-│           ├── auth.js         # POST /api/auth/login, /register
-│           ├── usuarios.js     # CRUD usuarios
-│           ├── perfiles.js     # Perfiles estudiante/empresa
-│           ├── habilidades.js  # Habilidades de estudiantes
-│           └── vacantes.js     # Publicación y consulta de vacantes
+│           ├── auth.js             # POST /register, /login
+│           ├── usuarios.js         # CRUD usuarios
+│           ├── perfiles.js         # Perfiles estudiante y empresa
+│           ├── habilidades.js      # Catálogo de habilidades
+│           ├── vacantes.js         # Publicación y consulta de vacantes
+│           ├── postulaciones.js    # Postulaciones y cambios de estado
+│           ├── publicaciones.js    # Feed de publicaciones con multimedia
+│           ├── comentarios.js      # Comentarios en publicaciones
+│           ├── conversaciones.js   # Chat empresa ↔ estudiante
+│           ├── mensajes_directos.js # Chat estudiante ↔ estudiante
+│           ├── notificaciones.js   # Notificaciones en tiempo real
+│           ├── talleres.js         # CRUD talleres e inscripciones
+│           ├── admin.js            # Rutas exclusivas del colegio/admin
+│           ├── slep.js             # Rutas exclusivas del SLEP
+│           ├── ia.js               # Moderación IA y ranking de candidatos
+│           ├── seguidores.js       # Sistema de seguimiento entre usuarios
+│           ├── buscar.js           # Búsqueda de perfiles
+│           ├── reportes.js         # Reportes y estadísticas
+│           ├── notas_admin.js      # Notas privadas del admin por conversación
+│           └── media.js            # Proxy de archivos desde el bucket
 └── sql/
-    └── 01_creacion_db_tablas.sql  # Script de creación de tablas
+    └── 01_creacion_db_tablas.sql   # Script de creación de tablas
 ```
-
----
-
-## Roles
-
-| Rol | Acceso |
-|-----|--------|
-| `estudiante` | Dashboard, perfil, evidencias, mensajería, postulaciones |
-| `empresa` | Dashboard, publicar vacantes, buscar estudiantes, mensajería |
-| `centro` (admin) | Panel de control, usuarios, monitoreo, evaluaciones, notas |
 
 ---
 
@@ -85,7 +133,7 @@ empleame/
 
 ### Requisitos
 - Node.js 18+
-- Una base de datos MySQL accesible (local o en la nube)
+- MySQL accesible (local o en Railway)
 
 ### 1. Clonar el repositorio
 
@@ -98,20 +146,33 @@ cd EmpleaMe
 
 ```bash
 cd backend
-cp .env.example .env   # o crea el .env manualmente
 npm install
 ```
 
-Contenido del `backend/.env`:
+Crear `backend/.env`:
 
 ```env
+# Base de datos
 DB_HOST=tu_host_mysql
 DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=tu_contraseña
 DB_NAME=railway
+
+# Autenticación
 JWT_SECRET=una_clave_secreta_larga
 PORT=3001
+
+# Almacenamiento (Railway Bucket, S3-compatible)
+S3_ENDPOINT=https://tu-bucket-endpoint.railway.app
+S3_REGION=auto
+S3_ACCESS_KEY_ID=tu_access_key
+S3_SECRET_ACCESS_KEY=tu_secret_key
+S3_BUCKET_NAME=nombre_del_bucket
+S3_PUBLIC_URL=https://url-publica-del-bucket
+
+# IA
+GEMINI_API_KEY=tu_clave_gemini
 ```
 
 Inicializar la base de datos:
@@ -131,7 +192,7 @@ npm start      # producción
 ### 3. Configurar el frontend
 
 ```bash
-cd ..          # volver a la raíz
+cd ..
 npm install
 ```
 
@@ -164,51 +225,73 @@ La aplicación estará disponible en `http://localhost:5173`.
 | `DB_NAME` | Nombre de la base de datos |
 | `JWT_SECRET` | Clave secreta para firmar tokens JWT |
 | `PORT` | Puerto del servidor Express (por defecto `3001`) |
+| `S3_ENDPOINT` | Endpoint del bucket Railway (S3-compatible) |
+| `S3_REGION` | Región del bucket (generalmente `auto`) |
+| `S3_ACCESS_KEY_ID` | Access key del bucket |
+| `S3_SECRET_ACCESS_KEY` | Secret key del bucket |
+| `S3_BUCKET_NAME` | Nombre del bucket |
+| `S3_PUBLIC_URL` | URL pública base para acceder a los archivos |
+| `GEMINI_API_KEY` | Clave de Google Gemini AI |
 
 ### Frontend (`.env` en la raíz)
 
 | Variable | Descripción |
 |----------|-------------|
-| `VITE_API_URL` | URL base del backend (ej. `https://empleame.up.railway.app/api`) |
+| `VITE_API_URL` | URL base del backend (ej. `https://tu-backend.railway.app/api`) |
 
 ---
 
 ## API — Endpoints principales
 
 ### Autenticación
-
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| POST | `/api/auth/login` | Iniciar sesión, retorna JWT |
 | POST | `/api/auth/register` | Registrar nuevo usuario |
+| POST | `/api/auth/login` | Iniciar sesión, retorna JWT |
 
-### Usuarios y perfiles
-
+### Perfiles y usuarios
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| GET | `/api/usuarios` | Listar usuarios |
-| GET | `/api/perfiles` | Obtener perfiles |
-| GET | `/api/habilidades` | Habilidades de estudiantes |
+| GET | `/api/perfiles/estudiante/:id` | Perfil de estudiante |
+| GET | `/api/perfiles/empresa/:id` | Perfil de empresa |
+| GET | `/api/usuarios` | Listar usuarios (admin) |
+| GET | `/api/buscar` | Búsqueda de perfiles por nombre/carrera |
 
-### Vacantes
-
+### Vacantes y postulaciones
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| GET | `/api/vacantes` | Listar vacantes publicadas |
-| POST | `/api/vacantes` | Publicar nueva vacante |
+| GET | `/api/vacantes` | Listar vacantes |
+| POST | `/api/vacantes` | Publicar vacante (empresa) |
+| POST | `/api/postulaciones` | Postularse a una vacante |
+| PUT | `/api/postulaciones/:id/estado` | Cambiar estado de postulación |
+
+### Feed y comunicación
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/publicaciones` | Listar publicaciones del feed |
+| POST | `/api/publicaciones` | Crear publicación con multimedia |
+| GET | `/api/conversaciones` | Listar conversaciones (empresa↔estudiante) |
+| GET | `/api/mensajes-directos` | Mensajes directos (estudiante↔estudiante) |
+| GET | `/api/notificaciones` | Notificaciones del usuario |
+
+### IA
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/ia/resumen/:estudianteId/:vacanteId` | Resumen de compatibilidad candidato–vacante |
+| GET | `/api/ia/ranking/:vacanteId` | Ranking IA de postulantes a una vacante |
+| POST | `/api/ia/moderar` | Moderación de contenido antes de publicar |
 
 ---
 
-## Despliegue en Railway
+## Despliegue
 
-El backend y la base de datos MySQL están desplegados en [Railway](https://railway.app).
-
-- **Servicio backend:** `empleame.up.railway.app`  
-- **Root Directory:** `/backend`  
-- Las variables de entorno se configuran en Railway → Variables
+- **Frontend:** desplegado en [Vercel](https://vercel.com). Configurado con `vercel.json` en la raíz.
+- **Backend:** desplegado en [Railway](https://railway.app). Root directory: `/backend`.
+- **Base de datos:** MySQL en Railway.
+- **Almacenamiento de archivos:** Railway Bucket (API S3-compatible). Los archivos se sirven a través de `/api/media/uploads/:filename`.
 
 Para que el frontend apunte al backend en producción, configurar en `.env`:
 
 ```env
-VITE_API_URL=https://empleame.up.railway.app/api
+VITE_API_URL=https://tu-backend.railway.app/api
 ```
