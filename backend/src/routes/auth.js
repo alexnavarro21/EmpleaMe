@@ -180,10 +180,10 @@ router.post("/solicitar-recuperacion", async (req, res) => {
 
       const [[estudiante]] = await db.query(
         `SELECT u.id, pe.nombre, pe.apellido_paterno, pe.colegio_id
-         FROM usuarios u
-         JOIN perfiles_estudiantes pe ON pe.usuario_id = u.id
-         WHERE u.rut = ? OR pe.rut = ?`,
-        [rut.trim(), rut.trim()]
+         FROM perfiles_estudiantes pe
+         JOIN usuarios u ON u.id = pe.usuario_id
+         WHERE pe.rut = ?`,
+        [rut.trim()]
       );
       if (!estudiante)
         return res.status(404).json({ error: "No se encontró un estudiante con ese RUT" });
