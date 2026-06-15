@@ -91,6 +91,7 @@ INSERT INTO perfiles_colegios (usuario_id, slep_id, nombre_institucion, telefono
   VALUES (3, 4, 'C.E. Cardenal J.M. Caro', '+56222334455',
     'Centro educacional técnico profesional con especialidades en Mecánica Automotriz y Administración. Más de 30 años formando técnicos para el mercado laboral de la Región Metropolitana.',
     'Región Metropolitana de Santiago', 'Santiago');
+INSERT INTO colegio_carreras (colegio_id, carrera_id) SELECT 3, id FROM carreras WHERE nombre IN ('Mecanica Automotriz', 'Administracion');
 
 INSERT INTO perfiles_estudiantes
   (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, nivel, promedio,
@@ -435,12 +436,8 @@ INSERT INTO postulaciones (vacante_id, estudiante_id, estado, fecha_creacion) VA
   (@v_taller_prac, (SELECT id FROM usuarios WHERE correo = 'estudiante@empleame.cl'),   'pendiente', DATE_SUB(NOW(), INTERVAL 10 DAY)),
   (@v_taller_prac, (SELECT id FROM usuarios WHERE correo = 'matias.sepulveda@demo.cl'), 'pendiente', DATE_SUB(NOW(), INTERVAL 8  DAY)),
   (@v_taller_prac, (SELECT id FROM usuarios WHERE correo = 'diego.castillo@demo.cl'),   'pendiente', DATE_SUB(NOW(), INTERVAL 6  DAY)),
-  (@v_taller_prac, (SELECT id FROM usuarios WHERE correo = 'andres.fuentes@demo.cl'),   'pendiente', DATE_SUB(NOW(), INTERVAL 12 DAY)),
-  (@v_taller_prac, (SELECT id FROM usuarios WHERE correo = 'nicolas.vargas@demo.cl'),   'pendiente', DATE_SUB(NOW(), INTERVAL 4  DAY)),
-  (@v_taller_prac, (SELECT id FROM usuarios WHERE correo = 'benjamin.soto@demo.cl'),    'pendiente', DATE_SUB(NOW(), INTERVAL 3  DAY)),
   (@v_taller_plab, (SELECT id FROM usuarios WHERE correo = 'matias.sepulveda@demo.cl'), 'pendiente', DATE_SUB(NOW(), INTERVAL 7  DAY)),
   (@v_taller_plab, (SELECT id FROM usuarios WHERE correo = 'diego.castillo@demo.cl'),   'pendiente', DATE_SUB(NOW(), INTERVAL 5  DAY)),
-  (@v_taller_plab, (SELECT id FROM usuarios WHERE correo = 'andres.fuentes@demo.cl'),   'pendiente', DATE_SUB(NOW(), INTERVAL 9  DAY)),
   (@v_taller_plab, (SELECT id FROM usuarios WHERE correo = 'estudiante@empleame.cl'),   'pendiente', DATE_SUB(NOW(), INTERVAL 14 DAY));
 
 -- ── 8. Publicaciones con imágenes ─────────────────────────────
@@ -580,6 +577,7 @@ INSERT INTO perfiles_colegios (usuario_id, slep_id, nombre_institucion, telefono
 VALUES (@c2, 4, 'Liceo Técnico Arturo Prat', '+56332201890',
   'Liceo técnico profesional con especialidades en administración y mecánica automotriz.',
   'Región de Valparaíso', 'Valparaíso');
+INSERT INTO colegio_carreras (colegio_id, carrera_id) SELECT @c2, id FROM carreras WHERE nombre IN ('Mecanica Automotriz', 'Administracion');
 
 INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('colegio3@empleame.cl', 'Demo1234', 'colegio');
 SET @c3 = LAST_INSERT_ID();
@@ -587,6 +585,7 @@ INSERT INTO perfiles_colegios (usuario_id, slep_id, nombre_institucion, telefono
 VALUES (@c3, 4, 'C.E. Gabriela Mistral', '+56412345678',
   'Centro educacional con fuerte énfasis en formación técnica y vinculación con el mundo laboral regional.',
   'Región del Biobío', 'Concepción');
+INSERT INTO colegio_carreras (colegio_id, carrera_id) SELECT @c3, id FROM carreras WHERE nombre IN ('Mecanica Automotriz', 'Administracion');
 
 -- Estudiante 6: Andrés Fuentes — Mecánica (Liceo Arturo Prat)
 INSERT INTO usuarios (correo, contrasena_hash, rol) VALUES ('andres.fuentes@demo.cl', 'Demo1234', 'estudiante');
@@ -780,6 +779,13 @@ INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, publicado_en) V
    'Último semestre antes de la titulación. Promedio 6.6 acumulado y con experiencia real en contabilidad.', DATE_SUB(NOW(), INTERVAL 4 DAY)),
   (@u11, (SELECT id FROM tipos_publicacion WHERE nombre='general'), 'Declaración de IVA: mi primera vez sola',
    'En Contadores Asociados me dejaron preparar la declaración de IVA de un cliente de forma independiente. La confianza que te da eso no tiene precio.', DATE_SUB(NOW(), INTERVAL 22 DAY));
+
+-- Postulaciones de andres/nicolas/benjamin a vacantes del taller base (deben ir aquí, después de crear esos usuarios)
+INSERT INTO postulaciones (vacante_id, estudiante_id, estado, fecha_creacion) VALUES
+  (@v_taller_prac, (SELECT id FROM usuarios WHERE correo = 'andres.fuentes@demo.cl'),   'pendiente', DATE_SUB(NOW(), INTERVAL 12 DAY)),
+  (@v_taller_prac, (SELECT id FROM usuarios WHERE correo = 'nicolas.vargas@demo.cl'),   'pendiente', DATE_SUB(NOW(), INTERVAL 4  DAY)),
+  (@v_taller_prac, (SELECT id FROM usuarios WHERE correo = 'benjamin.soto@demo.cl'),    'pendiente', DATE_SUB(NOW(), INTERVAL 3  DAY)),
+  (@v_taller_plab, (SELECT id FROM usuarios WHERE correo = 'andres.fuentes@demo.cl'),   'pendiente', DATE_SUB(NOW(), INTERVAL 9  DAY));
 
 -- ============================================================
 -- SEED GRÁFICOS — Datos para panel de colegio
@@ -1615,60 +1621,66 @@ INSERT INTO perfiles_empresas (usuario_id, nombre_empresa, telefono_contacto, de
 
 -- ── H. Vacantes nuevas (2 por empresa) ──────────────────────
 
-INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, remuneracion, direccion, beneficios, fecha_limite, esta_activa, fecha_creacion)
+INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, tipo, area, modalidad, remuneracion, direccion, beneficios, fecha_limite, esta_activa, fecha_creacion)
   VALUES (@emp_norte, 'Práctica Técnico en Mecánica Automotriz',
     'Buscamos practicante para área de taller de mantención preventiva de vehículos livianos y de carga. Trabajará junto a mecánicos certificados con más de 10 años de experiencia.',
     'Estudiante de 4° Medio o egresado de Mecánica Automotriz. Disponibilidad de lunes a viernes.',
+    'practica', 'Automotriz',
     'presencial', '$250.000 mensual',
     'Av. Los Mineros 450, Copiapó',
     'Colación provista. EPP completo. Uniforme. Certificado de práctica detallado.',
     DATE_ADD(CURDATE(), INTERVAL 30 DAY), TRUE, DATE_SUB(NOW(), INTERVAL 5 DAY));
 SET @v_norte1 = LAST_INSERT_ID();
 
-INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, remuneracion, direccion, beneficios, fecha_limite, esta_activa, fecha_creacion)
+INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, tipo, area, modalidad, remuneracion, direccion, beneficios, fecha_limite, esta_activa, fecha_creacion)
   VALUES (@emp_norte, 'Técnico Automotriz Junior',
     'Posición permanente para técnico junior en área de diagnóstico electrónico y mantención correctiva. Trabajo en flota de vehículos mineros.',
     'Egresado de Mecánica Automotriz con manejo de OBD-II. Licencia de conducir clase B.',
+    'puesto_laboral', 'Automotriz',
     'presencial', '$550.000 + bono',
     'Av. Los Mineros 450, Copiapó',
     'Seguro complementario de salud. Bono de productividad mensual. Uniforme y EPP.',
     DATE_ADD(CURDATE(), INTERVAL 45 DAY), TRUE, DATE_SUB(NOW(), INTERVAL 3 DAY));
 SET @v_norte2 = LAST_INSERT_ID();
 
-INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, remuneracion, direccion, beneficios, fecha_limite, esta_activa, fecha_creacion)
+INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, tipo, area, modalidad, remuneracion, direccion, beneficios, fecha_limite, esta_activa, fecha_creacion)
   VALUES (@emp_barr, 'Práctica en Contabilidad y Tributación',
     'Practicante para apoyar en registro contable, cuadraturas, emisión de documentos tributarios y atención de clientes empresariales.',
     'Estudiante o egresado de Administración con conocimientos de contabilidad general y SII. Manejo de Excel.',
+    'practica', 'Contabilidad',
     'presencial', '$200.000 mensual',
     'Teniente Cruz 890, Cerro Navia',
     'Colación incluida. Mentoría de contador senior. Evaluación para contratación al término.',
     DATE_ADD(CURDATE(), INTERVAL 25 DAY), TRUE, DATE_SUB(NOW(), INTERVAL 7 DAY));
 SET @v_barr1 = LAST_INSERT_ID();
 
-INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, remuneracion, direccion, beneficios, fecha_limite, esta_activa, fecha_creacion)
+INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, tipo, area, modalidad, remuneracion, direccion, beneficios, fecha_limite, esta_activa, fecha_creacion)
   VALUES (@emp_barr, 'Auxiliar Contable',
     'Posición part-time para apoyo en área contable. Responsable de conciliaciones bancarias, libro de compras/ventas y emisión de facturas.',
     'Egresado de Administración con conocimiento de Conta+ o SoftLand. Proactividad y orientación al detalle.',
+    'puesto_laboral', 'Contabilidad',
     'presencial', '$380.000 mensual',
     'Teniente Cruz 890, Cerro Navia',
     'Horario flexible. Posibilidad de contrato indefinido. Capacitación continua.',
     DATE_ADD(CURDATE(), INTERVAL 35 DAY), TRUE, DATE_SUB(NOW(), INTERVAL 2 DAY));
 SET @v_barr2 = LAST_INSERT_ID();
 
-INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, remuneracion, direccion, beneficios, fecha_limite, esta_activa, fecha_creacion)
+INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, tipo, area, modalidad, remuneracion, direccion, beneficios, fecha_limite, esta_activa, fecha_creacion)
   VALUES (@emp_fl, 'Asistente Administrativo de Proyectos',
     'Apoyo en gestión de contratos, coordinación de proveedores y control documental de proyectos de construcción en la zona sur de Santiago.',
     'Egresado o estudiante de Administración. Manejo de Excel y Word. Buena redacción.',
+    'puesto_laboral', 'Administración',
     'presencial', '$420.000 mensual',
     'Av. Vicuña Mackenna Sur 1200, La Florida',
     'Seguro de salud complementario. Bono de desempeño semestral. Estacionamiento.',
     DATE_ADD(CURDATE(), INTERVAL 40 DAY), TRUE, DATE_SUB(NOW(), INTERVAL 4 DAY));
 SET @v_fl1 = LAST_INSERT_ID();
 
-INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, modalidad, remuneracion, direccion, beneficios, fecha_limite, esta_activa, fecha_creacion)
+INSERT INTO vacantes (empresa_id, titulo, descripcion, requisitos, tipo, area, modalidad, remuneracion, direccion, beneficios, fecha_limite, esta_activa, fecha_creacion)
   VALUES (@emp_fl, 'Técnico en Gestión de Contratos',
     'Revisión y control de contratos con subcontratistas, seguimiento de cumplimiento y archivo documental del área legal-administrativa.',
     'Egresado de Administración con interés en el sector construcción. Capacidad analítica y atención al detalle.',
+    'puesto_laboral', 'Administración',
     'presencial', '$480.000 mensual',
     'Av. Vicuña Mackenna Sur 1200, La Florida',
     'Bono por cumplimiento de hitos. Capacitación en gestión de proyectos BIM.',
@@ -1849,7 +1861,7 @@ INSERT INTO publicaciones (autor_id, tipo_id, titulo, contenido, url_multimedia,
    DATE_SUB(NOW(), INTERVAL 42 DAY));
 
 -- ── Conversación Juan Pérez (id=1) ↔ Taller Automotriz del Sur (id=2) ────────
--- Nota: la conversacion entre empresa_id=2 y estudiante_id=1 debe existir (id=1)
+INSERT INTO conversaciones (empresa_id, estudiante_id) VALUES (2, 1);
 INSERT INTO mensajes (conversacion_id, remitente_id, contenido, enviado_en) VALUES
   (1, 2, 'Hola Juan, vimos tu perfil en EmpleaMe y nos interesa tu postulación para la práctica. ¿Tienes disponibilidad para conversar esta semana?',    DATE_SUB(NOW(), INTERVAL 143 HOUR)),
   (1, 1, 'Hola, muchas gracias por contactarme. Sí, tengo disponibilidad de lunes a viernes desde las 14:00 en adelante.',                              DATE_SUB(NOW(), INTERVAL 142 HOUR)),
