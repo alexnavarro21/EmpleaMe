@@ -947,6 +947,34 @@ const careerDisplay = {
   "Mecanica Automotriz": "Mecánica Automotriz",
 };
 
+function FiltroPills({ label, opciones, activos, onToggle, isDark, T, M, B }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <span className={`text-xs font-semibold ${M}`}>{label}</span>
+      <div className="flex flex-wrap gap-2">
+        {opciones.map((op) => {
+          const activo = activos.includes(op.value);
+          return (
+            <button
+              key={op.value}
+              type="button"
+              onClick={() => onToggle(op.value)}
+              className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
+                activo
+                  ? "border-[#0F4D8A] bg-[#0F4D8A] text-white"
+                  : `${B} ${T} ${isDark ? "bg-[#1e1e1c]" : "bg-white"} hover:border-[#378ADD] hover:text-[#378ADD]`
+              }`}
+            >
+              <Icon icon={op.icon} width={13} className={activo ? "text-white" : M} />
+              {op.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function EstudianteDashboard() {
   const { isDark } = useDark();
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
@@ -1456,90 +1484,52 @@ export default function EstudianteDashboard() {
 
         {/* Panel de filtros (solo en tab principal, para estudiantes) */}
         {tabFeed === "principal" && filtrosAbierto && (
-          <div className={`p-3 rounded-lg border ${B} ${isDark ? "bg-[#1e1e1c]" : "bg-[#F7F6F3]"} flex flex-wrap gap-4`}>
-            {/* Fecha de publicación */}
-            <div className="flex flex-col gap-1 min-w-[150px]">
-              <label className={`text-xs font-medium ${M}`}>Fecha de publicación</label>
-              <select
-                value={filtroFecha || ""}
-                onChange={(e) => setFiltroFecha(e.target.value || null)}
-                className={`text-xs px-2.5 py-1.5 rounded-lg border outline-none transition-colors ${B} ${
-                  isDark ? "bg-[#262624] text-[#D3D1C7]" : "bg-white text-[#2C2C2A]"
-                } ${filtroFecha ? "border-[#0F4D8A]" : ""}`}
-              >
-                <option value="">Cualquier fecha</option>
-                <option value="hoy">Hoy</option>
-                <option value="semana">Esta semana</option>
-                <option value="mes">Este mes</option>
-              </select>
-            </div>
+          <div className={`p-4 rounded-xl border ${B} ${BG} flex flex-col gap-4`}>
+            <FiltroPills
+              label="Fecha de publicación"
+              opciones={[
+                { value: "hoy",    label: "Hoy",          icon: "mdi:calendar-today-outline" },
+                { value: "semana", label: "Esta semana",  icon: "mdi:calendar-week-outline"  },
+                { value: "mes",    label: "Este mes",     icon: "mdi:calendar-month-outline" },
+              ]}
+              activos={filtroFecha ? [filtroFecha] : []}
+              onToggle={(v) => setFiltroFecha((prev) => prev === v ? null : v)}
+              isDark={isDark}
+              T={T} M={M} B={B}
+            />
 
-            {/* Tipo de publicación (selección múltiple) */}
-            <div className="flex flex-col gap-1 min-w-[190px]">
-              <label className={`text-xs font-medium ${M}`}>Tipo de publicación</label>
-              <div className="flex flex-wrap gap-1.5">
-                {[
-                  { value: "practica",       label: "Práctica profesional" },
-                  { value: "puesto_laboral", label: "Puesto laboral" },
-                ].map((op) => {
-                  const activo = filtrosTipo.includes(op.value);
-                  return (
-                    <button
-                      key={op.value}
-                      type="button"
-                      onClick={() => setFiltrosTipo((prev) => activo ? prev.filter((v) => v !== op.value) : [...prev, op.value])}
-                      className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${
-                        activo
-                          ? "border-[#0F4D8A] bg-[#0F4D8A]/10 text-[#0F4D8A]"
-                          : `${B} ${isDark ? "bg-[#262624] text-[#D3D1C7]" : "bg-white text-[#2C2C2A]"} hover:border-[#378ADD]`
-                      }`}
-                    >
-                      <Icon icon={activo ? "mdi:checkbox-marked" : "mdi:checkbox-blank-outline"} width={13} />
-                      {op.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            <FiltroPills
+              label="Tipo de publicación"
+              opciones={[
+                { value: "practica",       label: "Práctica profesional", icon: "mdi:school-outline"    },
+                { value: "puesto_laboral", label: "Puesto laboral",       icon: "mdi:briefcase-outline" },
+              ]}
+              activos={filtrosTipo}
+              onToggle={(v) => setFiltrosTipo((prev) => prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v])}
+              isDark={isDark}
+              T={T} M={M} B={B}
+            />
 
-            {/* Modalidad (selección múltiple) */}
-            <div className="flex flex-col gap-1 min-w-[190px]">
-              <label className={`text-xs font-medium ${M}`}>Modalidad</label>
-              <div className="flex flex-wrap gap-1.5">
-                {[
-                  { value: "presencial", label: "Presencial" },
-                  { value: "remoto",     label: "Remoto"     },
-                  { value: "hibrido",    label: "Híbrido"    },
-                ].map((op) => {
-                  const activo = filtrosModalidad.includes(op.value);
-                  return (
-                    <button
-                      key={op.value}
-                      type="button"
-                      onClick={() => setFiltrosModalidad((prev) => activo ? prev.filter((v) => v !== op.value) : [...prev, op.value])}
-                      className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${
-                        activo
-                          ? "border-[#0F4D8A] bg-[#0F4D8A]/10 text-[#0F4D8A]"
-                          : `${B} ${isDark ? "bg-[#262624] text-[#D3D1C7]" : "bg-white text-[#2C2C2A]"} hover:border-[#378ADD]`
-                      }`}
-                    >
-                      <Icon icon={activo ? "mdi:checkbox-marked" : "mdi:checkbox-blank-outline"} width={13} />
-                      {op.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            <FiltroPills
+              label="Modalidad"
+              opciones={[
+                { value: "presencial", label: "Presencial", icon: "mdi:map-marker-outline" },
+                { value: "remoto",     label: "Remoto",     icon: "mdi:laptop"              },
+                { value: "hibrido",    label: "Híbrido",    icon: "mdi:home-city"           },
+              ]}
+              activos={filtrosModalidad}
+              onToggle={(v) => setFiltrosModalidad((prev) => prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v])}
+              isDark={isDark}
+              T={T} M={M} B={B}
+            />
 
             {(filtroFecha || filtrosTipo.length > 0 || filtrosModalidad.length > 0) && (
-              <div className="flex items-end">
-                <button
-                  onClick={() => { setFiltroFecha(null); setFiltrosTipo([]); setFiltrosModalidad([]); }}
-                  className="text-xs px-3 py-1.5 rounded-lg border border-red-400/50 text-red-400 hover:bg-red-400/10 transition-colors"
-                >
-                  Limpiar filtros
-                </button>
-              </div>
+              <button
+                onClick={() => { setFiltroFecha(null); setFiltrosTipo([]); setFiltrosModalidad([]); }}
+                className="self-start text-xs font-medium text-[#378ADD] hover:underline"
+              >
+                Limpiar filtros
+              </button>
             )}
           </div>
         )}
