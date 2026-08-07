@@ -16,13 +16,20 @@ Guía paso a paso para desplegar el backend (Node/Express + MySQL) de EmpleaMe e
 
 ## 1. Base de datos (RDS MySQL)
 
-- [ ] RDS → **Create database** → Engine: MySQL 8.0.x (compatible con `mysql2`).
-- [ ] Plantilla: Free tier / Dev-Test.
-- [ ] DB instance identifier: `empleame-db`.
-- [ ] Crear usuario master + password (guardar en un lugar seguro).
-- [ ] **Publicly accessible**: `No` si el backend vive en la misma VPC (recomendado). `Yes` solo temporalmente si necesitas importar el schema desde tu máquina local.
-- [ ] Security group nuevo: `empleame-db-sg` — abrir puerto **3306** solo desde el security group del EC2 (paso 3).
-- [ ] Esperar estado `Available` → copiar el **endpoint**.
+- [ ] RDS → **Crear base de datos** → botón desplegable arriba a la derecha → elegir **Configuración completa** (NO "Configuración expres": oculta opciones que necesitas configurar a mano, como el security group y el usuario/password custom).
+- [ ] Motor: **MySQL** → versión 8.0.x (compatible con `mysql2`).
+- [ ] **Plantillas**: elegir **Desarrollo y pruebas** (NO "Producción" — esa activa Multi-AZ, duplica el consumo de crédito y no la necesitas para un LearnerLab de 4h).
+- [ ] **Disponibilidad y durabilidad**: elegir **Implementación de una instancia de base de datos de zona de disponibilidad única (1 instancia)** (la opción de la derecha, NO la del medio "Multi-AZ (2 instancias)" que viene preseleccionada — esa crea una instancia en espera extra y duplica el gasto).
+- [ ] Identificador de instancia de BD: `empleame-db`.
+- [ ] Credenciales: usuario master (ej. `admin`) + password propio (autogenerada o manual) — guardar en lugar seguro, no vuelve a mostrarse.
+- [ ] Clase de instancia: **db.t3.micro** (o la más pequeña disponible en burstable classes).
+- [ ] Almacenamiento: 20 GB gp2/gp3, sin autoescalado (para no pasarte de crédito sin darte cuenta).
+- [ ] Conectividad → **No conectar a un recurso de proposito compute EC2** si prefieres configurar la red manual, o dejar que asocie tu instancia EC2 si ya la creaste.
+- [ ] **Acceso público**: `No` si el backend vive en la misma VPC (recomendado). `Sí` solo temporalmente si necesitas importar el schema desde tu máquina local (paso 2), luego desactivar.
+- [ ] Grupo de seguridad de VPC: **Crear nuevo** → `empleame-db-sg` — abrir puerto **3306** solo desde el security group del EC2 (paso 3), no desde `0.0.0.0/0`.
+- [ ] Autenticación: contraseña (no IAM, no Kerberos — LearnerLab no lo soporta bien).
+- [ ] Dejar el resto en valores por defecto → **Crear base de datos**.
+- [ ] Esperar estado `Available` (puede tardar 5-10 min) → copiar el **endpoint** (pestaña Connectivity & security).
 
 ---
 
@@ -39,13 +46,21 @@ mysql -h <rds-endpoint> -u <usuario> -p < sql/inserts.sql
 
 ## 3. EC2 para el backend
 
-- [ ] EC2 → **Launch instance**.
-- [ ] AMI: Amazon Linux 2023. Tipo: `t2.micro` / `t3.micro`.
-- [ ] IAM instance profile: `LabInstanceProfile` (da acceso a S3 si el bucket usa el mismo rol del lab).
-- [ ] Security group `empleame-backend-sg`: abrir **22** (solo tu IP), **3001** o **80/443** si usas nginx.
-- [ ] Key pair nuevo → descargar `.pem`.
-- [ ] Launch → esperar `running` → copiar IP pública.
-- [ ] (Recomendado) Asociar una **Elastic IP** a la instancia para que la IP no cambie al reiniciar el lab.
+- [ ] EC2 → **Launch instance** (Lanzar instancia).
+- [ ] Nombre: `empleame-backend`.
+- [ ] AMI: **Amazon Linux 2023** (Free tier eligible, marcado por defecto).
+- [ ] Tipo de instancia: **t2.micro** o **t3.micro** (Free tier eligible).
+- [ ] Par de claves (key pair): **Crear nuevo par de claves** → tipo RSA, formato `.pem` → descargar y guardar (no se puede volver a descargar).
+- [ ] Configuración de red → **Editar**:
+  - VPC/Subred: la misma VPC/subred donde está el RDS (paso 1).
+  - Auto-assign public IP: **Enable**.
+  - Firewall (security groups): **Crear grupo de seguridad nuevo** → `empleame-backend-sg`:
+    - Regla SSH (22): origen **Mi IP** (no `0.0.0.0/0`).
+    - Regla custom TCP (3001) o HTTP (80) / HTTPS (443) si usas nginx: origen **Anywhere (0.0.0.0/0)** — necesario para que el frontend/cualquier dispositivo acceda.
+- [ ] Configurar almacenamiento: 8-16 GB gp3 (default está bien).
+- [ ] Detalles avanzados → **IAM instance profile**: `LabInstanceProfile` (da acceso a S3 si el bucket usa el mismo rol del lab; en LearnerLab no puedes crear uno nuevo).
+- [ ] **Launch instance** → esperar estado `Running` y "2/2 status checks passed" → copiar IP pública (IPv4).
+- [ ] (Recomendado) EC2 → **Elastic IPs** → **Allocate Elastic IP address** → **Associate** con esta instancia, para que la IP no cambie al reiniciar el lab.
 
 ---
 
