@@ -4,6 +4,7 @@ const XLSX    = require("xlsx");
 const bcrypt  = require("bcrypt");
 const db      = require("../db");
 const { verificarToken, soloRol } = require("../middleware/auth");
+const { leerLibroExcel, capitalizarNombre } = require("../utils/importarExcel");
 
 const auth    = [verificarToken, soloRol("colegio")];
 const upload  = multer({ storage: multer.memoryStorage() });
@@ -735,7 +736,7 @@ router.post("/alumnos/excel", ...auth, upload.single("archivo"), async (req, res
   const bcrypt = require("bcrypt");
 
   try {
-    const wb   = XLSX.read(req.file.buffer, { type: "buffer" });
+    const wb   = leerLibroExcel(req.file.buffer);
     const ws   = wb.Sheets[wb.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
 
@@ -747,7 +748,7 @@ router.post("/alumnos/excel", ...auth, upload.single("archivo"), async (req, res
 
     for (let i = 1; i < rows.length; i++) {
       const fila          = rows[i];
-      const nombre        = String(fila[0] ?? "").trim();
+      const nombre        = capitalizarNombre(String(fila[0] ?? "").trim());
       const correoRaw     = String(fila[1] ?? "").trim().toLowerCase() || null;
       const rutRaw        = String(fila[2] ?? "").trim() || null;
       const telefono      = String(fila[3] ?? "").trim() || null;
@@ -812,7 +813,7 @@ router.post("/alumnos/nomina", ...auth, upload.single("archivo"), async (req, re
   const bcrypt = require("bcrypt");
 
   try {
-    const wb   = XLSX.read(req.file.buffer, { type: "buffer" });
+    const wb   = leerLibroExcel(req.file.buffer);
     const ws   = wb.Sheets[wb.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
 
@@ -831,7 +832,7 @@ router.post("/alumnos/nomina", ...auth, upload.single("archivo"), async (req, re
       if (!runRaw || !dvRaw) continue;
 
       const rut    = `${runRaw}-${dvRaw}`;
-      const nombre = String(fila[9] ?? "").trim();
+      const nombre = capitalizarNombre(String(fila[9] ?? "").trim());
 
       if (!nombre) { errores.push(`Fila ${i + 1} (${rut}): nombre vacío`); continue; }
 
@@ -841,8 +842,8 @@ router.post("/alumnos/nomina", ...auth, upload.single("archivo"), async (req, re
       );
       if (existente) { omitidos.push(rut); continue; }
 
-      const apellidoPaterno = String(fila[10] ?? "").trim();
-      const apellidoMaterno = String(fila[11] ?? "").trim() || null;
+      const apellidoPaterno = capitalizarNombre(String(fila[10] ?? "").trim());
+      const apellidoMaterno = capitalizarNombre(String(fila[11] ?? "").trim()) || null;
       const correoRaw       = String(fila[15] ?? "").trim().toLowerCase() || null;
       const correo          = correoRaw && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoRaw) ? correoRaw : null;
       const celular         = String(fila[17] ?? "").trim().replace(/\.0$/, "") || null;

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
-import { Card, Badge, PrimaryButton } from "../../components/ui";
+import { Card, Badge, PrimaryButton, Paginacion } from "../../components/ui";
 import {
   getEstudiantes, getEmpresas, getVacantes, getTalleres, getColegios,
   iniciarMensajeDirecto, iniciarConversacionConEmpresa,
@@ -326,6 +326,8 @@ export default function BuscarPerfiles() {
   const [filtroRemuneracion,  setFiltroRemuneracion]  = useState("todas"); // todas | con_paga | sin_paga
   const [minEvalDocente,      setMinEvalDocente]      = useState(1);
   const [reportarPerfil,     setReportarPerfil]     = useState(null); // { id, tipo }
+  const [pagina,             setPagina]             = useState(1);
+  const [porPagina,          setPorPagina]          = useState(10);
 
   const T  = isDark ? "text-[#D3D1C7]"   : "text-[#2C2C2A]";
   const M  = isDark ? "text-[#888780]"   : "text-[#5F5E5A]";
@@ -443,6 +445,16 @@ export default function BuscarPerfiles() {
     colegios:    filteredColegios.length,
   };
   const count = countMap[tab] ?? 0;
+
+  // Paginación de los resultados de la pestaña activa
+  useEffect(() => { setPagina(1); }, [
+    tab, search, selectedCareer, minGpa, minEvalDocente, selectedRegion, selectedComuna,
+    selectedHabilidades, selectedAreas, selectedModalidad, filtroPrecio, filtroRemuneracion,
+  ]);
+  const totalPaginas = Math.max(1, Math.ceil(count / porPagina));
+  const paginaSegura = Math.min(pagina, totalPaginas);
+  const paginar = (arr) => arr.slice((paginaSegura - 1) * porPagina, paginaSegura * porPagina);
+  const cambiarPorPagina = (v) => { setPorPagina(v); setPagina(1); };
   const tabLabel = { estudiantes: "estudiante", empresas: "empresa", vacantes: "vacante", talleres: "taller", colegios: "colegio" }[tab];
   const usuarioActual = JSON.parse(localStorage.getItem("usuario") || "{}");
 
@@ -749,7 +761,7 @@ export default function BuscarPerfiles() {
           {/* Estudiantes */}
           {tab === "estudiantes" && (
             <div className="grid grid-cols-2 gap-4">
-              {filteredStudents.map((s) => {
+              {paginar(filteredStudents).map((s) => {
                 const nombreCarrera = careerDisplay[s.carrera] || s.carrera;
                 return (
                   <Card key={s.usuario_id} className="hover:border-[#378ADD] transition-colors">
@@ -817,7 +829,7 @@ export default function BuscarPerfiles() {
           {/* Empresas */}
           {tab === "empresas" && (
             <div className="grid grid-cols-2 gap-4">
-              {filteredCompanies.map((c) => (
+              {paginar(filteredCompanies).map((c) => (
                 <Card key={c.usuario_id} className="hover:border-[#378ADD] transition-colors">
                   <div className="flex items-start gap-3 mb-3">
                     {c.foto_perfil ? (
@@ -865,7 +877,7 @@ export default function BuscarPerfiles() {
           {/* Vacantes */}
           {tab === "vacantes" && (
             <div className="grid grid-cols-2 gap-4">
-              {filteredVacantes.map((v) => (
+              {paginar(filteredVacantes).map((v) => (
                 <Card key={v.id} className="hover:border-[#378ADD] transition-colors cursor-pointer flex flex-col" onClick={() => setModalVacante(v)}>
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <p className={`text-sm font-semibold ${T} leading-snug`}>{v.titulo}</p>
@@ -902,7 +914,7 @@ export default function BuscarPerfiles() {
           {/* Colegios */}
           {tab === "colegios" && canSeeColegios && (
             <div className="grid grid-cols-2 gap-4">
-              {filteredColegios.map((c) => (
+              {paginar(filteredColegios).map((c) => (
                 <Card key={c.usuario_id} className="hover:border-[#378ADD] transition-colors flex flex-col">
                   <div className="flex items-start gap-3 mb-3">
                     {c.foto_perfil ? (
@@ -961,7 +973,7 @@ export default function BuscarPerfiles() {
           {/* Talleres */}
           {tab === "talleres" && (
             <div className="grid grid-cols-2 gap-4">
-              {filteredTalleres.map((t) => {
+              {paginar(filteredTalleres).map((t) => {
                 const puedeInscribirse = (t.esta_activo === true || t.esta_activo === 1) && (t.permite_inscripcion === true || t.permite_inscripcion === 1);
                 return (
                   <Card key={t.id} className="hover:border-[#378ADD] transition-colors cursor-pointer flex flex-col" onClick={() => setModalTaller(t)}>
@@ -992,6 +1004,17 @@ export default function BuscarPerfiles() {
               })}
               {filteredTalleres.length === 0 && <EmptyState T={T} M={M} />}
             </div>
+          )}
+
+          {count > 0 && (
+            <Paginacion
+              paginaActual={paginaSegura}
+              totalPaginas={totalPaginas}
+              onCambiar={setPagina}
+              porPagina={porPagina}
+              opciones={[10, 20, 50]}
+              onCambiarPorPagina={cambiarPorPagina}
+            />
           )}
         </div>
       </div>
