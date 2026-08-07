@@ -1191,7 +1191,7 @@ export default function EstudianteDashboard() {
                 />
               </div>
               <p className={`text-sm font-semibold ${T}`}>{empresaPerfil?.nombre_empresa || usuario.nombre_empresa || "Mi empresa"}</p>
-              <p className={`text-xs ${M} mt-0.5`}>Empresa verificada · EmpleaMe</p>
+              <p className={`text-xs ${M} mt-0.5`}>Empresa registrada en EmpleaMe</p>
 
               <div className={`flex justify-around mt-3 pt-3 border-t ${B}`}>
                 <div className="text-center">

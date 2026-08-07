@@ -288,24 +288,24 @@ export default function Layout() {
           <div className="flex-shrink-0" ref={searchRef}>
             <div className="relative">
               <form onSubmit={handleSearchSubmit}>
-                <div className="relative">
+                <div className="flex items-center w-64 focus-within:w-[28rem] rounded-full bg-[#0F4D8A]/50 border border-[#1a5fa8] focus-within:bg-[#0F4D8A]/80 focus-within:border-[#378ADD] transition-all duration-200 overflow-hidden">
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={handleSearchChange}
                     onFocus={() => { if (searchQuery.trim() && suggestions.length > 0) setShowSuggestions(true); }}
                     placeholder="Buscar estudiantes, empresas..."
-                    className="w-64 pl-4 pr-10 py-1.5 rounded-full text-sm bg-[#0F4D8A]/50 border border-[#1a5fa8] text-[#E6F1FB] placeholder-[#85B7EB] outline-none focus:w-[28rem] focus:bg-[#0F4D8A]/80 focus:border-[#378ADD] transition-all duration-200"
+                    className="flex-1 min-w-0 pl-4 pr-2 py-1.5 text-sm bg-transparent text-[#E6F1FB] placeholder-[#85B7EB] outline-none"
                   />
                   <button
                     type="submit"
                     aria-label="Buscar"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-[#378ADD] hover:bg-[#4a9aee] flex items-center justify-center transition-colors"
+                    className="flex-shrink-0 self-stretch px-3 flex items-center justify-center border-l border-[#1a5fa8] hover:bg-[#378ADD]/25 transition-colors"
                   >
                     <Icon
                       icon={searchLoading ? "mdi:loading" : "mdi:magnify"}
                       width={15}
-                      className={`text-white ${searchLoading ? "animate-spin" : ""}`}
+                      className={`text-[#85B7EB] ${searchLoading ? "animate-spin" : ""}`}
                     />
                   </button>
                 </div>
