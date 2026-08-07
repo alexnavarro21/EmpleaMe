@@ -807,7 +807,7 @@ export default function BuscarPerfiles() {
               {paginar(filteredStudents).map((s) => {
                 const nombreCarrera = careerDisplay[s.carrera] || s.carrera;
                 return (
-                  <Card key={s.usuario_id} className="hover:border-[#378ADD] transition-colors">
+                  <Card key={s.usuario_id} className="hover:border-[#378ADD] transition-colors cursor-pointer" onClick={() => navigate(`${candidatoBase}/${s.usuario_id}`)}>
                     <div className="flex items-start gap-3 mb-3">
                       {s.foto_perfil ? (
                         <img src={getMediaUrl(s.foto_perfil)} className="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
@@ -840,7 +840,7 @@ export default function BuscarPerfiles() {
                         {s.habilidades.length > 3 && <span className={`text-xs ${M}`}>+{s.habilidades.length - 3} más</span>}
                       </div>
                     )}
-                    <div className="flex gap-2">
+                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                       <Link to={`${candidatoBase}/${s.usuario_id}`} className="flex-1">
                         <PrimaryButton className="w-full">Ver perfil</PrimaryButton>
                       </Link>
@@ -873,7 +873,7 @@ export default function BuscarPerfiles() {
           {tab === "empresas" && (
             <div className="grid grid-cols-2 gap-4">
               {paginar(filteredCompanies).map((c) => (
-                <Card key={c.usuario_id} className="hover:border-[#378ADD] transition-colors">
+                <Card key={c.usuario_id} className="hover:border-[#378ADD] transition-colors cursor-pointer" onClick={() => navigate(`/empresa-publica/${c.usuario_id}`)}>
                   <div className="flex items-start gap-3 mb-3">
                     {c.foto_perfil ? (
                       <img src={getMediaUrl(c.foto_perfil)} className="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
@@ -893,7 +893,7 @@ export default function BuscarPerfiles() {
                   </div>
                   {c.descripcion && <p className={`text-xs ${M} mb-3 line-clamp-2`}>{c.descripcion}</p>}
                   {c.telefono_contacto && <div className={`flex items-center gap-1.5 text-xs ${M} mb-3`}><Icon icon="mdi:phone-outline" width={13} />{c.telefono_contacto}</div>}
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
                     <Link to={`/empresa-publica/${c.usuario_id}`} className="flex-1"><PrimaryButton className="w-full">Ver perfil</PrimaryButton></Link>
                     {role === "estudiante" && (
                       <button onClick={() => handleContactarEmpresa(c.usuario_id)} disabled={contactandoId === c.usuario_id} title="Enviar mensaje"
@@ -958,7 +958,7 @@ export default function BuscarPerfiles() {
           {tab === "colegios" && canSeeColegios && (
             <div className="grid grid-cols-2 gap-4">
               {paginar(filteredColegios).map((c) => (
-                <Card key={c.usuario_id} className="hover:border-[#378ADD] transition-colors flex flex-col">
+                <Card key={c.usuario_id} className="hover:border-[#378ADD] transition-colors cursor-pointer flex flex-col" onClick={() => navigate(`/colegio-publico/${c.usuario_id}`)}>
                   <div className="flex items-start gap-3 mb-3">
                     {c.foto_perfil ? (
                       <img src={getMediaUrl(c.foto_perfil)} className="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
@@ -988,7 +988,7 @@ export default function BuscarPerfiles() {
                       <Icon icon="mdi:phone-outline" width={13} />{c.telefono_contacto}
                     </div>
                   )}
-                  <div className="flex gap-2 mt-auto pt-2">
+                  <div className="flex gap-2 mt-auto pt-2" onClick={(e) => e.stopPropagation()}>
                     <Link to={`/colegio-publico/${c.usuario_id}`} className="flex-1">
                       <PrimaryButton className="w-full">Ver perfil</PrimaryButton>
                     </Link>
