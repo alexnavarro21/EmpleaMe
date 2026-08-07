@@ -50,42 +50,59 @@ function VacanteModal({ vacante, role, onClose }) {
     }
   };
 
-  const infoItems = [
-    vacante.tipo      && { icon: vacante.tipo === "puesto_laboral" ? "mdi:briefcase-outline" : "mdi:school-outline", label: vacante.tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica profesional", color: vacante.tipo === "puesto_laboral" ? "text-green-500" : "text-orange-500" },
-    vacante.area      && { icon: "mdi:tag-outline",           label: vacante.area,      color: "text-[#378ADD]" },
-    vacante.modalidad && { icon: vacante.modalidad.toLowerCase() === "remoto" ? "mdi:laptop" : vacante.modalidad.toLowerCase() === "hibrido" || vacante.modalidad.toLowerCase() === "híbrido" ? "mdi:home-city" : "mdi:map-marker-outline", label: vacante.modalidad },
-    vacante.duracion  && { icon: "mdi:clock-outline",         label: vacante.duracion   },
-    vacante.remuneracion && { icon: "mdi:currency-usd",       label: vacante.remuneracion },
-    vacante.direccion && { icon: "mdi:map-outline",           label: vacante.direccion  },
+  const esPuestoLaboral = vacante.tipo === "puesto_laboral";
+  const modalidadIcon = (vacante.modalidad || "").toLowerCase() === "remoto"
+    ? "mdi:laptop"
+    : (vacante.modalidad || "").toLowerCase().includes("hibrido") || (vacante.modalidad || "").toLowerCase().includes("híbrido")
+    ? "mdi:home-city"
+    : "mdi:map-marker-outline";
+
+  const infoFields = [
+    { icon: esPuestoLaboral ? "mdi:briefcase-outline" : "mdi:school-outline", label: "Tipo de contrato", value: esPuestoLaboral ? "Puesto laboral" : "Práctica profesional" },
+    vacante.area         && { icon: "mdi:tag-outline",          label: "Área",             value: vacante.area },
+    vacante.modalidad     && { icon: modalidadIcon,               label: "Modalidad",        value: vacante.modalidad },
+    vacante.remuneracion && { icon: "mdi:currency-usd",         label: "Remuneración",     value: vacante.remuneracion },
+    vacante.duracion      && { icon: "mdi:clock-outline",         label: "Duración",         value: vacante.duracion },
+    vacante.horario       && { icon: "mdi:calendar-clock-outline",label: "Horario",          value: vacante.horario },
+    vacante.direccion     && { icon: "mdi:map-outline",           label: "Ubicación",        value: vacante.direccion },
+    vacante.fecha_limite  && { icon: "mdi:calendar-alert-outline",label: "Postula hasta",    value: new Date(vacante.fecha_limite).toLocaleDateString("es-CL", { day: "2-digit", month: "long", year: "numeric" }) },
   ].filter(Boolean);
+
+  const empresaInicial = vacante.nombre_empresa?.[0]?.toUpperCase() ?? "E";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
-      <div className={`relative w-full max-w-lg max-h-[88vh] flex flex-col rounded-2xl shadow-2xl border ${B} ${BG}`} onClick={(e) => e.stopPropagation()}>
+      <div className={`relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl shadow-2xl border ${B} ${BG}`} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className={`px-5 py-4 border-b ${B} flex items-start justify-between gap-3`}>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <p className={`text-base font-semibold ${T} leading-snug`}>{vacante.titulo}</p>
-              <Badge color={vacante.tipo === "puesto_laboral" ? "green" : "orange"}>
-                {vacante.tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica"}
-              </Badge>
-            </div>
-            <p className="text-sm font-medium text-[#378ADD]">{vacante.nombre_empresa}</p>
+        <div className={`px-6 pt-6 pb-5 border-b ${B} flex items-start gap-4`}>
+          <div className="w-12 h-12 rounded-xl bg-[#0F4D8A] flex items-center justify-center flex-shrink-0 text-white font-bold text-lg">
+            {empresaInicial}
           </div>
-          <button onClick={onClose} className={`p-1.5 rounded-lg hover:${S} transition-colors ${M} flex-shrink-0`}>
-            <Icon icon="mdi:close" width={18} />
-          </button>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-3">
+              <p className={`text-lg font-bold ${T} leading-snug`}>{vacante.titulo}</p>
+              <button onClick={onClose} className={`p-1.5 -mt-1 -mr-1 rounded-lg transition-colors ${M} ${isDark ? "hover:bg-[#262624]" : "hover:bg-[#F7F6F3]"} flex-shrink-0`}>
+                <Icon icon="mdi:close" width={18} />
+              </button>
+            </div>
+            <p className="text-sm font-semibold text-[#378ADD] mt-0.5">{vacante.nombre_empresa}</p>
+            <Badge color={esPuestoLaboral ? "green" : "orange"}>
+              {esPuestoLaboral ? "Puesto laboral" : "Práctica profesional"}
+            </Badge>
+          </div>
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto flex-1 px-5 py-4 flex flex-col gap-4">
-          {/* Info chips */}
-          <div className={`flex flex-wrap gap-3 p-3 rounded-xl border ${B} ${S}`}>
-            {infoItems.map((item, i) => (
-              <div key={i} className="flex items-center gap-1.5">
-                <Icon icon={item.icon} width={14} className={item.color || M} />
-                <span className={`text-xs ${item.color || M} capitalize`}>{item.label}</span>
+        <div className="overflow-y-auto flex-1 px-6 py-5 flex flex-col gap-6">
+          {/* Info grid */}
+          <div className="grid grid-cols-2 gap-3">
+            {infoFields.map((item, i) => (
+              <div key={i} className={`flex items-start gap-2.5 p-3 rounded-xl border ${B} ${S}`}>
+                <Icon icon={item.icon} width={16} className="text-[#378ADD] flex-shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <p className={`text-[10px] font-semibold uppercase tracking-wide ${M}`}>{item.label}</p>
+                  <p className={`text-sm font-medium ${T} capitalize truncate`}>{item.value}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -93,8 +110,24 @@ function VacanteModal({ vacante, role, onClose }) {
           {/* Descripción */}
           {vacante.descripcion && (
             <div>
-              <p className={`text-xs font-semibold uppercase tracking-wide ${M} mb-1.5`}>Descripción</p>
-              <p className={`text-sm leading-relaxed ${T}`}>{vacante.descripcion}</p>
+              <p className={`text-xs font-semibold uppercase tracking-wide ${M} mb-2`}>Descripción</p>
+              <p className={`text-sm leading-relaxed ${T} whitespace-pre-line`}>{vacante.descripcion}</p>
+            </div>
+          )}
+
+          {/* Requisitos */}
+          {vacante.requisitos && (
+            <div>
+              <p className={`text-xs font-semibold uppercase tracking-wide ${M} mb-2`}>Requisitos</p>
+              <p className={`text-sm leading-relaxed ${T} whitespace-pre-line`}>{vacante.requisitos}</p>
+            </div>
+          )}
+
+          {/* Beneficios */}
+          {vacante.beneficios && (
+            <div>
+              <p className={`text-xs font-semibold uppercase tracking-wide ${M} mb-2`}>Beneficios</p>
+              <p className={`text-sm leading-relaxed ${T} whitespace-pre-line`}>{vacante.beneficios}</p>
             </div>
           )}
 
@@ -113,11 +146,11 @@ function VacanteModal({ vacante, role, onClose }) {
 
         {/* Footer acción */}
         {role === "estudiante" && (
-          <div className={`px-5 py-3 border-t ${B}`}>
+          <div className={`px-6 py-4 border-t ${B}`}>
             <button
               onClick={handlePostular}
               disabled={estado !== "idle"}
-              className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
+              className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
                 estado === "ok"        ? (isDark ? "bg-green-500/15 text-green-400" : "bg-green-100 text-green-700")
                 : estado === "duplicado" ? (isDark ? "bg-amber-500/15 text-amber-400" : "bg-amber-100 text-amber-700")
                 : estado === "error"     ? (isDark ? "bg-red-500/15 text-red-400"   : "bg-red-100 text-red-700")
