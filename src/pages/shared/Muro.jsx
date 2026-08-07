@@ -947,30 +947,61 @@ const careerDisplay = {
   "Mecanica Automotriz": "Mecánica Automotriz",
 };
 
-function FiltroPills({ label, opciones, activos, onToggle, isDark, T, M, B }) {
+function FiltroDropdown({ label, icon, opciones, activos, onToggle, isDark, T, M, B, BG }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    function handler(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const hayActivos = activos.length > 0;
+
   return (
-    <div className="flex flex-col gap-2">
-      <span className={`text-xs font-semibold ${M}`}>{label}</span>
-      <div className="flex flex-wrap gap-2">
-        {opciones.map((op) => {
-          const activo = activos.includes(op.value);
-          return (
-            <button
-              key={op.value}
-              type="button"
-              onClick={() => onToggle(op.value)}
-              className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
-                activo
-                  ? "border-[#0F4D8A] bg-[#0F4D8A] text-white"
-                  : `${B} ${T} ${isDark ? "bg-[#1e1e1c]" : "bg-white"} hover:border-[#378ADD] hover:text-[#378ADD]`
-              }`}
-            >
-              <Icon icon={op.icon} width={13} className={activo ? "text-white" : M} />
-              {op.label}
-            </button>
-          );
-        })}
-      </div>
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={`flex items-center gap-1.5 text-xs font-medium pl-3 pr-2.5 py-1.5 rounded-full border transition-colors ${
+          hayActivos || open
+            ? "border-[#0F4D8A] bg-[#0F4D8A]/10 text-[#0F4D8A]"
+            : `${B} ${T} ${isDark ? "bg-[#1e1e1c]" : "bg-white"} hover:border-[#378ADD] hover:text-[#378ADD]`
+        }`}
+      >
+        <Icon icon={icon} width={13} className={hayActivos || open ? "text-[#0F4D8A]" : M} />
+        {label}
+        {hayActivos && (
+          <span className="w-4 h-4 rounded-full bg-[#0F4D8A] text-white text-[10px] flex items-center justify-center font-semibold">
+            {activos.length}
+          </span>
+        )}
+        <Icon icon="mdi:chevron-down" width={13} className={`transition-transform ${open ? "rotate-180" : ""} ${hayActivos || open ? "text-[#0F4D8A]" : M}`} />
+      </button>
+
+      {open && (
+        <div className={`absolute left-0 top-full mt-2 z-20 p-2.5 rounded-xl border shadow-lg min-w-max ${BG} ${B} flex flex-wrap gap-2`}>
+          {opciones.map((op) => {
+            const activo = activos.includes(op.value);
+            return (
+              <button
+                key={op.value}
+                type="button"
+                onClick={() => onToggle(op.value)}
+                className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border whitespace-nowrap transition-colors ${
+                  activo
+                    ? "border-[#0F4D8A] bg-[#0F4D8A] text-white"
+                    : `${B} ${T} ${isDark ? "bg-[#1e1e1c]" : "bg-white"} hover:border-[#378ADD] hover:text-[#378ADD]`
+                }`}
+              >
+                <Icon icon={op.icon} width={13} className={activo ? "text-white" : M} />
+                {op.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -1484,9 +1515,10 @@ export default function EstudianteDashboard() {
 
         {/* Panel de filtros (solo en tab principal, para estudiantes) */}
         {tabFeed === "principal" && filtrosAbierto && (
-          <div className={`p-4 rounded-xl border ${B} ${BG} flex flex-col gap-4`}>
-            <FiltroPills
+          <div className={`p-2.5 rounded-xl border ${B} ${BG} flex flex-wrap items-center gap-2`}>
+            <FiltroDropdown
               label="Fecha de publicación"
+              icon="mdi:calendar-outline"
               opciones={[
                 { value: "hoy",    label: "Hoy",          icon: "mdi:calendar-today-outline" },
                 { value: "semana", label: "Esta semana",  icon: "mdi:calendar-week-outline"  },
@@ -1495,11 +1527,12 @@ export default function EstudianteDashboard() {
               activos={filtroFecha ? [filtroFecha] : []}
               onToggle={(v) => setFiltroFecha((prev) => prev === v ? null : v)}
               isDark={isDark}
-              T={T} M={M} B={B}
+              T={T} M={M} B={B} BG={BG}
             />
 
-            <FiltroPills
+            <FiltroDropdown
               label="Tipo de publicación"
+              icon="mdi:briefcase-search-outline"
               opciones={[
                 { value: "practica",       label: "Práctica profesional", icon: "mdi:school-outline"    },
                 { value: "puesto_laboral", label: "Puesto laboral",       icon: "mdi:briefcase-outline" },
@@ -1507,11 +1540,12 @@ export default function EstudianteDashboard() {
               activos={filtrosTipo}
               onToggle={(v) => setFiltrosTipo((prev) => prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v])}
               isDark={isDark}
-              T={T} M={M} B={B}
+              T={T} M={M} B={B} BG={BG}
             />
 
-            <FiltroPills
+            <FiltroDropdown
               label="Modalidad"
+              icon="mdi:map-marker-radius-outline"
               opciones={[
                 { value: "presencial", label: "Presencial", icon: "mdi:map-marker-outline" },
                 { value: "remoto",     label: "Remoto",     icon: "mdi:laptop"              },
@@ -1520,13 +1554,13 @@ export default function EstudianteDashboard() {
               activos={filtrosModalidad}
               onToggle={(v) => setFiltrosModalidad((prev) => prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v])}
               isDark={isDark}
-              T={T} M={M} B={B}
+              T={T} M={M} B={B} BG={BG}
             />
 
             {(filtroFecha || filtrosTipo.length > 0 || filtrosModalidad.length > 0) && (
               <button
                 onClick={() => { setFiltroFecha(null); setFiltrosTipo([]); setFiltrosModalidad([]); }}
-                className="self-start text-xs font-medium text-[#378ADD] hover:underline"
+                className="text-xs font-medium text-[#378ADD] hover:underline ml-1"
               >
                 Limpiar filtros
               </button>
