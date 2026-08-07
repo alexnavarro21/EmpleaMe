@@ -971,8 +971,8 @@ export default function EstudianteDashboard() {
   const [talleres, setTalleres] = useState([]);
   const [siguiendoIds, setSiguiendoIds] = useState(new Set());
   const [tabFeed, setTabFeed] = useState("principal"); // "principal" | "siguiendo"
-  const [filtroModalidad, setFiltroModalidad] = useState(null);
-  const [filtroTipo, setFiltroTipo] = useState(null);
+  const [filtrosModalidad, setFiltrosModalidad] = useState([]);
+  const [filtrosTipo, setFiltrosTipo] = useState([]);
   const [filtroFecha, setFiltroFecha] = useState(null); // null | "hoy" | "semana" | "mes"
   const [filtrosAbierto, setFiltrosAbierto] = useState(false);
 
@@ -1437,16 +1437,16 @@ export default function EstudianteDashboard() {
               <button
                 onClick={() => setFiltrosAbierto((v) => !v)}
                 className={`ml-auto flex items-center gap-1.5 text-xs px-3 py-1.5 mb-1 rounded-lg border transition-colors ${
-                  filtrosAbierto || filtroFecha || filtroTipo || filtroModalidad
+                  filtrosAbierto || filtroFecha || filtrosTipo.length > 0 || filtrosModalidad.length > 0
                     ? "border-[#0F4D8A] text-[#0F4D8A] bg-[#0F4D8A]/10"
                     : `${B} ${M} hover:border-[#378ADD] hover:text-[#378ADD]`
                 }`}
               >
                 <Icon icon="mdi:filter-outline" width={14} />
                 Filtros
-                {(filtroFecha || filtroTipo || filtroModalidad) && (
+                {(filtroFecha || filtrosTipo.length > 0 || filtrosModalidad.length > 0) && (
                   <span className="w-4 h-4 rounded-full bg-[#0F4D8A] text-white text-xs flex items-center justify-center font-semibold">
-                    {[filtroFecha, filtroTipo, filtroModalidad].filter(Boolean).length}
+                    {(filtroFecha ? 1 : 0) + filtrosTipo.length + filtrosModalidad.length}
                   </span>
                 )}
               </button>
@@ -1474,43 +1474,67 @@ export default function EstudianteDashboard() {
               </select>
             </div>
 
-            {/* Tipo de publicación */}
-            <div className="flex flex-col gap-1 min-w-[150px]">
+            {/* Tipo de publicación (selección múltiple) */}
+            <div className="flex flex-col gap-1 min-w-[190px]">
               <label className={`text-xs font-medium ${M}`}>Tipo de publicación</label>
-              <select
-                value={filtroTipo || ""}
-                onChange={(e) => setFiltroTipo(e.target.value || null)}
-                className={`text-xs px-2.5 py-1.5 rounded-lg border outline-none transition-colors ${B} ${
-                  isDark ? "bg-[#262624] text-[#D3D1C7]" : "bg-white text-[#2C2C2A]"
-                } ${filtroTipo ? "border-[#0F4D8A]" : ""}`}
-              >
-                <option value="">Todos los tipos</option>
-                <option value="practica">Práctica profesional</option>
-                <option value="puesto_laboral">Puesto laboral</option>
-              </select>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { value: "practica",       label: "Práctica profesional" },
+                  { value: "puesto_laboral", label: "Puesto laboral" },
+                ].map((op) => {
+                  const activo = filtrosTipo.includes(op.value);
+                  return (
+                    <button
+                      key={op.value}
+                      type="button"
+                      onClick={() => setFiltrosTipo((prev) => activo ? prev.filter((v) => v !== op.value) : [...prev, op.value])}
+                      className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${
+                        activo
+                          ? "border-[#0F4D8A] bg-[#0F4D8A]/10 text-[#0F4D8A]"
+                          : `${B} ${isDark ? "bg-[#262624] text-[#D3D1C7]" : "bg-white text-[#2C2C2A]"} hover:border-[#378ADD]`
+                      }`}
+                    >
+                      <Icon icon={activo ? "mdi:checkbox-marked" : "mdi:checkbox-blank-outline"} width={13} />
+                      {op.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Modalidad */}
-            <div className="flex flex-col gap-1 min-w-[140px]">
+            {/* Modalidad (selección múltiple) */}
+            <div className="flex flex-col gap-1 min-w-[190px]">
               <label className={`text-xs font-medium ${M}`}>Modalidad</label>
-              <select
-                value={filtroModalidad || ""}
-                onChange={(e) => setFiltroModalidad(e.target.value || null)}
-                className={`text-xs px-2.5 py-1.5 rounded-lg border outline-none transition-colors ${B} ${
-                  isDark ? "bg-[#262624] text-[#D3D1C7]" : "bg-white text-[#2C2C2A]"
-                } ${filtroModalidad ? "border-[#0F4D8A]" : ""}`}
-              >
-                <option value="">Todas las modalidades</option>
-                <option value="presencial">Presencial</option>
-                <option value="remoto">Remoto</option>
-                <option value="hibrido">Híbrido</option>
-              </select>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { value: "presencial", label: "Presencial" },
+                  { value: "remoto",     label: "Remoto"     },
+                  { value: "hibrido",    label: "Híbrido"    },
+                ].map((op) => {
+                  const activo = filtrosModalidad.includes(op.value);
+                  return (
+                    <button
+                      key={op.value}
+                      type="button"
+                      onClick={() => setFiltrosModalidad((prev) => activo ? prev.filter((v) => v !== op.value) : [...prev, op.value])}
+                      className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${
+                        activo
+                          ? "border-[#0F4D8A] bg-[#0F4D8A]/10 text-[#0F4D8A]"
+                          : `${B} ${isDark ? "bg-[#262624] text-[#D3D1C7]" : "bg-white text-[#2C2C2A]"} hover:border-[#378ADD]`
+                      }`}
+                    >
+                      <Icon icon={activo ? "mdi:checkbox-marked" : "mdi:checkbox-blank-outline"} width={13} />
+                      {op.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            {(filtroFecha || filtroTipo || filtroModalidad) && (
+            {(filtroFecha || filtrosTipo.length > 0 || filtrosModalidad.length > 0) && (
               <div className="flex items-end">
                 <button
-                  onClick={() => { setFiltroFecha(null); setFiltroTipo(null); setFiltroModalidad(null); }}
+                  onClick={() => { setFiltroFecha(null); setFiltrosTipo([]); setFiltrosModalidad([]); }}
                   className="text-xs px-3 py-1.5 rounded-lg border border-red-400/50 text-red-400 hover:bg-red-400/10 transition-colors"
                 >
                   Limpiar filtros
@@ -1541,12 +1565,13 @@ export default function EstudianteDashboard() {
             feedUnificado = feedUnificado.filter((item) => item._fecha >= inicio);
           }
 
-          // Filtrar por modalidad/tipo (solo aplica a posts de tipo vacante)
-          if (filtroModalidad || filtroTipo) {
+          // Filtrar por modalidad/tipo: solo tiene sentido sobre posts de vacante,
+          // así que al activarlos se excluye todo lo demás (logros, talleres, etc.)
+          if (filtrosModalidad.length > 0 || filtrosTipo.length > 0) {
             feedUnificado = feedUnificado.filter((item) => {
-              if (item._tipo !== "publicacion" || item.tipo !== "vacante") return true;
-              if (filtroModalidad && item.modalidad !== filtroModalidad) return false;
-              if (filtroTipo && item.vacante_tipo !== filtroTipo) return false;
+              if (item._tipo !== "publicacion" || item.tipo !== "vacante") return false;
+              if (filtrosModalidad.length > 0 && !filtrosModalidad.includes(item.modalidad)) return false;
+              if (filtrosTipo.length > 0 && !filtrosTipo.includes(item.vacante_tipo)) return false;
               return true;
             });
           }
@@ -1572,7 +1597,7 @@ export default function EstudianteDashboard() {
                         : "Cuando publiquen algo, aparecerá aquí."}
                     </p>
                   </>
-                ) : (filtroModalidad || filtroTipo) ? (
+                ) : (filtrosModalidad.length > 0 || filtrosTipo.length > 0) ? (
                   <>
                     <p className={`text-sm font-medium ${T}`}>Sin vacantes con ese filtro</p>
                     <p className="text-xs mt-1">Prueba con otros filtros o limpia la selección.</p>
@@ -1608,7 +1633,7 @@ export default function EstudianteDashboard() {
                       }}
                     />
               )}
-              {hayMasPubs && !filtroFecha && !filtroModalidad && !filtroTipo && tabFeed === "principal" && (
+              {hayMasPubs && !filtroFecha && filtrosModalidad.length === 0 && filtrosTipo.length === 0 && tabFeed === "principal" && (
                 <button
                   onClick={cargarMasPublicaciones}
                   disabled={cargandoMas}
