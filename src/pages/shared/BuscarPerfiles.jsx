@@ -214,46 +214,49 @@ function TallerModal({ taller, role, onClose }) {
   const gratuito = !taller.costo || parseFloat(taller.costo) === 0;
   const costoStr = gratuito ? "Gratuito" : `$${Number(taller.costo).toLocaleString("es-CL")}`;
 
-  const infoItems = [
-    taller.area      && { icon: "mdi:tag-outline",            label: taller.area,      color: "text-[#0F4D8A]" },
-    taller.modalidad && { icon: "mdi:map-marker-outline",     label: taller.modalidad  },
-    taller.duracion  && { icon: "mdi:clock-outline",          label: taller.duracion   },
-    taller.horario   && { icon: "mdi:calendar-clock-outline", label: taller.horario    },
-    taller.cupos != null && { icon: "mdi:account-group-outline", label: `${taller.cupos_disponibles ?? taller.cupos} cupos disponibles` },
-    taller.fecha_inicio && { icon: "mdi:calendar-start",      label: new Date(taller.fecha_inicio).toLocaleDateString("es-CL") },
-    { icon: gratuito ? "mdi:gift-outline" : "mdi:currency-usd", label: costoStr, color: gratuito ? "text-green-500" : "text-amber-500" },
+  const infoFields = [
+    taller.area           && { icon: "mdi:tag-outline",            label: "Área",             value: taller.area },
+    taller.modalidad       && { icon: "mdi:map-marker-outline",     label: "Modalidad",        value: taller.modalidad },
+    { icon: gratuito ? "mdi:gift-outline" : "mdi:currency-usd", label: "Costo", value: costoStr },
+    taller.duracion        && { icon: "mdi:clock-outline",          label: "Duración",         value: taller.duracion },
+    taller.horario         && { icon: "mdi:calendar-clock-outline", label: "Horario",          value: taller.horario },
+    taller.direccion       && { icon: "mdi:map-outline",            label: "Ubicación",        value: taller.direccion },
+    taller.cupos != null    && { icon: "mdi:account-group-outline",  label: "Cupos disponibles",value: taller.cupos_disponibles ?? taller.cupos },
+    taller.fecha_inicio    && { icon: "mdi:calendar-start",         label: "Fecha de inicio",  value: new Date(taller.fecha_inicio).toLocaleDateString("es-CL", { day: "2-digit", month: "long", year: "numeric" }) },
+    taller.fecha_limite    && { icon: "mdi:calendar-alert-outline", label: "Inscríbete hasta", value: new Date(taller.fecha_limite).toLocaleDateString("es-CL", { day: "2-digit", month: "long", year: "numeric" }) },
   ].filter(Boolean);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
-      <div className={`relative w-full max-w-lg max-h-[88vh] flex flex-col rounded-2xl shadow-2xl border ${B} ${BG}`} onClick={(e) => e.stopPropagation()}>
+      <div className={`relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl shadow-2xl border ${B} ${BG}`} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className={`px-5 py-4 border-b ${B} flex items-start justify-between gap-3`}>
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center flex-shrink-0">
-              <Icon icon="mdi:school-outline" width={20} className="text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className={`text-base font-semibold ${T} leading-snug`}>{taller.titulo}</p>
-              <p className={`text-xs ${M}`}>{taller.nombre_institucion || "Centro educacional"}</p>
-            </div>
+        <div className={`px-6 pt-6 pb-5 border-b ${B} flex items-start gap-4`}>
+          <div className="w-12 h-12 rounded-xl bg-[#0F4D8A] flex items-center justify-center flex-shrink-0">
+            <Icon icon="mdi:school-outline" width={22} className="text-white" />
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-3">
+              <p className={`text-lg font-bold ${T} leading-snug`}>{taller.titulo}</p>
+              <button onClick={onClose} className={`p-1.5 -mt-1 -mr-1 rounded-lg transition-colors ${M} ${isDark ? "hover:bg-[#262624]" : "hover:bg-[#F7F6F3]"} flex-shrink-0`}>
+                <Icon icon="mdi:close" width={18} />
+              </button>
+            </div>
+            <p className="text-sm font-semibold text-[#378ADD] mt-0.5">{taller.nombre_institucion || "Centro educacional"}</p>
             <Badge color={taller.esta_activo ? "green" : "gray"}>{taller.esta_activo ? "Activo" : "Cerrado"}</Badge>
-            <button onClick={onClose} className={`p-1.5 rounded-lg hover:${S} transition-colors ${M}`}>
-              <Icon icon="mdi:close" width={18} />
-            </button>
           </div>
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto flex-1 px-5 py-4 flex flex-col gap-4">
-          {/* Info chips */}
-          <div className={`flex flex-wrap gap-3 p-3 rounded-xl border ${B} ${S}`}>
-            {infoItems.map((item, i) => (
-              <div key={i} className="flex items-center gap-1.5">
-                <Icon icon={item.icon} width={14} className={item.color || M} />
-                <span className={`text-xs ${item.color || M} capitalize`}>{item.label}</span>
+        <div className="overflow-y-auto flex-1 px-6 py-5 flex flex-col gap-6">
+          {/* Info grid */}
+          <div className="grid grid-cols-2 gap-3">
+            {infoFields.map((item, i) => (
+              <div key={i} className={`flex items-start gap-2.5 p-3 rounded-xl border ${B} ${S}`}>
+                <Icon icon={item.icon} width={16} className="text-[#378ADD] flex-shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <p className={`text-[10px] font-semibold uppercase tracking-wide ${M}`}>{item.label}</p>
+                  <p className={`text-sm font-medium ${T} capitalize truncate`}>{item.value}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -261,8 +264,16 @@ function TallerModal({ taller, role, onClose }) {
           {/* Descripción */}
           {taller.descripcion && (
             <div>
-              <p className={`text-xs font-semibold uppercase tracking-wide ${M} mb-1.5`}>Descripción</p>
-              <p className={`text-sm leading-relaxed ${T}`}>{taller.descripcion}</p>
+              <p className={`text-xs font-semibold uppercase tracking-wide ${M} mb-2`}>Descripción</p>
+              <p className={`text-sm leading-relaxed ${T} whitespace-pre-line`}>{taller.descripcion}</p>
+            </div>
+          )}
+
+          {/* Requisitos */}
+          {taller.requisitos && (
+            <div>
+              <p className={`text-xs font-semibold uppercase tracking-wide ${M} mb-2`}>Requisitos</p>
+              <p className={`text-sm leading-relaxed ${T} whitespace-pre-line`}>{taller.requisitos}</p>
             </div>
           )}
 
@@ -275,11 +286,11 @@ function TallerModal({ taller, role, onClose }) {
 
         {/* Footer acción */}
         {puedeInscribirse && (
-          <div className={`px-5 py-3 border-t ${B}`}>
+          <div className={`px-6 py-4 border-t ${B}`}>
             <button
               onClick={handleInscribirse}
               disabled={estado !== "idle"}
-              className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
+              className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
                 estado === "ok"        ? (isDark ? "bg-green-500/15 text-green-400"  : "bg-green-100 text-green-700")
                 : estado === "duplicado" ? (isDark ? "bg-amber-500/15 text-amber-400" : "bg-amber-100 text-amber-700")
                 : estado === "sin_cupos" ? (isDark ? "bg-red-500/15 text-red-400"    : "bg-red-100 text-red-700")
