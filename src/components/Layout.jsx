@@ -289,19 +289,25 @@ export default function Layout() {
             <div className="relative">
               <form onSubmit={handleSearchSubmit}>
                 <div className="relative">
-                  <Icon
-                    icon={searchLoading ? "mdi:loading" : "mdi:magnify"}
-                    width={16}
-                    className={`absolute left-3.5 top-1/2 -translate-y-1/2 text-[#85B7EB] pointer-events-none ${searchLoading ? "animate-spin" : ""}`}
-                  />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={handleSearchChange}
                     onFocus={() => { if (searchQuery.trim() && suggestions.length > 0) setShowSuggestions(true); }}
                     placeholder="Buscar estudiantes, empresas..."
-                    className="w-64 pl-9 pr-4 py-1.5 rounded-full text-sm bg-[#0F4D8A]/50 border border-[#1a5fa8] text-[#E6F1FB] placeholder-[#85B7EB] outline-none focus:w-[28rem] focus:bg-[#0F4D8A]/80 focus:border-[#378ADD] transition-all duration-200"
+                    className="w-64 pl-4 pr-10 py-1.5 rounded-full text-sm bg-[#0F4D8A]/50 border border-[#1a5fa8] text-[#E6F1FB] placeholder-[#85B7EB] outline-none focus:w-[28rem] focus:bg-[#0F4D8A]/80 focus:border-[#378ADD] transition-all duration-200"
                   />
+                  <button
+                    type="submit"
+                    aria-label="Buscar"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-[#378ADD] hover:bg-[#4a9aee] flex items-center justify-center transition-colors"
+                  >
+                    <Icon
+                      icon={searchLoading ? "mdi:loading" : "mdi:magnify"}
+                      width={15}
+                      className={`text-white ${searchLoading ? "animate-spin" : ""}`}
+                    />
+                  </button>
                 </div>
               </form>
 
