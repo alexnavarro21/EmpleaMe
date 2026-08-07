@@ -806,7 +806,10 @@ router.post("/alumnos/excel", ...auth, upload.single("archivo"), async (req, res
 // Formato: exportación de nómina del colegio (CSV/XLS)
 // Columnas relevantes: Run(6), Dígito Ver.(7), Genero(8), Nombres(9),
 //   Apellido Paterno(10), Apellido Materno(11), Email(15), Telefono(16), Celular(17), Comuna(13)
-// Contraseña por defecto: run+dígito sin puntuación (ej. 25399679K)
+// El RUT es el identificador: muchos alumnos no traen correo, y el que traen a veces
+// es de un apoderado y se repite entre hermanos — por eso el correo nunca bloquea la
+// creación de la cuenta, solo se omite si ya está en uso por otra persona.
+// Contraseña por defecto: primera letra del nombre + últimos 4 dígitos del RUN (ej. G9679)
 router.post("/alumnos/nomina", ...auth, upload.single("archivo"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "Se requiere un archivo" });
 
@@ -853,16 +856,34 @@ router.post("/alumnos/nomina", ...auth, upload.single("archivo"), async (req, re
       const genero          = generoRaw === "M" ? "masculino" : generoRaw === "F" ? "femenino" : "no_especifica";
       const comuna          = String(fila[13] ?? "").trim() || null;
 
-      const contrasena = `${runRaw}${dvRaw}`;
+      const contrasena = `${nombre.charAt(0)}${runRaw.slice(-4)}`;
 
       const conn = await db.getConnection();
       try {
         await conn.beginTransaction();
         const hash = await bcrypt.hash(contrasena, 10);
-        const [result] = await conn.query(
-          "INSERT INTO usuarios (correo, rut, contrasena_hash, rol) VALUES (?, ?, ?, 'estudiante')",
-          [correo, rut, hash]
-        );
+
+        let correoAUsar = correo;
+        let result;
+        try {
+          [result] = await conn.query(
+            "INSERT INTO usuarios (correo, rut, contrasena_hash, rol) VALUES (?, ?, ?, 'estudiante')",
+            [correoAUsar, rut, hash]
+          );
+        } catch (e) {
+          // El correo ya pertenece a otra cuenta (ej. mismo correo del apoderado entre hermanos):
+          // el RUT es el identificador real, así que la cuenta se crea igual, sin correo.
+          if (e.code === "ER_DUP_ENTRY" && e.message.includes("usuarios.correo")) {
+            correoAUsar = null;
+            [result] = await conn.query(
+              "INSERT INTO usuarios (correo, rut, contrasena_hash, rol) VALUES (?, ?, ?, 'estudiante')",
+              [correoAUsar, rut, hash]
+            );
+          } else {
+            throw e;
+          }
+        }
+
         await conn.query(
           `INSERT INTO perfiles_estudiantes
            (usuario_id, nombre, apellido_paterno, apellido_materno, rut, telefono, colegio_id, genero, comuna)
@@ -870,6 +891,9 @@ router.post("/alumnos/nomina", ...auth, upload.single("archivo"), async (req, re
           [result.insertId, nombre, apellidoPaterno, apellidoMaterno, rut, telefono, req.usuario.id, genero, comuna]
         );
         await conn.commit();
+        if (correo && !correoAUsar) {
+          errores.push(`Fila ${i + 1} (${rut}): correo "${correo}" ya está en uso por otra cuenta, se creó sin correo (inicia sesión con RUT)`);
+        }
         creados.push({ rut, nombre: `${nombre} ${apellidoPaterno}`.trim() });
       } catch (e) {
         await conn.rollback();
