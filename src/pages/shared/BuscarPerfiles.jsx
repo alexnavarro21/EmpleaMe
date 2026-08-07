@@ -340,8 +340,6 @@ export default function BuscarPerfiles() {
     role === "admin"   ? "/admin/candidato"   :
     role === "slep"    ? "/slep/candidato"    : "/estudiante/candidato";
 
-  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
-
   // Sincronizar search con cambios en ?q= de la URL (cuando el navbar escribe)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -349,9 +347,10 @@ export default function BuscarPerfiles() {
   }, [location.search]);
 
   useEffect(() => {
-    const colegioFiltro = role === "admin" ? usuario.id : undefined;
+    // El buscador general muestra todos los estudiantes de la plataforma, no solo
+    // los propios del colegio (a diferencia de la gestión en "Usuarios").
     const fetchColegios = canSeeColegios ? getColegios() : Promise.reject();
-    Promise.allSettled([getEstudiantes(colegioFiltro), getEmpresas(), getVacantes(), getTalleres(true), fetchColegios])
+    Promise.allSettled([getEstudiantes(), getEmpresas(), getVacantes(), getTalleres(true), fetchColegios])
       .then(([sts, cos, vacs, tals, cols]) => {
         if (sts.status  === "fulfilled") setStudents(sts.value);
         if (cos.status  === "fulfilled") setCompanies(cos.value);
