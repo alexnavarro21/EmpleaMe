@@ -12,11 +12,10 @@ dist
 dist-ssr
 *.local
 *.env
-
+cosas-a-hacer.txt
 
 .claude/
 # Claude Code local settings
-.claude/
 
 # Editor directories and files
 .vscode/*
