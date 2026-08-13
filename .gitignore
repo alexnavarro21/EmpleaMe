@@ -20,7 +20,6 @@ nomina_excel*
 cosas-a-hacer.txt
 
 .claude/
-# Claude Code local settings
 
 # Editor directories and files
 .vscode/*
