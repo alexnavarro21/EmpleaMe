@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
-import { Card, Badge, PrimaryButton } from "../../components/ui";
+import { Card, Badge, PrimaryButton, Paginacion } from "../../components/ui";
 import {
   getEstudiantes, getEmpresas, getVacantes, getTalleres, getColegios,
   iniciarMensajeDirecto, iniciarConversacionConEmpresa,
@@ -50,42 +50,59 @@ function VacanteModal({ vacante, role, onClose }) {
     }
   };
 
-  const infoItems = [
-    vacante.tipo      && { icon: vacante.tipo === "puesto_laboral" ? "mdi:briefcase-outline" : "mdi:school-outline", label: vacante.tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica profesional", color: vacante.tipo === "puesto_laboral" ? "text-green-500" : "text-orange-500" },
-    vacante.area      && { icon: "mdi:tag-outline",           label: vacante.area,      color: "text-[#378ADD]" },
-    vacante.modalidad && { icon: vacante.modalidad.toLowerCase() === "remoto" ? "mdi:laptop" : vacante.modalidad.toLowerCase() === "hibrido" || vacante.modalidad.toLowerCase() === "híbrido" ? "mdi:home-city" : "mdi:map-marker-outline", label: vacante.modalidad },
-    vacante.duracion  && { icon: "mdi:clock-outline",         label: vacante.duracion   },
-    vacante.remuneracion && { icon: "mdi:currency-usd",       label: vacante.remuneracion },
-    vacante.direccion && { icon: "mdi:map-outline",           label: vacante.direccion  },
+  const esPuestoLaboral = vacante.tipo === "puesto_laboral";
+  const modalidadIcon = (vacante.modalidad || "").toLowerCase() === "remoto"
+    ? "mdi:laptop"
+    : (vacante.modalidad || "").toLowerCase().includes("hibrido") || (vacante.modalidad || "").toLowerCase().includes("híbrido")
+    ? "mdi:home-city"
+    : "mdi:map-marker-outline";
+
+  const infoFields = [
+    { icon: esPuestoLaboral ? "mdi:briefcase-outline" : "mdi:school-outline", label: "Tipo de contrato", value: esPuestoLaboral ? "Puesto laboral" : "Práctica profesional" },
+    vacante.area         && { icon: "mdi:tag-outline",          label: "Área",             value: vacante.area },
+    vacante.modalidad     && { icon: modalidadIcon,               label: "Modalidad",        value: vacante.modalidad },
+    vacante.remuneracion && { icon: "mdi:currency-usd",         label: "Remuneración",     value: vacante.remuneracion },
+    vacante.duracion      && { icon: "mdi:clock-outline",         label: "Duración",         value: vacante.duracion },
+    vacante.horario       && { icon: "mdi:calendar-clock-outline",label: "Horario",          value: vacante.horario },
+    vacante.direccion     && { icon: "mdi:map-outline",           label: "Ubicación",        value: vacante.direccion },
+    vacante.fecha_limite  && { icon: "mdi:calendar-alert-outline",label: "Postula hasta",    value: new Date(vacante.fecha_limite).toLocaleDateString("es-CL", { day: "2-digit", month: "long", year: "numeric" }) },
   ].filter(Boolean);
+
+  const empresaInicial = vacante.nombre_empresa?.[0]?.toUpperCase() ?? "E";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
-      <div className={`relative w-full max-w-lg max-h-[88vh] flex flex-col rounded-2xl shadow-2xl border ${B} ${BG}`} onClick={(e) => e.stopPropagation()}>
+      <div className={`relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl shadow-2xl border ${B} ${BG}`} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className={`px-5 py-4 border-b ${B} flex items-start justify-between gap-3`}>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <p className={`text-base font-semibold ${T} leading-snug`}>{vacante.titulo}</p>
-              <Badge color={vacante.tipo === "puesto_laboral" ? "green" : "orange"}>
-                {vacante.tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica"}
-              </Badge>
-            </div>
-            <p className="text-sm font-medium text-[#378ADD]">{vacante.nombre_empresa}</p>
+        <div className={`px-6 pt-6 pb-5 border-b ${B} flex items-start gap-4`}>
+          <div className="w-12 h-12 rounded-xl bg-[#0F4D8A] flex items-center justify-center flex-shrink-0 text-white font-bold text-lg">
+            {empresaInicial}
           </div>
-          <button onClick={onClose} className={`p-1.5 rounded-lg hover:${S} transition-colors ${M} flex-shrink-0`}>
-            <Icon icon="mdi:close" width={18} />
-          </button>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-3">
+              <p className={`text-lg font-bold ${T} leading-snug`}>{vacante.titulo}</p>
+              <button onClick={onClose} className={`p-1.5 -mt-1 -mr-1 rounded-lg transition-colors ${M} ${isDark ? "hover:bg-[#262624]" : "hover:bg-[#F7F6F3]"} flex-shrink-0`}>
+                <Icon icon="mdi:close" width={18} />
+              </button>
+            </div>
+            <p className="text-sm font-semibold text-[#378ADD] mt-0.5">{vacante.nombre_empresa}</p>
+            <Badge color={esPuestoLaboral ? "green" : "orange"}>
+              {esPuestoLaboral ? "Puesto laboral" : "Práctica profesional"}
+            </Badge>
+          </div>
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto flex-1 px-5 py-4 flex flex-col gap-4">
-          {/* Info chips */}
-          <div className={`flex flex-wrap gap-3 p-3 rounded-xl border ${B} ${S}`}>
-            {infoItems.map((item, i) => (
-              <div key={i} className="flex items-center gap-1.5">
-                <Icon icon={item.icon} width={14} className={item.color || M} />
-                <span className={`text-xs ${item.color || M} capitalize`}>{item.label}</span>
+        <div className="overflow-y-auto flex-1 px-6 py-5 flex flex-col gap-6">
+          {/* Info grid */}
+          <div className="grid grid-cols-2 gap-3">
+            {infoFields.map((item, i) => (
+              <div key={i} className={`flex items-start gap-2.5 p-3 rounded-xl border ${B} ${S}`}>
+                <Icon icon={item.icon} width={16} className="text-[#378ADD] flex-shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <p className={`text-[10px] font-semibold uppercase tracking-wide ${M}`}>{item.label}</p>
+                  <p className={`text-sm font-medium ${T} capitalize truncate`}>{item.value}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -93,8 +110,24 @@ function VacanteModal({ vacante, role, onClose }) {
           {/* Descripción */}
           {vacante.descripcion && (
             <div>
-              <p className={`text-xs font-semibold uppercase tracking-wide ${M} mb-1.5`}>Descripción</p>
-              <p className={`text-sm leading-relaxed ${T}`}>{vacante.descripcion}</p>
+              <p className={`text-xs font-semibold uppercase tracking-wide ${M} mb-2`}>Descripción</p>
+              <p className={`text-sm leading-relaxed ${T} whitespace-pre-line`}>{vacante.descripcion}</p>
+            </div>
+          )}
+
+          {/* Requisitos */}
+          {vacante.requisitos && (
+            <div>
+              <p className={`text-xs font-semibold uppercase tracking-wide ${M} mb-2`}>Requisitos</p>
+              <p className={`text-sm leading-relaxed ${T} whitespace-pre-line`}>{vacante.requisitos}</p>
+            </div>
+          )}
+
+          {/* Beneficios */}
+          {vacante.beneficios && (
+            <div>
+              <p className={`text-xs font-semibold uppercase tracking-wide ${M} mb-2`}>Beneficios</p>
+              <p className={`text-sm leading-relaxed ${T} whitespace-pre-line`}>{vacante.beneficios}</p>
             </div>
           )}
 
@@ -113,11 +146,11 @@ function VacanteModal({ vacante, role, onClose }) {
 
         {/* Footer acción */}
         {role === "estudiante" && (
-          <div className={`px-5 py-3 border-t ${B}`}>
+          <div className={`px-6 py-4 border-t ${B}`}>
             <button
               onClick={handlePostular}
               disabled={estado !== "idle"}
-              className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
+              className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
                 estado === "ok"        ? (isDark ? "bg-green-500/15 text-green-400" : "bg-green-100 text-green-700")
                 : estado === "duplicado" ? (isDark ? "bg-amber-500/15 text-amber-400" : "bg-amber-100 text-amber-700")
                 : estado === "error"     ? (isDark ? "bg-red-500/15 text-red-400"   : "bg-red-100 text-red-700")
@@ -181,46 +214,49 @@ function TallerModal({ taller, role, onClose }) {
   const gratuito = !taller.costo || parseFloat(taller.costo) === 0;
   const costoStr = gratuito ? "Gratuito" : `$${Number(taller.costo).toLocaleString("es-CL")}`;
 
-  const infoItems = [
-    taller.area      && { icon: "mdi:tag-outline",            label: taller.area,      color: "text-[#0F4D8A]" },
-    taller.modalidad && { icon: "mdi:map-marker-outline",     label: taller.modalidad  },
-    taller.duracion  && { icon: "mdi:clock-outline",          label: taller.duracion   },
-    taller.horario   && { icon: "mdi:calendar-clock-outline", label: taller.horario    },
-    taller.cupos != null && { icon: "mdi:account-group-outline", label: `${taller.cupos_disponibles ?? taller.cupos} cupos disponibles` },
-    taller.fecha_inicio && { icon: "mdi:calendar-start",      label: new Date(taller.fecha_inicio).toLocaleDateString("es-CL") },
-    { icon: gratuito ? "mdi:gift-outline" : "mdi:currency-usd", label: costoStr, color: gratuito ? "text-green-500" : "text-amber-500" },
+  const infoFields = [
+    taller.area           && { icon: "mdi:tag-outline",            label: "Área",             value: taller.area },
+    taller.modalidad       && { icon: "mdi:map-marker-outline",     label: "Modalidad",        value: taller.modalidad },
+    { icon: gratuito ? "mdi:gift-outline" : "mdi:currency-usd", label: "Costo", value: costoStr },
+    taller.duracion        && { icon: "mdi:clock-outline",          label: "Duración",         value: taller.duracion },
+    taller.horario         && { icon: "mdi:calendar-clock-outline", label: "Horario",          value: taller.horario },
+    taller.direccion       && { icon: "mdi:map-outline",            label: "Ubicación",        value: taller.direccion },
+    taller.cupos != null    && { icon: "mdi:account-group-outline",  label: "Cupos disponibles",value: taller.cupos_disponibles ?? taller.cupos },
+    taller.fecha_inicio    && { icon: "mdi:calendar-start",         label: "Fecha de inicio",  value: new Date(taller.fecha_inicio).toLocaleDateString("es-CL", { day: "2-digit", month: "long", year: "numeric" }) },
+    taller.fecha_limite    && { icon: "mdi:calendar-alert-outline", label: "Inscríbete hasta", value: new Date(taller.fecha_limite).toLocaleDateString("es-CL", { day: "2-digit", month: "long", year: "numeric" }) },
   ].filter(Boolean);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
-      <div className={`relative w-full max-w-lg max-h-[88vh] flex flex-col rounded-2xl shadow-2xl border ${B} ${BG}`} onClick={(e) => e.stopPropagation()}>
+      <div className={`relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl shadow-2xl border ${B} ${BG}`} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className={`px-5 py-4 border-b ${B} flex items-start justify-between gap-3`}>
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="w-10 h-10 rounded-full bg-[#0F4D8A] flex items-center justify-center flex-shrink-0">
-              <Icon icon="mdi:school-outline" width={20} className="text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className={`text-base font-semibold ${T} leading-snug`}>{taller.titulo}</p>
-              <p className={`text-xs ${M}`}>{taller.nombre_institucion || "Centro educacional"}</p>
-            </div>
+        <div className={`px-6 pt-6 pb-5 border-b ${B} flex items-start gap-4`}>
+          <div className="w-12 h-12 rounded-xl bg-[#0F4D8A] flex items-center justify-center flex-shrink-0">
+            <Icon icon="mdi:school-outline" width={22} className="text-white" />
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-3">
+              <p className={`text-lg font-bold ${T} leading-snug`}>{taller.titulo}</p>
+              <button onClick={onClose} className={`p-1.5 -mt-1 -mr-1 rounded-lg transition-colors ${M} ${isDark ? "hover:bg-[#262624]" : "hover:bg-[#F7F6F3]"} flex-shrink-0`}>
+                <Icon icon="mdi:close" width={18} />
+              </button>
+            </div>
+            <p className="text-sm font-semibold text-[#378ADD] mt-0.5">{taller.nombre_institucion || "Centro educacional"}</p>
             <Badge color={taller.esta_activo ? "green" : "gray"}>{taller.esta_activo ? "Activo" : "Cerrado"}</Badge>
-            <button onClick={onClose} className={`p-1.5 rounded-lg hover:${S} transition-colors ${M}`}>
-              <Icon icon="mdi:close" width={18} />
-            </button>
           </div>
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto flex-1 px-5 py-4 flex flex-col gap-4">
-          {/* Info chips */}
-          <div className={`flex flex-wrap gap-3 p-3 rounded-xl border ${B} ${S}`}>
-            {infoItems.map((item, i) => (
-              <div key={i} className="flex items-center gap-1.5">
-                <Icon icon={item.icon} width={14} className={item.color || M} />
-                <span className={`text-xs ${item.color || M} capitalize`}>{item.label}</span>
+        <div className="overflow-y-auto flex-1 px-6 py-5 flex flex-col gap-6">
+          {/* Info grid */}
+          <div className="grid grid-cols-2 gap-3">
+            {infoFields.map((item, i) => (
+              <div key={i} className={`flex items-start gap-2.5 p-3 rounded-xl border ${B} ${S}`}>
+                <Icon icon={item.icon} width={16} className="text-[#378ADD] flex-shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <p className={`text-[10px] font-semibold uppercase tracking-wide ${M}`}>{item.label}</p>
+                  <p className={`text-sm font-medium ${T} capitalize truncate`}>{item.value}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -228,8 +264,16 @@ function TallerModal({ taller, role, onClose }) {
           {/* Descripción */}
           {taller.descripcion && (
             <div>
-              <p className={`text-xs font-semibold uppercase tracking-wide ${M} mb-1.5`}>Descripción</p>
-              <p className={`text-sm leading-relaxed ${T}`}>{taller.descripcion}</p>
+              <p className={`text-xs font-semibold uppercase tracking-wide ${M} mb-2`}>Descripción</p>
+              <p className={`text-sm leading-relaxed ${T} whitespace-pre-line`}>{taller.descripcion}</p>
+            </div>
+          )}
+
+          {/* Requisitos */}
+          {taller.requisitos && (
+            <div>
+              <p className={`text-xs font-semibold uppercase tracking-wide ${M} mb-2`}>Requisitos</p>
+              <p className={`text-sm leading-relaxed ${T} whitespace-pre-line`}>{taller.requisitos}</p>
             </div>
           )}
 
@@ -242,11 +286,11 @@ function TallerModal({ taller, role, onClose }) {
 
         {/* Footer acción */}
         {puedeInscribirse && (
-          <div className={`px-5 py-3 border-t ${B}`}>
+          <div className={`px-6 py-4 border-t ${B}`}>
             <button
               onClick={handleInscribirse}
               disabled={estado !== "idle"}
-              className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
+              className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
                 estado === "ok"        ? (isDark ? "bg-green-500/15 text-green-400"  : "bg-green-100 text-green-700")
                 : estado === "duplicado" ? (isDark ? "bg-amber-500/15 text-amber-400" : "bg-amber-100 text-amber-700")
                 : estado === "sin_cupos" ? (isDark ? "bg-red-500/15 text-red-400"    : "bg-red-100 text-red-700")
@@ -326,6 +370,8 @@ export default function BuscarPerfiles() {
   const [filtroRemuneracion,  setFiltroRemuneracion]  = useState("todas"); // todas | con_paga | sin_paga
   const [minEvalDocente,      setMinEvalDocente]      = useState(1);
   const [reportarPerfil,     setReportarPerfil]     = useState(null); // { id, tipo }
+  const [pagina,             setPagina]             = useState(1);
+  const [porPagina,          setPorPagina]          = useState(10);
 
   const T  = isDark ? "text-[#D3D1C7]"   : "text-[#2C2C2A]";
   const M  = isDark ? "text-[#888780]"   : "text-[#5F5E5A]";
@@ -338,8 +384,6 @@ export default function BuscarPerfiles() {
     role === "admin"   ? "/admin/candidato"   :
     role === "slep"    ? "/slep/candidato"    : "/estudiante/candidato";
 
-  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
-
   // Sincronizar search con cambios en ?q= de la URL (cuando el navbar escribe)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -347,9 +391,10 @@ export default function BuscarPerfiles() {
   }, [location.search]);
 
   useEffect(() => {
-    const colegioFiltro = role === "admin" ? usuario.id : undefined;
+    // El buscador general muestra todos los estudiantes de la plataforma, no solo
+    // los propios del colegio (a diferencia de la gestión en "Usuarios").
     const fetchColegios = canSeeColegios ? getColegios() : Promise.reject();
-    Promise.allSettled([getEstudiantes(colegioFiltro), getEmpresas(), getVacantes(), getTalleres(true), fetchColegios])
+    Promise.allSettled([getEstudiantes(), getEmpresas(), getVacantes(), getTalleres(true), fetchColegios])
       .then(([sts, cos, vacs, tals, cols]) => {
         if (sts.status  === "fulfilled") setStudents(sts.value);
         if (cos.status  === "fulfilled") setCompanies(cos.value);
@@ -443,6 +488,16 @@ export default function BuscarPerfiles() {
     colegios:    filteredColegios.length,
   };
   const count = countMap[tab] ?? 0;
+
+  // Paginación de los resultados de la pestaña activa
+  useEffect(() => { setPagina(1); }, [
+    tab, search, selectedCareer, minGpa, minEvalDocente, selectedRegion, selectedComuna,
+    selectedHabilidades, selectedAreas, selectedModalidad, filtroPrecio, filtroRemuneracion,
+  ]);
+  const totalPaginas = Math.max(1, Math.ceil(count / porPagina));
+  const paginaSegura = Math.min(pagina, totalPaginas);
+  const paginar = (arr) => arr.slice((paginaSegura - 1) * porPagina, paginaSegura * porPagina);
+  const cambiarPorPagina = (v) => { setPorPagina(v); setPagina(1); };
   const tabLabel = { estudiantes: "estudiante", empresas: "empresa", vacantes: "vacante", talleres: "taller", colegios: "colegio" }[tab];
   const usuarioActual = JSON.parse(localStorage.getItem("usuario") || "{}");
 
@@ -749,10 +804,10 @@ export default function BuscarPerfiles() {
           {/* Estudiantes */}
           {tab === "estudiantes" && (
             <div className="grid grid-cols-2 gap-4">
-              {filteredStudents.map((s) => {
+              {paginar(filteredStudents).map((s) => {
                 const nombreCarrera = careerDisplay[s.carrera] || s.carrera;
                 return (
-                  <Card key={s.usuario_id} className="hover:border-[#378ADD] transition-colors">
+                  <Card key={s.usuario_id} className="hover:border-[#378ADD] transition-colors cursor-pointer" onClick={() => navigate(`${candidatoBase}/${s.usuario_id}`)}>
                     <div className="flex items-start gap-3 mb-3">
                       {s.foto_perfil ? (
                         <img src={getMediaUrl(s.foto_perfil)} className="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
@@ -785,7 +840,7 @@ export default function BuscarPerfiles() {
                         {s.habilidades.length > 3 && <span className={`text-xs ${M}`}>+{s.habilidades.length - 3} más</span>}
                       </div>
                     )}
-                    <div className="flex gap-2">
+                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                       <Link to={`${candidatoBase}/${s.usuario_id}`} className="flex-1">
                         <PrimaryButton className="w-full">Ver perfil</PrimaryButton>
                       </Link>
@@ -817,8 +872,8 @@ export default function BuscarPerfiles() {
           {/* Empresas */}
           {tab === "empresas" && (
             <div className="grid grid-cols-2 gap-4">
-              {filteredCompanies.map((c) => (
-                <Card key={c.usuario_id} className="hover:border-[#378ADD] transition-colors">
+              {paginar(filteredCompanies).map((c) => (
+                <Card key={c.usuario_id} className="hover:border-[#378ADD] transition-colors cursor-pointer" onClick={() => navigate(`/empresa-publica/${c.usuario_id}`)}>
                   <div className="flex items-start gap-3 mb-3">
                     {c.foto_perfil ? (
                       <img src={getMediaUrl(c.foto_perfil)} className="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
@@ -838,7 +893,7 @@ export default function BuscarPerfiles() {
                   </div>
                   {c.descripcion && <p className={`text-xs ${M} mb-3 line-clamp-2`}>{c.descripcion}</p>}
                   {c.telefono_contacto && <div className={`flex items-center gap-1.5 text-xs ${M} mb-3`}><Icon icon="mdi:phone-outline" width={13} />{c.telefono_contacto}</div>}
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
                     <Link to={`/empresa-publica/${c.usuario_id}`} className="flex-1"><PrimaryButton className="w-full">Ver perfil</PrimaryButton></Link>
                     {role === "estudiante" && (
                       <button onClick={() => handleContactarEmpresa(c.usuario_id)} disabled={contactandoId === c.usuario_id} title="Enviar mensaje"
@@ -865,7 +920,7 @@ export default function BuscarPerfiles() {
           {/* Vacantes */}
           {tab === "vacantes" && (
             <div className="grid grid-cols-2 gap-4">
-              {filteredVacantes.map((v) => (
+              {paginar(filteredVacantes).map((v) => (
                 <Card key={v.id} className="hover:border-[#378ADD] transition-colors cursor-pointer flex flex-col" onClick={() => setModalVacante(v)}>
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <p className={`text-sm font-semibold ${T} leading-snug`}>{v.titulo}</p>
@@ -902,8 +957,8 @@ export default function BuscarPerfiles() {
           {/* Colegios */}
           {tab === "colegios" && canSeeColegios && (
             <div className="grid grid-cols-2 gap-4">
-              {filteredColegios.map((c) => (
-                <Card key={c.usuario_id} className="hover:border-[#378ADD] transition-colors flex flex-col">
+              {paginar(filteredColegios).map((c) => (
+                <Card key={c.usuario_id} className="hover:border-[#378ADD] transition-colors cursor-pointer flex flex-col" onClick={() => navigate(`/colegio-publico/${c.usuario_id}`)}>
                   <div className="flex items-start gap-3 mb-3">
                     {c.foto_perfil ? (
                       <img src={getMediaUrl(c.foto_perfil)} className="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
@@ -933,7 +988,7 @@ export default function BuscarPerfiles() {
                       <Icon icon="mdi:phone-outline" width={13} />{c.telefono_contacto}
                     </div>
                   )}
-                  <div className="flex gap-2 mt-auto pt-2">
+                  <div className="flex gap-2 mt-auto pt-2" onClick={(e) => e.stopPropagation()}>
                     <Link to={`/colegio-publico/${c.usuario_id}`} className="flex-1">
                       <PrimaryButton className="w-full">Ver perfil</PrimaryButton>
                     </Link>
@@ -961,7 +1016,7 @@ export default function BuscarPerfiles() {
           {/* Talleres */}
           {tab === "talleres" && (
             <div className="grid grid-cols-2 gap-4">
-              {filteredTalleres.map((t) => {
+              {paginar(filteredTalleres).map((t) => {
                 const puedeInscribirse = (t.esta_activo === true || t.esta_activo === 1) && (t.permite_inscripcion === true || t.permite_inscripcion === 1);
                 return (
                   <Card key={t.id} className="hover:border-[#378ADD] transition-colors cursor-pointer flex flex-col" onClick={() => setModalTaller(t)}>
@@ -992,6 +1047,17 @@ export default function BuscarPerfiles() {
               })}
               {filteredTalleres.length === 0 && <EmptyState T={T} M={M} />}
             </div>
+          )}
+
+          {count > 0 && (
+            <Paginacion
+              paginaActual={paginaSegura}
+              totalPaginas={totalPaginas}
+              onCambiar={setPagina}
+              porPagina={porPagina}
+              opciones={[10, 20, 50]}
+              onCambiarPorPagina={cambiarPorPagina}
+            />
           )}
         </div>
       </div>

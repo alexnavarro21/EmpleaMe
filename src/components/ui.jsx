@@ -84,14 +84,17 @@ export function SecondaryButton({ children, className = "", ...props }) {
   );
 }
 
-export function Card({ children, className = "" }) {
+export function Card({ children, className = "", ...props }) {
   const { isDark, isContrast } = useDark();
   return (
-    <div className={`rounded-xl border p-5 ${
-      isContrast ? "bg-white border-[#BFB49A]"
-      : isDark ? "bg-[#262624] border-[#3a3a38]"
-      : "bg-white border-[#D3D1C7]"
-    } ${className}`}>
+    <div
+      className={`rounded-xl border p-5 ${
+        isContrast ? "bg-white border-[#BFB49A]"
+        : isDark ? "bg-[#262624] border-[#3a3a38]"
+        : "bg-white border-[#D3D1C7]"
+      } ${className}`}
+      {...props}
+    >
       {children}
     </div>
   );

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
-import { Card, Badge, PrimaryButton, SecondaryButton, FormField, PageHeader } from "../../components/ui";
+import { Card, PrimaryButton, SecondaryButton, FormField, PageHeader } from "../../components/ui";
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
 import { getEmpresaById, actualizarPerfilEmpresa, getVacantesEmpresa, subirFotoPerfil, getMediaUrl } from "../../services/api";
 import { REGIONES_COMUNAS, REGIONES } from "../../data/regionesComunas";
@@ -165,8 +165,6 @@ export default function EmpresaPerfil() {
                 {[comuna, region].filter(Boolean).join(", ")}
               </p>
             )}
-            <Badge color="blue">Empresa Verificada</Badge>
-
             <div className={`mt-4 pt-4 border-t ${B} text-left`}>
               <div className="flex justify-between text-xs mb-1">
                 <span className={M}>Perfil completado</span>

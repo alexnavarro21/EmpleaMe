@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
-import { Card, Badge, PrimaryButton, PageHeader } from "../../components/ui";
+import { Card, Badge, PrimaryButton, PageHeader, Paginacion } from "../../components/ui";
 import { getEstudiantes, getEmpresas, getMediaUrl } from "../../services/api";
 import { REGIONES_COMUNAS, REGIONES } from "../../data/regionesComunas";
 
@@ -23,6 +23,8 @@ export default function EmpresaBuscadorEstudiantes() {
   const [minGpa, setMinGpa] = useState(1);
   const [selectedRegion, setSelectedRegion] = useState("");
   const [selectedComuna, setSelectedComuna] = useState("");
+  const [pagina, setPagina] = useState(1);
+  const [porPagina, setPorPagina] = useState(10);
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -66,6 +68,12 @@ export default function EmpresaBuscadorEstudiantes() {
   });
 
   const count = tab === "estudiantes" ? filteredStudents.length : filteredCompanies.length;
+
+  useEffect(() => { setPagina(1); }, [tab, search, selectedCareer, minGpa, selectedRegion, selectedComuna]);
+  const totalPaginas = Math.max(1, Math.ceil(count / porPagina));
+  const paginaSegura = Math.min(pagina, totalPaginas);
+  const paginar = (arr) => arr.slice((paginaSegura - 1) * porPagina, paginaSegura * porPagina);
+  const cambiarPorPagina = (v) => { setPorPagina(v); setPagina(1); };
 
   if (loading) {
     return (
@@ -215,7 +223,7 @@ export default function EmpresaBuscadorEstudiantes() {
         <div className="col-span-3">
           {tab === "estudiantes" && (
             <div className="grid grid-cols-2 gap-4">
-              {filteredStudents.map((s) => {
+              {paginar(filteredStudents).map((s) => {
                 const nombreCarrera = careerDisplay[s.carrera] || s.carrera;
                 return (
                   <Card key={s.usuario_id} className="hover:border-[#378ADD] transition-colors">
@@ -271,7 +279,7 @@ export default function EmpresaBuscadorEstudiantes() {
 
           {tab === "empresas" && (
             <div className="grid grid-cols-2 gap-4">
-              {filteredCompanies.map((c) => (
+              {paginar(filteredCompanies).map((c) => (
                 <Card key={c.usuario_id} className="hover:border-[#378ADD] transition-colors">
                   <div className="flex items-start gap-3 mb-3">
                     {c.foto_perfil ? (
@@ -312,6 +320,17 @@ export default function EmpresaBuscadorEstudiantes() {
               ))}
               {filteredCompanies.length === 0 && <EmptyState T={T} M={M} />}
             </div>
+          )}
+
+          {count > 0 && (
+            <Paginacion
+              paginaActual={paginaSegura}
+              totalPaginas={totalPaginas}
+              onCambiar={setPagina}
+              porPagina={porPagina}
+              opciones={[10, 20, 50]}
+              onCambiarPorPagina={cambiarPorPagina}
+            />
           )}
         </div>
       </div>

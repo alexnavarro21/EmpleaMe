@@ -1915,8 +1915,12 @@ function TabCrearAlumnos({ isDark }) {
           <p className={`text-xs ${M} mb-4`}>
             Sube el archivo de nómina exportado desde la base de datos del colegio (.xls, .xlsx o .csv).
             El sistema extrae el <strong>RUN</strong>, nombre y datos de contacto de cada fila.
-            Los estudiantes ya registrados se omiten automáticamente.
-            La contraseña inicial de cada alumno es su RUN sin puntuación (ej. <code>25399679K</code>).
+            El RUT es el identificador de la cuenta: si el correo ya está en uso por otra persona
+            (por ejemplo, el mismo correo de un apoderado entre hermanos) la cuenta se crea igual,
+            sin correo, y el alumno inicia sesión con su RUT.
+            Los estudiantes ya registrados (mismo RUT) se omiten automáticamente.
+            La contraseña inicial de cada alumno es la primera letra de su nombre + los últimos 4 dígitos
+            de su RUN (ej. <code>G9679</code>).
           </p>
 
           <div

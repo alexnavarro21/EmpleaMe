@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
-import { Card, Badge, SecondaryButton, PrimaryButton, PageHeader, Paginacion } from "../../components/ui";
+import { Card, Badge, PrimaryButton, Paginacion } from "../../components/ui";
 import PublicacionesUsuario from "../../components/PublicacionesUsuario";
 import { getEmpresaById, getVacantesEmpresa, postularAVacante, iniciarConversacionConEmpresa, iniciarMensajeDirecto, getEstudianteById, getMediaUrl, toggleSeguir, getEstadoSeguimiento } from "../../services/api";
 import { calcularCompletitud } from "../../utils/perfilCompletitud";
@@ -122,11 +122,13 @@ export default function PerfilEmpresaPublico() {
 
   return (
     <div>
-      <PageHeader
-        title={empresa.nombre_empresa}
-        subtitle="Perfil de empresa"
-        action={<SecondaryButton onClick={() => navigate(-1)}>← Volver</SecondaryButton>}
-      />
+      <button
+        onClick={() => navigate(-1)}
+        className={`mb-4 flex items-center gap-1.5 text-sm transition-colors ${M} hover:text-[#378ADD]`}
+      >
+        <Icon icon="mdi:arrow-left" width={18} />
+        Volver
+      </button>
 
       <div className="grid grid-cols-3 gap-6">
         {/* Sidebar */}
@@ -147,7 +149,6 @@ export default function PerfilEmpresaPublico() {
               </p>
             )}
             <p className={`text-xs ${M} mb-3`}>Empresa registrada en EmpleaMe</p>
-            <Badge color="blue">Empresa Verificada</Badge>
 
             {/* Botón Seguir (visible para todos excepto la propia empresa y SLEP) */}
             {usuario.id && parseInt(id) !== usuario.id && usuario.rol !== "slep" && (

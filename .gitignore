@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 *.env
+
+# Nóminas y planillas reales de alumnos (datos personales sensibles)
+nomina_excel*
+*.xls
+*.xlsx
 cosas-a-hacer.txt
 
 .claude/
