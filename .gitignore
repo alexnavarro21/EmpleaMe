@@ -31,3 +31,5 @@ cosas-a-hacer.txt
 *.njsproj
 *.sln
 *.sw?
+
+DEPLOY_AWS_LEARNERLAB.md
