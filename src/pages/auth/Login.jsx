@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDark } from "../../context/DarkModeContext";
-import { loginUsuario, registrarUsuario, listarColegios, solicitarRecuperacion } from "../../services/api";
+import { loginUsuario, registrarUsuario, listarColegios, listarCarrerasPorColegio, solicitarRecuperacion } from "../../services/api";
 import Mascota from "../../components/Mascota";
 
 const RUTAS_ROL = {
@@ -22,8 +22,11 @@ export default function Login() {
 
   // Register state
   const [activeRole, setActiveRole] = useState("estudiante");
+  const [regStep, setRegStep] = useState(0);
   const [colegios, setColegios] = useState([]);
   const [regColegioId, setRegColegioId] = useState("");
+  const [regCarreras, setRegCarreras] = useState([]);
+  const [cargandoCarreras, setCargandoCarreras] = useState(false);
   const [regRut, setRegRut] = useState("");
   const [regNombre, setRegNombre] = useState("");
   const [regApellidoPaterno, setRegApellidoPaterno] = useState("");
@@ -48,6 +51,20 @@ export default function Login() {
     listarColegios().then(setColegios).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (!regColegioId) {
+      setRegCarreras([]);
+      setRegCarrera("");
+      return;
+    }
+    setCargandoCarreras(true);
+    setRegCarrera("");
+    listarCarrerasPorColegio(regColegioId)
+      .then(setRegCarreras)
+      .catch(() => setRegCarreras([]))
+      .finally(() => setCargandoCarreras(false));
+  }, [regColegioId]);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoginError("");
@@ -61,9 +78,67 @@ export default function Login() {
     }
   };
 
+  const stepsEstudiante = ["Datos personales", "Centro educativo", "Contacto", "Seguridad"];
+  const stepsEmpresa    = ["Datos de la empresa", "Contacto", "Seguridad"];
+  const regSteps    = activeRole === "estudiante" ? stepsEstudiante : stepsEmpresa;
+  const isLastStep  = regStep === regSteps.length - 1;
+
+  const validateStep = () => {
+    if (activeRole === "estudiante") {
+      if (regStep === 0 && (!regNombre || !regApellidoPaterno)) {
+        setRegError("Nombre y apellido paterno son obligatorios.");
+        return false;
+      }
+      if (regStep === 1 && !regColegioId) {
+        setRegError("El centro educacional es obligatorio.");
+        return false;
+      }
+      if (regStep === 1 && !regCarrera) {
+        setRegError("La carrera es obligatoria.");
+        return false;
+      }
+      if (regStep === 2 && !regRut) {
+        setRegError("El RUT es obligatorio.");
+        return false;
+      }
+    } else {
+      if (regStep === 0 && !regNombreEmpresa) {
+        setRegError("El nombre de la empresa es obligatorio.");
+        return false;
+      }
+      if (regStep === 1 && !regCorreo) {
+        setRegError("Las empresas deben registrarse con correo.");
+        return false;
+      }
+    }
+    setRegError("");
+    return true;
+  };
+
+  const handleRoleChange = (roleId) => {
+    setActiveRole(roleId);
+    setRegStep(0);
+    setRegError("");
+  };
+
+  const goNextStep = () => {
+    if (!validateStep()) return;
+    setRegStep((s) => s + 1);
+  };
+
+  const goPrevStep = () => {
+    setRegError("");
+    setRegStep((s) => Math.max(0, s - 1));
+  };
+
   const handleRegister = async (e) => {
     e.preventDefault();
     setRegError("");
+
+    if (!isLastStep) {
+      goNextStep();
+      return;
+    }
 
     if (!regContrasena) {
       setRegError("Completa todos los campos obligatorios.");
@@ -73,8 +148,8 @@ export default function Login() {
       setRegError("Las empresas deben registrarse con correo.");
       return;
     }
-    if (activeRole === "estudiante" && (!regNombre || !regApellidoPaterno || !regRut || !regCarrera)) {
-      setRegError("Nombre, apellido paterno, RUT y carrera son obligatorios.");
+    if (activeRole === "estudiante" && (!regNombre || !regApellidoPaterno || !regRut || !regColegioId || !regCarrera)) {
+      setRegError("Nombre, apellido paterno, RUT, centro educacional y carrera son obligatorios.");
       return;
     }
     if (activeRole === "empresa" && !regNombreEmpresa) {
@@ -228,146 +303,216 @@ export default function Login() {
 
             {activeTab === "register" && (
               <form className="flex flex-col gap-1" onSubmit={handleRegister}>
-                {/* Selector de rol: solo Estudiante y Empresa */}
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  {[
-                    { id: "estudiante", label: "Estudiante", desc: "Busco práctica profesional" },
-                    { id: "empresa",    label: "Empresa",    desc: "Quiero publicar vacantes"   },
-                  ].map((role) => (
-                    <button
-                      type="button"
-                      key={role.id}
-                      onClick={() => setActiveRole(role.id)}
-                      className={`rounded-xl p-3.5 text-center border transition-all ${
-                        activeRole === role.id
-                          ? `border-2 border-[#378ADD] ${isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]"}`
-                          : `border ${isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]"}`
-                      }`}
-                    >
-                      <p className={`text-sm font-semibold ${isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]"}`}>
-                        {role.label}
-                      </p>
-                      <p className="text-xs text-[#888780] mt-0.5">{role.desc}</p>
-                    </button>
-                  ))}
-                </div>
+                {/* Selector de rol: solo Estudiante y Empresa, solo en el primer paso */}
+                {regStep === 0 && (
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    {[
+                      { id: "estudiante", label: "Estudiante", desc: "Busco práctica profesional" },
+                      { id: "empresa",    label: "Empresa",    desc: "Quiero publicar vacantes"   },
+                    ].map((role) => (
+                      <button
+                        type="button"
+                        key={role.id}
+                        onClick={() => handleRoleChange(role.id)}
+                        className={`rounded-xl p-3.5 text-center border transition-all ${
+                          activeRole === role.id
+                            ? `border-2 border-[#378ADD] ${isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]"}`
+                            : `border ${isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]"}`
+                        }`}
+                      >
+                        <p className={`text-sm font-semibold ${isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]"}`}>
+                          {role.label}
+                        </p>
+                        <p className="text-xs text-[#888780] mt-0.5">{role.desc}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 {/* Campos para Estudiante */}
                 {activeRole === "estudiante" && (
                   <>
-                    <FormField
-                      label="Nombre *"
-                      type="text"
-                      placeholder="Tu nombre"
-                      value={regNombre}
-                      onChange={(e) => setRegNombre(e.target.value)}
-                      isDark={isDark}
-                    />
-                    <div className="grid grid-cols-2 gap-3">
-                      <FormField
-                        label="Apellido paterno *"
-                        type="text"
-                        placeholder="Apellido paterno"
-                        value={regApellidoPaterno}
-                        onChange={(e) => setRegApellidoPaterno(e.target.value)}
-                        isDark={isDark}
-                      />
-                      <FormField
-                        label="Apellido materno"
-                        type="text"
-                        placeholder="Apellido materno"
-                        value={regApellidoMaterno}
-                        onChange={(e) => setRegApellidoMaterno(e.target.value)}
-                        isDark={isDark}
-                      />
-                    </div>
-                    <ColegioCombobox
-                      colegios={colegios}
-                      value={regColegioId}
-                      onChange={setRegColegioId}
-                      isDark={isDark}
-                    />
-                    <div className="grid grid-cols-2 gap-3">
-                      <SelectField label="Carrera *" value={regCarrera} onChange={(e) => setRegCarrera(e.target.value)} isDark={isDark}>
-                        <option value="">Selecciona tu carrera</option>
-                        <option value="Administracion">Administración</option>
-                        <option value="Mecanica Automotriz">Mecánica Automotriz</option>
-                      </SelectField>
-                      <SelectField label="Nivel" value={regNivel} onChange={(e) => setRegNivel(e.target.value)} isDark={isDark}>
-                        <option value="">Nivel (opcional)</option>
-                        {['1° Medio','2° Medio','3° Medio','4° Medio'].map((n) => (
-                          <option key={n} value={n}>{n}</option>
-                        ))}
-                      </SelectField>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <FormField
-                        label="RUT *"
-                        type="text"
-                        placeholder="12.345.678-9"
-                        value={regRut}
-                        onChange={(e) => setRegRut(e.target.value)}
-                        isDark={isDark}
-                      />
-                      <FormField
-                        label="Correo (opcional)"
-                        type="email"
-                        placeholder="tucorreo@email.com"
-                        value={regCorreo}
-                        onChange={(e) => setRegCorreo(e.target.value)}
-                        isDark={isDark}
-                      />
-                    </div>
-                    <FormField
-                      label="Teléfono (opcional)"
-                      type="tel"
-                      placeholder="+56 9 1234 5678"
-                      value={regTelefono}
-                      onChange={(e) => setRegTelefono(e.target.value)}
-                      isDark={isDark}
-                    />
+                    {regStep === 0 && (
+                      <>
+                        <FormField
+                          label="Nombre *"
+                          type="text"
+                          placeholder="Tu nombre"
+                          value={regNombre}
+                          onChange={(e) => setRegNombre(e.target.value)}
+                          isDark={isDark}
+                        />
+                        <div className="grid grid-cols-2 gap-3">
+                          <FormField
+                            label="Apellido paterno *"
+                            type="text"
+                            placeholder="Apellido paterno"
+                            value={regApellidoPaterno}
+                            onChange={(e) => setRegApellidoPaterno(e.target.value)}
+                            isDark={isDark}
+                          />
+                          <FormField
+                            label="Apellido materno"
+                            type="text"
+                            placeholder="Apellido materno"
+                            value={regApellidoMaterno}
+                            onChange={(e) => setRegApellidoMaterno(e.target.value)}
+                            isDark={isDark}
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {regStep === 1 && (
+                      <>
+                        <ColegioCombobox
+                          colegios={colegios}
+                          value={regColegioId}
+                          onChange={setRegColegioId}
+                          isDark={isDark}
+                        />
+                        <div className="grid grid-cols-2 gap-3">
+                          <SelectField
+                            label="Carrera *"
+                            value={regCarrera}
+                            onChange={(e) => setRegCarrera(e.target.value)}
+                            isDark={isDark}
+                            disabled={!regColegioId || cargandoCarreras}
+                          >
+                            <option value="">
+                              {!regColegioId
+                                ? "Elige primero tu centro educacional"
+                                : cargandoCarreras
+                                ? "Cargando carreras..."
+                                : regCarreras.length === 0
+                                ? "Este centro no tiene carreras registradas"
+                                : "Selecciona tu carrera"}
+                            </option>
+                            {regCarreras.map((c) => (
+                              <option key={c.id} value={c.nombre}>{c.nombre}</option>
+                            ))}
+                          </SelectField>
+                          <SelectField label="Nivel" value={regNivel} onChange={(e) => setRegNivel(e.target.value)} isDark={isDark}>
+                            <option value="">Nivel (opcional)</option>
+                            {['1° Medio','2° Medio','3° Medio','4° Medio'].map((n) => (
+                              <option key={n} value={n}>{n}</option>
+                            ))}
+                          </SelectField>
+                        </div>
+                      </>
+                    )}
+
+                    {regStep === 2 && (
+                      <>
+                        <div className="grid grid-cols-2 gap-3">
+                          <FormField
+                            label="RUT *"
+                            type="text"
+                            placeholder="12.345.678-9"
+                            value={regRut}
+                            onChange={(e) => setRegRut(e.target.value)}
+                            isDark={isDark}
+                          />
+                          <FormField
+                            label="Correo (opcional)"
+                            type="email"
+                            placeholder="tucorreo@email.com"
+                            value={regCorreo}
+                            onChange={(e) => setRegCorreo(e.target.value)}
+                            isDark={isDark}
+                          />
+                        </div>
+                        <FormField
+                          label="Teléfono (opcional)"
+                          type="tel"
+                          placeholder="+56 9 1234 5678"
+                          value={regTelefono}
+                          onChange={(e) => setRegTelefono(e.target.value)}
+                          isDark={isDark}
+                        />
+                      </>
+                    )}
                   </>
                 )}
 
                 {/* Campos para Empresa */}
                 {activeRole === "empresa" && (
                   <>
-                    <FormField
-                      label="Nombre de la empresa *"
-                      type="text"
-                      placeholder="Ej: Automotriz Salinas SpA"
-                      value={regNombreEmpresa}
-                      onChange={(e) => setRegNombreEmpresa(e.target.value)}
-                      isDark={isDark}
-                    />
-                    <FormField
-                      label="Teléfono de contacto (opcional)"
-                      type="tel"
-                      placeholder="+56 2 1234 5678"
-                      value={regTelefonoEmpresa}
-                      onChange={(e) => setRegTelefonoEmpresa(e.target.value)}
-                      isDark={isDark}
-                    />
+                    {regStep === 0 && (
+                      <>
+                        <FormField
+                          label="Nombre de la empresa *"
+                          type="text"
+                          placeholder="Ej: Automotriz Salinas SpA"
+                          value={regNombreEmpresa}
+                          onChange={(e) => setRegNombreEmpresa(e.target.value)}
+                          isDark={isDark}
+                        />
+                        <FormField
+                          label="Teléfono de contacto (opcional)"
+                          type="tel"
+                          placeholder="+56 2 1234 5678"
+                          value={regTelefonoEmpresa}
+                          onChange={(e) => setRegTelefonoEmpresa(e.target.value)}
+                          isDark={isDark}
+                        />
+                      </>
+                    )}
+
+                    {regStep === 1 && (
+                      <FormField label="Correo electrónico *" type="email" placeholder="tucorreo@email.com" value={regCorreo} onChange={(e) => setRegCorreo(e.target.value)} isDark={isDark} />
+                    )}
                   </>
                 )}
 
-                {/* Campos comunes — correo solo obligatorio para empresa */}
-                {activeRole === "empresa" && (
-                  <FormField label="Correo electrónico *" type="email" placeholder="tucorreo@email.com" value={regCorreo} onChange={(e) => setRegCorreo(e.target.value)} isDark={isDark} />
+                {/* Último paso: seguridad, común a ambos roles */}
+                {isLastStep && (
+                  <>
+                    <FormField label="Contraseña *" type="password" placeholder="Mínimo 8 caracteres" value={regContrasena} onChange={(e) => setRegContrasena(e.target.value)} isDark={isDark} />
+                    <FormField label="Confirmar contraseña *" type="password" placeholder="Repite tu contraseña" value={regConfirm} onChange={(e) => setRegConfirm(e.target.value)} isDark={isDark} />
+                  </>
                 )}
-                <FormField label="Contraseña *" type="password" placeholder="Mínimo 8 caracteres" value={regContrasena} onChange={(e) => setRegContrasena(e.target.value)} isDark={isDark} />
-                <FormField label="Confirmar contraseña *" type="password" placeholder="Repite tu contraseña" value={regConfirm} onChange={(e) => setRegConfirm(e.target.value)} isDark={isDark} />
 
                 {regError && (
                   <p className="text-xs text-red-500 mt-1">{regError}</p>
                 )}
-                <button
-                  type="submit"
-                  disabled={regLoading}
-                  className="w-full py-2.5 bg-[#0F4D8A] hover:bg-[#0A3A6A] disabled:opacity-60 text-[#E6F1FB] rounded-lg text-sm font-medium transition-colors mt-1"
-                >
-                  {regLoading ? "Creando cuenta..." : "Crear cuenta"}
-                </button>
+
+                {/* Indicador de progreso */}
+                <div className="flex items-center gap-1.5 mt-3">
+                  {regSteps.map((label, i) => (
+                    <div key={label} className="flex-1">
+                      <div className={`h-1.5 rounded-full transition-colors ${
+                        i <= regStep ? "bg-[#0F4D8A]" : isDark ? "bg-[#3a3a38]" : "bg-[#E8E6E1]"
+                      }`} />
+                    </div>
+                  ))}
+                </div>
+                <p className={`text-xs mb-2 mt-1.5 ${isDark ? "text-[#888780]" : "text-[#5F5E5A]"}`}>
+                  Paso {regStep + 1} de {regSteps.length} · {regSteps[regStep]}
+                </p>
+
+                <div className="flex gap-3 mt-1">
+                  {regStep > 0 && (
+                    <button
+                      type="button"
+                      onClick={goPrevStep}
+                      className={`flex-1 py-2.5 rounded-lg text-sm font-medium border transition-colors ${
+                        isDark
+                          ? "border-[#3a3a38] text-[#D3D1C7] hover:bg-[#313130]"
+                          : "border-[#D3D1C7] text-[#2C2C2A] hover:bg-[#F7F6F3]"
+                      }`}
+                    >
+                      Anterior
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={regLoading}
+                    className="flex-1 py-2.5 bg-[#0F4D8A] hover:bg-[#0A3A6A] disabled:opacity-60 text-[#E6F1FB] rounded-lg text-sm font-medium transition-colors"
+                  >
+                    {isLastStep ? (regLoading ? "Creando cuenta..." : "Crear cuenta") : "Siguiente"}
+                  </button>
+                </div>
                 <p className="text-xs text-[#888780] text-center mt-3 leading-relaxed">
                   Al registrarte aceptas nuestros{" "}
                   <a href="#" className="text-[#378ADD]">Términos de uso</a> y{" "}
@@ -630,7 +775,7 @@ function ColegioCombobox({ colegios, value, onChange, isDark }) {
 
   return (
     <div className="mb-3" ref={wrapperRef}>
-      <label className={`block text-xs mb-1.5 ${isDark ? "text-[#B4B2A9]" : "text-[#5F5E5A]"}`}>Centro educacional (opcional)</label>
+      <label className={`block text-xs mb-1.5 ${isDark ? "text-[#B4B2A9]" : "text-[#5F5E5A]"}`}>Centro educacional *</label>
       <div className="relative">
         <input
           type="text"
@@ -653,15 +798,6 @@ function ColegioCombobox({ colegios, value, onChange, isDark }) {
           <div className={`absolute z-20 mt-1 w-full max-h-48 overflow-y-auto rounded-lg border shadow-lg ${
             isDark ? "bg-[#262624] border-[#3a3a38]" : "bg-white border-[#D3D1C7]"
           }`}>
-            <button
-              type="button"
-              onClick={() => { onChange(""); setQuery(""); setOpen(false); }}
-              className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                isDark ? "text-[#888780] hover:bg-[#313130]" : "text-[#B4B2A9] hover:bg-[#F7F6F3]"
-              }`}
-            >
-              Sin institución asociada
-            </button>
             {filtrados.length === 0 ? (
               <p className={`px-3 py-2 text-xs ${isDark ? "text-[#888780]" : "text-[#B4B2A9]"}`}>Sin resultados</p>
             ) : filtrados.map((c) => (
@@ -685,15 +821,17 @@ function ColegioCombobox({ colegios, value, onChange, isDark }) {
   );
 }
 
-function SelectField({ label, value, onChange, isDark, children }) {
+function SelectField({ label, value, onChange, isDark, children, disabled = false }) {
   return (
     <div className="mb-3">
       <label className={`block text-xs mb-1.5 ${isDark ? "text-[#B4B2A9]" : "text-[#5F5E5A]"}`}>{label}</label>
       <select
         value={value}
         onChange={onChange}
+        disabled={disabled}
         className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all
           focus:border-[#378ADD] focus:ring-2 focus:ring-[#B5D4F4]
+          disabled:opacity-60 disabled:cursor-not-allowed
           ${isDark
             ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7]"
             : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A]"
