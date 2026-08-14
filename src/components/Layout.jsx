@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useDark } from "../context/DarkModeContext";
 import { useState, useRef, useEffect } from "react";
 import NotificacionesBell from "./NotificacionesBell";
@@ -250,6 +251,21 @@ export default function Layout() {
     isDark ? "text-[#D3D1C7] hover:bg-[#0F4D8A]/30" : "text-[#2C2C2A] hover:bg-[#F0F4F8]"
   }`;
 
+  // Botón flotante: volver al inicio del muro
+  const [mostrarSubir, setMostrarSubir] = useState(false);
+
+  useEffect(() => {
+    function handleScroll() {
+      setMostrarSubir(window.scrollY > 400);
+    }
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const subirArriba = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <div className={isDark ? "dark" : isContrast ? "colorblind-mode" : ""}>
       <div className={`min-h-screen font-sans ${
@@ -497,6 +513,32 @@ export default function Layout() {
         <main className="max-w-7xl mx-auto px-6 py-8">
           <Outlet />
         </main>
+
+        {/* Flecha flotante: volver arriba */}
+        <AnimatePresence>
+          {mostrarSubir && (
+            <motion.button
+              key="scroll-top"
+              type="button"
+              onClick={subirArriba}
+              title="Volver al comienzo"
+              aria-label="Volver al comienzo"
+              initial={{ opacity: 0, y: 12, scale: 0.85 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.85 }}
+              transition={{ duration: 0.18 }}
+              className={`fixed bottom-6 left-6 z-40 w-11 h-11 rounded-full shadow-lg border flex items-center justify-center transition-colors ${
+                isContrast
+                  ? "bg-[#FFF9E8] border-[#C45E00] text-[#C45E00] hover:bg-[#FCEFD1]"
+                  : isDark
+                  ? "bg-[#0F4D8A] border-[#1a5fa8] text-[#E6F1FB] hover:bg-[#0A3A6A]"
+                  : "bg-[#0A3A6A] border-[#0A3A6A] text-[#E6F1FB] hover:bg-[#0F4D8A]"
+              }`}
+            >
+              <Icon icon="mdi:arrow-up-bold" width={20} />
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
