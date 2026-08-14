@@ -6,8 +6,9 @@ import { Card, Badge, PrimaryButton, Paginacion } from "../../components/ui";
 import {
   getEstudiantes, getEmpresas, getVacantes, getTalleres, getColegios,
   iniciarMensajeDirecto, iniciarConversacionConEmpresa,
-  postularAVacante, inscribirseEnTaller, getMediaUrl,
+  postularAVacante, inscribirseEnTaller, getMediaUrl, getEstudianteById,
 } from "../../services/api";
+import { calcularCompletitud } from "../../utils/perfilCompletitud";
 import { REGIONES_COMUNAS, REGIONES } from "../../data/regionesComunas";
 import ModalReporte from "../../components/ModalReporte";
 
@@ -27,9 +28,9 @@ const CAT_COLEGIOS = { id: "colegios", icon: "mdi:domain", label: "Colegios" };
 const VALID_CATS_BASE = ["estudiantes", "empresas", "vacantes", "talleres"];
 
 // ── Modal Vacante ─────────────────────────────────────────────────────────────
-function VacanteModal({ vacante, role, onClose }) {
+function VacanteModal({ vacante, role, onClose, perfilCompleto }) {
   const { isDark } = useDark();
-  const [estado, setEstado] = useState("idle"); // idle | loading | ok | duplicado | error
+  const [estado, setEstado] = useState("idle"); // idle | loading | ok | duplicado | error | incompleto
 
   const T  = isDark ? "text-[#D3D1C7]"   : "text-[#2C2C2A]";
   const M  = isDark ? "text-[#888780]"   : "text-[#5F5E5A]";
@@ -39,6 +40,7 @@ function VacanteModal({ vacante, role, onClose }) {
 
   const handlePostular = async () => {
     if (estado !== "idle") return;
+    if (!perfilCompleto) { setEstado("incompleto"); setTimeout(() => setEstado("idle"), 2500); return; }
     setEstado("loading");
     try {
       await postularAVacante(vacante.id);
@@ -154,26 +156,31 @@ function VacanteModal({ vacante, role, onClose }) {
                 estado === "ok"        ? (isDark ? "bg-green-500/15 text-green-400" : "bg-green-100 text-green-700")
                 : estado === "duplicado" ? (isDark ? "bg-amber-500/15 text-amber-400" : "bg-amber-100 text-amber-700")
                 : estado === "error"     ? (isDark ? "bg-red-500/15 text-red-400"   : "bg-red-100 text-red-700")
+                : estado === "incompleto" ? (isDark ? "bg-orange-500/15 text-orange-400" : "bg-orange-100 text-orange-700")
                 : estado === "loading"   ? (isDark ? "bg-[#0F4D8A]/50 text-[#85B7EB]" : "bg-[#0F4D8A]/70 text-white")
                 : "bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white"
               }`}
             >
-              <Icon
-                icon={
-                  estado === "ok"        ? "mdi:check-circle-outline"
-                  : estado === "duplicado" ? "mdi:information-outline"
-                  : estado === "error"     ? "mdi:alert-circle-outline"
-                  : estado === "loading"   ? "mdi:loading"
-                  : "mdi:send-outline"
-                }
-                width={16}
-                className={estado === "loading" ? "animate-spin" : ""}
-              />
-              {estado === "ok"        ? "¡Postulación enviada!"
-               : estado === "duplicado" ? "Ya postulaste a esta vacante"
-               : estado === "error"     ? "Error al postular"
-               : estado === "loading"   ? "Postulando..."
-               : "Postular"}
+              <span key={estado} className="fade-swap flex items-center justify-center gap-2">
+                <Icon
+                  icon={
+                    estado === "ok"        ? "mdi:check-circle-outline"
+                    : estado === "duplicado" ? "mdi:information-outline"
+                    : estado === "error"     ? "mdi:alert-circle-outline"
+                    : estado === "incompleto" ? "mdi:account-alert-outline"
+                    : estado === "loading"   ? "mdi:loading"
+                    : "mdi:send-outline"
+                  }
+                  width={16}
+                  className={estado === "loading" ? "animate-spin" : ""}
+                />
+                {estado === "ok"        ? "¡Postulación enviada!"
+                 : estado === "duplicado" ? "Ya postulaste a esta vacante"
+                 : estado === "error"     ? "Error al postular"
+                 : estado === "incompleto" ? "Completa tu perfil primero"
+                 : estado === "loading"   ? "Postulando..."
+                 : "Postular"}
+              </span>
             </button>
           </div>
         )}
@@ -372,6 +379,9 @@ export default function BuscarPerfiles() {
   const [reportarPerfil,     setReportarPerfil]     = useState(null); // { id, tipo }
   const [pagina,             setPagina]             = useState(1);
   const [porPagina,          setPorPagina]          = useState(10);
+  const [perfilCompleto,     setPerfilCompleto]     = useState(false);
+  const [estadosPostulacion, setEstadosPostulacion] = useState({}); // { [vacanteId]: idle|loading|ok|duplicado|error|incompleto }
+  const [estadosInscripcion, setEstadosInscripcion] = useState({}); // { [tallerId]: idle|loading|ok|duplicado|sin_cupos|error }
 
   const T  = isDark ? "text-[#D3D1C7]"   : "text-[#2C2C2A]";
   const M  = isDark ? "text-[#888780]"   : "text-[#5F5E5A]";
@@ -389,6 +399,48 @@ export default function BuscarPerfiles() {
     const params = new URLSearchParams(location.search);
     setSearch(params.get("q") || "");
   }, [location.search]);
+
+  useEffect(() => {
+    if (role !== "estudiante") return;
+    const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+    if (!usuario.id) return;
+    getEstudianteById(usuario.id)
+      .then((perfil) => setPerfilCompleto(calcularCompletitud(perfil) === 100))
+      .catch(() => {});
+  }, [role]);
+
+  const handlePostularCard = async (vacanteId) => {
+    const actual = estadosPostulacion[vacanteId] || "idle";
+    if (actual !== "idle") return;
+    if (!perfilCompleto) {
+      setEstadosPostulacion((prev) => ({ ...prev, [vacanteId]: "incompleto" }));
+      setTimeout(() => setEstadosPostulacion((prev) => ({ ...prev, [vacanteId]: "idle" })), 2500);
+      return;
+    }
+    setEstadosPostulacion((prev) => ({ ...prev, [vacanteId]: "loading" }));
+    try {
+      await postularAVacante(vacanteId);
+      setEstadosPostulacion((prev) => ({ ...prev, [vacanteId]: "ok" }));
+    } catch (err) {
+      const msg = err.message?.toLowerCase();
+      const estado = msg?.includes("ya") || msg?.includes("duplic") ? "duplicado" : "error";
+      setEstadosPostulacion((prev) => ({ ...prev, [vacanteId]: estado }));
+    }
+  };
+
+  const handleInscribirseCard = async (tallerId) => {
+    const actual = estadosInscripcion[tallerId] || "idle";
+    if (actual !== "idle") return;
+    setEstadosInscripcion((prev) => ({ ...prev, [tallerId]: "loading" }));
+    try {
+      await inscribirseEnTaller(tallerId);
+      setEstadosInscripcion((prev) => ({ ...prev, [tallerId]: "ok" }));
+    } catch (err) {
+      const msg = err.message?.toLowerCase();
+      const estado = msg?.includes("ya estás") || msg?.includes("ya te") ? "duplicado" : msg?.includes("cupos") ? "sin_cupos" : "error";
+      setEstadosInscripcion((prev) => ({ ...prev, [tallerId]: estado }));
+    }
+  };
 
   useEffect(() => {
     // El buscador general muestra todos los estudiantes de la plataforma, no solo
@@ -544,7 +596,7 @@ export default function BuscarPerfiles() {
 
   return (
     <div>
-      {modalVacante && <VacanteModal vacante={modalVacante} role={role} onClose={() => setModalVacante(null)} />}
+      {modalVacante && <VacanteModal vacante={modalVacante} role={role} onClose={() => setModalVacante(null)} perfilCompleto={perfilCompleto} />}
       {modalTaller  && <TallerModal  taller={modalTaller}  role={role} onClose={() => setModalTaller(null)}  />}
 
       <div className="mb-6">
@@ -944,9 +996,28 @@ export default function BuscarPerfiles() {
                     <button onClick={() => setModalVacante(v)} className={`flex-1 py-2 rounded-lg text-xs font-medium border ${isDark ? "border-[#3a3a38] text-[#D3D1C7] hover:bg-[#313130]" : "border-[#D3D1C7] text-[#2C2C2A] hover:bg-[#F7F6F3]"} transition-colors`}>
                       Ver más
                     </button>
-                    {role === "estudiante" && (
-                      <PrimaryButton className="flex-1 text-xs py-2" onClick={() => setModalVacante(v)}>Postular</PrimaryButton>
-                    )}
+                    {role === "estudiante" && (() => {
+                      const estado = estadosPostulacion[v.id] || "idle";
+                      return (
+                        <PrimaryButton
+                          className={`flex-1 text-xs py-2 fade-swap ${
+                            estado === "ok"        ? "!bg-green-100 !text-green-700"  :
+                            estado === "duplicado" ? "!bg-amber-100 !text-amber-700"  :
+                            estado === "error"     ? "!bg-red-100 !text-red-700"      :
+                            estado === "incompleto"? "!bg-orange-100 !text-orange-700": ""
+                          }`}
+                          key={estado}
+                          disabled={estado !== "idle"}
+                          onClick={() => handlePostularCard(v.id)}
+                        >
+                          {estado === "ok"        ? "¡Postulado!"         :
+                           estado === "duplicado" ? "Ya postulaste"       :
+                           estado === "error"     ? "Error, reintentar"   :
+                           estado === "incompleto"? "Perfil incompleto"   :
+                           estado === "loading"   ? "Postulando..."       : "Postular"}
+                        </PrimaryButton>
+                      );
+                    })()}
                   </div>
                 </Card>
               ))}
@@ -1036,11 +1107,29 @@ export default function BuscarPerfiles() {
                       <button onClick={() => setModalTaller(t)} className={`flex-1 py-2 rounded-lg text-xs font-medium border ${isDark ? "border-[#3a3a38] text-[#D3D1C7] hover:bg-[#313130]" : "border-[#D3D1C7] text-[#2C2C2A] hover:bg-[#F7F6F3]"} transition-colors`}>
                         Ver más
                       </button>
-                      {role === "estudiante" && puedeInscribirse && (
-                        <button onClick={() => setModalTaller(t)} className="flex-1 py-2 rounded-lg text-xs font-semibold bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white transition-colors">
-                          Inscribirse
-                        </button>
-                      )}
+                      {role === "estudiante" && puedeInscribirse && (() => {
+                        const estado = estadosInscripcion[t.id] || "idle";
+                        return (
+                          <button
+                            key={estado}
+                            onClick={() => handleInscribirseCard(t.id)}
+                            disabled={estado !== "idle"}
+                            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors fade-swap ${
+                              estado === "ok"        ? "bg-green-100 text-green-700"  :
+                              estado === "duplicado" ? "bg-amber-100 text-amber-700"  :
+                              estado === "sin_cupos" ? "bg-red-100 text-red-700"      :
+                              estado === "error"     ? "bg-red-100 text-red-700"      :
+                              "bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white"
+                            }`}
+                          >
+                            {estado === "ok"        ? "¡Inscrito!"          :
+                             estado === "duplicado" ? "Ya inscrito"         :
+                             estado === "sin_cupos" ? "Sin cupos"           :
+                             estado === "error"     ? "Error, reintentar"  :
+                             estado === "loading"   ? "Inscribiendo..."    : "Inscribirse"}
+                          </button>
+                        );
+                      })()}
                     </div>
                   </Card>
                 );

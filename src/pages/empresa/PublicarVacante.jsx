@@ -39,6 +39,7 @@ export default function EmpresaPublicarVacante() {
   const [busquedaHab, setBusquedaHab] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [step, setStep] = useState(0);
 
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -54,9 +55,41 @@ export default function EmpresaPublicarVacante() {
     );
   }
 
+  const steps = ["Datos básicos", "Descripción y requisitos", "Publicación"];
+  const isLastStep = step === steps.length - 1;
+
+  const validateStep = () => {
+    if (step === 0 && !titulo.trim()) {
+      setError("El título es obligatorio.");
+      return false;
+    }
+    if (step === 1 && !descripcion.trim()) {
+      setError("La descripción es obligatoria.");
+      return false;
+    }
+    setError("");
+    return true;
+  };
+
+  const goNextStep = () => {
+    if (!validateStep()) return;
+    setStep((s) => s + 1);
+  };
+
+  const goPrevStep = () => {
+    setError("");
+    setStep((s) => Math.max(0, s - 1));
+  };
+
   const handlePublicar = async () => {
-    if (!titulo.trim() || !descripcion.trim()) {
-      setError("El título y la descripción son obligatorios.");
+    if (!titulo.trim()) {
+      setError("Falta el título del puesto (paso 1: Datos básicos).");
+      setStep(0);
+      return;
+    }
+    if (!descripcion.trim()) {
+      setError("Falta la descripción del puesto (paso 2: Descripción y requisitos).");
+      setStep(1);
       return;
     }
     setError("");
@@ -65,7 +98,10 @@ export default function EmpresaPublicarVacante() {
       const textoARevisar = [titulo, descripcion, requisitos].filter(Boolean).join(" ").trim();
       const mod = await moderarContenido(textoARevisar);
       if (!mod.aprobado) {
-        setError(mod.razon || "La vacante contiene contenido inapropiado.");
+        setError(
+          (mod.razon || "La vacante contiene contenido inapropiado.") +
+          " Revisa el título, la descripción o los requisitos."
+        );
         return;
       }
 
@@ -86,8 +122,8 @@ export default function EmpresaPublicarVacante() {
   return (
     <div>
       <PageHeader
-        title="Publicar Vacante de Práctica"
-        subtitle="Completa los datos para que los estudiantes encuentren tu oferta"
+        title="Publicar Vacante"
+        subtitle="Completa el formulario con los detalles de la nueva vacante"
         action={<SecondaryButton onClick={() => navigate("/empresa/dashboard")}>Cancelar</SecondaryButton>}
       />
 
@@ -96,236 +132,272 @@ export default function EmpresaPublicarVacante() {
           <Card>
             <h3 className={`text-sm font-semibold ${T} mb-4`}>Información general</h3>
 
-            <div className="mb-4">
-              <label className={`block text-xs mb-2 ${M}`}>Tipo de oferta</label>
-              <div className="grid grid-cols-2 gap-3">
-                {tiposVacante.map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setTipo(t.id)}
-                    className={`p-3 rounded-lg border text-center transition-all ${
-                      tipo === t.id
-                        ? `border-2 border-[#378ADD] ${isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]"}`
-                        : `border ${B}`
-                    }`}
-                  >
-                    <Icon
-                      icon={t.icon}
-                      width={24}
-                      className={`mx-auto mb-1.5 ${tipo === t.id ? "text-[#378ADD]" : M}`}
-                    />
-                    <span className={`text-sm font-medium ${T}`}>{t.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <FormField
-              label="Título del puesto"
-              placeholder="ej. Practicante Mecánico Automotriz"
-              value={titulo}
-              onChange={(e) => setTitulo(e.target.value)}
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <SelectField label="Área / Carrera" value={area} onChange={(e) => setArea(e.target.value)}>
-                <option>Mecánica Automotriz</option>
-                <option>Administración</option>
-                <option>Contabilidad</option>
-                <option>Servicio al Cliente</option>
-              </SelectField>
-              <FormField
-                label="Duración de la práctica"
-                placeholder="ej. 3 meses"
-                value={duracion}
-                onChange={(e) => setDuracion(e.target.value)}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                label="Horario"
-                placeholder="ej. Lunes a Viernes 8am–1pm"
-                value={horario}
-                onChange={(e) => setHorario(e.target.value)}
-              />
-              <FormField
-                label="Remuneración (opcional)"
-                placeholder="ej. $250.000 mensual"
-                value={remuneracion}
-                onChange={(e) => setRemuneracion(e.target.value)}
-              />
-            </div>
-            <FormField
-              label="Dirección / Ubicación"
-              placeholder="ej. Lo Espejo, Santiago"
-              value={direccion}
-              onChange={(e) => setDireccion(e.target.value)}
-            />
-
-            <div className="mb-4">
-              <label className={`block text-xs mb-2 ${M}`}>Modalidad de trabajo</label>
-              <div className="grid grid-cols-3 gap-3">
-                {modalidades.map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => setModalidad(m.id)}
-                    className={`p-3 rounded-lg border text-center transition-all ${
-                      modalidad === m.id
-                        ? `border-2 border-[#378ADD] ${isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]"}`
-                        : `border ${B}`
-                    }`}
-                  >
-                    <Icon
-                      icon={m.icon}
-                      width={24}
-                      className={`mx-auto mb-1.5 ${modalidad === m.id ? "text-[#378ADD]" : M}`}
-                    />
-                    <span className={`text-sm font-medium ${T}`}>{m.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <TextAreaField
-              label="Descripción del puesto"
-              placeholder="Describe las actividades que realizará el practicante..."
-              rows={4}
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-            />
-            <TextAreaField
-              label="Requisitos"
-              placeholder="Carrera, conocimientos técnicos, habilidades requeridas..."
-              rows={3}
-              value={requisitos}
-              onChange={(e) => setRequisitos(e.target.value)}
-            />
-            <TextAreaField
-              label="Beneficios"
-              placeholder="Certificado de práctica, colación, movilización, posibilidad de contrato, etc."
-              rows={2}
-              value={beneficios}
-              onChange={(e) => setBeneficios(e.target.value)}
-            />
-            {catalogoHabilidades.length > 0 && (
-              <div className="mb-4">
-                <label className={`block text-xs mb-2 ${M}`}>Habilidades que buscas</label>
-
-                {/* Chips seleccionados */}
-                {habilidadesSeleccionadas.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {habilidadesSeleccionadas.map((id) => {
-                      const h = catalogoHabilidades.find((x) => x.id === id);
-                      if (!h) return null;
-                      return (
-                        <span key={id} className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-full bg-[#0F4D8A] text-white">
-                          {h.nombre}
-                          <button
-                            type="button"
-                            onClick={() => toggleHabilidad(id)}
-                            className="hover:opacity-70 transition-opacity leading-none"
-                          >
-                            <Icon icon="mdi:close" width={12} />
-                          </button>
-                        </span>
-                      );
-                    })}
+            {step === 0 && (
+              <>
+                <div className="mb-4">
+                  <label className={`block text-xs mb-2 ${M}`}>Tipo de oferta</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {tiposVacante.map((t) => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setTipo(t.id)}
+                        className={`p-3 rounded-lg border text-center transition-all ${
+                          tipo === t.id
+                            ? `border-2 border-[#378ADD] ${isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]"}`
+                            : `border ${B}`
+                        }`}
+                      >
+                        <Icon
+                          icon={t.icon}
+                          width={24}
+                          className={`mx-auto mb-1.5 ${tipo === t.id ? "text-[#378ADD]" : M}`}
+                        />
+                        <span className={`text-sm font-medium ${T}`}>{t.label}</span>
+                      </button>
+                    ))}
                   </div>
-                )}
+                </div>
 
-                {/* Buscador */}
-                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${B} ${isDark ? "bg-[#313130]" : "bg-[#F7F6F3]"} mb-3`}>
-                  <Icon icon="mdi:magnify" width={16} className={M} />
-                  <input
-                    type="text"
-                    value={busquedaHab}
-                    onChange={(e) => setBusquedaHab(e.target.value)}
-                    placeholder="Buscar habilidad..."
-                    className={`flex-1 bg-transparent text-sm outline-none ${T} placeholder-[#B4B2A9]`}
+                <FormField
+                  label="Título del puesto"
+                  placeholder="ej. Practicante Mecánico Automotriz"
+                  value={titulo}
+                  onChange={(e) => setTitulo(e.target.value)}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <SelectField label="Área / Carrera" value={area} onChange={(e) => setArea(e.target.value)}>
+                    <option>Mecánica Automotriz</option>
+                    <option>Administración</option>
+                    <option>Contabilidad</option>
+                    <option>Servicio al Cliente</option>
+                  </SelectField>
+                  <FormField
+                    label="Duración de la práctica"
+                    placeholder="ej. 3 meses"
+                    value={duracion}
+                    onChange={(e) => setDuracion(e.target.value)}
                   />
-                  {busquedaHab && (
-                    <button type="button" onClick={() => setBusquedaHab("")}>
-                      <Icon icon="mdi:close-circle" width={15} className={M} />
-                    </button>
-                  )}
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    label="Horario"
+                    placeholder="ej. Lunes a Viernes 8am–1pm"
+                    value={horario}
+                    onChange={(e) => setHorario(e.target.value)}
+                  />
+                  <FormField
+                    label="Remuneración (opcional)"
+                    placeholder="ej. $250.000 mensual"
+                    value={remuneracion}
+                    onChange={(e) => setRemuneracion(e.target.value)}
+                  />
+                </div>
+                <FormField
+                  label="Dirección / Ubicación"
+                  placeholder="ej. Lo Espejo, Santiago"
+                  value={direccion}
+                  onChange={(e) => setDireccion(e.target.value)}
+                />
 
-                {/* Dos listas por categoría */}
-                <div className="grid grid-cols-2 gap-3">
-                  {["tecnica", "blanda"].map((cat) => {
-                    const termino = busquedaHab.toLowerCase().trim();
-                    const grupo = catalogoHabilidades.filter(
-                      (h) => h.categoria === cat &&
-                      (!termino || h.nombre.toLowerCase().includes(termino))
-                    );
-                    return (
-                      <div key={cat}>
-                        <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1.5 ${M}`}>
-                          {cat === "tecnica" ? "Técnicas" : "Socioemocionales"}
-                        </p>
-                        <div className={`max-h-48 overflow-y-auto rounded-lg border ${B}`}>
-                          {grupo.length === 0 ? (
-                            <p className={`text-xs ${M} px-3 py-4 text-center`}>Sin resultados</p>
-                          ) : grupo.map((h) => {
-                            const sel = habilidadesSeleccionadas.includes(h.id);
-                            return (
-                              <button
-                                key={h.id}
-                                type="button"
-                                onClick={() => toggleHabilidad(h.id)}
-                                className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors border-b last:border-0 ${isDark ? "border-[#3a3a38]" : "border-[#E8E6E1]"} ${
-                                  sel
-                                    ? isDark ? "bg-[#0F4D8A]/20 text-[#85B7EB]" : "bg-[#E6F1FB] text-[#0F4D8A]"
-                                    : isDark ? "hover:bg-[#313130] text-[#D3D1C7]" : "hover:bg-[#F7F6F3] text-[#2C2C2A]"
-                                }`}
-                              >
-                                <Icon
-                                  icon={sel ? "mdi:checkbox-marked" : "mdi:checkbox-blank-outline"}
-                                  width={15}
-                                  className={sel ? "text-[#0F4D8A] flex-shrink-0" : `${M} flex-shrink-0`}
-                                />
-                                {h.nombre}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="mb-4">
+                  <label className={`block text-xs mb-2 ${M}`}>Modalidad de trabajo</label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {modalidades.map((m) => (
+                      <button
+                        key={m.id}
+                        onClick={() => setModalidad(m.id)}
+                        className={`p-3 rounded-lg border text-center transition-all ${
+                          modalidad === m.id
+                            ? `border-2 border-[#378ADD] ${isDark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]"}`
+                            : `border ${B}`
+                        }`}
+                      >
+                        <Icon
+                          icon={m.icon}
+                          width={24}
+                          className={`mx-auto mb-1.5 ${modalidad === m.id ? "text-[#378ADD]" : M}`}
+                        />
+                        <span className={`text-sm font-medium ${T}`}>{m.label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
 
-            <FormField
-              label="Fecha límite de postulación"
-              type="date"
-              value={fechaLimite}
-              onChange={(e) => setFechaLimite(e.target.value)}
-            />
+            {step === 1 && (
+              <>
+                <TextAreaField
+                  label="Descripción del puesto"
+                  placeholder={
+                    tipo === "practica"
+                      ? "Describe las actividades que realizará el practicante..."
+                      : "Describe las actividades del puesto laboral..."
+                  }
+                  rows={4}
+                  value={descripcion}
+                  onChange={(e) => setDescripcion(e.target.value)}
+                />
+                <TextAreaField
+                  label="Requisitos"
+                  placeholder="Carrera, conocimientos técnicos, habilidades requeridas..."
+                  rows={3}
+                  value={requisitos}
+                  onChange={(e) => setRequisitos(e.target.value)}
+                />
+                <TextAreaField
+                  label="Beneficios"
+                  placeholder="Certificado de práctica, colación, movilización, posibilidad de contrato, etc."
+                  rows={2}
+                  value={beneficios}
+                  onChange={(e) => setBeneficios(e.target.value)}
+                />
+                {catalogoHabilidades.length > 0 && (
+                  <div className="mb-4">
+                    <label className={`block text-xs mb-2 ${M}`}>Habilidades que buscas</label>
 
-            <div className="mb-4">
-              <label className={`block text-xs mb-2 ${M}`}>Imagen o archivo adjunto (opcional)</label>
-              <FileUploader
-                title="Imagen, video o documento"
-                accept="image/*,video/*,.pdf"
-                icon="mdi:image-outline"
-                onFileSelect={(file) => setArchivo(file)}
-              />
-            </div>
+                    {/* Chips seleccionados */}
+                    {habilidadesSeleccionadas.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {habilidadesSeleccionadas.map((id) => {
+                          const h = catalogoHabilidades.find((x) => x.id === id);
+                          if (!h) return null;
+                          return (
+                            <span key={id} className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-full bg-[#0F4D8A] text-white">
+                              {h.nombre}
+                              <button
+                                type="button"
+                                onClick={() => toggleHabilidad(id)}
+                                className="hover:opacity-70 transition-opacity leading-none"
+                              >
+                                <Icon icon="mdi:close" width={12} />
+                              </button>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Buscador */}
+                    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${B} ${isDark ? "bg-[#313130]" : "bg-[#F7F6F3]"} mb-3`}>
+                      <Icon icon="mdi:magnify" width={16} className={M} />
+                      <input
+                        type="text"
+                        value={busquedaHab}
+                        onChange={(e) => setBusquedaHab(e.target.value)}
+                        placeholder="Buscar habilidad..."
+                        className={`flex-1 bg-transparent text-sm outline-none ${T} placeholder-[#B4B2A9]`}
+                      />
+                      {busquedaHab && (
+                        <button type="button" onClick={() => setBusquedaHab("")}>
+                          <Icon icon="mdi:close-circle" width={15} className={M} />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Dos listas por categoría */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {["tecnica", "blanda"].map((cat) => {
+                        const termino = busquedaHab.toLowerCase().trim();
+                        const grupo = catalogoHabilidades.filter(
+                          (h) => h.categoria === cat &&
+                          (!termino || h.nombre.toLowerCase().includes(termino))
+                        );
+                        return (
+                          <div key={cat}>
+                            <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1.5 ${M}`}>
+                              {cat === "tecnica" ? "Técnicas" : "Socioemocionales"}
+                            </p>
+                            <div className={`max-h-48 overflow-y-auto rounded-lg border ${B}`}>
+                              {grupo.length === 0 ? (
+                                <p className={`text-xs ${M} px-3 py-4 text-center`}>Sin resultados</p>
+                              ) : grupo.map((h) => {
+                                const sel = habilidadesSeleccionadas.includes(h.id);
+                                return (
+                                  <button
+                                    key={h.id}
+                                    type="button"
+                                    onClick={() => toggleHabilidad(h.id)}
+                                    className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors border-b last:border-0 ${isDark ? "border-[#3a3a38]" : "border-[#E8E6E1]"} ${
+                                      sel
+                                        ? isDark ? "bg-[#0F4D8A]/20 text-[#85B7EB]" : "bg-[#E6F1FB] text-[#0F4D8A]"
+                                        : isDark ? "hover:bg-[#313130] text-[#D3D1C7]" : "hover:bg-[#F7F6F3] text-[#2C2C2A]"
+                                    }`}
+                                  >
+                                    <Icon
+                                      icon={sel ? "mdi:checkbox-marked" : "mdi:checkbox-blank-outline"}
+                                      width={15}
+                                      className={sel ? "text-[#0F4D8A] flex-shrink-0" : `${M} flex-shrink-0`}
+                                    />
+                                    {h.nombre}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {step === 2 && (
+              <>
+                <FormField
+                  label="Fecha límite de postulación"
+                  type="date"
+                  value={fechaLimite}
+                  onChange={(e) => setFechaLimite(e.target.value)}
+                />
+
+                <div className="mb-4">
+                  <label className={`block text-xs mb-2 ${M}`}>Imagen o archivo adjunto (opcional)</label>
+                  <FileUploader
+                    title="Imagen, video o documento"
+                    accept="image/*,video/*,.pdf"
+                    icon="mdi:image-outline"
+                    onFileSelect={(file) => setArchivo(file)}
+                  />
+                </div>
+              </>
+            )}
 
             {error && <p className="text-xs text-red-500 mb-3">{error}</p>}
 
-            <div className="flex gap-3 mt-2">
+            {/* Indicador de progreso */}
+            <div className="flex items-center gap-1.5">
+              {steps.map((label, i) => (
+                <div key={label} className="flex-1">
+                  <div className={`h-1.5 rounded-full transition-colors ${
+                    i <= step ? "bg-[#0F4D8A]" : isDark ? "bg-[#3a3a38]" : "bg-[#E8E6E1]"
+                  }`} />
+                </div>
+              ))}
+            </div>
+            <p className={`text-xs mb-2 mt-1.5 ${M}`}>
+              Paso {step + 1} de {steps.length} · {steps[step]}
+            </p>
+
+            <div className="flex gap-3 mt-1">
+              {step > 0 ? (
+                <SecondaryButton className="flex-1" onClick={goPrevStep}>
+                  Anterior
+                </SecondaryButton>
+              ) : (
+                <SecondaryButton className="flex-1" onClick={() => navigate("/empresa/dashboard")}>
+                  Cancelar
+                </SecondaryButton>
+              )}
               <PrimaryButton
                 className="flex-1"
-                onClick={handlePublicar}
+                onClick={isLastStep ? handlePublicar : goNextStep}
                 disabled={loading}
               >
-                {loading ? "Publicando..." : "Publicar vacante"}
+                {isLastStep ? (loading ? "Publicando..." : "Publicar vacante") : "Siguiente"}
               </PrimaryButton>
-              <SecondaryButton className="flex-1" onClick={() => navigate("/empresa/dashboard")}>
-                Cancelar
-              </SecondaryButton>
             </div>
           </Card>
         </div>

@@ -7,7 +7,26 @@ const db = require("../db");
 router.get("/colegios", async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT usuario_id AS id, nombre_institucion FROM perfiles_colegios ORDER BY nombre_institucion"
+      `SELECT pc.usuario_id AS id, pc.nombre_institucion
+       FROM perfiles_colegios pc
+       JOIN usuarios u ON u.id = pc.usuario_id AND u.rol = 'colegio'
+       ORDER BY pc.nombre_institucion`
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// GET /api/auth/colegios/:id/carreras — carreras que imparte un colegio (para el registro)
+router.get("/colegios/:id/carreras", async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT c.id, c.nombre FROM colegio_carreras cc
+       JOIN carreras c ON c.id = cc.carrera_id
+       WHERE cc.colegio_id = ?
+       ORDER BY c.nombre`,
+      [req.params.id]
     );
     res.json(rows);
   } catch (err) {
@@ -85,8 +104,8 @@ router.post("/register", async (req, res) => {
   if (rol === "empresa" && !correoNorm)
     return res.status(400).json({ error: "Las empresas deben registrarse con correo" });
 
-  if (rol === "estudiante" && !correoNorm && !rutNorm)
-    return res.status(400).json({ error: "Debes ingresar correo o RUT" });
+  if (rol === "estudiante" && !rutNorm)
+    return res.status(400).json({ error: "El RUT es obligatorio" });
 
   const conn = await db.getConnection();
   try {
@@ -100,21 +119,26 @@ router.post("/register", async (req, res) => {
     const usuarioId = result.insertId;
 
     if (rol === "estudiante") {
-      if (!nombre || !apellido_paterno || !carrera)
-        return res.status(400).json({ error: "nombre, apellido_paterno y carrera son requeridos para estudiante" });
+      if (!nombre || !apellido_paterno || !carrera || !colegio_id)
+        return res.status(400).json({ error: "nombre, apellido_paterno, centro educacional y carrera son requeridos para estudiante" });
+      const [[colegioRow]] = await conn.query(
+        "SELECT usuario_id FROM perfiles_colegios WHERE usuario_id = ?", [colegio_id]
+      );
+      if (!colegioRow)
+        return res.status(400).json({ error: "Centro educacional no válido" });
       const [[carreraRow]] = await conn.query(
-        "SELECT id FROM carreras WHERE nombre = ?", [carrera]
+        `SELECT c.id FROM carreras c
+         JOIN colegio_carreras cc ON cc.carrera_id = c.id
+         WHERE c.nombre = ? AND cc.colegio_id = ?`,
+        [carrera, colegio_id]
       );
       if (!carreraRow)
-        return res.status(400).json({ error: "Carrera no válida" });
-      const colegioValido = colegio_id ? (await conn.query(
-        "SELECT usuario_id FROM perfiles_colegios WHERE usuario_id = ?", [colegio_id]
-      ))[0][0] : null;
+        return res.status(400).json({ error: "La carrera seleccionada no pertenece al centro educacional elegido" });
       await conn.query(
         `INSERT INTO perfiles_estudiantes
            (usuario_id, nombre, apellido_paterno, apellido_materno, rut, carrera_id, nivel, telefono, colegio_id)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [usuarioId, nombre.trim(), apellido_paterno.trim(), apellido_materno?.trim() || null, rutNorm, carreraRow.id, nivel || null, telefono || null, colegioValido ? colegio_id : null]
+        [usuarioId, nombre.trim(), apellido_paterno.trim(), apellido_materno?.trim() || null, rutNorm, carreraRow.id, nivel || null, telefono || null, colegio_id]
       );
     } else if (rol === "empresa") {
       if (!nombre_empresa)

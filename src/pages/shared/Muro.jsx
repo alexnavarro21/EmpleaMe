@@ -10,8 +10,6 @@ import VerMasModal from "../../components/VerMasModal";
 import ModalReporteShared from "../../components/ModalReporte";
 import { MascotaFlotante } from "../../components/Mascota";
 
-const AVATAR_COLORS = ["bg-[#0F4D8A]", "bg-red-500", "bg-green-600", "bg-teal-600", "bg-amber-500"];
-
 const BASE_URL_GLOBAL = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
 function resolverMedia(url) {
   if (!url) return null;
@@ -239,7 +237,7 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
 
   const handlePostular = async () => {
     if (!pub.vacante_id || estadoPostula !== "idle") return;
-    if (!perfilCompleto) { setEstadoPostula("incompleto"); return; }
+    if (!perfilCompleto) { setEstadoPostula("incompleto"); setTimeout(() => setEstadoPostula("idle"), 2500); return; }
     setEstadoPostula("loading");
     try {
       await postularAVacante(pub.vacante_id);
@@ -485,26 +483,28 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
                 estadoPostula === "loading"     ? M                 : M
               } ${estadoPostula === "idle" ? HV : ""}`}
             >
-              <Icon
-                icon={
-                  estadoPostula === "ok"         ? "mdi:check-circle-outline"  :
-                  estadoPostula === "duplicado"  ? "mdi:information-outline"   :
-                  estadoPostula === "error"      ? "mdi:alert-circle-outline"  :
-                  estadoPostula === "incompleto" ? "mdi:account-alert-outline" :
-                  estadoPostula === "loading"    ? "mdi:loading"               : "mdi:send-outline"
-                }
-                width={16}
-                className={estadoPostula === "loading" ? "animate-spin" : ""}
-              />
-              {estadoPostula === "ok"         ? "Postulado"          :
-               estadoPostula === "duplicado"  ? "Ya postulaste"      :
-               estadoPostula === "error"      ? "Error, reintentar"  :
-               estadoPostula === "incompleto" ? "Perfil incompleto"  :
-               estadoPostula === "loading"    ? "Enviando..."        :
-               !pub.vacante_activa            ? "Cerrada"            : "Postular"}
+              <span key={estadoPostula} className="fade-swap flex items-center gap-1.5">
+                <Icon
+                  icon={
+                    estadoPostula === "ok"         ? "mdi:check-circle-outline"  :
+                    estadoPostula === "duplicado"  ? "mdi:information-outline"   :
+                    estadoPostula === "error"      ? "mdi:alert-circle-outline"  :
+                    estadoPostula === "incompleto" ? "mdi:account-alert-outline" :
+                    estadoPostula === "loading"    ? "mdi:loading"               : "mdi:send-outline"
+                  }
+                  width={16}
+                  className={estadoPostula === "loading" ? "animate-spin" : ""}
+                />
+                {estadoPostula === "ok"         ? "Postulado"          :
+                 estadoPostula === "duplicado"  ? "Ya postulaste"      :
+                 estadoPostula === "error"      ? "Error, reintentar"  :
+                 estadoPostula === "incompleto" ? "Perfil incompleto"  :
+                 estadoPostula === "loading"    ? "Enviando..."        :
+                 !pub.vacante_activa            ? "Cerrada"            : "Postular"}
+              </span>
             </button>
             {estadoPostula === "incompleto" && (
-              <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 text-center text-xs rounded-lg px-3 py-2 shadow-lg z-10 pointer-events-none ${
+              <div className={`fade-swap absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 text-center text-xs rounded-lg px-3 py-2 shadow-lg z-10 pointer-events-none ${
                 isDark ? "bg-[#262624] border border-[#3a3a38] text-[#D3D1C7]" : "bg-white border border-[#D3D1C7] text-[#2C2C2A]"
               }`}>
                 Completa tu perfil al 100% para poder postular
@@ -514,7 +514,7 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
         )}
       </div>
 
-      {verMas && <VerMasModal pub={pub} onClose={() => setVerMas(false)} />}
+      {verMas && <VerMasModal pub={pub} onClose={() => setVerMas(false)} perfilCompleto={perfilCompleto} />}
 
       {modalReporte && (
         <ModalReporteShared
@@ -545,7 +545,7 @@ function TallerVerMasModal({ taller, isDark, perfilCompleto, onClose }) {
 
   const handleInscribirse = async () => {
     if (estadoInscripcion !== "idle") return;
-    if (!perfilCompleto) { setEstadoInscripcion("incompleto"); return; }
+    if (!perfilCompleto) { setEstadoInscripcion("incompleto"); setTimeout(() => setEstadoInscripcion("idle"), 2500); return; }
     setEstadoInscripcion("loading");
     try {
       await inscribirseEnTaller(taller.id);
@@ -648,24 +648,26 @@ function TallerVerMasModal({ taller, isDark, perfilCompleto, onClose }) {
                 : "bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white"
               }`}
             >
-              <Icon
-                icon={
-                  estadoInscripcion === "ok"         ? "mdi:check-circle-outline"   :
-                  estadoInscripcion === "duplicado"  ? "mdi:information-outline"    :
-                  estadoInscripcion === "sin_cupos"  ? "mdi:account-cancel-outline" :
-                  estadoInscripcion === "incompleto" ? "mdi:account-alert-outline"  :
-                  estadoInscripcion === "error"      ? "mdi:alert-circle-outline"   :
-                  estadoInscripcion === "loading"    ? "mdi:loading"                : "mdi:clipboard-plus-outline"
-                }
-                width={16}
-                className={estadoInscripcion === "loading" ? "animate-spin" : ""}
-              />
-              {estadoInscripcion === "ok"         ? "¡Ya estás inscrito!"           :
-               estadoInscripcion === "duplicado"  ? "Ya estabas inscrito"           :
-               estadoInscripcion === "sin_cupos"  ? "Sin cupos disponibles"         :
-               estadoInscripcion === "incompleto" ? "Completa tu perfil primero"    :
-               estadoInscripcion === "error"      ? "Error al inscribirse"          :
-               estadoInscripcion === "loading"    ? "Inscribiendo..."               : "Inscribirse"}
+              <span key={estadoInscripcion} className="fade-swap flex items-center justify-center gap-2">
+                <Icon
+                  icon={
+                    estadoInscripcion === "ok"         ? "mdi:check-circle-outline"   :
+                    estadoInscripcion === "duplicado"  ? "mdi:information-outline"    :
+                    estadoInscripcion === "sin_cupos"  ? "mdi:account-cancel-outline" :
+                    estadoInscripcion === "incompleto" ? "mdi:account-alert-outline"  :
+                    estadoInscripcion === "error"      ? "mdi:alert-circle-outline"   :
+                    estadoInscripcion === "loading"    ? "mdi:loading"                : "mdi:clipboard-plus-outline"
+                  }
+                  width={16}
+                  className={estadoInscripcion === "loading" ? "animate-spin" : ""}
+                />
+                {estadoInscripcion === "ok"         ? "¡Ya estás inscrito!"           :
+                 estadoInscripcion === "duplicado"  ? "Ya estabas inscrito"           :
+                 estadoInscripcion === "sin_cupos"  ? "Sin cupos disponibles"         :
+                 estadoInscripcion === "incompleto" ? "Completa tu perfil primero"    :
+                 estadoInscripcion === "error"      ? "Error al inscribirse"          :
+                 estadoInscripcion === "loading"    ? "Inscribiendo..."               : "Inscribirse"}
+              </span>
             </button>
           </div>
         )}
@@ -714,7 +716,7 @@ function TallerCard({ taller, isDark, perfilCompleto, onDeleted }) {
 
   const handleInscribirse = async () => {
     if (estadoInscripcion !== "idle") return;
-    if (!perfilCompleto) { setEstadoInscripcion("incompleto"); return; }
+    if (!perfilCompleto) { setEstadoInscripcion("incompleto"); setTimeout(() => setEstadoInscripcion("idle"), 2500); return; }
     setEstadoInscripcion("loading");
     try {
       await inscribirseEnTaller(taller.id);
@@ -901,27 +903,29 @@ function TallerCard({ taller, isDark, perfilCompleto, onDeleted }) {
                 estadoInscripcion === "incompleto" ? "text-orange-500" : M
               } ${estadoInscripcion === "idle" ? HV : ""}`}
             >
-              <Icon
-                icon={
-                  estadoInscripcion === "ok"         ? "mdi:check-circle-outline"  :
-                  estadoInscripcion === "duplicado"  ? "mdi:information-outline"   :
-                  estadoInscripcion === "sin_cupos"  ? "mdi:account-cancel-outline":
-                  estadoInscripcion === "error"      ? "mdi:alert-circle-outline"  :
-                  estadoInscripcion === "incompleto" ? "mdi:account-alert-outline" :
-                  estadoInscripcion === "loading"    ? "mdi:loading"               : "mdi:clipboard-plus-outline"
-                }
-                width={16}
-                className={estadoInscripcion === "loading" ? "animate-spin" : ""}
-              />
-              {estadoInscripcion === "ok"         ? "Inscrito"           :
-               estadoInscripcion === "duplicado"  ? "Ya inscrito"        :
-               estadoInscripcion === "sin_cupos"  ? "Sin cupos"          :
-               estadoInscripcion === "error"      ? "Error, reintentar"  :
-               estadoInscripcion === "incompleto" ? "Perfil incompleto"  :
-               estadoInscripcion === "loading"    ? "Enviando..."        : "Inscribirse"}
+              <span key={estadoInscripcion} className="fade-swap flex items-center gap-1.5">
+                <Icon
+                  icon={
+                    estadoInscripcion === "ok"         ? "mdi:check-circle-outline"  :
+                    estadoInscripcion === "duplicado"  ? "mdi:information-outline"   :
+                    estadoInscripcion === "sin_cupos"  ? "mdi:account-cancel-outline":
+                    estadoInscripcion === "error"      ? "mdi:alert-circle-outline"  :
+                    estadoInscripcion === "incompleto" ? "mdi:account-alert-outline" :
+                    estadoInscripcion === "loading"    ? "mdi:loading"               : "mdi:clipboard-plus-outline"
+                  }
+                  width={16}
+                  className={estadoInscripcion === "loading" ? "animate-spin" : ""}
+                />
+                {estadoInscripcion === "ok"         ? "Inscrito"           :
+                 estadoInscripcion === "duplicado"  ? "Ya inscrito"        :
+                 estadoInscripcion === "sin_cupos"  ? "Sin cupos"          :
+                 estadoInscripcion === "error"      ? "Error, reintentar"  :
+                 estadoInscripcion === "incompleto" ? "Perfil incompleto"  :
+                 estadoInscripcion === "loading"    ? "Enviando..."        : "Inscribirse"}
+              </span>
             </button>
             {estadoInscripcion === "incompleto" && (
-              <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 text-center text-xs rounded-lg px-3 py-2 shadow-lg z-10 pointer-events-none ${
+              <div className={`fade-swap absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 text-center text-xs rounded-lg px-3 py-2 shadow-lg z-10 pointer-events-none ${
                 isDark ? "bg-[#262624] border border-[#3a3a38] text-[#D3D1C7]" : "bg-white border border-[#D3D1C7] text-[#2C2C2A]"
               }`}>
                 Completa tu perfil al 100% para inscribirte
@@ -1219,22 +1223,28 @@ export default function EstudianteDashboard() {
 
           {/* Accesos rápidos */}
           <div className={`rounded-xl border ${B} ${BG} p-4`}>
-            <p className={`text-xs font-semibold ${T} mb-2`}>Accesos rápidos</p>
-            {[
-              { icon: "mdi:plus-circle-outline",    label: "Publicar vacante",   to: "/empresa/publicar"   },
-              { icon: "mdi:view-dashboard-outline", label: "Panel de empresa",   to: "/empresa/dashboard"  },
-              { icon: "mdi:account-search-outline", label: "Buscar estudiantes", to: "/empresa/buscador"   },
-              { icon: "mdi:message-outline",        label: "Mensajería",         to: "/empresa/mensajeria" },
-            ].map((link) => (
-              <Link
-                key={link.label}
-                to={link.to}
-                className={`flex items-center gap-2.5 py-2 text-xs rounded-lg px-2 -mx-2 transition-colors ${isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"} ${M}`}
-              >
-                <Icon icon={link.icon} width={15} className="flex-shrink-0" />
-                {link.label}
-              </Link>
-            ))}
+            <p className={`text-xs font-semibold ${T} mb-3`}>Accesos rápidos</p>
+            <div className="flex flex-col gap-1">
+              {[
+                { icon: "mdi:plus-circle-outline",    label: "Publicar vacante",   to: "/empresa/publicar"   },
+                { icon: "mdi:view-dashboard-outline", label: "Panel de empresa",   to: "/empresa/dashboard"  },
+                { icon: "mdi:account-search-outline", label: "Buscar estudiantes", to: "/empresa/buscador"   },
+                { icon: "mdi:message-outline",        label: "Mensajería",         to: "/empresa/mensajeria" },
+              ].map((link) => (
+                <Link
+                  key={link.label}
+                  to={link.to}
+                  className={`flex items-center gap-3 py-2 px-2 -mx-2 rounded-lg transition-colors ${isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"}`}
+                >
+                  <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    isDark ? "bg-[#1a2e42] text-[#85B7EB]" : "bg-[#E6F1FB] text-[#0F4D8A]"
+                  }`}>
+                    <Icon icon={link.icon} width={17} />
+                  </span>
+                  <span className={`text-sm font-medium ${T}`}>{link.label}</span>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -1279,25 +1289,31 @@ export default function EstudianteDashboard() {
 
           {/* Accesos rápidos */}
           <div className={`rounded-xl border ${B} ${BG} p-4`}>
-            <p className={`text-xs font-semibold ${T} mb-2`}>Accesos rápidos</p>
-            {[
-              { icon: "mdi:account-group-outline",   label: "Gestión de usuarios",  to: "/admin/usuarios"     },
-              { icon: "mdi:school-outline",           label: "Talleres",             to: "/admin/talleres"     },
-              { icon: "mdi:clipboard-check-outline",  label: "Evaluaciones",         to: "/admin/usuarios", state: { tab: "evaluacion" } },
-              { icon: "mdi:message-outline",          label: "Mensajería",           to: "/admin/mensajeria"   },
-              { icon: "mdi:account-search-outline",   label: "Buscar perfiles",      to: "/admin/buscar"       },
-              { icon: "mdi:flag-outline",             label: "Reportes",             to: "/admin/reportes"     },
-            ].map((link) => (
-              <Link
-                key={link.label}
-                to={link.to}
-                state={link.state}
-                className={`flex items-center gap-2.5 py-2 text-xs rounded-lg px-2 -mx-2 transition-colors ${isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"} ${M}`}
-              >
-                <Icon icon={link.icon} width={15} className="flex-shrink-0" />
-                {link.label}
-              </Link>
-            ))}
+            <p className={`text-xs font-semibold ${T} mb-3`}>Accesos rápidos</p>
+            <div className="flex flex-col gap-1">
+              {[
+                { icon: "mdi:account-group-outline",   label: "Gestión de usuarios",  to: "/admin/usuarios"     },
+                { icon: "mdi:school-outline",           label: "Talleres",             to: "/admin/talleres"     },
+                { icon: "mdi:clipboard-check-outline",  label: "Evaluaciones",         to: "/admin/usuarios", state: { tab: "evaluacion" } },
+                { icon: "mdi:message-outline",          label: "Mensajería",           to: "/admin/mensajeria"   },
+                { icon: "mdi:account-search-outline",   label: "Buscar perfiles",      to: "/admin/buscar"       },
+                { icon: "mdi:flag-outline",             label: "Reportes",             to: "/admin/reportes"     },
+              ].map((link) => (
+                <Link
+                  key={link.label}
+                  to={link.to}
+                  state={link.state}
+                  className={`flex items-center gap-3 py-2 px-2 -mx-2 rounded-lg transition-colors ${isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"}`}
+                >
+                  <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    isDark ? "bg-[#1a2e42] text-[#85B7EB]" : "bg-[#E6F1FB] text-[#0F4D8A]"
+                  }`}>
+                    <Icon icon={link.icon} width={17} />
+                  </span>
+                  <span className={`text-sm font-medium ${T}`}>{link.label}</span>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -1348,23 +1364,29 @@ export default function EstudianteDashboard() {
           </div>
 
           <div className={`rounded-xl border ${B} ${BG} p-4`}>
-            <p className={`text-xs font-semibold ${T} mb-2`}>Accesos rápidos</p>
-            {[
-              { icon: "mdi:office-building-outline",  label: "Empresas",       to: "/slep/empresas"   },
-              { icon: "mdi:domain",                    label: "Colegios",       to: "/slep/colegios"   },
-              { icon: "mdi:flag-outline",              label: "Reportes",       to: "/slep/reportes"   },
-              { icon: "mdi:message-outline",           label: "Mensajería",     to: "/slep/mensajeria" },
-              { icon: "mdi:account-search-outline",    label: "Buscar perfiles",to: "/slep/buscar"     },
-            ].map((link) => (
-              <Link
-                key={link.label}
-                to={link.to}
-                className={`flex items-center gap-2.5 py-2 text-xs rounded-lg px-2 -mx-2 transition-colors ${isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"} ${M}`}
-              >
-                <Icon icon={link.icon} width={15} className="flex-shrink-0" />
-                {link.label}
-              </Link>
-            ))}
+            <p className={`text-xs font-semibold ${T} mb-3`}>Accesos rápidos</p>
+            <div className="flex flex-col gap-1">
+              {[
+                { icon: "mdi:office-building-outline",  label: "Empresas",       to: "/slep/empresas"   },
+                { icon: "mdi:domain",                    label: "Colegios",       to: "/slep/colegios"   },
+                { icon: "mdi:flag-outline",              label: "Reportes",       to: "/slep/reportes"   },
+                { icon: "mdi:message-outline",           label: "Mensajería",     to: "/slep/mensajeria" },
+                { icon: "mdi:account-search-outline",    label: "Buscar perfiles",to: "/slep/buscar"     },
+              ].map((link) => (
+                <Link
+                  key={link.label}
+                  to={link.to}
+                  className={`flex items-center gap-3 py-2 px-2 -mx-2 rounded-lg transition-colors ${isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"}`}
+                >
+                  <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    isDark ? "bg-[#1a2e42] text-[#85B7EB]" : "bg-[#E6F1FB] text-[#0F4D8A]"
+                  }`}>
+                    <Icon icon={link.icon} width={17} />
+                  </span>
+                  <span className={`text-sm font-medium ${T}`}>{link.label}</span>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -1434,23 +1456,29 @@ export default function EstudianteDashboard() {
 
         {/* Quick links */}
         <div className={`rounded-xl border ${B} ${BG} p-4`}>
-          <p className={`text-xs font-semibold ${T} mb-2`}>Accesos rápidos</p>
-          {[
-            { icon: "mdi:send-check-outline",       label: "Mis postulaciones", to: "/estudiante/postulaciones" },
-            { icon: "mdi:message-outline",           label: "Mensajería",        to: "/estudiante/mensajeria"    },
-            { icon: "mdi:account-search-outline",    label: "Buscar perfiles",   to: "/estudiante/buscar"        },
-          ].map((link) => (
-            <Link
-              key={link.label}
-              to={link.to}
-              className={`flex items-center gap-2.5 py-2 text-xs rounded-lg px-2 -mx-2 transition-colors ${
-                isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"
-              } ${M}`}
-            >
-              <Icon icon={link.icon} width={15} />
-              {link.label}
-            </Link>
-          ))}
+          <p className={`text-xs font-semibold ${T} mb-3`}>Accesos rápidos</p>
+          <div className="flex flex-col gap-1">
+            {[
+              { icon: "mdi:send-check-outline",       label: "Mis postulaciones", to: "/estudiante/postulaciones" },
+              { icon: "mdi:message-outline",           label: "Mensajería",        to: "/estudiante/mensajeria"    },
+              { icon: "mdi:account-search-outline",    label: "Buscar perfiles",   to: "/estudiante/buscar"        },
+            ].map((link) => (
+              <Link
+                key={link.label}
+                to={link.to}
+                className={`flex items-center gap-3 py-2 px-2 -mx-2 rounded-lg transition-colors ${
+                  isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"
+                }`}
+              >
+                <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                  isDark ? "bg-[#1a2e42] text-[#85B7EB]" : "bg-[#E6F1FB] text-[#0F4D8A]"
+                }`}>
+                  <Icon icon={link.icon} width={17} />
+                </span>
+                <span className={`text-sm font-medium ${T}`}>{link.label}</span>
+              </Link>
+            ))}
+          </div>
         </div>
       </div>}
 
@@ -1974,7 +2002,10 @@ export default function EstudianteDashboard() {
         {/* Mis postulaciones */}
         <div className={`rounded-xl border ${B} ${BG} p-4`}>
           <div className="flex items-center justify-between mb-3">
-            <p className={`text-xs font-semibold ${T}`}>Mis postulaciones</p>
+            <Link to="/estudiante/postulaciones" className={`titulo-link text-xs ${T}`}>
+              <span className="titulo-link-text" data-text="Mis postulaciones">Mis postulaciones</span>
+              <Icon icon="mdi:arrow-right" />
+            </Link>
             {estudiantePostulaciones.length > 0 && (
               <span className={`text-xs font-semibold ${M}`}>{estudiantePostulaciones.length}</span>
             )}
@@ -2010,7 +2041,10 @@ export default function EstudianteDashboard() {
         {/* Mensajes */}
         <div className={`rounded-xl border ${B} ${BG} p-4`}>
           <div className="flex items-center justify-between mb-3">
-            <p className={`text-xs font-semibold ${T}`}>Mensajes</p>
+            <Link to="/estudiante/mensajeria" className={`titulo-link text-xs ${T}`}>
+              <span className="titulo-link-text" data-text="Mensajes">Mensajes</span>
+              <Icon icon="mdi:arrow-right" />
+            </Link>
             {todasConvsEstudiante.some((c) => c.no_leidos > 0) && (
               <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isDark ? "bg-red-500/15 text-red-400" : "bg-red-100 text-red-600"}`}>
                 {todasConvsEstudiante.reduce((a, c) => a + (c.no_leidos || 0), 0)} sin leer
@@ -2055,34 +2089,6 @@ export default function EstudianteDashboard() {
             </>
           )}
         </div>
-
-        {/* Vacantes recomendadas del feed */}
-        {(() => {
-          const vacantes = publicaciones.filter((p) => p.tipo === "vacante" && p.vacante_activa).slice(0, 3);
-          return vacantes.length === 0 ? null : (
-            <div className={`rounded-xl border ${B} ${BG} p-4`}>
-              <p className={`text-xs font-semibold ${T} mb-3`}>Vacantes en el muro</p>
-              {vacantes.map((v, i) => (
-                <div key={v.id} className={`flex items-center gap-2.5 ${i < vacantes.length - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}>
-                  {v.autor_foto_perfil ? (
-                    <img src={resolverMedia(v.autor_foto_perfil)} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
-                  ) : (
-                    <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-semibold ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}>
-                      {v.autor_nombre?.[0]?.toUpperCase() || "?"}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-xs font-semibold ${T} truncate`}>{v.titulo || v.area || "Vacante"}</p>
-                    <p className={`text-xs ${M} truncate`}>{v.autor_nombre}</p>
-                    <span className={`text-xs font-medium ${v.vacante_tipo === "puesto_laboral" ? "text-green-600" : "text-orange-500"}`}>
-                      {v.vacante_tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica"}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          );
-        })()}
 
       </div>}
     </div>
