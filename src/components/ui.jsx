@@ -258,8 +258,9 @@ export function Paginacion({ paginaActual, totalPaginas, onCambiar, porPagina, o
   const btnBase = `w-8 h-8 rounded-lg text-sm flex items-center justify-center transition-colors border`;
 
   return (
-    <div className="flex items-center justify-between mt-4 gap-3 flex-wrap">
-      <div className="flex items-center gap-1">
+    <div className={`grid items-center mt-4 gap-3 flex-wrap ${showPerPage ? "grid-cols-[1fr_auto_1fr]" : "grid-cols-1 justify-center"}`}>
+      {showPerPage && <div />}
+      <div className="flex items-center gap-1 justify-self-center">
         <button
           onClick={() => onCambiar(paginaActual - 1)}
           disabled={paginaActual === 1 || totalPaginas <= 1}
@@ -294,7 +295,7 @@ export function Paginacion({ paginaActual, totalPaginas, onCambiar, porPagina, o
       </div>
 
       {showPerPage && (
-        <div className={`flex items-center gap-2 text-xs ${M}`}>
+        <div className={`flex items-center gap-2 text-xs justify-self-end ${M}`}>
           <span>Mostrar:</span>
           <select
             value={porPagina}

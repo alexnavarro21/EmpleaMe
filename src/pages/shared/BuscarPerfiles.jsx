@@ -380,6 +380,8 @@ export default function BuscarPerfiles() {
   const [pagina,             setPagina]             = useState(1);
   const [porPagina,          setPorPagina]          = useState(10);
   const [perfilCompleto,     setPerfilCompleto]     = useState(false);
+  const [estadosPostulacion, setEstadosPostulacion] = useState({}); // { [vacanteId]: idle|loading|ok|duplicado|error|incompleto }
+  const [estadosInscripcion, setEstadosInscripcion] = useState({}); // { [tallerId]: idle|loading|ok|duplicado|sin_cupos|error }
 
   const T  = isDark ? "text-[#D3D1C7]"   : "text-[#2C2C2A]";
   const M  = isDark ? "text-[#888780]"   : "text-[#5F5E5A]";
@@ -406,6 +408,39 @@ export default function BuscarPerfiles() {
       .then((perfil) => setPerfilCompleto(calcularCompletitud(perfil) === 100))
       .catch(() => {});
   }, [role]);
+
+  const handlePostularCard = async (vacanteId) => {
+    const actual = estadosPostulacion[vacanteId] || "idle";
+    if (actual !== "idle") return;
+    if (!perfilCompleto) {
+      setEstadosPostulacion((prev) => ({ ...prev, [vacanteId]: "incompleto" }));
+      setTimeout(() => setEstadosPostulacion((prev) => ({ ...prev, [vacanteId]: "idle" })), 2500);
+      return;
+    }
+    setEstadosPostulacion((prev) => ({ ...prev, [vacanteId]: "loading" }));
+    try {
+      await postularAVacante(vacanteId);
+      setEstadosPostulacion((prev) => ({ ...prev, [vacanteId]: "ok" }));
+    } catch (err) {
+      const msg = err.message?.toLowerCase();
+      const estado = msg?.includes("ya") || msg?.includes("duplic") ? "duplicado" : "error";
+      setEstadosPostulacion((prev) => ({ ...prev, [vacanteId]: estado }));
+    }
+  };
+
+  const handleInscribirseCard = async (tallerId) => {
+    const actual = estadosInscripcion[tallerId] || "idle";
+    if (actual !== "idle") return;
+    setEstadosInscripcion((prev) => ({ ...prev, [tallerId]: "loading" }));
+    try {
+      await inscribirseEnTaller(tallerId);
+      setEstadosInscripcion((prev) => ({ ...prev, [tallerId]: "ok" }));
+    } catch (err) {
+      const msg = err.message?.toLowerCase();
+      const estado = msg?.includes("ya estás") || msg?.includes("ya te") ? "duplicado" : msg?.includes("cupos") ? "sin_cupos" : "error";
+      setEstadosInscripcion((prev) => ({ ...prev, [tallerId]: estado }));
+    }
+  };
 
   useEffect(() => {
     // El buscador general muestra todos los estudiantes de la plataforma, no solo
@@ -961,9 +996,28 @@ export default function BuscarPerfiles() {
                     <button onClick={() => setModalVacante(v)} className={`flex-1 py-2 rounded-lg text-xs font-medium border ${isDark ? "border-[#3a3a38] text-[#D3D1C7] hover:bg-[#313130]" : "border-[#D3D1C7] text-[#2C2C2A] hover:bg-[#F7F6F3]"} transition-colors`}>
                       Ver más
                     </button>
-                    {role === "estudiante" && (
-                      <PrimaryButton className="flex-1 text-xs py-2" onClick={() => setModalVacante(v)}>Postular</PrimaryButton>
-                    )}
+                    {role === "estudiante" && (() => {
+                      const estado = estadosPostulacion[v.id] || "idle";
+                      return (
+                        <PrimaryButton
+                          className={`flex-1 text-xs py-2 fade-swap ${
+                            estado === "ok"        ? "!bg-green-100 !text-green-700"  :
+                            estado === "duplicado" ? "!bg-amber-100 !text-amber-700"  :
+                            estado === "error"     ? "!bg-red-100 !text-red-700"      :
+                            estado === "incompleto"? "!bg-orange-100 !text-orange-700": ""
+                          }`}
+                          key={estado}
+                          disabled={estado !== "idle"}
+                          onClick={() => handlePostularCard(v.id)}
+                        >
+                          {estado === "ok"        ? "¡Postulado!"         :
+                           estado === "duplicado" ? "Ya postulaste"       :
+                           estado === "error"     ? "Error, reintentar"   :
+                           estado === "incompleto"? "Perfil incompleto"   :
+                           estado === "loading"   ? "Postulando..."       : "Postular"}
+                        </PrimaryButton>
+                      );
+                    })()}
                   </div>
                 </Card>
               ))}
@@ -1053,11 +1107,29 @@ export default function BuscarPerfiles() {
                       <button onClick={() => setModalTaller(t)} className={`flex-1 py-2 rounded-lg text-xs font-medium border ${isDark ? "border-[#3a3a38] text-[#D3D1C7] hover:bg-[#313130]" : "border-[#D3D1C7] text-[#2C2C2A] hover:bg-[#F7F6F3]"} transition-colors`}>
                         Ver más
                       </button>
-                      {role === "estudiante" && puedeInscribirse && (
-                        <button onClick={() => setModalTaller(t)} className="flex-1 py-2 rounded-lg text-xs font-semibold bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white transition-colors">
-                          Inscribirse
-                        </button>
-                      )}
+                      {role === "estudiante" && puedeInscribirse && (() => {
+                        const estado = estadosInscripcion[t.id] || "idle";
+                        return (
+                          <button
+                            key={estado}
+                            onClick={() => handleInscribirseCard(t.id)}
+                            disabled={estado !== "idle"}
+                            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors fade-swap ${
+                              estado === "ok"        ? "bg-green-100 text-green-700"  :
+                              estado === "duplicado" ? "bg-amber-100 text-amber-700"  :
+                              estado === "sin_cupos" ? "bg-red-100 text-red-700"      :
+                              estado === "error"     ? "bg-red-100 text-red-700"      :
+                              "bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white"
+                            }`}
+                          >
+                            {estado === "ok"        ? "¡Inscrito!"          :
+                             estado === "duplicado" ? "Ya inscrito"         :
+                             estado === "sin_cupos" ? "Sin cupos"           :
+                             estado === "error"     ? "Error, reintentar"  :
+                             estado === "loading"   ? "Inscribiendo..."    : "Inscribirse"}
+                          </button>
+                        );
+                      })()}
                     </div>
                   </Card>
                 );

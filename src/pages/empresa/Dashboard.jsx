@@ -59,7 +59,7 @@ export default function EmpresaDashboard() {
   const [vacantes, setVacantes] = useState([]);
   const [postulantes, setPostulantes] = useState([]);
   const [paginaPost, setPaginaPost]       = useState(1);
-  const porPaginaPost                     = 5;
+  const [porPaginaPost, setPorPaginaPost] = useState(6);
   const [aceptados, setAceptados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [contactandoId, setContactandoId] = useState(null);
@@ -229,6 +229,9 @@ export default function EmpresaDashboard() {
     paginaVacantes * porPaginaVacantes
   );
   const totalPostulantes = vacantes.reduce((acc, v) => acc + (v.total_postulantes || 0), 0);
+  const totalPagsPost = Math.ceil(postulantes.length / porPaginaPost);
+  const paginaPostSegura = Math.min(paginaPost, totalPagsPost) || 1;
+  const postulantesPagina = postulantes.slice((paginaPostSegura - 1) * porPaginaPost, paginaPostSegura * porPaginaPost);
 
   if (loading) {
     return (
@@ -262,8 +265,8 @@ export default function EmpresaDashboard() {
         <StatCard label="Postulantes pendientes" value={String(postulantes.length)} sub="Sin revisar" subColor="text-amber-500" />
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
-        <Card>
+      <div className="grid grid-cols-2 gap-6 items-stretch">
+        <Card className="flex flex-col">
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             <h2 className={`text-sm font-semibold ${T} flex items-center gap-2 flex-1`}>
               <Icon icon="mdi:clipboard-list-outline" width={16} className="text-[#378ADD]" />
@@ -288,6 +291,7 @@ export default function EmpresaDashboard() {
             <Link to="/empresa/publicar" className="text-xs text-[#378ADD] hover:underline">+ Nueva</Link>
           </div>
 
+          <div className="flex-1">
           {vacantes.length === 0 ? (
             <p className={`text-xs ${M} text-center py-8`}>No tienes vacantes publicadas aún.</p>
           ) : vacantesFiltradas.length === 0 ? (
@@ -336,6 +340,7 @@ export default function EmpresaDashboard() {
               ))}
             </div>
           )}
+          </div>
           <Paginacion
             paginaActual={paginaVacantes}
             totalPaginas={totalPaginasVacantes}
@@ -346,7 +351,7 @@ export default function EmpresaDashboard() {
           />
         </Card>
 
-        <Card>
+        <Card className="flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h2 className={`text-sm font-semibold ${T} flex items-center gap-2`}>
               <Icon icon="mdi:account-group-outline" width={16} className="text-[#378ADD]" />
@@ -354,16 +359,12 @@ export default function EmpresaDashboard() {
             </h2>
           </div>
 
+          <div className="flex-1">
           {postulantes.length === 0 ? (
             <p className={`text-xs ${M} text-center py-8`}>No hay postulantes pendientes.</p>
-          ) : (() => {
-            const totalPags  = Math.ceil(postulantes.length / porPaginaPost);
-            const pagina     = Math.min(paginaPost, totalPags);
-            const items      = postulantes.slice((pagina - 1) * porPaginaPost, pagina * porPaginaPost);
-            return (
-            <>
+          ) : (
             <div className="flex flex-col gap-3">
-              {items.map((p) => (
+              {postulantesPagina.map((p) => (
                 <div key={p.id} className={`flex items-center gap-3 p-3 rounded-lg border ${B}`}>
                   <Link to={`/empresa/candidato/${p.estudiante_id}`} className="flex-shrink-0">
                     {p.foto_perfil ? (
@@ -430,17 +431,18 @@ export default function EmpresaDashboard() {
                 </div>
               ))}
             </div>
+          )}
+          </div>
+          {postulantes.length > 0 && (
             <Paginacion
-              paginaActual={pagina}
-              totalPaginas={totalPags}
+              paginaActual={paginaPostSegura}
+              totalPaginas={totalPagsPost}
               onCambiar={(p) => setPaginaPost(p)}
               porPagina={porPaginaPost}
-              opciones={[5, 10, 20]}
-              onCambiarPorPagina={() => {}}
+              opciones={[3, 6, 9, 15]}
+              onCambiarPorPagina={(n) => { setPorPaginaPost(n); setPaginaPost(1); }}
             />
-            </>
-            );
-          })()}
+          )}
         </Card>
       </div>
 
