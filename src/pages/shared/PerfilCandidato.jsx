@@ -194,24 +194,34 @@ export default function EmpresaPerfilCandidato() {
               </p>
             )}
 
-            {/* Botón Seguir */}
+            {/* Botón Editar estudiante (colegio) / Seguir (resto de roles) */}
             {viewer.id && parseInt(id) !== viewer.id && (
-              <button
-                onClick={handleToggleSeguir}
-                disabled={toggleandoSeguir}
-                className={`mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 border ${
-                  siguiendo
-                    ? `${isDark ? "border-[#3a3a38] text-[#D3D1C7] hover:bg-red-500/10 hover:border-red-500/40 hover:text-red-400" : "border-[#D3D1C7] text-[#5F5E5A] hover:bg-red-50 hover:border-red-300 hover:text-red-500"}`
-                    : "border-[#378ADD] bg-[#378ADD]/10 text-[#378ADD] hover:bg-[#378ADD]/20"
-                }`}
-              >
-                <Icon
-                  icon={toggleandoSeguir ? "mdi:loading" : siguiendo ? "mdi:account-check" : "mdi:account-plus-outline"}
-                  width={16}
-                  className={toggleandoSeguir ? "animate-spin" : ""}
-                />
-                {toggleandoSeguir ? "..." : siguiendo ? "Siguiendo" : "Seguir"}
-              </button>
+              viewer.rol === "colegio" ? (
+                <button
+                  onClick={() => navigate("/admin/usuarios", { state: { tab: "editar_estudiante", editarId: id } })}
+                  className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors border border-[#378ADD] bg-[#378ADD]/10 text-[#378ADD] hover:bg-[#378ADD]/20"
+                >
+                  <Icon icon="mdi:account-edit-outline" width={16} />
+                  Editar estudiante
+                </button>
+              ) : (
+                <button
+                  onClick={handleToggleSeguir}
+                  disabled={toggleandoSeguir}
+                  className={`mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 border ${
+                    siguiendo
+                      ? `${isDark ? "border-[#3a3a38] text-[#D3D1C7] hover:bg-red-500/10 hover:border-red-500/40 hover:text-red-400" : "border-[#D3D1C7] text-[#5F5E5A] hover:bg-red-50 hover:border-red-300 hover:text-red-500"}`
+                      : "border-[#378ADD] bg-[#378ADD]/10 text-[#378ADD] hover:bg-[#378ADD]/20"
+                  }`}
+                >
+                  <Icon
+                    icon={toggleandoSeguir ? "mdi:loading" : siguiendo ? "mdi:account-check" : "mdi:account-plus-outline"}
+                    width={16}
+                    className={toggleandoSeguir ? "animate-spin" : ""}
+                  />
+                  {toggleandoSeguir ? "..." : siguiendo ? "Siguiendo" : "Seguir"}
+                </button>
+              )
             )}
 
             <div className="flex flex-col gap-2 mt-4">

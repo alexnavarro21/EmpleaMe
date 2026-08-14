@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useDark } from "../context/DarkModeContext";
 import { useState, useRef, useEffect } from "react";
 import NotificacionesBell from "./NotificacionesBell";
@@ -81,7 +82,9 @@ export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [accesibilidadOpen, setAccesibilidadOpen] = useState(false);
   const menuRef = useRef(null);
+  const accesibilidadRef = useRef(null);
   const searchRef = useRef(null);
   const debounceRef = useRef(null);
 
@@ -137,6 +140,7 @@ export default function Layout() {
   useEffect(() => {
     function handleClickOutside(e) {
       if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+      if (accesibilidadRef.current && !accesibilidadRef.current.contains(e.target)) setAccesibilidadOpen(false);
       if (searchRef.current && !searchRef.current.contains(e.target)) setShowSuggestions(false);
     }
     function handleStorageChange(e) {
@@ -249,6 +253,21 @@ export default function Layout() {
   const dropdownItemCls = `flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
     isDark ? "text-[#D3D1C7] hover:bg-[#0F4D8A]/30" : "text-[#2C2C2A] hover:bg-[#F0F4F8]"
   }`;
+
+  // Botón flotante: volver al inicio del muro
+  const [mostrarSubir, setMostrarSubir] = useState(false);
+
+  useEffect(() => {
+    function handleScroll() {
+      setMostrarSubir(window.scrollY > 400);
+    }
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const subirArriba = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <div className={isDark ? "dark" : isContrast ? "colorblind-mode" : ""}>
@@ -391,6 +410,63 @@ export default function Layout() {
 
             <NotificacionesBell role={role} />
 
+            {/* Botón de accesibilidad: modo oscuro / alto contraste */}
+            <div className="relative" ref={accesibilidadRef}>
+              <button
+                onClick={() => setAccesibilidadOpen(!accesibilidadOpen)}
+                title="Accesibilidad"
+                className={`p-1.5 rounded-lg transition-colors ${
+                  accesibilidadOpen
+                    ? "bg-[#0F4D8A] text-[#E6F1FB]"
+                    : "text-[#B5D4F4] hover:text-[#E6F1FB] hover:bg-[#0F4D8A]/40"
+                }`}
+              >
+                <Icon icon="ph:eye-fill" width={22} />
+              </button>
+
+              {accesibilidadOpen && (
+                <div className={`absolute right-0 mt-2 w-56 rounded-xl shadow-lg border overflow-hidden z-50 ${
+                  isDark ? "bg-[#262624] border-[#3a3a38]" : "bg-white border-[#D3D1C7]"
+                }`}>
+                  {/* Modo oscuro/claro */}
+                  <div className={`flex items-center justify-between px-4 py-3 text-sm ${isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]"}`}>
+                    <div className="flex items-center gap-3">
+                      <Icon
+                        icon="ix:light-dark"
+                        width={22}
+                        className={isDark ? "text-[#85B7EB]" : "text-[#5F5E5A]"}
+                      />
+                      Modo oscuro
+                    </div>
+                    <button
+                      onClick={() => setIsDark(!isDark)}
+                      className={`w-8 h-[18px] rounded-full relative transition-colors duration-200 flex-shrink-0 ${isDark ? "bg-[#378ADD]" : "bg-[#D3D1C7]"}`}
+                    >
+                      <span className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white transition-all duration-200 ${isDark ? "left-[16px]" : "left-[2px]"}`} />
+                    </button>
+                  </div>
+
+                  {/* Modo alto contraste */}
+                  <div className={`flex items-center justify-between px-4 py-3 text-sm ${isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]"}`}>
+                    <div className="flex items-center gap-3">
+                      <Icon
+                        icon="mdi:contrast-circle"
+                        width={18}
+                        className={isContrast ? "text-[#C45E00]" : isDark ? "text-[#888780]" : "text-[#5F5E5A]"}
+                      />
+                      Alto contraste
+                    </div>
+                    <button
+                      onClick={() => setTheme(isContrast ? (isDark ? "dark" : "light") : "colorblind")}
+                      className={`w-8 h-[18px] rounded-full relative transition-colors duration-200 flex-shrink-0 ${isContrast ? "bg-[#C45E00]" : isDark ? "bg-[#3a3a38]" : "bg-[#D3D1C7]"}`}
+                    >
+                      <span className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white transition-all duration-200 ${isContrast ? "left-[16px]" : "left-[2px]"}`} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Botón de perfil con popup */}
             <div className="relative" ref={menuRef}>
               <button
@@ -439,45 +515,6 @@ export default function Layout() {
                   {/* Separador */}
                   <div className={`mx-3 border-t ${isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]"}`} />
 
-                  {/* Modo oscuro/claro */}
-                  <div className={`flex items-center justify-between px-4 py-3 text-sm ${isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]"}`}>
-                    <div className="flex items-center gap-3">
-                      <Icon
-                        icon="ix:light-dark"
-                        width={22}
-                        className={isDark ? "text-[#85B7EB]" : "text-[#5F5E5A]"}
-                      />
-                      Modo oscuro
-                    </div>
-                    <button
-                      onClick={() => setIsDark(!isDark)}
-                      className={`w-8 h-[18px] rounded-full relative transition-colors duration-200 flex-shrink-0 ${isDark ? "bg-[#378ADD]" : "bg-[#D3D1C7]"}`}
-                    >
-                      <span className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white transition-all duration-200 ${isDark ? "left-[16px]" : "left-[2px]"}`} />
-                    </button>
-                  </div>
-
-                  {/* Modo alto contraste */}
-                  <div className={`flex items-center justify-between px-4 py-3 text-sm ${isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]"}`}>
-                    <div className="flex items-center gap-3">
-                      <Icon
-                        icon="ph:eye-fill"
-                        width={18}
-                        className={isContrast ? "text-[#C45E00]" : isDark ? "text-[#888780]" : "text-[#5F5E5A]"}
-                      />
-                      Alto contraste
-                    </div>
-                    <button
-                      onClick={() => setTheme(isContrast ? (isDark ? "dark" : "light") : "colorblind")}
-                      className={`w-8 h-[18px] rounded-full relative transition-colors duration-200 flex-shrink-0 ${isContrast ? "bg-[#C45E00]" : isDark ? "bg-[#3a3a38]" : "bg-[#D3D1C7]"}`}
-                    >
-                      <span className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white transition-all duration-200 ${isContrast ? "left-[16px]" : "left-[2px]"}`} />
-                    </button>
-                  </div>
-
-                  {/* Separador */}
-                  <div className={`mx-3 border-t ${isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]"}`} />
-
                   {/* Cerrar sesión */}
                   <Link
                     to="/"
@@ -497,6 +534,32 @@ export default function Layout() {
         <main className="max-w-7xl mx-auto px-6 py-8">
           <Outlet />
         </main>
+
+        {/* Flecha flotante: volver arriba */}
+        <AnimatePresence>
+          {mostrarSubir && (
+            <motion.button
+              key="scroll-top"
+              type="button"
+              onClick={subirArriba}
+              title="Volver al comienzo"
+              aria-label="Volver al comienzo"
+              initial={{ opacity: 0, y: 12, scale: 0.85 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.85 }}
+              transition={{ duration: 0.18 }}
+              className={`fixed bottom-6 left-6 z-40 w-11 h-11 rounded-full shadow-lg border flex items-center justify-center transition-colors ${
+                isContrast
+                  ? "bg-[#FFF9E8] border-[#C45E00] text-[#C45E00] hover:bg-[#FCEFD1]"
+                  : isDark
+                  ? "bg-[#0F4D8A] border-[#1a5fa8] text-[#E6F1FB] hover:bg-[#0A3A6A]"
+                  : "bg-[#0A3A6A] border-[#0A3A6A] text-[#E6F1FB] hover:bg-[#0F4D8A]"
+              }`}
+            >
+              <Icon icon="mdi:arrow-up-bold" width={20} />
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
