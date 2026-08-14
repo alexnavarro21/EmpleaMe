@@ -10,8 +10,6 @@ import VerMasModal from "../../components/VerMasModal";
 import ModalReporteShared from "../../components/ModalReporte";
 import { MascotaFlotante } from "../../components/Mascota";
 
-const AVATAR_COLORS = ["bg-[#0F4D8A]", "bg-red-500", "bg-green-600", "bg-teal-600", "bg-amber-500"];
-
 const BASE_URL_GLOBAL = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
 function resolverMedia(url) {
   if (!url) return null;
@@ -2004,7 +2002,10 @@ export default function EstudianteDashboard() {
         {/* Mis postulaciones */}
         <div className={`rounded-xl border ${B} ${BG} p-4`}>
           <div className="flex items-center justify-between mb-3">
-            <p className={`text-xs font-semibold ${T}`}>Mis postulaciones</p>
+            <Link to="/estudiante/postulaciones" className={`titulo-link text-xs ${T}`}>
+              <span className="titulo-link-text" data-text="Mis postulaciones">Mis postulaciones</span>
+              <Icon icon="mdi:arrow-right" />
+            </Link>
             {estudiantePostulaciones.length > 0 && (
               <span className={`text-xs font-semibold ${M}`}>{estudiantePostulaciones.length}</span>
             )}
@@ -2040,7 +2041,10 @@ export default function EstudianteDashboard() {
         {/* Mensajes */}
         <div className={`rounded-xl border ${B} ${BG} p-4`}>
           <div className="flex items-center justify-between mb-3">
-            <p className={`text-xs font-semibold ${T}`}>Mensajes</p>
+            <Link to="/estudiante/mensajeria" className={`titulo-link text-xs ${T}`}>
+              <span className="titulo-link-text" data-text="Mensajes">Mensajes</span>
+              <Icon icon="mdi:arrow-right" />
+            </Link>
             {todasConvsEstudiante.some((c) => c.no_leidos > 0) && (
               <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isDark ? "bg-red-500/15 text-red-400" : "bg-red-100 text-red-600"}`}>
                 {todasConvsEstudiante.reduce((a, c) => a + (c.no_leidos || 0), 0)} sin leer
@@ -2085,34 +2089,6 @@ export default function EstudianteDashboard() {
             </>
           )}
         </div>
-
-        {/* Vacantes recomendadas del feed */}
-        {(() => {
-          const vacantes = publicaciones.filter((p) => p.tipo === "vacante" && p.vacante_activa).slice(0, 3);
-          return vacantes.length === 0 ? null : (
-            <div className={`rounded-xl border ${B} ${BG} p-4`}>
-              <p className={`text-xs font-semibold ${T} mb-3`}>Vacantes en el muro</p>
-              {vacantes.map((v, i) => (
-                <div key={v.id} className={`flex items-center gap-2.5 ${i < vacantes.length - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}>
-                  {v.autor_foto_perfil ? (
-                    <img src={resolverMedia(v.autor_foto_perfil)} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
-                  ) : (
-                    <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-semibold ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}>
-                      {v.autor_nombre?.[0]?.toUpperCase() || "?"}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-xs font-semibold ${T} truncate`}>{v.titulo || v.area || "Vacante"}</p>
-                    <p className={`text-xs ${M} truncate`}>{v.autor_nombre}</p>
-                    <span className={`text-xs font-medium ${v.vacante_tipo === "puesto_laboral" ? "text-green-600" : "text-orange-500"}`}>
-                      {v.vacante_tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica"}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          );
-        })()}
 
       </div>}
     </div>

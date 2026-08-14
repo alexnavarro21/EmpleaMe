@@ -8,6 +8,66 @@
   animation: fade-swap 0.3s ease;
 }
 
+/* Título de panel clickeable — adaptado de Uiverse.io by satyamchaudharydev,
+   colores ajustados a la paleta de EmpleaMe */
+.titulo-link {
+  --hovered-color: #378ADD;
+  --primary-color: currentColor;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.titulo-link .titulo-link-text {
+  position: relative;
+  color: var(--primary-color);
+}
+.titulo-link .titulo-link-text::before {
+  position: absolute;
+  content: attr(data-text);
+  width: 0%;
+  inset: 0;
+  color: var(--hovered-color);
+  overflow: hidden;
+  white-space: nowrap;
+  transition: 0.3s ease-out;
+}
+.titulo-link::after {
+  position: absolute;
+  content: "";
+  width: 0;
+  left: 0;
+  bottom: -4px;
+  background: var(--hovered-color);
+  height: 2px;
+  transition: 0.3s ease-out;
+}
+.titulo-link:hover::after {
+  width: 100%;
+}
+.titulo-link:hover .titulo-link-text::before {
+  width: 100%;
+}
+.titulo-link:hover svg {
+  transform: translateX(3px);
+  color: var(--hovered-color);
+}
+.titulo-link svg {
+  color: var(--primary-color);
+  transition: 0.2s;
+  transition-delay: 0.2s;
+  position: relative;
+  width: 15px;
+  flex-shrink: 0;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    MODO ALTO CONTRASTE — DALTÓNICO
    Se activa con la clase .colorblind-mode en el root.
