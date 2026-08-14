@@ -27,14 +27,14 @@ function tiempoRelativo(fecha) {
   return `Hace ${Math.floor(diff / 86400)} días`;
 }
 
-export default function VerMasModal({ pub, onClose }) {
+export default function VerMasModal({ pub, onClose, perfilCompleto = true }) {
   const { isDark } = useDark();
   const navigate = useNavigate();
   const [comentarios, setComentarios] = useState([]);
   const [texto, setTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [contactando, setContactando] = useState(false);
-  const [estadoPostula, setEstadoPostula] = useState("idle"); // idle | loading | ok | duplicado | error
+  const [estadoPostula, setEstadoPostula] = useState("idle"); // idle | loading | ok | duplicado | error | incompleto
   const inputRef = useRef(null);
 
   const T  = isDark ? "text-[#D3D1C7]"  : "text-[#2C2C2A]";
@@ -76,6 +76,7 @@ export default function VerMasModal({ pub, onClose }) {
 
   const handlePostular = async () => {
     if (!pub.vacante_id || estadoPostula !== "idle") return;
+    if (!perfilCompleto) { setEstadoPostula("incompleto"); setTimeout(() => setEstadoPostula("idle"), 2500); return; }
     setEstadoPostula("loading");
     try {
       await postularAVacante(pub.vacante_id);
@@ -206,24 +207,30 @@ export default function VerMasModal({ pub, onClose }) {
                     ? isDark ? "bg-amber-500/15 text-amber-400 cursor-default" : "bg-amber-100 text-amber-700 cursor-default"
                     : estadoPostula === "error"
                     ? isDark ? "bg-red-500/15 text-red-400" : "bg-red-100 text-red-700"
+                    : estadoPostula === "incompleto"
+                    ? isDark ? "bg-orange-500/15 text-orange-400" : "bg-orange-100 text-orange-700"
                     : "bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white"
                 }`}
               >
-                <Icon
-                  icon={
-                    estadoPostula === "ok"        ? "mdi:check-circle-outline" :
-                    estadoPostula === "duplicado" ? "mdi:information-outline"  :
-                    estadoPostula === "error"     ? "mdi:alert-circle-outline" :
-                    estadoPostula === "loading"   ? "mdi:loading"              : "mdi:send-outline"
-                  }
-                  width={18}
-                  className={estadoPostula === "loading" ? "animate-spin" : ""}
-                />
-                {estadoPostula === "ok"        ? "Postulación enviada" :
-                 estadoPostula === "duplicado" ? "Ya postulaste"       :
-                 estadoPostula === "error"     ? "Error, reintentar"   :
-                 estadoPostula === "loading"   ? "Enviando..."         :
-                 !pub.vacante_activa           ? "Vacante cerrada"     : "Postular"}
+                <span key={estadoPostula} className="fade-swap flex items-center justify-center gap-2">
+                  <Icon
+                    icon={
+                      estadoPostula === "ok"        ? "mdi:check-circle-outline" :
+                      estadoPostula === "duplicado" ? "mdi:information-outline"  :
+                      estadoPostula === "error"     ? "mdi:alert-circle-outline" :
+                      estadoPostula === "incompleto"? "mdi:account-alert-outline":
+                      estadoPostula === "loading"   ? "mdi:loading"              : "mdi:send-outline"
+                    }
+                    width={18}
+                    className={estadoPostula === "loading" ? "animate-spin" : ""}
+                  />
+                  {estadoPostula === "ok"        ? "Postulación enviada" :
+                   estadoPostula === "duplicado" ? "Ya postulaste"       :
+                   estadoPostula === "error"     ? "Error, reintentar"   :
+                   estadoPostula === "incompleto"? "Completa tu perfil primero" :
+                   estadoPostula === "loading"   ? "Enviando..."         :
+                   !pub.vacante_activa           ? "Vacante cerrada"     : "Postular"}
+                </span>
               </button>
               <button
                 onClick={handleContactarEmpresa}

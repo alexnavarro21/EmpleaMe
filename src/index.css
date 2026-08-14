@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@keyframes fade-swap {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.fade-swap {
+  animation: fade-swap 0.3s ease;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    MODO ALTO CONTRASTE — DALTÓNICO
    Se activa con la clase .colorblind-mode en el root.

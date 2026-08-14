@@ -6,8 +6,9 @@ import { Card, Badge, PrimaryButton, Paginacion } from "../../components/ui";
 import {
   getEstudiantes, getEmpresas, getVacantes, getTalleres, getColegios,
   iniciarMensajeDirecto, iniciarConversacionConEmpresa,
-  postularAVacante, inscribirseEnTaller, getMediaUrl,
+  postularAVacante, inscribirseEnTaller, getMediaUrl, getEstudianteById,
 } from "../../services/api";
+import { calcularCompletitud } from "../../utils/perfilCompletitud";
 import { REGIONES_COMUNAS, REGIONES } from "../../data/regionesComunas";
 import ModalReporte from "../../components/ModalReporte";
 
@@ -27,9 +28,9 @@ const CAT_COLEGIOS = { id: "colegios", icon: "mdi:domain", label: "Colegios" };
 const VALID_CATS_BASE = ["estudiantes", "empresas", "vacantes", "talleres"];
 
 // ── Modal Vacante ─────────────────────────────────────────────────────────────
-function VacanteModal({ vacante, role, onClose }) {
+function VacanteModal({ vacante, role, onClose, perfilCompleto }) {
   const { isDark } = useDark();
-  const [estado, setEstado] = useState("idle"); // idle | loading | ok | duplicado | error
+  const [estado, setEstado] = useState("idle"); // idle | loading | ok | duplicado | error | incompleto
 
   const T  = isDark ? "text-[#D3D1C7]"   : "text-[#2C2C2A]";
   const M  = isDark ? "text-[#888780]"   : "text-[#5F5E5A]";
@@ -39,6 +40,7 @@ function VacanteModal({ vacante, role, onClose }) {
 
   const handlePostular = async () => {
     if (estado !== "idle") return;
+    if (!perfilCompleto) { setEstado("incompleto"); setTimeout(() => setEstado("idle"), 2500); return; }
     setEstado("loading");
     try {
       await postularAVacante(vacante.id);
@@ -154,26 +156,31 @@ function VacanteModal({ vacante, role, onClose }) {
                 estado === "ok"        ? (isDark ? "bg-green-500/15 text-green-400" : "bg-green-100 text-green-700")
                 : estado === "duplicado" ? (isDark ? "bg-amber-500/15 text-amber-400" : "bg-amber-100 text-amber-700")
                 : estado === "error"     ? (isDark ? "bg-red-500/15 text-red-400"   : "bg-red-100 text-red-700")
+                : estado === "incompleto" ? (isDark ? "bg-orange-500/15 text-orange-400" : "bg-orange-100 text-orange-700")
                 : estado === "loading"   ? (isDark ? "bg-[#0F4D8A]/50 text-[#85B7EB]" : "bg-[#0F4D8A]/70 text-white")
                 : "bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white"
               }`}
             >
-              <Icon
-                icon={
-                  estado === "ok"        ? "mdi:check-circle-outline"
-                  : estado === "duplicado" ? "mdi:information-outline"
-                  : estado === "error"     ? "mdi:alert-circle-outline"
-                  : estado === "loading"   ? "mdi:loading"
-                  : "mdi:send-outline"
-                }
-                width={16}
-                className={estado === "loading" ? "animate-spin" : ""}
-              />
-              {estado === "ok"        ? "¡Postulación enviada!"
-               : estado === "duplicado" ? "Ya postulaste a esta vacante"
-               : estado === "error"     ? "Error al postular"
-               : estado === "loading"   ? "Postulando..."
-               : "Postular"}
+              <span key={estado} className="fade-swap flex items-center justify-center gap-2">
+                <Icon
+                  icon={
+                    estado === "ok"        ? "mdi:check-circle-outline"
+                    : estado === "duplicado" ? "mdi:information-outline"
+                    : estado === "error"     ? "mdi:alert-circle-outline"
+                    : estado === "incompleto" ? "mdi:account-alert-outline"
+                    : estado === "loading"   ? "mdi:loading"
+                    : "mdi:send-outline"
+                  }
+                  width={16}
+                  className={estado === "loading" ? "animate-spin" : ""}
+                />
+                {estado === "ok"        ? "¡Postulación enviada!"
+                 : estado === "duplicado" ? "Ya postulaste a esta vacante"
+                 : estado === "error"     ? "Error al postular"
+                 : estado === "incompleto" ? "Completa tu perfil primero"
+                 : estado === "loading"   ? "Postulando..."
+                 : "Postular"}
+              </span>
             </button>
           </div>
         )}
@@ -372,6 +379,7 @@ export default function BuscarPerfiles() {
   const [reportarPerfil,     setReportarPerfil]     = useState(null); // { id, tipo }
   const [pagina,             setPagina]             = useState(1);
   const [porPagina,          setPorPagina]          = useState(10);
+  const [perfilCompleto,     setPerfilCompleto]     = useState(false);
 
   const T  = isDark ? "text-[#D3D1C7]"   : "text-[#2C2C2A]";
   const M  = isDark ? "text-[#888780]"   : "text-[#5F5E5A]";
@@ -389,6 +397,15 @@ export default function BuscarPerfiles() {
     const params = new URLSearchParams(location.search);
     setSearch(params.get("q") || "");
   }, [location.search]);
+
+  useEffect(() => {
+    if (role !== "estudiante") return;
+    const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+    if (!usuario.id) return;
+    getEstudianteById(usuario.id)
+      .then((perfil) => setPerfilCompleto(calcularCompletitud(perfil) === 100))
+      .catch(() => {});
+  }, [role]);
 
   useEffect(() => {
     // El buscador general muestra todos los estudiantes de la plataforma, no solo
@@ -544,7 +561,7 @@ export default function BuscarPerfiles() {
 
   return (
     <div>
-      {modalVacante && <VacanteModal vacante={modalVacante} role={role} onClose={() => setModalVacante(null)} />}
+      {modalVacante && <VacanteModal vacante={modalVacante} role={role} onClose={() => setModalVacante(null)} perfilCompleto={perfilCompleto} />}
       {modalTaller  && <TallerModal  taller={modalTaller}  role={role} onClose={() => setModalTaller(null)}  />}
 
       <div className="mb-6">

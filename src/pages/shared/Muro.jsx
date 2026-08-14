@@ -239,7 +239,7 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
 
   const handlePostular = async () => {
     if (!pub.vacante_id || estadoPostula !== "idle") return;
-    if (!perfilCompleto) { setEstadoPostula("incompleto"); return; }
+    if (!perfilCompleto) { setEstadoPostula("incompleto"); setTimeout(() => setEstadoPostula("idle"), 2500); return; }
     setEstadoPostula("loading");
     try {
       await postularAVacante(pub.vacante_id);
@@ -485,26 +485,28 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
                 estadoPostula === "loading"     ? M                 : M
               } ${estadoPostula === "idle" ? HV : ""}`}
             >
-              <Icon
-                icon={
-                  estadoPostula === "ok"         ? "mdi:check-circle-outline"  :
-                  estadoPostula === "duplicado"  ? "mdi:information-outline"   :
-                  estadoPostula === "error"      ? "mdi:alert-circle-outline"  :
-                  estadoPostula === "incompleto" ? "mdi:account-alert-outline" :
-                  estadoPostula === "loading"    ? "mdi:loading"               : "mdi:send-outline"
-                }
-                width={16}
-                className={estadoPostula === "loading" ? "animate-spin" : ""}
-              />
-              {estadoPostula === "ok"         ? "Postulado"          :
-               estadoPostula === "duplicado"  ? "Ya postulaste"      :
-               estadoPostula === "error"      ? "Error, reintentar"  :
-               estadoPostula === "incompleto" ? "Perfil incompleto"  :
-               estadoPostula === "loading"    ? "Enviando..."        :
-               !pub.vacante_activa            ? "Cerrada"            : "Postular"}
+              <span key={estadoPostula} className="fade-swap flex items-center gap-1.5">
+                <Icon
+                  icon={
+                    estadoPostula === "ok"         ? "mdi:check-circle-outline"  :
+                    estadoPostula === "duplicado"  ? "mdi:information-outline"   :
+                    estadoPostula === "error"      ? "mdi:alert-circle-outline"  :
+                    estadoPostula === "incompleto" ? "mdi:account-alert-outline" :
+                    estadoPostula === "loading"    ? "mdi:loading"               : "mdi:send-outline"
+                  }
+                  width={16}
+                  className={estadoPostula === "loading" ? "animate-spin" : ""}
+                />
+                {estadoPostula === "ok"         ? "Postulado"          :
+                 estadoPostula === "duplicado"  ? "Ya postulaste"      :
+                 estadoPostula === "error"      ? "Error, reintentar"  :
+                 estadoPostula === "incompleto" ? "Perfil incompleto"  :
+                 estadoPostula === "loading"    ? "Enviando..."        :
+                 !pub.vacante_activa            ? "Cerrada"            : "Postular"}
+              </span>
             </button>
             {estadoPostula === "incompleto" && (
-              <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 text-center text-xs rounded-lg px-3 py-2 shadow-lg z-10 pointer-events-none ${
+              <div className={`fade-swap absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 text-center text-xs rounded-lg px-3 py-2 shadow-lg z-10 pointer-events-none ${
                 isDark ? "bg-[#262624] border border-[#3a3a38] text-[#D3D1C7]" : "bg-white border border-[#D3D1C7] text-[#2C2C2A]"
               }`}>
                 Completa tu perfil al 100% para poder postular
@@ -514,7 +516,7 @@ function FeedCard({ pub, isDark, perfilCompleto, onDeleted, siguiendoIds, onSegu
         )}
       </div>
 
-      {verMas && <VerMasModal pub={pub} onClose={() => setVerMas(false)} />}
+      {verMas && <VerMasModal pub={pub} onClose={() => setVerMas(false)} perfilCompleto={perfilCompleto} />}
 
       {modalReporte && (
         <ModalReporteShared
@@ -545,7 +547,7 @@ function TallerVerMasModal({ taller, isDark, perfilCompleto, onClose }) {
 
   const handleInscribirse = async () => {
     if (estadoInscripcion !== "idle") return;
-    if (!perfilCompleto) { setEstadoInscripcion("incompleto"); return; }
+    if (!perfilCompleto) { setEstadoInscripcion("incompleto"); setTimeout(() => setEstadoInscripcion("idle"), 2500); return; }
     setEstadoInscripcion("loading");
     try {
       await inscribirseEnTaller(taller.id);
@@ -648,24 +650,26 @@ function TallerVerMasModal({ taller, isDark, perfilCompleto, onClose }) {
                 : "bg-[#0F4D8A] hover:bg-[#0A3A6A] text-white"
               }`}
             >
-              <Icon
-                icon={
-                  estadoInscripcion === "ok"         ? "mdi:check-circle-outline"   :
-                  estadoInscripcion === "duplicado"  ? "mdi:information-outline"    :
-                  estadoInscripcion === "sin_cupos"  ? "mdi:account-cancel-outline" :
-                  estadoInscripcion === "incompleto" ? "mdi:account-alert-outline"  :
-                  estadoInscripcion === "error"      ? "mdi:alert-circle-outline"   :
-                  estadoInscripcion === "loading"    ? "mdi:loading"                : "mdi:clipboard-plus-outline"
-                }
-                width={16}
-                className={estadoInscripcion === "loading" ? "animate-spin" : ""}
-              />
-              {estadoInscripcion === "ok"         ? "¡Ya estás inscrito!"           :
-               estadoInscripcion === "duplicado"  ? "Ya estabas inscrito"           :
-               estadoInscripcion === "sin_cupos"  ? "Sin cupos disponibles"         :
-               estadoInscripcion === "incompleto" ? "Completa tu perfil primero"    :
-               estadoInscripcion === "error"      ? "Error al inscribirse"          :
-               estadoInscripcion === "loading"    ? "Inscribiendo..."               : "Inscribirse"}
+              <span key={estadoInscripcion} className="fade-swap flex items-center justify-center gap-2">
+                <Icon
+                  icon={
+                    estadoInscripcion === "ok"         ? "mdi:check-circle-outline"   :
+                    estadoInscripcion === "duplicado"  ? "mdi:information-outline"    :
+                    estadoInscripcion === "sin_cupos"  ? "mdi:account-cancel-outline" :
+                    estadoInscripcion === "incompleto" ? "mdi:account-alert-outline"  :
+                    estadoInscripcion === "error"      ? "mdi:alert-circle-outline"   :
+                    estadoInscripcion === "loading"    ? "mdi:loading"                : "mdi:clipboard-plus-outline"
+                  }
+                  width={16}
+                  className={estadoInscripcion === "loading" ? "animate-spin" : ""}
+                />
+                {estadoInscripcion === "ok"         ? "¡Ya estás inscrito!"           :
+                 estadoInscripcion === "duplicado"  ? "Ya estabas inscrito"           :
+                 estadoInscripcion === "sin_cupos"  ? "Sin cupos disponibles"         :
+                 estadoInscripcion === "incompleto" ? "Completa tu perfil primero"    :
+                 estadoInscripcion === "error"      ? "Error al inscribirse"          :
+                 estadoInscripcion === "loading"    ? "Inscribiendo..."               : "Inscribirse"}
+              </span>
             </button>
           </div>
         )}
@@ -714,7 +718,7 @@ function TallerCard({ taller, isDark, perfilCompleto, onDeleted }) {
 
   const handleInscribirse = async () => {
     if (estadoInscripcion !== "idle") return;
-    if (!perfilCompleto) { setEstadoInscripcion("incompleto"); return; }
+    if (!perfilCompleto) { setEstadoInscripcion("incompleto"); setTimeout(() => setEstadoInscripcion("idle"), 2500); return; }
     setEstadoInscripcion("loading");
     try {
       await inscribirseEnTaller(taller.id);
@@ -901,27 +905,29 @@ function TallerCard({ taller, isDark, perfilCompleto, onDeleted }) {
                 estadoInscripcion === "incompleto" ? "text-orange-500" : M
               } ${estadoInscripcion === "idle" ? HV : ""}`}
             >
-              <Icon
-                icon={
-                  estadoInscripcion === "ok"         ? "mdi:check-circle-outline"  :
-                  estadoInscripcion === "duplicado"  ? "mdi:information-outline"   :
-                  estadoInscripcion === "sin_cupos"  ? "mdi:account-cancel-outline":
-                  estadoInscripcion === "error"      ? "mdi:alert-circle-outline"  :
-                  estadoInscripcion === "incompleto" ? "mdi:account-alert-outline" :
-                  estadoInscripcion === "loading"    ? "mdi:loading"               : "mdi:clipboard-plus-outline"
-                }
-                width={16}
-                className={estadoInscripcion === "loading" ? "animate-spin" : ""}
-              />
-              {estadoInscripcion === "ok"         ? "Inscrito"           :
-               estadoInscripcion === "duplicado"  ? "Ya inscrito"        :
-               estadoInscripcion === "sin_cupos"  ? "Sin cupos"          :
-               estadoInscripcion === "error"      ? "Error, reintentar"  :
-               estadoInscripcion === "incompleto" ? "Perfil incompleto"  :
-               estadoInscripcion === "loading"    ? "Enviando..."        : "Inscribirse"}
+              <span key={estadoInscripcion} className="fade-swap flex items-center gap-1.5">
+                <Icon
+                  icon={
+                    estadoInscripcion === "ok"         ? "mdi:check-circle-outline"  :
+                    estadoInscripcion === "duplicado"  ? "mdi:information-outline"   :
+                    estadoInscripcion === "sin_cupos"  ? "mdi:account-cancel-outline":
+                    estadoInscripcion === "error"      ? "mdi:alert-circle-outline"  :
+                    estadoInscripcion === "incompleto" ? "mdi:account-alert-outline" :
+                    estadoInscripcion === "loading"    ? "mdi:loading"               : "mdi:clipboard-plus-outline"
+                  }
+                  width={16}
+                  className={estadoInscripcion === "loading" ? "animate-spin" : ""}
+                />
+                {estadoInscripcion === "ok"         ? "Inscrito"           :
+                 estadoInscripcion === "duplicado"  ? "Ya inscrito"        :
+                 estadoInscripcion === "sin_cupos"  ? "Sin cupos"          :
+                 estadoInscripcion === "error"      ? "Error, reintentar"  :
+                 estadoInscripcion === "incompleto" ? "Perfil incompleto"  :
+                 estadoInscripcion === "loading"    ? "Enviando..."        : "Inscribirse"}
+              </span>
             </button>
             {estadoInscripcion === "incompleto" && (
-              <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 text-center text-xs rounded-lg px-3 py-2 shadow-lg z-10 pointer-events-none ${
+              <div className={`fade-swap absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 text-center text-xs rounded-lg px-3 py-2 shadow-lg z-10 pointer-events-none ${
                 isDark ? "bg-[#262624] border border-[#3a3a38] text-[#D3D1C7]" : "bg-white border border-[#D3D1C7] text-[#2C2C2A]"
               }`}>
                 Completa tu perfil al 100% para inscribirte

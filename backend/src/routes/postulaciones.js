@@ -1,12 +1,23 @@
 const router = require("express").Router();
 const db = require("../db");
 const { verificarToken, soloRol } = require("../middleware/auth");
+const { calcularCompletitud } = require("../utils/perfilCompletitud");
 
 // POST /api/postulaciones  — estudiante postula a una vacante
 router.post("/", verificarToken, soloRol("estudiante"), async (req, res) => {
   const { vacante_id } = req.body;
   if (!vacante_id) return res.status(400).json({ error: "vacante_id es requerido" });
   try {
+    const [[perfil]] = await db.query(
+      `SELECT pe.*, c.nombre AS carrera
+       FROM perfiles_estudiantes pe
+       LEFT JOIN carreras c ON c.id = pe.carrera_id
+       WHERE pe.usuario_id = ?`,
+      [req.usuario.id]
+    );
+    if (calcularCompletitud(perfil) < 100)
+      return res.status(403).json({ error: "Debes completar tu perfil antes de postular" });
+
     const [[vacante]] = await db.query(
       "SELECT esta_activa FROM vacantes WHERE id = ?",
       [vacante_id]

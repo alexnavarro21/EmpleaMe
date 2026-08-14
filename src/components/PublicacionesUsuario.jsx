@@ -3,7 +3,8 @@ import { Icon } from "@iconify/react";
 import { useDark } from "../context/DarkModeContext";
 import { Badge } from "./ui";
 import VerMasModal from "./VerMasModal";
-import { getPublicacionesByAutor, eliminarPublicacion } from "../services/api";
+import { getPublicacionesByAutor, eliminarPublicacion, getEstudianteById } from "../services/api";
+import { calcularCompletitud } from "../utils/perfilCompletitud";
 
 const TIPO_BADGE = {
   vacante:    { label: "Práctica",   color: "orange" },
@@ -21,7 +22,7 @@ function tiempoRelativo(fecha) {
   return `Hace ${Math.floor(diff / 86400)} días`;
 }
 
-function MiniPostCard({ pub, isDark, onDeleted, puedeModerar }) {
+function MiniPostCard({ pub, isDark, onDeleted, puedeModerar, perfilCompleto }) {
   const [verMas, setVerMas] = useState(false);
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [confirmarEliminar, setConfirmarEliminar] = useState(false);
@@ -149,7 +150,7 @@ function MiniPostCard({ pub, isDark, onDeleted, puedeModerar }) {
         Ver más · comentarios
       </button>
 
-      {verMas && <VerMasModal pub={pub} onClose={() => setVerMas(false)} />}
+      {verMas && <VerMasModal pub={pub} onClose={() => setVerMas(false)} perfilCompleto={perfilCompleto} />}
     </div>
   );
 }
@@ -161,6 +162,7 @@ export default function PublicacionesUsuario({ usuarioId, puedeModerar = false }
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
   const [publicaciones, setPublicaciones] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [perfilCompleto, setPerfilCompleto] = useState(false);
 
   useEffect(() => {
     if (!usuarioId) return;
@@ -169,6 +171,14 @@ export default function PublicacionesUsuario({ usuarioId, puedeModerar = false }
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [usuarioId]);
+
+  useEffect(() => {
+    const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+    if (usuario.rol !== "estudiante") return;
+    getEstudianteById(usuario.id)
+      .then((perfil) => setPerfilCompleto(calcularCompletitud(perfil) === 100))
+      .catch(() => {});
+  }, []);
 
   if (loading) return (
     <div className={`flex items-center gap-2 py-6 justify-center ${M} text-sm`}>
@@ -194,6 +204,7 @@ export default function PublicacionesUsuario({ usuarioId, puedeModerar = false }
               pub={pub}
               isDark={isDark}
               puedeModerar={puedeModerar}
+              perfilCompleto={perfilCompleto}
               onDeleted={(id) => setPublicaciones((prev) => prev.filter((p) => p.id !== id))}
             />
           ))}
