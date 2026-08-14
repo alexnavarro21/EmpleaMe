@@ -87,7 +87,7 @@ export default function EmpresaPublicarVacante() {
     <div>
       <PageHeader
         title="Publicar Vacante de Práctica"
-        subtitle="Completa los datos para que los estudiantes encuentren tu oferta"
+        subtitle="Completa el formulario con los detalles de la nueva vacante"
         action={<SecondaryButton onClick={() => navigate("/empresa/dashboard")}>Cancelar</SecondaryButton>}
       />
 
@@ -188,7 +188,11 @@ export default function EmpresaPublicarVacante() {
 
             <TextAreaField
               label="Descripción del puesto"
-              placeholder="Describe las actividades que realizará el practicante..."
+              placeholder={
+                tipo === "practica"
+                  ? "Describe las actividades que realizará el practicante..."
+                  : "Describe las actividades del puesto laboral..."
+              }
               rows={4}
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
