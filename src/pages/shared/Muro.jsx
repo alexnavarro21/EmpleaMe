@@ -1225,22 +1225,28 @@ export default function EstudianteDashboard() {
 
           {/* Accesos rápidos */}
           <div className={`rounded-xl border ${B} ${BG} p-4`}>
-            <p className={`text-xs font-semibold ${T} mb-2`}>Accesos rápidos</p>
-            {[
-              { icon: "mdi:plus-circle-outline",    label: "Publicar vacante",   to: "/empresa/publicar"   },
-              { icon: "mdi:view-dashboard-outline", label: "Panel de empresa",   to: "/empresa/dashboard"  },
-              { icon: "mdi:account-search-outline", label: "Buscar estudiantes", to: "/empresa/buscador"   },
-              { icon: "mdi:message-outline",        label: "Mensajería",         to: "/empresa/mensajeria" },
-            ].map((link) => (
-              <Link
-                key={link.label}
-                to={link.to}
-                className={`flex items-center gap-2.5 py-2 text-xs rounded-lg px-2 -mx-2 transition-colors ${isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"} ${M}`}
-              >
-                <Icon icon={link.icon} width={15} className="flex-shrink-0" />
-                {link.label}
-              </Link>
-            ))}
+            <p className={`text-xs font-semibold ${T} mb-3`}>Accesos rápidos</p>
+            <div className="flex flex-col gap-1">
+              {[
+                { icon: "mdi:plus-circle-outline",    label: "Publicar vacante",   to: "/empresa/publicar"   },
+                { icon: "mdi:view-dashboard-outline", label: "Panel de empresa",   to: "/empresa/dashboard"  },
+                { icon: "mdi:account-search-outline", label: "Buscar estudiantes", to: "/empresa/buscador"   },
+                { icon: "mdi:message-outline",        label: "Mensajería",         to: "/empresa/mensajeria" },
+              ].map((link) => (
+                <Link
+                  key={link.label}
+                  to={link.to}
+                  className={`flex items-center gap-3 py-2 px-2 -mx-2 rounded-lg transition-colors ${isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"}`}
+                >
+                  <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    isDark ? "bg-[#1a2e42] text-[#85B7EB]" : "bg-[#E6F1FB] text-[#0F4D8A]"
+                  }`}>
+                    <Icon icon={link.icon} width={17} />
+                  </span>
+                  <span className={`text-sm font-medium ${T}`}>{link.label}</span>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -1285,25 +1291,31 @@ export default function EstudianteDashboard() {
 
           {/* Accesos rápidos */}
           <div className={`rounded-xl border ${B} ${BG} p-4`}>
-            <p className={`text-xs font-semibold ${T} mb-2`}>Accesos rápidos</p>
-            {[
-              { icon: "mdi:account-group-outline",   label: "Gestión de usuarios",  to: "/admin/usuarios"     },
-              { icon: "mdi:school-outline",           label: "Talleres",             to: "/admin/talleres"     },
-              { icon: "mdi:clipboard-check-outline",  label: "Evaluaciones",         to: "/admin/usuarios", state: { tab: "evaluacion" } },
-              { icon: "mdi:message-outline",          label: "Mensajería",           to: "/admin/mensajeria"   },
-              { icon: "mdi:account-search-outline",   label: "Buscar perfiles",      to: "/admin/buscar"       },
-              { icon: "mdi:flag-outline",             label: "Reportes",             to: "/admin/reportes"     },
-            ].map((link) => (
-              <Link
-                key={link.label}
-                to={link.to}
-                state={link.state}
-                className={`flex items-center gap-2.5 py-2 text-xs rounded-lg px-2 -mx-2 transition-colors ${isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"} ${M}`}
-              >
-                <Icon icon={link.icon} width={15} className="flex-shrink-0" />
-                {link.label}
-              </Link>
-            ))}
+            <p className={`text-xs font-semibold ${T} mb-3`}>Accesos rápidos</p>
+            <div className="flex flex-col gap-1">
+              {[
+                { icon: "mdi:account-group-outline",   label: "Gestión de usuarios",  to: "/admin/usuarios"     },
+                { icon: "mdi:school-outline",           label: "Talleres",             to: "/admin/talleres"     },
+                { icon: "mdi:clipboard-check-outline",  label: "Evaluaciones",         to: "/admin/usuarios", state: { tab: "evaluacion" } },
+                { icon: "mdi:message-outline",          label: "Mensajería",           to: "/admin/mensajeria"   },
+                { icon: "mdi:account-search-outline",   label: "Buscar perfiles",      to: "/admin/buscar"       },
+                { icon: "mdi:flag-outline",             label: "Reportes",             to: "/admin/reportes"     },
+              ].map((link) => (
+                <Link
+                  key={link.label}
+                  to={link.to}
+                  state={link.state}
+                  className={`flex items-center gap-3 py-2 px-2 -mx-2 rounded-lg transition-colors ${isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"}`}
+                >
+                  <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    isDark ? "bg-[#1a2e42] text-[#85B7EB]" : "bg-[#E6F1FB] text-[#0F4D8A]"
+                  }`}>
+                    <Icon icon={link.icon} width={17} />
+                  </span>
+                  <span className={`text-sm font-medium ${T}`}>{link.label}</span>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -1354,23 +1366,29 @@ export default function EstudianteDashboard() {
           </div>
 
           <div className={`rounded-xl border ${B} ${BG} p-4`}>
-            <p className={`text-xs font-semibold ${T} mb-2`}>Accesos rápidos</p>
-            {[
-              { icon: "mdi:office-building-outline",  label: "Empresas",       to: "/slep/empresas"   },
-              { icon: "mdi:domain",                    label: "Colegios",       to: "/slep/colegios"   },
-              { icon: "mdi:flag-outline",              label: "Reportes",       to: "/slep/reportes"   },
-              { icon: "mdi:message-outline",           label: "Mensajería",     to: "/slep/mensajeria" },
-              { icon: "mdi:account-search-outline",    label: "Buscar perfiles",to: "/slep/buscar"     },
-            ].map((link) => (
-              <Link
-                key={link.label}
-                to={link.to}
-                className={`flex items-center gap-2.5 py-2 text-xs rounded-lg px-2 -mx-2 transition-colors ${isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"} ${M}`}
-              >
-                <Icon icon={link.icon} width={15} className="flex-shrink-0" />
-                {link.label}
-              </Link>
-            ))}
+            <p className={`text-xs font-semibold ${T} mb-3`}>Accesos rápidos</p>
+            <div className="flex flex-col gap-1">
+              {[
+                { icon: "mdi:office-building-outline",  label: "Empresas",       to: "/slep/empresas"   },
+                { icon: "mdi:domain",                    label: "Colegios",       to: "/slep/colegios"   },
+                { icon: "mdi:flag-outline",              label: "Reportes",       to: "/slep/reportes"   },
+                { icon: "mdi:message-outline",           label: "Mensajería",     to: "/slep/mensajeria" },
+                { icon: "mdi:account-search-outline",    label: "Buscar perfiles",to: "/slep/buscar"     },
+              ].map((link) => (
+                <Link
+                  key={link.label}
+                  to={link.to}
+                  className={`flex items-center gap-3 py-2 px-2 -mx-2 rounded-lg transition-colors ${isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"}`}
+                >
+                  <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    isDark ? "bg-[#1a2e42] text-[#85B7EB]" : "bg-[#E6F1FB] text-[#0F4D8A]"
+                  }`}>
+                    <Icon icon={link.icon} width={17} />
+                  </span>
+                  <span className={`text-sm font-medium ${T}`}>{link.label}</span>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -1440,23 +1458,29 @@ export default function EstudianteDashboard() {
 
         {/* Quick links */}
         <div className={`rounded-xl border ${B} ${BG} p-4`}>
-          <p className={`text-xs font-semibold ${T} mb-2`}>Accesos rápidos</p>
-          {[
-            { icon: "mdi:send-check-outline",       label: "Mis postulaciones", to: "/estudiante/postulaciones" },
-            { icon: "mdi:message-outline",           label: "Mensajería",        to: "/estudiante/mensajeria"    },
-            { icon: "mdi:account-search-outline",    label: "Buscar perfiles",   to: "/estudiante/buscar"        },
-          ].map((link) => (
-            <Link
-              key={link.label}
-              to={link.to}
-              className={`flex items-center gap-2.5 py-2 text-xs rounded-lg px-2 -mx-2 transition-colors ${
-                isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"
-              } ${M}`}
-            >
-              <Icon icon={link.icon} width={15} />
-              {link.label}
-            </Link>
-          ))}
+          <p className={`text-xs font-semibold ${T} mb-3`}>Accesos rápidos</p>
+          <div className="flex flex-col gap-1">
+            {[
+              { icon: "mdi:send-check-outline",       label: "Mis postulaciones", to: "/estudiante/postulaciones" },
+              { icon: "mdi:message-outline",           label: "Mensajería",        to: "/estudiante/mensajeria"    },
+              { icon: "mdi:account-search-outline",    label: "Buscar perfiles",   to: "/estudiante/buscar"        },
+            ].map((link) => (
+              <Link
+                key={link.label}
+                to={link.to}
+                className={`flex items-center gap-3 py-2 px-2 -mx-2 rounded-lg transition-colors ${
+                  isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"
+                }`}
+              >
+                <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                  isDark ? "bg-[#1a2e42] text-[#85B7EB]" : "bg-[#E6F1FB] text-[#0F4D8A]"
+                }`}>
+                  <Icon icon={link.icon} width={17} />
+                </span>
+                <span className={`text-sm font-medium ${T}`}>{link.label}</span>
+              </Link>
+            ))}
+          </div>
         </div>
       </div>}
 
