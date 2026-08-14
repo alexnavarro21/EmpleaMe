@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDark } from "../../context/DarkModeContext";
 import { loginUsuario, registrarUsuario, listarColegios, solicitarRecuperacion } from "../../services/api";
@@ -69,16 +69,12 @@ export default function Login() {
       setRegError("Completa todos los campos obligatorios.");
       return;
     }
-    if (activeRole === "estudiante" && !regCorreo && !regRut) {
-      setRegError("Debes ingresar correo o RUT.");
-      return;
-    }
     if (activeRole === "empresa" && !regCorreo) {
       setRegError("Las empresas deben registrarse con correo.");
       return;
     }
-    if (activeRole === "estudiante" && (!regNombre || !regApellidoPaterno || !regCarrera)) {
-      setRegError("Nombre, apellido paterno y carrera son obligatorios.");
+    if (activeRole === "estudiante" && (!regNombre || !regApellidoPaterno || !regRut || !regCarrera)) {
+      setRegError("Nombre, apellido paterno, RUT y carrera son obligatorios.");
       return;
     }
     if (activeRole === "empresa" && !regNombreEmpresa) {
@@ -285,6 +281,12 @@ export default function Login() {
                         isDark={isDark}
                       />
                     </div>
+                    <ColegioCombobox
+                      colegios={colegios}
+                      value={regColegioId}
+                      onChange={setRegColegioId}
+                      isDark={isDark}
+                    />
                     <div className="grid grid-cols-2 gap-3">
                       <SelectField label="Carrera *" value={regCarrera} onChange={(e) => setRegCarrera(e.target.value)} isDark={isDark}>
                         <option value="">Selecciona tu carrera</option>
@@ -298,24 +300,21 @@ export default function Login() {
                         ))}
                       </SelectField>
                     </div>
-                    <div className={`text-xs mb-1 ${isDark ? "text-[#B4B2A9]" : "text-[#5F5E5A]"}`}>
-                      Ingresa al menos uno: correo o RUT
-                    </div>
                     <div className="grid grid-cols-2 gap-3">
+                      <FormField
+                        label="RUT *"
+                        type="text"
+                        placeholder="12.345.678-9"
+                        value={regRut}
+                        onChange={(e) => setRegRut(e.target.value)}
+                        isDark={isDark}
+                      />
                       <FormField
                         label="Correo (opcional)"
                         type="email"
                         placeholder="tucorreo@email.com"
                         value={regCorreo}
                         onChange={(e) => setRegCorreo(e.target.value)}
-                        isDark={isDark}
-                      />
-                      <FormField
-                        label="RUT (opcional)"
-                        type="text"
-                        placeholder="12.345.678-9"
-                        value={regRut}
-                        onChange={(e) => setRegRut(e.target.value)}
                         isDark={isDark}
                       />
                     </div>
@@ -327,17 +326,6 @@ export default function Login() {
                       onChange={(e) => setRegTelefono(e.target.value)}
                       isDark={isDark}
                     />
-                    <SelectField
-                      label="Centro educacional (opcional)"
-                      value={regColegioId}
-                      onChange={(e) => setRegColegioId(e.target.value)}
-                      isDark={isDark}
-                    >
-                      <option value="">Sin institución asociada</option>
-                      {colegios.map((c) => (
-                        <option key={c.id} value={c.id}>{c.nombre_institucion}</option>
-                      ))}
-                    </SelectField>
                   </>
                 )}
 
@@ -616,6 +604,81 @@ function FormField({ label, type, placeholder, isDark, value, onChange }) {
               </svg>
             )}
           </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ColegioCombobox({ colegios, value, onChange, isDark }) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const seleccionado = colegios.find((c) => String(c.id) === String(value));
+  const filtrados = query
+    ? colegios.filter((c) => c.nombre_institucion.toLowerCase().includes(query.toLowerCase()))
+    : colegios;
+
+  return (
+    <div className="mb-3" ref={wrapperRef}>
+      <label className={`block text-xs mb-1.5 ${isDark ? "text-[#B4B2A9]" : "text-[#5F5E5A]"}`}>Centro educacional (opcional)</label>
+      <div className="relative">
+        <input
+          type="text"
+          placeholder="Busca tu colegio..."
+          value={open ? query : (seleccionado?.nombre_institucion || "")}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setOpen(true);
+            if (!e.target.value) onChange("");
+          }}
+          onFocus={() => { setQuery(""); setOpen(true); }}
+          className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none border transition-all
+            focus:border-[#378ADD] focus:ring-2 focus:ring-[#B5D4F4]
+            ${isDark
+              ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
+              : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
+            }`}
+        />
+        {open && (
+          <div className={`absolute z-20 mt-1 w-full max-h-48 overflow-y-auto rounded-lg border shadow-lg ${
+            isDark ? "bg-[#262624] border-[#3a3a38]" : "bg-white border-[#D3D1C7]"
+          }`}>
+            <button
+              type="button"
+              onClick={() => { onChange(""); setQuery(""); setOpen(false); }}
+              className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                isDark ? "text-[#888780] hover:bg-[#313130]" : "text-[#B4B2A9] hover:bg-[#F7F6F3]"
+              }`}
+            >
+              Sin institución asociada
+            </button>
+            {filtrados.length === 0 ? (
+              <p className={`px-3 py-2 text-xs ${isDark ? "text-[#888780]" : "text-[#B4B2A9]"}`}>Sin resultados</p>
+            ) : filtrados.map((c) => (
+              <button
+                type="button"
+                key={c.id}
+                onClick={() => { onChange(String(c.id)); setQuery(""); setOpen(false); }}
+                className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                  String(c.id) === String(value)
+                    ? isDark ? "bg-[#1a2e42] text-[#D3D1C7]" : "bg-[#E6F1FB] text-[#2C2C2A]"
+                    : isDark ? "text-[#D3D1C7] hover:bg-[#313130]" : "text-[#2C2C2A] hover:bg-[#F7F6F3]"
+                }`}
+              >
+                {c.nombre_institucion}
+              </button>
+            ))}
+          </div>
         )}
       </div>
     </div>

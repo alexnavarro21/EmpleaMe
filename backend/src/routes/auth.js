@@ -85,8 +85,8 @@ router.post("/register", async (req, res) => {
   if (rol === "empresa" && !correoNorm)
     return res.status(400).json({ error: "Las empresas deben registrarse con correo" });
 
-  if (rol === "estudiante" && !correoNorm && !rutNorm)
-    return res.status(400).json({ error: "Debes ingresar correo o RUT" });
+  if (rol === "estudiante" && !rutNorm)
+    return res.status(400).json({ error: "El RUT es obligatorio" });
 
   const conn = await db.getConnection();
   try {
