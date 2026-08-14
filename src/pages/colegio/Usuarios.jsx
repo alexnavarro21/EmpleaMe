@@ -2005,7 +2005,7 @@ export default function GestionEstudiantes() {
   const { isDark } = useDark();
   const location = useLocation();
   const [tab, setTab] = useState(location.state?.tab || "usuarios");
-  const [editarId, setEditarId]         = useState(null);
+  const [editarId, setEditarId]         = useState(location.state?.editarId ? String(location.state.editarId) : null);
   const [rawUsers, setRawUsers]         = useState([]);
   const [estudiantes, setEstudiantes]   = useState([]);
   const [habilidades, setHabilidades]   = useState([]);

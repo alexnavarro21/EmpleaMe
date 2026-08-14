@@ -71,7 +71,24 @@ router.get("/estudiante/:id", verificarToken, async (req, res) => {
 router.patch("/estudiante/:id/cv-experiencias", verificarToken, async (req, res) => {
   const { ids } = req.body;
   if (!Array.isArray(ids)) return res.status(400).json({ error: "ids debe ser un array" });
+  const { id: callerId, rol } = req.usuario;
   const estudianteId = req.params.id;
+
+  if (rol === "estudiante" && callerId !== parseInt(estudianteId))
+    return res.status(403).json({ error: "No puedes modificar el CV de otro estudiante" });
+
+  if (rol === "colegio") {
+    const [[esMiEstudiante]] = await db.query(
+      "SELECT 1 FROM perfiles_estudiantes WHERE usuario_id = ? AND colegio_id = ?",
+      [estudianteId, callerId]
+    );
+    if (!esMiEstudiante)
+      return res.status(403).json({ error: "Este estudiante no pertenece a tu institución" });
+  }
+
+  if (rol === "empresa" || rol === "slep")
+    return res.status(403).json({ error: "No tienes permiso para modificar el CV de este estudiante" });
+
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();

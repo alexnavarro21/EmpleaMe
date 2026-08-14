@@ -14,9 +14,16 @@ router.get("/", verificarToken, soloRol("colegio"), async (req, res) => {
   }
 });
 
-// DELETE /api/usuarios/:id  — solo centro/admin
+// DELETE /api/usuarios/:id  — solo centro/admin, y solo sobre estudiantes de su propia institución
 router.delete("/:id", verificarToken, soloRol("colegio"), async (req, res) => {
   try {
+    const [[esMiEstudiante]] = await db.query(
+      "SELECT 1 FROM perfiles_estudiantes WHERE usuario_id = ? AND colegio_id = ?",
+      [req.params.id, req.usuario.id]
+    );
+    if (!esMiEstudiante)
+      return res.status(403).json({ error: "Este estudiante no pertenece a tu institución" });
+
     const [result] = await db.query("DELETE FROM usuarios WHERE id = ?", [req.params.id]);
     if (result.affectedRows === 0)
       return res.status(404).json({ error: "Usuario no encontrado" });
