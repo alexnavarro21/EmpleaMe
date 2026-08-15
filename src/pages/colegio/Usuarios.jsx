@@ -2016,8 +2016,11 @@ export default function GestionEstudiantes() {
     setTab("editar_estudiante");
   };
 
+  const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
+  const BG = isDark ? "bg-[#262624]" : "bg-white";
+  const TOOLBAR_BG = isDark ? "bg-[#1e1e1c]" : "bg-[#F0F4F8]";
 
   const cargarHabilidades = () => getHabilidades().then(setHabilidades).catch(() => {});
 
@@ -2042,39 +2045,45 @@ export default function GestionEstudiantes() {
         subtitle="Usuarios, evaluaciones, habilidades, tests y promedios académicos"
       />
 
-      <div className={`flex border-b ${B} mb-6 gap-0.25`}>
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`flex items-center gap-2 px-5 py-3 text-sm border-b-2 -mb-px transition-colors ${
-              tab === t.key
-                ? "border-[#0F4D8A] text-[#0F4D8A] font-medium"
-                : `border-transparent ${M} hover:text-[#0F4D8A]`
-            }`}
-          >
-            <Icon icon={t.icon} width={15} />
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {loading ? (
-        <div className={`flex items-center justify-center py-20 ${M}`}>
-          <Icon icon="mdi:loading" width={28} className="animate-spin mr-2" />
-          Cargando datos...
+      <div className={`rounded-lg border ${B} ${BG} overflow-hidden mb-6`}>
+        <div className={`flex gap-1 px-2 pt-2 ${TOOLBAR_BG} overflow-x-auto ${
+          isDark ? "shadow-[inset_0_-1px_0_0_#3a3a38]" : "shadow-[inset_0_-1px_0_0_#D3D1C7]"
+        }`}>
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm rounded-t-md whitespace-nowrap transition-colors ${
+                tab === t.key
+                  ? `${BG} ${T} font-medium border-x border-t ${B}`
+                  : `${M} hover:text-[#0F4D8A]`
+              }`}
+            >
+              <Icon icon={t.icon} width={15} className={tab === t.key ? "text-[#0F4D8A]" : ""} />
+              {t.label}
+            </button>
+          ))}
         </div>
-      ) : (
-        <>
-          {tab === "usuarios"          && <TabUsuarios        rawUsers={rawUsers} isDark={isDark} onEditarEstudiante={handleEditarEstudiante} />}
-          {tab === "editar_estudiante" && <TabEditarEstudiante estudiantes={estudiantes} habilidades={habilidades} isDark={isDark} initialId={editarId} />}
-          {tab === "evaluacion"        && <TabEvaluacion      estudiantes={estudiantes} habilidades={habilidades} isDark={isDark} />}
-          {tab === "tests"             && <TabTests  isDark={isDark} />}
-          {tab === "promedios"         && <TabPromedios isDark={isDark} />}
-          {tab === "habilidades"       && <TabHabilidades habilidades={habilidades} onRefresh={cargarHabilidades} isDark={isDark} />}
-          {tab === "crear_alumnos"     && <TabCrearAlumnos isDark={isDark} />}
-        </>
-      )}
+
+        <div className="p-6">
+        {loading ? (
+          <div className={`flex items-center justify-center py-20 ${M}`}>
+            <Icon icon="mdi:loading" width={28} className="animate-spin mr-2" />
+            Cargando datos...
+          </div>
+        ) : (
+          <>
+            {tab === "usuarios"          && <TabUsuarios        rawUsers={rawUsers} isDark={isDark} onEditarEstudiante={handleEditarEstudiante} />}
+            {tab === "editar_estudiante" && <TabEditarEstudiante estudiantes={estudiantes} habilidades={habilidades} isDark={isDark} initialId={editarId} />}
+            {tab === "evaluacion"        && <TabEvaluacion      estudiantes={estudiantes} habilidades={habilidades} isDark={isDark} />}
+            {tab === "tests"             && <TabTests  isDark={isDark} />}
+            {tab === "promedios"         && <TabPromedios isDark={isDark} />}
+            {tab === "habilidades"       && <TabHabilidades habilidades={habilidades} onRefresh={cargarHabilidades} isDark={isDark} />}
+            {tab === "crear_alumnos"     && <TabCrearAlumnos isDark={isDark} />}
+          </>
+        )}
+        </div>
+      </div>
     </div>
   );
 }

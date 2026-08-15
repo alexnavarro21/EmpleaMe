@@ -72,6 +72,7 @@ export default function EmpresaDashboard() {
   const [busquedaVacante, setBusquedaVacante] = useState("");
   const [paginaAceptados, setPaginaAceptados] = useState(1);
   const [porPaginaAceptados, setPorPaginaAceptados] = useState(6);
+  const [estadoAceptar, setEstadoAceptar] = useState({}); // { [postulanteId]: "loading" | "ok" }
 
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
@@ -154,17 +155,31 @@ export default function EmpresaDashboard() {
   };
 
   const handleAceptar = async (postulante) => {
+    setEstadoAceptar((prev) => ({ ...prev, [postulante.id]: "loading" }));
     try {
       await actualizarEstadoPostulacion(postulante.id, "aceptado");
+      setEstadoAceptar((prev) => ({ ...prev, [postulante.id]: "ok" }));
       setAceptados((prev) => [{ ...postulante, estado: "aceptado" }, ...prev]);
-      setPostulantes((prev) => prev.filter((p) => p.id !== postulante.id));
       // Auto-message
       const conv = await iniciarConversacion(postulante.estudiante_id);
       await enviarMensaje(conv.id,
         `¡Felicidades, ${postulante.nombre_completo}! Has sido aceptado/a en la vacante "${postulante.vacante_titulo}". La empresa se pondrá en contacto contigo pronto para coordinar los detalles. ¡Mucho éxito!`
       );
+      setTimeout(() => {
+        setPostulantes((prev) => prev.filter((p) => p.id !== postulante.id));
+        setEstadoAceptar((prev) => {
+          const next = { ...prev };
+          delete next[postulante.id];
+          return next;
+        });
+      }, 1100);
     } catch (err) {
       console.error("Error al aceptar postulante:", err);
+      setEstadoAceptar((prev) => {
+        const next = { ...prev };
+        delete next[postulante.id];
+        return next;
+      });
     }
   };
 
@@ -431,17 +446,25 @@ export default function EmpresaDashboard() {
                         </div>
                       )}
                     </div>
-                    {p.estado === "pendiente" && (
+                    {estadoAceptar[p.id] === "ok" ? (
+                      <div className={`fade-swap flex items-center gap-1.5 text-sm font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 ${isDark ? "bg-green-500/15 text-green-400" : "bg-green-100 text-green-700"}`}>
+                        <Icon icon="mdi:check-circle" width={16} />
+                        Aceptado
+                      </div>
+                    ) : p.estado === "pendiente" && (
                       <div className="flex gap-1.5 flex-shrink-0">
                         <button
                           onClick={() => handleAceptar(p)}
-                          className={`text-sm px-2.5 py-1.5 rounded-lg font-medium transition-colors ${isDark ? "bg-green-500/15 text-green-400 hover:bg-green-500/25" : "bg-green-100 text-green-700 hover:bg-green-200"}`}
+                          disabled={estadoAceptar[p.id] === "loading"}
+                          className={`flex items-center gap-1.5 text-sm px-2.5 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-60 ${isDark ? "bg-green-500/15 text-green-400 hover:bg-green-500/25" : "bg-green-100 text-green-700 hover:bg-green-200"}`}
                         >
+                          {estadoAceptar[p.id] === "loading" && <Icon icon="mdi:loading" width={14} className="animate-spin" />}
                           Aceptar
                         </button>
                         <button
                           onClick={() => setModalRechazar(p)}
-                          className={`text-sm px-2.5 py-1.5 rounded-lg font-medium transition-colors ${isDark ? "bg-red-500/15 text-red-400 hover:bg-red-500/25" : "bg-red-100 text-red-700 hover:bg-red-200"}`}
+                          disabled={estadoAceptar[p.id] === "loading"}
+                          className={`text-sm px-2.5 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-60 ${isDark ? "bg-red-500/15 text-red-400 hover:bg-red-500/25" : "bg-red-100 text-red-700 hover:bg-red-200"}`}
                         >
                           Rechazar
                         </button>

@@ -1213,10 +1213,10 @@ export default function EstudianteDashboard() {
               </div>
 
               <Link
-                to="/empresa/dashboard"
+                to="/empresa/perfil"
                 className="block text-center mt-3 text-xs font-medium text-[#0F4D8A] hover:text-[#0A3A6A] border border-[#0F4D8A] hover:bg-[#E6F1FB] py-1.5 rounded-lg transition-colors"
               >
-                Ir al panel
+                Ver mi perfil
               </Link>
             </div>
           </div>
@@ -1279,11 +1279,32 @@ export default function EstudianteDashboard() {
               </div>
 
               <Link
-                to="/admin/panel"
+                to="/admin/perfil"
                 className="block text-center mt-3 text-xs font-medium text-[#0F4D8A] hover:text-[#0A3A6A] border border-[#0F4D8A] hover:bg-[#E6F1FB] py-1.5 rounded-lg transition-colors"
               >
-                Ir al panel
+                Ver mi perfil
               </Link>
+
+              {slepInfo?.id && (
+                <button
+                  disabled={contactandoSlep}
+                  onClick={async () => {
+                    setContactandoSlep(true);
+                    try {
+                      const conv = await iniciarMensajeDirecto(slepInfo.id);
+                      navigate("/admin/mensajeria", { state: { directaId: conv.id } });
+                    } catch (err) {
+                      console.error("Error al contactar SLEP:", err);
+                    } finally {
+                      setContactandoSlep(false);
+                    }
+                  }}
+                  className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-[#378ADD] bg-[#378ADD]/10 text-[#378ADD] hover:bg-[#378ADD]/20 transition-colors disabled:opacity-50"
+                >
+                  <Icon icon={contactandoSlep ? "mdi:loading" : "mdi:domain"} width={14} className={contactandoSlep ? "animate-spin" : ""} />
+                  {contactandoSlep ? "Abriendo chat..." : `Contactar ${slepInfo.nombre_organismo || "SLEP"}`}
+                </button>
+              )}
             </div>
           </div>
 
@@ -1814,7 +1835,12 @@ export default function EstudianteDashboard() {
 
           {/* Estadísticas del sistema */}
           <div className={`rounded-xl border ${B} ${BG} p-4`}>
-            <p className={`text-xs font-semibold ${T} mb-3`}>Estado del sistema</p>
+            <div className="mb-3">
+              <Link to="/admin/panel" className={`titulo-link text-xs ${T}`}>
+                <span className="titulo-link-text" data-text="Estado del sistema">Estado del sistema</span>
+                <Icon icon="mdi:arrow-right" />
+              </Link>
+            </div>
             {[
               { label: "Estudiantes registrados", value: adminStats?.total_estudiantes, icon: "mdi:account-school-outline",  color: "text-[#378ADD]"  },
               { label: "Postulaciones pendientes",value: adminStats?.total_postulaciones,icon: "mdi:clock-outline",           color: "text-amber-500"  },
@@ -1835,7 +1861,10 @@ export default function EstudianteDashboard() {
           {talleres.length > 0 && (
             <div className={`rounded-xl border ${B} ${BG} p-4`}>
               <div className="flex items-center justify-between mb-3">
-                <p className={`text-xs font-semibold ${T}`}>Talleres activos</p>
+                <Link to="/admin/talleres" className={`titulo-link text-xs ${T}`}>
+                  <span className="titulo-link-text" data-text="Talleres activos">Talleres activos</span>
+                  <Icon icon="mdi:arrow-right" />
+                </Link>
                 <span className={`text-xs font-semibold text-[#0F4D8A]`}>{talleres.filter(t => t.esta_activo).length}</span>
               </div>
               {talleres.filter(t => t.esta_activo).slice(0, 3).map((t, i, arr) => (
@@ -1849,16 +1878,18 @@ export default function EstudianteDashboard() {
                   </div>
                 </div>
               ))}
-              <Link to="/admin/talleres" className="block text-center mt-2 text-xs text-[#0F4D8A] hover:underline">
-                Gestionar talleres →
-              </Link>
             </div>
           )}
 
           {/* Estudiantes evaluados */}
           {adminStats && (
             <div className={`rounded-xl border ${B} ${BG} p-4`}>
-              <p className={`text-xs font-semibold ${T} mb-3`}>Cobertura de evaluaciones</p>
+              <div className="mb-3">
+                <Link to="/admin/usuarios" state={{ tab: "evaluacion" }} className={`titulo-link text-xs ${T}`}>
+                  <span className="titulo-link-text" data-text="Cobertura de evaluaciones">Cobertura de evaluaciones</span>
+                  <Icon icon="mdi:arrow-right" />
+                </Link>
+              </div>
               <div className="flex items-center gap-2 mb-2">
                 <div className={`flex-1 h-2 rounded-full overflow-hidden ${isDark ? "bg-[#3a3a38]" : "bg-gray-200"}`}>
                   <div
@@ -1873,43 +1904,6 @@ export default function EstudianteDashboard() {
                 </span>
               </div>
               <p className={`text-xs ${M}`}>{adminStats.estudiantes_evaluados} de {adminStats.total_estudiantes} estudiantes evaluados</p>
-              <Link to="/admin/usuarios" className="block text-center mt-2 text-xs text-[#0F4D8A] hover:underline">
-                Ver evaluaciones →
-              </Link>
-            </div>
-          )}
-
-          {/* Contactar SLEP */}
-          {slepInfo?.id && (
-            <div className={`rounded-xl border ${B} ${BG} p-4`}>
-              <p className={`text-xs font-semibold ${T} mb-2`}>Organismo administrador</p>
-              <div className="flex items-center gap-2.5 mb-3">
-                <div className="w-8 h-8 rounded-full bg-[#0A3A6A] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                  {(slepInfo.nombre_organismo || "S")[0].toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-xs font-medium ${T} truncate`}>{slepInfo.nombre_organismo || "SLEP"}</p>
-                  <p className={`text-xs ${M}`}>Organismo administrador</p>
-                </div>
-              </div>
-              <button
-                disabled={contactandoSlep}
-                onClick={async () => {
-                  setContactandoSlep(true);
-                  try {
-                    const conv = await iniciarMensajeDirecto(slepInfo.id);
-                    navigate("/admin/mensajeria", { state: { directaId: conv.id } });
-                  } catch (err) {
-                    console.error("Error al contactar SLEP:", err);
-                  } finally {
-                    setContactandoSlep(false);
-                  }
-                }}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB] text-xs font-medium transition-colors disabled:opacity-50"
-              >
-                <Icon icon={contactandoSlep ? "mdi:loading" : "mdi:message-outline"} width={14} className={contactandoSlep ? "animate-spin" : ""} />
-                {contactandoSlep ? "Abriendo chat..." : "Contactar SLEP"}
-              </button>
             </div>
           )}
         </div>
