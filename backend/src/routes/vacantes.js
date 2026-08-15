@@ -186,6 +186,26 @@ router.put("/:id", verificarToken, soloRol("empresa"), compressAndUpload("archiv
       await db.query("INSERT INTO vacante_habilidades (vacante_id, habilidad_id) VALUES ?", [values]);
     }
 
+    // Sincronizar la publicación del feed vinculada a la vacante
+    const [[pubVinculada]] = await db.query(
+      "SELECT publicacion_id FROM publicaciones_vacantes WHERE vacante_id = ?",
+      [req.params.id]
+    );
+    if (pubVinculada) {
+      if (req.file) {
+        const url_multimedia = `/api/media/${req.file.key}`;
+        await db.query(
+          "UPDATE publicaciones SET titulo = ?, contenido = ?, url_multimedia = ? WHERE id = ?",
+          [titulo, descripcion, url_multimedia, pubVinculada.publicacion_id]
+        );
+      } else {
+        await db.query(
+          "UPDATE publicaciones SET titulo = ?, contenido = ? WHERE id = ?",
+          [titulo, descripcion, pubVinculada.publicacion_id]
+        );
+      }
+    }
+
     res.json({ mensaje: "Vacante actualizada" });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
