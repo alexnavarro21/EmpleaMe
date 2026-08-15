@@ -314,6 +314,13 @@ export default function EmpresaDashboard() {
                   <div className="flex items-center justify-between gap-2">
                     <span className={`text-xs ${M}`}>{v.total_postulantes || 0} postulantes</span>
                     <div className="flex items-center gap-2">
+                      <Link
+                        to={`/empresa/editar/${v.id}`}
+                        title="Editar vacante"
+                        className={`p-1 rounded transition-colors ${M} hover:text-[#378ADD]`}
+                      >
+                        <Icon icon="mdi:pencil-outline" width={15} />
+                      </Link>
                       <button
                         onClick={() => handleToggleVacante(v)}
                         disabled={toggling === v.id}

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import { Card, PrimaryButton, SecondaryButton, FormField, TextAreaField, SelectField, PageHeader } from "../../components/ui";
-import { crearVacante, getHabilidades, moderarContenido } from "../../services/api";
+import { crearVacante, actualizarVacante, getVacante, getHabilidades, moderarContenido } from "../../services/api";
 import FileUploader from "../../components/FileUploader";
 
 const modalidades = [
@@ -20,7 +20,10 @@ const tiposVacante = [
 export default function EmpresaPublicarVacante() {
   const { isDark } = useDark();
   const navigate = useNavigate();
+  const { id: vacanteId } = useParams();
+  const esEdicion = Boolean(vacanteId);
 
+  const [cargandoVacante, setCargandoVacante] = useState(esEdicion);
   const [tipo, setTipo] = useState("practica");
   const [titulo, setTitulo] = useState("");
   const [area, setArea] = useState("Mecánica Automotriz");
@@ -48,6 +51,28 @@ export default function EmpresaPublicarVacante() {
   useEffect(() => {
     getHabilidades().then(setCatalogoHabilidades).catch(console.error);
   }, []);
+
+  useEffect(() => {
+    if (!esEdicion) return;
+    getVacante(vacanteId)
+      .then((v) => {
+        setTipo(v.tipo || "practica");
+        setTitulo(v.titulo || "");
+        setArea(v.area || "Mecánica Automotriz");
+        setDuracion(v.duracion || "");
+        setHorario(v.horario || "");
+        setRemuneracion(v.remuneracion || "");
+        setDireccion(v.direccion || "");
+        setModalidad(v.modalidad || "presencial");
+        setDescripcion(v.descripcion || "");
+        setRequisitos(v.requisitos || "");
+        setBeneficios(v.beneficios || "");
+        setFechaLimite(v.fecha_limite ? String(v.fecha_limite).slice(0, 10) : "");
+        setHabilidadesSeleccionadas((v.habilidades || []).map((h) => h.id));
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setCargandoVacante(false));
+  }, [esEdicion, vacanteId]);
 
   function toggleHabilidad(id) {
     setHabilidadesSeleccionadas((prev) =>
@@ -105,12 +130,17 @@ export default function EmpresaPublicarVacante() {
         return;
       }
 
-      await crearVacante({
+      const datos = {
         tipo, titulo, descripcion, requisitos, area, modalidad,
         duracion, horario, remuneracion, direccion, beneficios,
         fecha_limite: fechaLimite || undefined,
         habilidades: habilidadesSeleccionadas,
-      }, archivo);
+      };
+      if (esEdicion) {
+        await actualizarVacante(vacanteId, datos, archivo);
+      } else {
+        await crearVacante(datos, archivo);
+      }
       navigate("/empresa/dashboard");
     } catch (err) {
       setError(err.message);
@@ -119,11 +149,20 @@ export default function EmpresaPublicarVacante() {
     }
   };
 
+  if (cargandoVacante) {
+    return (
+      <div className="flex items-center justify-center py-24 text-[#5F5E5A]">
+        <Icon icon="mdi:loading" width={28} className="animate-spin mr-2" />
+        Cargando vacante...
+      </div>
+    );
+  }
+
   return (
     <div>
       <PageHeader
-        title="Publicar Vacante"
-        subtitle="Completa el formulario con los detalles de la nueva vacante"
+        title={esEdicion ? "Editar Vacante" : "Publicar Vacante"}
+        subtitle={esEdicion ? "Actualiza los detalles de tu vacante" : "Completa el formulario con los detalles de la nueva vacante"}
         action={<SecondaryButton onClick={() => navigate("/empresa/dashboard")}>Cancelar</SecondaryButton>}
       />
 
@@ -396,7 +435,9 @@ export default function EmpresaPublicarVacante() {
                 onClick={isLastStep ? handlePublicar : goNextStep}
                 disabled={loading}
               >
-                {isLastStep ? (loading ? "Publicando..." : "Publicar vacante") : "Siguiente"}
+                {isLastStep
+                  ? (loading ? (esEdicion ? "Guardando..." : "Publicando...") : (esEdicion ? "Guardar cambios" : "Publicar vacante"))
+                  : "Siguiente"}
               </PrimaryButton>
             </div>
           </Card>
