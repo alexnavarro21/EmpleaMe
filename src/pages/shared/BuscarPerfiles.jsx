@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
@@ -379,6 +379,8 @@ export default function BuscarPerfiles() {
   const [reportarPerfil,     setReportarPerfil]     = useState(null); // { id, tipo }
   const [pagina,             setPagina]             = useState(1);
   const [porPagina,          setPorPagina]          = useState(10);
+  const [minAltura,          setMinAltura]          = useState(0);
+  const resultadosRef = useRef(null);
   const [perfilCompleto,     setPerfilCompleto]     = useState(false);
   const [estadosPostulacion, setEstadosPostulacion] = useState({}); // { [vacanteId]: idle|loading|ok|duplicado|error|incompleto }
   const [estadosInscripcion, setEstadosInscripcion] = useState({}); // { [tallerId]: idle|loading|ok|duplicado|sin_cupos|error }
@@ -542,14 +544,25 @@ export default function BuscarPerfiles() {
   const count = countMap[tab] ?? 0;
 
   // Paginación de los resultados de la pestaña activa
-  useEffect(() => { setPagina(1); }, [
+  useEffect(() => { setPagina(1); setMinAltura(0); }, [
     tab, search, selectedCareer, minGpa, minEvalDocente, selectedRegion, selectedComuna,
-    selectedHabilidades, selectedAreas, selectedModalidad, filtroPrecio, filtroRemuneracion,
+    selectedHabilidades, selectedAreas, selectedModalidad, filtroPrecio, filtroRemuneracion, porPagina,
   ]);
   const totalPaginas = Math.max(1, Math.ceil(count / porPagina));
   const paginaSegura = Math.min(pagina, totalPaginas);
   const paginar = (arr) => arr.slice((paginaSegura - 1) * porPagina, paginaSegura * porPagina);
   const cambiarPorPagina = (v) => { setPorPagina(v); setPagina(1); };
+
+  // Reserva la altura máxima alcanzada por la grilla de resultados, así la paginación
+  // no salta hacia arriba cuando una página trae menos resultados que las anteriores.
+  // Sin deps a propósito: debe remedir en cada render (incluido el cambio de página);
+  // el guard `alto > minAltura` evita el loop infinito.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useLayoutEffect(() => {
+    if (!resultadosRef.current) return;
+    const alto = resultadosRef.current.offsetHeight;
+    if (alto > minAltura) setMinAltura(alto);
+  });
   const tabLabel = { estudiantes: "estudiante", empresas: "empresa", vacantes: "vacante", talleres: "taller", colegios: "colegio" }[tab];
   const usuarioActual = JSON.parse(localStorage.getItem("usuario") || "{}");
 
@@ -853,6 +866,7 @@ export default function BuscarPerfiles() {
 
         {/* ── Resultados ── */}
         <div className="col-span-3 flex flex-col gap-4">
+        <div ref={resultadosRef} style={minAltura ? { minHeight: minAltura } : undefined}>
           {/* Estudiantes */}
           {tab === "estudiantes" && (
             <div className="grid grid-cols-2 gap-4">
@@ -1137,6 +1151,7 @@ export default function BuscarPerfiles() {
               {filteredTalleres.length === 0 && <EmptyState T={T} M={M} />}
             </div>
           )}
+        </div>
 
           {count > 0 && (
             <Paginacion
