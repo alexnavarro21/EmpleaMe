@@ -87,7 +87,7 @@ export default function CrearPublicacion({ onPublicado }) {
               <FileUploader
                 title="Sube una imagen, video o documento"
                 accept="image/*,video/*,.pdf"
-                icon="mdi:paperclip"
+                icon="mdi:image-multiple-outline"
                 onFileSelect={(file) => setArchivo(file)}
               />
             </div>
@@ -103,7 +103,7 @@ export default function CrearPublicacion({ onPublicado }) {
               className={`p-2 rounded-full transition-colors ${archivo || mostrarUploader ? "text-[#378ADD]" : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"}`}
               title="Adjuntar archivo"
             >
-              <Icon icon="mdi:paperclip" width={22} />
+              <Icon icon="mdi:image-multiple-outline" width={22} />
             </button>
 
             <PrimaryButton onClick={handleSubmit} disabled={(!contenido.trim() && !archivo) || cargando}>
