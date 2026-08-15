@@ -19,7 +19,7 @@ const navLinks = {
   ],
   empresa: [
     { to: "/empresa/muro", label: "Inicio" },
-    { to: "/empresa/dashboard", label: "Mis Vacantes" },
+    { to: "/empresa/dashboard", label: "Panel Empresa" },
     { to: "/empresa/publicar", label: "Publicar Vacante" },
   ],
   admin: [

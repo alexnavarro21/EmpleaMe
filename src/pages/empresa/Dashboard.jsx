@@ -246,14 +246,14 @@ export default function EmpresaDashboard() {
     <div>
       <PageHeader
         title="Panel Empresa"
-        subtitle={usuario.nombre_empresa || "Mi empresa"}
+        subtitle="Gestiona tus vacantes, postulantes y prácticas."
         action={
           <Link
             to="/empresa/publicar"
             className="flex items-center gap-2 text-base font-semibold bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB] px-6 py-3 rounded-lg transition-colors"
           >
             <Icon icon="mdi:plus" width={20} />
-            Publicar vacante
+            Nueva vacante
           </Link>
         }
       />

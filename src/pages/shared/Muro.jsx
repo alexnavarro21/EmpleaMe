@@ -1484,6 +1484,27 @@ export default function EstudianteDashboard() {
 
       {/* ── CENTER FEED ── */}
       <div className="flex flex-col gap-4">
+        {isEmpresa && (
+          <div className="flex items-center justify-between gap-4 rounded-xl bg-gradient-to-r from-[#0A3A6A] to-[#378ADD] px-5 py-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center flex-shrink-0">
+                <Icon icon="mdi:briefcase-plus-outline" width={20} className="text-white" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-white leading-tight">¿Tienes una posición abierta?</p>
+                <p className="text-xs text-white/80 truncate">Publica tu vacante y llega a los estudiantes de la red</p>
+              </div>
+            </div>
+            <Link
+              to="/empresa/publicar"
+              className="flex items-center gap-1.5 text-sm font-semibold bg-white text-[#0F4D8A] px-4 py-2 rounded-lg hover:bg-white/90 transition-colors flex-shrink-0"
+            >
+              <Icon icon="mdi:plus" width={17} />
+              Publicar vacante
+            </Link>
+          </div>
+        )}
+
         {(isEstudiante || isEmpresa || isAdmin || isSlep) && <CrearPublicacion onPublicado={cargarPublicaciones} />}
 
         {/* Tabs del feed + botón filtros */}
@@ -1708,7 +1729,10 @@ export default function EstudianteDashboard() {
           {/* Mensajes no leídos */}
           <div className={`rounded-xl border ${B} ${BG} p-4`}>
             <div className="flex items-center justify-between mb-3">
-              <p className={`text-xs font-semibold ${T}`}>Mensajes</p>
+              <Link to="/empresa/mensajeria" className={`titulo-link text-xs ${T}`}>
+                <span className="titulo-link-text" data-text="Mensajes">Mensajes</span>
+                <Icon icon="mdi:arrow-right" />
+              </Link>
               {mensajesNoLeidos.length > 0 && (
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isDark ? "bg-red-500/15 text-red-400" : "bg-red-100 text-red-600"}`}>
                   {mensajesNoLeidos.length} sin leer
@@ -1718,46 +1742,44 @@ export default function EstudianteDashboard() {
             {empresaConversaciones.length === 0 ? (
               <p className={`text-xs ${M}`}>Sin conversaciones aún.</p>
             ) : (
-              <>
-                {empresaConversaciones.slice(0, 4).map((c, i) => {
-                  const nombre = c.contraparte || c.nombre_estudiante || c.nombre_empresa || "Usuario";
-                  return (
-                    <Link
-                      key={c.id}
-                      to="/empresa/mensajeria"
-                      state={{ conversacionId: c.id }}
-                      className={`flex items-center gap-2.5 ${i < Math.min(empresaConversaciones.length, 4) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}
-                    >
-                      {c.contraparte_foto ? (
-                        <img src={resolverMedia(c.contraparte_foto)} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
-                      ) : (
-                        <div className="w-7 h-7 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                          {nombre[0]?.toUpperCase() || "?"}
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-xs font-medium ${T} truncate`}>{nombre}</p>
-                        <p className={`text-xs ${M} truncate`}>{c.ultimo_mensaje || "Sin mensajes"}</p>
+              empresaConversaciones.slice(0, 4).map((c, i) => {
+                const nombre = c.contraparte || c.nombre_estudiante || c.nombre_empresa || "Usuario";
+                return (
+                  <Link
+                    key={c.id}
+                    to="/empresa/mensajeria"
+                    state={{ conversacionId: c.id }}
+                    className={`flex items-center gap-2.5 ${i < Math.min(empresaConversaciones.length, 4) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}
+                  >
+                    {c.contraparte_foto ? (
+                      <img src={resolverMedia(c.contraparte_foto)} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                        {nombre[0]?.toUpperCase() || "?"}
                       </div>
-                      {c.no_leidos > 0 && (
-                        <span className="text-xs bg-[#0F4D8A] text-white font-semibold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">
-                          {c.no_leidos}
-                        </span>
-                      )}
-                    </Link>
-                  );
-                })}
-                <Link to="/empresa/mensajeria" className={`block text-center mt-2 text-xs text-[#378ADD] hover:underline`}>
-                  Ver todos →
-                </Link>
-              </>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-xs font-medium ${T} truncate`}>{nombre}</p>
+                      <p className={`text-xs ${M} truncate`}>{c.ultimo_mensaje || "Sin mensajes"}</p>
+                    </div>
+                    {c.no_leidos > 0 && (
+                      <span className="text-xs bg-[#0F4D8A] text-white font-semibold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">
+                        {c.no_leidos}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })
             )}
           </div>
 
           {/* Últimos postulantes pendientes */}
           <div className={`rounded-xl border ${B} ${BG} p-4`}>
             <div className="flex items-center justify-between mb-3">
-              <p className={`text-xs font-semibold ${T}`}>Postulantes pendientes</p>
+              <Link to="/empresa/dashboard" className={`titulo-link text-xs ${T}`}>
+                <span className="titulo-link-text" data-text="Postulantes pendientes">Postulantes pendientes</span>
+                <Icon icon="mdi:arrow-right" />
+              </Link>
               {empresaPostulantes.length > 0 && (
                 <span className="text-xs text-amber-600 font-semibold">{empresaPostulantes.length}</span>
               )}
@@ -1765,49 +1787,22 @@ export default function EstudianteDashboard() {
             {empresaPostulantes.length === 0 ? (
               <p className={`text-xs ${M}`}>Sin postulantes pendientes.</p>
             ) : (
-              <>
-                {empresaPostulantes.slice(0, 3).map((p, i) => (
-                  <Link
-                    key={p.id}
-                    to={`/empresa/candidato/${p.estudiante_id}`}
-                    className={`flex items-center gap-2.5 ${i < Math.min(empresaPostulantes.length, 3) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}
-                  >
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 bg-[#0F4D8A]`}>
-                      {p.nombre_completo?.[0]?.toUpperCase() || "?"}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-medium ${T} truncate`}>{p.nombre_completo}</p>
-                      <p className={`text-xs ${M} truncate`}>{p.vacante_titulo || p.carrera}</p>
-                    </div>
-                    <Icon icon="mdi:chevron-right" width={14} className={M} />
-                  </Link>
-                ))}
-                <Link to="/empresa/dashboard" className={`block text-center mt-2 text-xs text-[#378ADD] hover:underline`}>
-                  Ver panel →
-                </Link>
-              </>
-            )}
-          </div>
-
-          {/* Vacantes activas resumen */}
-          <div className={`rounded-xl border ${B} ${BG} p-4`}>
-            <p className={`text-xs font-semibold ${T} mb-3`}>Mis vacantes activas</p>
-            {vacantesActivasEmpresa.length === 0 ? (
-              <p className={`text-xs ${M}`}>No tienes vacantes activas.</p>
-            ) : (
-              <>
-                {vacantesActivasEmpresa.slice(0, 3).map((v, i) => (
-                  <div key={v.id} className={`${i < Math.min(vacantesActivasEmpresa.length, 3) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}>
-                    <p className={`text-xs font-medium ${T} truncate`}>{v.titulo}</p>
-                    <p className={`text-xs ${M}`}>
-                      {v.tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica"} · {v.total_postulantes || 0} postulantes
-                    </p>
+              empresaPostulantes.slice(0, 3).map((p, i) => (
+                <Link
+                  key={p.id}
+                  to={`/empresa/candidato/${p.estudiante_id}`}
+                  className={`flex items-center gap-2.5 ${i < Math.min(empresaPostulantes.length, 3) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}
+                >
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 bg-[#0F4D8A]`}>
+                    {p.nombre_completo?.[0]?.toUpperCase() || "?"}
                   </div>
-                ))}
-                <Link to="/empresa/dashboard" className={`block text-center mt-2 text-xs text-[#378ADD] hover:underline`}>
-                  Gestionar vacantes →
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-xs font-medium ${T} truncate`}>{p.nombre_completo}</p>
+                    <p className={`text-xs ${M} truncate`}>{p.vacante_titulo || p.carrera}</p>
+                  </div>
+                  <Icon icon="mdi:chevron-right" width={14} className={M} />
                 </Link>
-              </>
+              ))
             )}
           </div>
         </div>
@@ -2013,28 +2008,23 @@ export default function EstudianteDashboard() {
           {estudiantePostulaciones.length === 0 ? (
             <p className={`text-xs ${M}`}>Aún no has postulado a ninguna vacante.</p>
           ) : (
-            <>
-              {estudiantePostulaciones.slice(0, 3).map((p, i) => {
-                const cfg = {
-                  pendiente:  { label: "Pendiente", color: "text-blue-500",  icon: "mdi:clock-outline"          },
-                  aceptado:   { label: "Aceptado",  color: "text-green-600", icon: "mdi:check-circle-outline"   },
-                  rechazado:  { label: "Rechazado", color: "text-red-500",   icon: "mdi:close-circle-outline"   },
-                }[p.estado] || { label: p.estado, color: M, icon: "mdi:help-circle-outline" };
-                return (
-                  <div key={p.id} className={`flex items-start gap-2 ${i < Math.min(estudiantePostulaciones.length, 3) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}>
-                    <Icon icon={cfg.icon} width={14} className={`${cfg.color} flex-shrink-0 mt-0.5`} />
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-medium ${T} truncate`}>{p.titulo}</p>
-                      <p className={`text-xs ${M} truncate`}>{p.nombre_empresa}</p>
-                      <p className={`text-xs font-medium ${cfg.color}`}>{cfg.label}</p>
-                    </div>
+            estudiantePostulaciones.slice(0, 3).map((p, i) => {
+              const cfg = {
+                pendiente:  { label: "Pendiente", color: "text-blue-500",  icon: "mdi:clock-outline"          },
+                aceptado:   { label: "Aceptado",  color: "text-green-600", icon: "mdi:check-circle-outline"   },
+                rechazado:  { label: "Rechazado", color: "text-red-500",   icon: "mdi:close-circle-outline"   },
+              }[p.estado] || { label: p.estado, color: M, icon: "mdi:help-circle-outline" };
+              return (
+                <div key={p.id} className={`flex items-start gap-2 ${i < Math.min(estudiantePostulaciones.length, 3) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}>
+                  <Icon icon={cfg.icon} width={14} className={`${cfg.color} flex-shrink-0 mt-0.5`} />
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-xs font-medium ${T} truncate`}>{p.titulo}</p>
+                    <p className={`text-xs ${M} truncate`}>{p.nombre_empresa}</p>
+                    <p className={`text-xs font-medium ${cfg.color}`}>{cfg.label}</p>
                   </div>
-                );
-              })}
-              <Link to="/estudiante/postulaciones" className="block text-center mt-2 text-xs text-[#378ADD] hover:underline">
-                Ver todas →
-              </Link>
-            </>
+                </div>
+              );
+            })
           )}
         </div>
 
@@ -2054,39 +2044,34 @@ export default function EstudianteDashboard() {
           {todasConvsEstudiante.length === 0 ? (
             <p className={`text-xs ${M}`}>Sin conversaciones aún.</p>
           ) : (
-            <>
-              {todasConvsEstudiante.slice(0, 3).map((c, i) => {
-                const nombre = c.contraparte || c.nombre_empresa || c.nombre_estudiante || "Usuario";
-                return (
-                  <Link
-                    key={`${c.esDirecta ? "d" : "e"}-${c.id}`}
-                    to="/estudiante/mensajeria"
-                    state={c.esDirecta ? { directaId: c.id } : { conversacionId: c.id }}
-                    className={`flex items-center gap-2.5 ${i < Math.min(todasConvsEstudiante.length, 3) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}
-                  >
-                    {c.contraparte_foto ? (
-                      <img src={resolverMedia(c.contraparte_foto)} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
-                    ) : (
-                      <div className="w-7 h-7 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                        {nombre[0]?.toUpperCase() || "?"}
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-medium ${T} truncate`}>{nombre}</p>
-                      <p className={`text-xs ${M} truncate`}>{c.ultimo_mensaje || "Sin mensajes"}</p>
+            todasConvsEstudiante.slice(0, 3).map((c, i) => {
+              const nombre = c.contraparte || c.nombre_empresa || c.nombre_estudiante || "Usuario";
+              return (
+                <Link
+                  key={`${c.esDirecta ? "d" : "e"}-${c.id}`}
+                  to="/estudiante/mensajeria"
+                  state={c.esDirecta ? { directaId: c.id } : { conversacionId: c.id }}
+                  className={`flex items-center gap-2.5 ${i < Math.min(todasConvsEstudiante.length, 3) - 1 ? `pb-2.5 mb-2.5 border-b ${B}` : ""}`}
+                >
+                  {c.contraparte_foto ? (
+                    <img src={resolverMedia(c.contraparte_foto)} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-[#0F4D8A] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                      {nombre[0]?.toUpperCase() || "?"}
                     </div>
-                    {c.no_leidos > 0 && (
-                      <span className="text-xs bg-[#0F4D8A] text-white font-semibold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">
-                        {c.no_leidos}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-              <Link to="/estudiante/mensajeria" className="block text-center mt-2 text-xs text-[#378ADD] hover:underline">
-                Ver todos →
-              </Link>
-            </>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-xs font-medium ${T} truncate`}>{nombre}</p>
+                    <p className={`text-xs ${M} truncate`}>{c.ultimo_mensaje || "Sin mensajes"}</p>
+                  </div>
+                  {c.no_leidos > 0 && (
+                    <span className="text-xs bg-[#0F4D8A] text-white font-semibold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">
+                      {c.no_leidos}
+                    </span>
+                  )}
+                </Link>
+              );
+            })
           )}
         </div>
 
