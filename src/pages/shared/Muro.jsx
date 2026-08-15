@@ -1314,10 +1314,10 @@ export default function EstudianteDashboard() {
             <div className="flex flex-col gap-1">
               {[
                 { icon: "mdi:account-group-outline",   label: "Gestión de usuarios",  to: "/admin/usuarios"     },
-                { icon: "mdi:school-outline",           label: "Talleres",             to: "/admin/talleres"     },
                 { icon: "mdi:clipboard-check-outline",  label: "Evaluaciones",         to: "/admin/usuarios", state: { tab: "evaluacion" } },
+                { icon: "mdi:tag-multiple-outline",     label: "Asignar habilidades",  to: "/admin/usuarios", state: { tab: "editar_estudiante" } },
+                { icon: "mdi:school-outline",           label: "Talleres",             to: "/admin/talleres"     },
                 { icon: "mdi:message-outline",          label: "Mensajería",           to: "/admin/mensajeria"   },
-                { icon: "mdi:account-search-outline",   label: "Buscar perfiles",      to: "/admin/buscar"       },
                 { icon: "mdi:flag-outline",             label: "Reportes",             to: "/admin/reportes"     },
               ].map((link) => (
                 <Link

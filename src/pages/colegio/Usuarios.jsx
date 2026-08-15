@@ -1326,9 +1326,9 @@ function TabTests({ isDark }) {
             <h3 className={`text-sm font-semibold ${T}`}>Subir resultados de test socioemocional</h3>
             <button
               onClick={() => descargarPlantilla("/admin/tests/template", "plantilla_tests.xlsx", setDlError)}
-              className="flex items-center gap-1.5 text-xs text-[#378ADD] hover:underline"
+              className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg border border-[#378ADD] text-[#378ADD] hover:bg-[#378ADD]/10 transition-colors"
             >
-              <Icon icon="mdi:download" width={14} />
+              <Icon icon="mdi:download" width={16} />
               Descargar plantilla
             </button>
           </div>
@@ -1441,9 +1441,9 @@ function TabPromedios({ isDark }) {
             <h3 className={`text-sm font-semibold ${T}`}>Subir promedios académicos</h3>
             <button
               onClick={() => descargarPlantilla("/admin/promedios/template", "plantilla_promedios.xlsx", setDlError)}
-              className="flex items-center gap-1.5 text-xs text-[#378ADD] hover:underline"
+              className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg border border-[#378ADD] text-[#378ADD] hover:bg-[#378ADD]/10 transition-colors"
             >
-              <Icon icon="mdi:download" width={14} />
+              <Icon icon="mdi:download" width={16} />
               Descargar plantilla
             </button>
           </div>
@@ -1805,15 +1805,15 @@ function TabCrearAlumnos({ isDark }) {
             <h3 className={`text-sm font-semibold ${T}`}>Crear cuentas de alumnos en masa</h3>
             <button
               onClick={() => descargarPlantilla("/admin/alumnos/template", "plantilla_alumnos.xlsx", setDlError)}
-              className="flex items-center gap-1.5 text-xs text-[#378ADD] hover:underline"
+              className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg border border-[#378ADD] text-[#378ADD] hover:bg-[#378ADD]/10 transition-colors"
             >
-              <Icon icon="mdi:download" width={14} />
+              <Icon icon="mdi:download" width={16} />
               Descargar plantilla
             </button>
           </div>
           {dlError && <p className="text-xs text-red-400 mb-2">Error: {dlError}</p>}
           <p className={`text-xs ${M} mb-4`}>
-            Completa la plantilla con <strong>Nombre Completo</strong>, <strong>Correo</strong>, <strong>Teléfono</strong> y <strong>Contraseña</strong> de cada alumno. Los estudiantes podrán completar el resto de su perfil al ingresar. Los correos ya registrados se omiten sin generar error.
+            Completa la plantilla con <strong>Nombre</strong>, <strong>Correo</strong>, <strong>Teléfono</strong> y <strong>Contraseña</strong> de cada alumno; el resto lo completan ellos al ingresar. Los correos ya registrados se omiten automáticamente.
           </p>
 
           <div
@@ -1913,14 +1913,7 @@ function TabCrearAlumnos({ isDark }) {
         <Card>
           <h3 className={`text-sm font-semibold ${T} mb-1`}>Importar nómina del colegio</h3>
           <p className={`text-xs ${M} mb-4`}>
-            Sube el archivo de nómina exportado desde la base de datos del colegio (.xls, .xlsx o .csv).
-            El sistema extrae el <strong>RUN</strong>, nombre y datos de contacto de cada fila.
-            El RUT es el identificador de la cuenta: si el correo ya está en uso por otra persona
-            (por ejemplo, el mismo correo de un apoderado entre hermanos) la cuenta se crea igual,
-            sin correo, y el alumno inicia sesión con su RUT.
-            Los estudiantes ya registrados (mismo RUT) se omiten automáticamente.
-            La contraseña inicial de cada alumno es la primera letra de su nombre + los últimos 4 dígitos
-            de su RUN (ej. <code>G9679</code>).
+            Sube la nómina exportada del colegio (.xls, .xlsx o .csv). Se usa el <strong>RUT</strong> como identificador: si el correo ya está en uso (ej. hermanos con el mismo apoderado), la cuenta se crea sin correo y el alumno inicia sesión con su RUT. Alumnos ya registrados se omiten. Contraseña inicial: primera letra del nombre + últimos 4 dígitos del RUN (ej. <code>G9679</code>).
           </p>
 
           <div
@@ -1998,7 +1991,7 @@ const TABS = [
   { key: "tests",             label: "Tests socioemocionales",icon: "hugeicons:brain-02" },
   { key: "promedios",         label: "Promedios académicos",  icon: "mdi:school-outline" },
   { key: "habilidades",       label: "Habilidades",           icon: "mdi:tag-multiple-outline" },
-  { key: "crear_alumnos",     label: "Crear alumnos",         icon: "mdi:account-multiple-plus-outline" },
+  { key: "crear_alumnos",     label: "Importar alumnos",      icon: "mdi:account-multiple-plus-outline" },
 ];
 
 export default function GestionEstudiantes() {
