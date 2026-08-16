@@ -108,7 +108,7 @@ export default function AdminPerfil() {
         }
       />
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Tarjeta lateral */}
         <div className="flex flex-col gap-4">
           <Card className="text-center">
@@ -191,16 +191,16 @@ export default function AdminPerfil() {
         </div>
 
         {/* Formulario */}
-        <div className="col-span-2">
+        <div className="lg:col-span-2">
           <Card>
-            <div className="grid grid-cols-2 gap-x-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
               <FormField
                 label="Nombre de la institución"
                 placeholder="Ej: Colegio San Ignacio"
                 value={nombreInstitucion}
                 onChange={(e) => setNombreInstitucion(e.target.value)}
                 disabled={!editMode}
-                className="col-span-2"
+                className="sm:col-span-2"
               />
               <FormField
                 label="Teléfono de contacto"
@@ -250,7 +250,7 @@ export default function AdminPerfil() {
                   ))}
                 </select>
               </div>
-              <div className="col-span-2 mb-3">
+              <div className="sm:col-span-2 mb-3">
                 <label className={`block text-xs mb-1.5 ${M}`}>Descripción de la institución</label>
                 <textarea
                   rows={4}
@@ -266,7 +266,7 @@ export default function AdminPerfil() {
                     }`}
                 />
               </div>
-              <div className="col-span-2 mb-3">
+              <div className="sm:col-span-2 mb-3">
                 <label className={`block text-xs mb-2 ${M}`}>Carreras impartidas</label>
                 <div className="flex flex-wrap gap-2">
                   {CARRERAS_DISPONIBLES.map((c) => {
@@ -305,7 +305,7 @@ export default function AdminPerfil() {
                 </div>
               </div>
               {editMode && (
-                <div className="col-span-2 mt-2">
+                <div className="sm:col-span-2 mt-2">
                   <PrimaryButton className="w-full" onClick={handleGuardar} disabled={saving}>
                     {saving ? "Guardando..." : "Guardar cambios"}
                   </PrimaryButton>

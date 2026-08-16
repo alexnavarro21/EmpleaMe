@@ -97,7 +97,7 @@ function VacanteModal({ vacante, role, onClose, perfilCompleto }) {
         {/* Body */}
         <div className="overflow-y-auto flex-1 px-6 py-5 flex flex-col gap-6">
           {/* Info grid */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {infoFields.map((item, i) => (
               <div key={i} className={`flex items-start gap-2.5 p-3 rounded-xl border ${B} ${S}`}>
                 <Icon icon={item.icon} width={16} className="text-[#378ADD] flex-shrink-0 mt-0.5" />
@@ -256,7 +256,7 @@ function TallerModal({ taller, role, onClose }) {
         {/* Body */}
         <div className="overflow-y-auto flex-1 px-6 py-5 flex flex-col gap-6">
           {/* Info grid */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {infoFields.map((item, i) => (
               <div key={i} className={`flex items-start gap-2.5 p-3 rounded-xl border ${B} ${S}`}>
                 <Icon icon={item.icon} width={16} className="text-[#378ADD] flex-shrink-0 mt-0.5" />
@@ -380,6 +380,7 @@ export default function BuscarPerfiles() {
   const [pagina,             setPagina]             = useState(1);
   const [porPagina,          setPorPagina]          = useState(10);
   const [minAltura,          setMinAltura]          = useState(0);
+  const [filtrosMobileOpen,  setFiltrosMobileOpen]  = useState(false);
   const resultadosRef = useRef(null);
   const [perfilCompleto,     setPerfilCompleto]     = useState(false);
   const [estadosPostulacion, setEstadosPostulacion] = useState({}); // { [vacanteId]: idle|loading|ok|duplicado|error|incompleto }
@@ -552,6 +553,7 @@ export default function BuscarPerfiles() {
   const paginaSegura = Math.min(pagina, totalPaginas);
   const paginar = (arr) => arr.slice((paginaSegura - 1) * porPagina, paginaSegura * porPagina);
   const cambiarPorPagina = (v) => { setPorPagina(v); setPagina(1); };
+  const cambiarPagina = (p) => { setPagina(p); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
   // Reserva la altura máxima alcanzada por la grilla de resultados, así la paginación
   // no salta hacia arriba cuando una página trae menos resultados que las anteriores.
@@ -612,15 +614,48 @@ export default function BuscarPerfiles() {
       {modalVacante && <VacanteModal vacante={modalVacante} role={role} onClose={() => setModalVacante(null)} perfilCompleto={perfilCompleto} />}
       {modalTaller  && <TallerModal  taller={modalTaller}  role={role} onClose={() => setModalTaller(null)}  />}
 
-      <div className="mb-6">
+      {/* Título + subtítulo: desde md */}
+      <div className="hidden md:block mb-6">
         <h1 className={`text-xl font-bold ${T}`}>Búsqueda</h1>
         <p className={`text-sm ${M} mt-0.5`}>{count} {tabLabel}{count !== 1 ? "s" : ""} encontrado{count !== 1 ? "s" : ""}</p>
       </div>
 
-      <div className="grid grid-cols-4 gap-6">
+      {/* Barra de búsqueda: solo mobile, reemplaza título/subtítulo */}
+      <div className={`flex md:hidden items-center rounded-full border overflow-hidden mb-6 ${
+        isDark ? "bg-[#313130] border-[#3a3a38]" : "bg-[#F7F6F3] border-[#D3D1C7]"
+      }`}>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar en EmpleaMe..."
+          style={{ fontSize: 16 }}
+          className={`flex-1 min-w-0 pl-4 pr-2 py-2.5 text-sm bg-transparent outline-none ${
+            isDark ? "text-[#D3D1C7] placeholder-[#5F5E5A]" : "text-[#2C2C2A] placeholder-[#B4B2A9]"
+          }`}
+        />
+        <span className={`flex-shrink-0 self-stretch px-4 flex items-center justify-center border-l ${
+          isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]"
+        }`}>
+          <Icon icon="mdi:magnify" width={16} className={isDark ? "text-[#85B7EB]" : "text-[#0A3B6A]"} />
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* ── Panel izquierdo ── */}
         <div className="flex flex-col gap-4">
-          <Card>
+          <button
+            type="button"
+            onClick={() => setFiltrosMobileOpen((v) => !v)}
+            className={`lg:hidden flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-medium ${B} ${T} ${isDark ? "bg-[#262624]" : "bg-white"}`}
+          >
+            <span className="flex items-center gap-2">
+              <Icon icon="mdi:filter-variant" width={16} className="text-[#378ADD]" />
+              Filtros
+            </span>
+            <Icon icon={filtrosMobileOpen ? "mdi:chevron-up" : "mdi:chevron-down"} width={18} className={M} />
+          </button>
+          <Card className={`${filtrosMobileOpen ? "block" : "hidden"} lg:block`}>
             <p className={`text-sm font-semibold ${T} mb-4`}>Filtros</p>
 
             {/* Categoría */}
@@ -865,11 +900,11 @@ export default function BuscarPerfiles() {
         </div>
 
         {/* ── Resultados ── */}
-        <div className="col-span-3 flex flex-col gap-4">
+        <div className="lg:col-span-3 flex flex-col gap-4">
         <div ref={resultadosRef} style={minAltura ? { minHeight: minAltura } : undefined}>
           {/* Estudiantes */}
           {tab === "estudiantes" && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {paginar(filteredStudents).map((s) => {
                 const nombreCarrera = careerDisplay[s.carrera] || s.carrera;
                 return (
@@ -937,7 +972,7 @@ export default function BuscarPerfiles() {
 
           {/* Empresas */}
           {tab === "empresas" && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {paginar(filteredCompanies).map((c) => (
                 <Card key={c.usuario_id} className="hover:border-[#378ADD] transition-colors cursor-pointer" onClick={() => navigate(`/empresa-publica/${c.usuario_id}`)}>
                   <div className="flex items-start gap-3 mb-3">
@@ -985,7 +1020,7 @@ export default function BuscarPerfiles() {
 
           {/* Vacantes */}
           {tab === "vacantes" && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {paginar(filteredVacantes).map((v) => (
                 <Card key={v.id} className="hover:border-[#378ADD] transition-colors cursor-pointer flex flex-col" onClick={() => setModalVacante(v)}>
                   <div className="flex items-start justify-between gap-2 mb-2">
@@ -1041,7 +1076,7 @@ export default function BuscarPerfiles() {
 
           {/* Colegios */}
           {tab === "colegios" && canSeeColegios && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {paginar(filteredColegios).map((c) => (
                 <Card key={c.usuario_id} className="hover:border-[#378ADD] transition-colors cursor-pointer flex flex-col" onClick={() => navigate(`/colegio-publico/${c.usuario_id}`)}>
                   <div className="flex items-start gap-3 mb-3">
@@ -1100,7 +1135,7 @@ export default function BuscarPerfiles() {
 
           {/* Talleres */}
           {tab === "talleres" && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {paginar(filteredTalleres).map((t) => {
                 const puedeInscribirse = (t.esta_activo === true || t.esta_activo === 1) && (t.permite_inscripcion === true || t.permite_inscripcion === 1);
                 return (
@@ -1154,14 +1189,16 @@ export default function BuscarPerfiles() {
         </div>
 
           {count > 0 && (
-            <Paginacion
-              paginaActual={paginaSegura}
-              totalPaginas={totalPaginas}
-              onCambiar={setPagina}
-              porPagina={porPagina}
-              opciones={[10, 20, 50]}
-              onCambiarPorPagina={cambiarPorPagina}
-            />
+            <div className="pb-10 md:pb-0">
+              <Paginacion
+                paginaActual={paginaSegura}
+                totalPaginas={totalPaginas}
+                onCambiar={cambiarPagina}
+                porPagina={porPagina}
+                opciones={[10, 20, 50]}
+                onCambiarPorPagina={cambiarPorPagina}
+              />
+            </div>
           )}
         </div>
       </div>

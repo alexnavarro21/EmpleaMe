@@ -130,7 +130,7 @@ export default function PerfilEmpresaPublico() {
         Volver
       </button>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Sidebar */}
         <div className="flex flex-col gap-4">
           <Card className="text-center">
@@ -248,7 +248,7 @@ export default function PerfilEmpresaPublico() {
         </div>
 
         {/* Main */}
-        <div className="col-span-2 flex flex-col gap-4">
+        <div className="lg:col-span-2 flex flex-col gap-4">
           {empresa.descripcion && (
             <Card>
               <h3 className={`text-sm font-semibold ${T} mb-2`}>Sobre la empresa</h3>
@@ -266,14 +266,14 @@ export default function PerfilEmpresaPublico() {
                 )}
               </h3>
               {vacantes.length > 0 && (
-                <div className="relative">
+                <div className="relative w-full sm:w-auto">
                   <Icon icon="mdi:search" width={14} className={`absolute left-2.5 top-1/2 -translate-y-1/2 ${M}`} />
                   <input
                     type="text"
                     placeholder="Buscar vacante..."
                     value={busquedaVacante}
                     onChange={(e) => { setBusquedaVacante(e.target.value); setPaginaVacantes(1); }}
-                    className={`pl-8 pr-3 py-1.5 rounded-lg text-xs outline-none border transition-all focus:border-[#378ADD] w-44 ${
+                    className={`w-full sm:w-44 pl-8 pr-3 py-1.5 rounded-lg text-xs outline-none border transition-all focus:border-[#378ADD] ${
                       isDark
                         ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
                         : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"
@@ -300,8 +300,8 @@ export default function PerfilEmpresaPublico() {
                   const activa = !!v.esta_activa;
                   return (
                     <div key={v.id} className={`p-4 rounded-lg border ${B} ${!activa ? "opacity-60" : ""}`}>
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <p className={`text-sm font-semibold ${T}`}>{v.titulo}</p>
+                      <div className="flex flex-wrap items-start justify-between gap-2 mb-1">
+                        <p className={`text-sm font-semibold ${T} min-w-0`}>{v.titulo}</p>
                         <div className="flex items-center gap-1.5 flex-shrink-0">
                           <Badge color={v.tipo === "puesto_laboral" ? "green" : "orange"}>
                             {v.tipo === "puesto_laboral" ? "Puesto laboral" : "Práctica"}

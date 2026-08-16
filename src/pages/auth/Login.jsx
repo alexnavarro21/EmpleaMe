@@ -51,6 +51,16 @@ export default function Login() {
     listarColegios().then(setColegios).catch(() => {});
   }, []);
 
+  // Sincroniza el color de la barra del navegador (mobile) con el banner del login
+  useEffect(() => {
+    const meta = document.getElementById("meta-theme-color");
+    const previo = meta?.getAttribute("content");
+    if (meta) meta.setAttribute("content", isDark ? "#02192e" : "#042C53");
+    return () => {
+      if (meta && previo) meta.setAttribute("content", previo);
+    };
+  }, [isDark]);
+
   useEffect(() => {
     if (!regColegioId) {
       setRegCarreras([]);
@@ -197,11 +207,27 @@ export default function Login() {
     <div className={isDark ? "dark" : ""}>
       <div className={`min-h-screen font-sans ${isDark ? "bg-[#1e1e1c]" : "bg-white"}`}>
 
-        {/* Main grid */}
-        <div className="grid md:grid-cols-2 h-screen">
+        {/* Header compacto solo mobile: sticky (no solo fondo sólido) para que Safari en iOS
+            extienda este color hacia la barra de estado (Website Tinting). La animación
+            va solo en el contenido, no en este contenedor. */}
+        <div
+          className={`sticky top-0 z-10 flex md:hidden items-center justify-center gap-3 py-8 px-4 ${isDark ? "bg-[#02192e]" : "bg-[#042C53]"}`}
+          style={{ paddingTop: `calc(env(safe-area-inset-top) + 2rem)` }}
+        >
+          <div className="logo-in flex items-center justify-center gap-3">
+            <img src="/empleame-icono.svg" alt="EmpleaMe" className="h-12 w-12" />
+            <span className="text-2xl font-semibold tracking-tight">
+              <span className="text-white">Emplea</span>
+              <span className="text-[#85B7EB]">Me</span>
+            </span>
+          </div>
+        </div>
 
-          {/* Left panel */}
-          <div className={`relative flex flex-col justify-center px-10 py-16 ${isDark ? "bg-[#02192e]" : "bg-[#042C53]"}`}>
+        {/* Main grid */}
+        <div className="md:grid md:grid-cols-2 md:h-screen">
+
+          {/* Left panel: oculto en mobile, se muestra desde md */}
+          <div className={`hidden md:flex relative flex-col justify-center px-10 py-16 ${isDark ? "bg-[#02192e]" : "bg-[#042C53]"}`}>
             {/* Logo centrado arriba */}
             <div className="logo-in flex items-center justify-center gap-4 mb-8 -translate-x-8">
               <img src="/empleame-icono.svg" alt="EmpleaMe" className="h-20 w-20" />
@@ -243,8 +269,8 @@ export default function Login() {
           </div>
 
           {/* Right panel */}
-          <div className={`flex flex-col overflow-y-auto ${isDark ? "bg-[#262624]" : "bg-white"}`}>
-          <div className="my-auto px-8 py-12">
+          <div className={`flex flex-col md:overflow-y-auto ${isDark ? "bg-[#262624]" : "bg-white"}`}>
+          <div className="my-auto px-5 py-8 sm:px-8 md:py-12">
             {/* Tabs */}
             <div className={`flex mb-6 border-b ${isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]"}`}>
               {["login", "register"].map((tab) => (
@@ -342,7 +368,7 @@ export default function Login() {
                           onChange={(e) => setRegNombre(e.target.value)}
                           isDark={isDark}
                         />
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <FormField
                             label="Apellido paterno *"
                             type="text"
@@ -371,7 +397,7 @@ export default function Login() {
                           onChange={setRegColegioId}
                           isDark={isDark}
                         />
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <SelectField
                             label="Carrera *"
                             value={regCarrera}
@@ -404,7 +430,7 @@ export default function Login() {
 
                     {regStep === 2 && (
                       <>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <FormField
                             label="RUT *"
                             type="text"

@@ -60,7 +60,7 @@ export default function PerfilColegioPublico() {
         Volver
       </button>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Sidebar */}
         <div className="flex flex-col gap-4">
           <Card className="text-center">
@@ -138,7 +138,7 @@ export default function PerfilColegioPublico() {
         </div>
 
         {/* Main */}
-        <div className="col-span-2 flex flex-col gap-4">
+        <div className="lg:col-span-2 flex flex-col gap-4">
           {colegio.descripcion && (
             <Card>
               <h3 className={`text-sm font-semibold ${T} mb-2`}>Sobre la institución</h3>

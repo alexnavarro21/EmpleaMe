@@ -114,7 +114,7 @@ export default function EmpresaPerfil() {
         }
       />
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: card de empresa */}
         <div className="flex flex-col gap-4">
           <Card className="text-center">
@@ -198,16 +198,16 @@ export default function EmpresaPerfil() {
         </div>
 
         {/* Right: Información */}
-        <div className="col-span-2">
+        <div className="lg:col-span-2">
           <Card>
-            <div className="grid grid-cols-2 gap-x-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
               <FormField
                 label="Nombre de la empresa"
                 placeholder="Ej: Automotriz Salinas"
                 value={nombreEmpresa}
                 onChange={(e) => setNombreEmpresa(e.target.value)}
                 disabled={!editMode}
-                className="col-span-2"
+                className="sm:col-span-2"
               />
               <FormField
                 label="Teléfono de contacto"
@@ -257,7 +257,7 @@ export default function EmpresaPerfil() {
                   ))}
                 </select>
               </div>
-              <div className="col-span-2 mb-3">
+              <div className="sm:col-span-2 mb-3">
                 <label className={`block text-xs mb-1.5 ${M}`}>Descripción de la empresa</label>
                 <textarea
                   rows={4}
@@ -274,7 +274,7 @@ export default function EmpresaPerfil() {
                 />
               </div>
               {editMode && (
-                <div className="col-span-2 mt-2">
+                <div className="sm:col-span-2 mt-2">
                   <PrimaryButton className="w-full" onClick={handleGuardar} disabled={saving}>
                     {saving ? "Guardando..." : "Guardar cambios"}
                   </PrimaryButton>

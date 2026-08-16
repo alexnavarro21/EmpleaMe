@@ -200,7 +200,7 @@ export default function VerMasModal({ pub, onClose, perfilCompleto = true }) {
               <button
                 onClick={handlePostular}
                 disabled={estadoPostula !== "idle" || !pub.vacante_activa}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                className={`flex-1 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-1.5 ${
                   estadoPostula === "ok"
                     ? isDark ? "bg-green-500/15 text-green-400 cursor-default" : "bg-green-100 text-green-700 cursor-default"
                     : estadoPostula === "duplicado"
@@ -235,10 +235,10 @@ export default function VerMasModal({ pub, onClose, perfilCompleto = true }) {
               <button
                 onClick={handleContactarEmpresa}
                 disabled={contactando}
-                className={`flex-1 py-2.5 rounded-xl border text-sm font-medium transition-colors flex items-center justify-center gap-2 ${B} ${M} hover:border-[#378ADD] hover:text-[#378ADD]`}
+                className={`flex-1 px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors flex items-center justify-center gap-1.5 ${B} ${M} hover:border-[#378ADD] hover:text-[#378ADD]`}
               >
-                <Icon icon="mdi:message-outline" width={18} />
-                {contactando ? "Abriendo chat..." : "Contactar empresa"}
+                <Icon icon="mdi:message-outline" width={18} className="flex-shrink-0" />
+                <span>{contactando ? "Abriendo chat..." : "Contactar empresa"}</span>
               </button>
             </div>
           )}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, useOutletContext, Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useDark } from "../../context/DarkModeContext";
 import {
@@ -61,6 +61,7 @@ export default function EstudianteMensajeria() {
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
   const { isDark } = useDark();
   const location = useLocation();
+  const { setNavbarHidden } = useOutletContext() || {};
 
   const [convEmpresas, setConvEmpresas] = useState([]);
   const [convDirectas, setConvDirectas] = useState([]);
@@ -82,9 +83,91 @@ export default function EstudianteMensajeria() {
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
   const cardBg = isDark ? "bg-[#262624]" : "bg-white";
 
+  // Deshabilita el zoom en mobile: el chat usa position:fixed y el pinch/double-tap
+  // zoom rompe el layout (ej. la flecha "volver arriba" queda mal ubicada).
+  // iOS Safari ignora "user-scalable=no" del viewport (desde iOS 10, por accesibilidad),
+  // así que además bloqueamos los gestos de pinch-zoom directamente.
+  useEffect(() => {
+    const meta = document.getElementById("meta-viewport");
+    const previo = meta?.getAttribute("content");
+    if (meta) {
+      meta.setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover");
+    }
+
+    const bloquearGesto = (e) => e.preventDefault();
+    const bloquearMultitouch = (e) => { if (e.touches.length > 1) e.preventDefault(); };
+    // gesturestart/gesturechange son eventos propietarios de WebKit (Safari) para pinch-zoom
+    document.addEventListener("gesturestart", bloquearGesto);
+    document.addEventListener("gesturechange", bloquearGesto);
+    document.addEventListener("touchmove", bloquearMultitouch, { passive: false });
+
+    return () => {
+      if (meta && previo) meta.setAttribute("content", previo);
+      document.removeEventListener("gesturestart", bloquearGesto);
+      document.removeEventListener("gesturechange", bloquearGesto);
+      document.removeEventListener("touchmove", bloquearMultitouch);
+    };
+  }, []);
+
+  // Bloquea el scroll del body mientras se ve esta página: todo el scroll real pasa
+  // por el div interno de mensajes (overflow-y-auto). Si el body queda "scrollable"
+  // aunque sea un poco, el rubber-band/bounce de iOS puede desplazar momentáneamente
+  // el viewport y dejar ver, en el borde, el color de fondo real de html/body (blanco
+  // por defecto) en vez del fondo de la app — eso es el "fondo desplazado". Fijamos
+  // también el color de html/body al de la app para que, si algo se ve, sea el color
+  // correcto y no blanco.
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const colorFondo = isDark ? "#1e1e1c" : "#F0F4F8";
+
+    const prevHtmlOverflow = html.style.overflow;
+    const prevBodyOverflow = body.style.overflow;
+    const prevHtmlBg = html.style.backgroundColor;
+    const prevBodyBg = body.style.backgroundColor;
+
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    html.style.backgroundColor = colorFondo;
+    body.style.backgroundColor = colorFondo;
+
+    return () => {
+      html.style.overflow = prevHtmlOverflow;
+      body.style.overflow = prevBodyOverflow;
+      html.style.backgroundColor = prevHtmlBg;
+      body.style.backgroundColor = prevBodyBg;
+    };
+  }, [isDark]);
+
+  // Con una conversación abierta en mobile, el chat pasa a ocupar toda la pantalla
+  // y necesitamos sacar la navbar del DOM (no solo taparla, para que no "asome" con
+  // el scroll). También hay que actualizar el theme-color: si no coincide con el
+  // fondo realmente visible queda un color raro al abrir/cerrar el teclado.
+  useEffect(() => {
+    if (!setNavbarHidden) return;
+    const meta = document.getElementById("meta-theme-color");
+    const colorChat = isDark ? "#262624" : "#ffffff";
+    const colorNavbar = "#0A3A6A";
+
+    const mq = window.matchMedia("(min-width: 768px)");
+    const actualizar = () => {
+      const ocultarNavbar = !!selected && !mq.matches;
+      setNavbarHidden(ocultarNavbar);
+      if (meta) meta.setAttribute("content", ocultarNavbar ? colorChat : colorNavbar);
+    };
+    actualizar();
+    mq.addEventListener("change", actualizar);
+    return () => mq.removeEventListener("change", actualizar);
+  }, [selected, isDark, setNavbarHidden]);
+
+  useEffect(() => {
+    return () => setNavbarHidden?.(false);
+  }, [setNavbarHidden]);
+
   useEffect(() => {
     const targetEmpresa = location.state?.conversacionId;
     const targetDirecta = location.state?.directaId;
+    const forceList = location.state?.forceList;
 
     Promise.allSettled([getConversaciones(), getMensajesDirectos()])
       .then(([empRes, dirRes]) => {
@@ -97,6 +180,8 @@ export default function EstudianteMensajeria() {
           setSelected({ id: targetEmpresa, esDirecta: false });
         } else if (targetDirecta) {
           setSelected({ id: targetDirecta, esDirecta: true });
+        } else if (forceList) {
+          setSelected(null);
         } else if (empresas.length > 0 || directas.length > 0) {
           // Seleccionar la más reciente entre ambas listas
           const todas = [
@@ -209,9 +294,20 @@ export default function EstudianteMensajeria() {
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 flex overflow-hidden" style={{ top: "56px" }}>
+    <div
+      className={`fixed inset-x-0 bottom-0 flex overflow-hidden ${selected ? "top-0 z-[60] md:top-14 md:z-0" : "top-14 z-0"}`}
+      style={{ touchAction: "pan-y" }}
+    >
+        {/* Capa de fondo fija: no es táctil ni se mueve con el scroll, así cualquier
+            desplazamiento del viewport (rubber-band de iOS al abrir/cerrar el teclado)
+            siempre deja ver este color y no un blanco/color incorrecto por debajo. */}
+        <div
+          className={`fixed inset-0 -z-10 pointer-events-none ${isDark ? "bg-[#1e1e1c]" : "bg-[#F0F4F8]"}`}
+          aria-hidden="true"
+        />
+
         {/* Lista de conversaciones */}
-        <div className={`w-72 flex-shrink-0 border-r ${B} flex flex-col ${cardBg}`}>
+        <div className={`${selected ? "hidden md:flex" : "flex"} w-full md:w-72 flex-shrink-0 border-r ${B} flex-col ${cardBg}`}>
           <div className="flex-1 overflow-y-auto pt-2">
             {todasLasConvs.length === 0 ? (
               <p className={`text-xs ${M} text-center py-8 px-4`}>
@@ -276,16 +372,28 @@ export default function EstudianteMensajeria() {
         </div>
 
         {/* Hilo del chat */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className={`${selected ? "flex" : "hidden md:flex"} flex-1 flex-col min-w-0`}>
           {!activeConv ? (
-            <div className={`flex-1 flex items-center justify-center ${M}`}>
+            <div className={`flex-1 hidden md:flex items-center justify-center ${M}`}>
               <p className="text-sm">Selecciona una conversación</p>
             </div>
           ) : (
             <>
-              {/* Header del chat */}
-              <div className={`px-5 py-3 border-b ${B} ${cardBg} flex items-center justify-between flex-shrink-0`}>
-                <div className="flex items-center gap-3">
+              {/* Header del chat: en mobile cubre el lugar del navbar de la app (tapado
+                  detrás), por eso necesita su propio padding para la status bar */}
+              <div
+                className={`px-3 md:px-5 py-3 border-b ${B} ${cardBg} flex items-center justify-between flex-shrink-0`}
+                style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)" }}
+              >
+                <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => setSelected(null)}
+                    aria-label="Volver a conversaciones"
+                    className={`md:hidden p-1.5 -ml-1.5 rounded-lg flex-shrink-0 ${M} ${isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"}`}
+                  >
+                    <Icon icon="mdi:arrow-left" width={20} />
+                  </button>
                   {activeConv.foto ? (
                     <img src={getMediaUrl(activeConv.foto)} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
                   ) : (
@@ -293,11 +401,11 @@ export default function EstudianteMensajeria() {
                       {(activeConv.contraparte || "?")[0].toUpperCase()}
                     </div>
                   )}
-                  <div>
-                    <div className="flex items-center gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
                       <Link
                         to={profileLink}
-                        className={`text-sm font-semibold hover:underline hover:text-[#378ADD] transition-colors ${T}`}
+                        className={`text-sm font-semibold truncate hover:underline hover:text-[#378ADD] transition-colors ${T}`}
                       >
                         {activeConv.contraparte}
                       </Link>
@@ -309,7 +417,7 @@ export default function EstudianteMensajeria() {
 
               {/* Aviso privacidad solo para empresa */}
               {!activeConv.esDirecta && (
-                <div className={`px-5 py-2 text-xs flex items-center gap-2 flex-shrink-0 ${
+                <div className={`px-3 md:px-5 py-2 text-xs flex items-center gap-2 flex-shrink-0 ${
                   isDark ? "bg-[#2a2416] text-[#e5b34a]" : "bg-[#fff8e6] text-[#b38600]"
                 }`}>
                   <Icon icon="mdi:shield-lock-outline" width={14} />
@@ -318,7 +426,7 @@ export default function EstudianteMensajeria() {
               )}
 
               {/* Mensajes */}
-              <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
+              <div className="flex-1 overflow-y-auto px-3 md:px-5 py-4 flex flex-col gap-3">
                 {loadingMsgs ? (
                   <div className={`flex items-center justify-center py-8 ${M}`}>
                     <Icon icon="mdi:loading" width={20} className="animate-spin mr-2" />
@@ -352,9 +460,9 @@ export default function EstudianteMensajeria() {
               </div>
 
               {errorEnvio && (
-                <p className="px-5 py-1 text-xs text-red-500 bg-red-50 dark:bg-red-900/20">{errorEnvio}</p>
+                <p className="px-3 md:px-5 py-1 text-xs text-red-500 bg-red-50 dark:bg-red-900/20">{errorEnvio}</p>
               )}
-              <form onSubmit={handleSend} className={`px-5 py-3 border-t ${B} ${cardBg} flex gap-2 flex-shrink-0`}>
+              <form onSubmit={handleSend} className={`px-3 md:px-5 py-3 border-t ${B} ${cardBg} flex gap-2 flex-shrink-0`}>
                 <input
                   type="text"
                   placeholder="Escribe un mensaje..."

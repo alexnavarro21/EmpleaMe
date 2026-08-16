@@ -14,25 +14,25 @@ const profilePaths = {
 
 const navLinks = {
   estudiante: [
-    { to: "/estudiante/muro", label: "Inicio" },
-    { to: "/estudiante/postulaciones", label: "Mis postulaciones" },
+    { to: "/estudiante/muro", label: "Inicio", icon: "mdi:home-outline" },
+    { to: "/estudiante/postulaciones", label: "Mis postulaciones", icon: "mdi:briefcase-check-outline" },
   ],
   empresa: [
-    { to: "/empresa/muro", label: "Inicio" },
-    { to: "/empresa/dashboard", label: "Panel Empresa" },
-    { to: "/empresa/publicar", label: "Publicar Vacante" },
+    { to: "/empresa/muro", label: "Inicio", icon: "mdi:home-outline" },
+    { to: "/empresa/dashboard", label: "Panel Empresa", icon: "mdi:view-dashboard-outline" },
+    { to: "/empresa/publicar", label: "Publicar Vacante", icon: "mdi:plus-box-outline" },
   ],
   admin: [
-    { to: "/admin/muro", label: "Inicio" },
-    { to: "/admin/panel", label: "Panel" },
-    { to: "/admin/usuarios", label: "Estudiantes" },
-    { to: "/admin/talleres", label: "Talleres" },
+    { to: "/admin/muro", label: "Inicio", icon: "mdi:home-outline" },
+    { to: "/admin/panel", label: "Panel", icon: "mdi:view-dashboard-outline" },
+    { to: "/admin/usuarios", label: "Estudiantes", icon: "mdi:account-group-outline" },
+    { to: "/admin/talleres", label: "Talleres", icon: "mdi:school-outline" },
   ],
   slep: [
-    { to: "/slep/muro",      label: "Inicio" },
-    { to: "/slep/panel",       label: "Panel" },
-    { to: "/slep/usuarios",    label: "Usuarios" },
-    { to: "/slep/reportes",    label: "Reportes" },
+    { to: "/slep/muro",      label: "Inicio", icon: "mdi:home-outline" },
+    { to: "/slep/panel",       label: "Panel", icon: "mdi:view-dashboard-outline" },
+    { to: "/slep/usuarios",    label: "Usuarios", icon: "mdi:account-multiple-outline" },
+    { to: "/slep/reportes",    label: "Reportes", icon: "mdi:chart-box-outline" },
   ],
 };
 
@@ -92,6 +92,10 @@ export default function Layout() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [accesibilidadOpen, setAccesibilidadOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Páginas (ej. chat de mensajería en mobile) pueden pedir ocultar el navbar
+  // por completo (no solo taparlo) vía useOutletContext().setNavbarHidden(true).
+  const [navbarHidden, setNavbarHidden] = useState(false);
   const menuRef = useRef(null);
   const accesibilidadRef = useRef(null);
   const searchRef = useRef(null);
@@ -170,6 +174,17 @@ export default function Layout() {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("foto_perfil_updated", handleFotoUpdate);
     };
+  }, []);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+    setNavbarHidden(false);
+  }, [location.pathname]);
+
+  // Sincroniza el color de la barra del navegador (mobile) con el navbar
+  useEffect(() => {
+    const meta = document.getElementById("meta-theme-color");
+    if (meta) meta.setAttribute("content", "#0A3A6A");
   }, []);
 
   const isOnBuscar = location.pathname.includes("/buscar");
@@ -264,6 +279,12 @@ export default function Layout() {
     isDark ? "text-[#D3D1C7] hover:bg-[#0F4D8A]/30" : "text-[#2C2C2A] hover:bg-[#F0F4F8]"
   }`;
 
+  const drawerLinkCls = (active, dark) => `flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+    active
+      ? `font-medium text-[#378ADD] ${dark ? "bg-[#1a2e42]" : "bg-[#E6F1FB]"}`
+      : dark ? "text-[#D3D1C7]" : "text-[#2C2C2A]"
+  }`;
+
   // Botón flotante: volver al inicio del muro
   const [mostrarSubir, setMostrarSubir] = useState(false);
 
@@ -285,8 +306,10 @@ export default function Layout() {
         isContrast ? "bg-[#FFF9E8]" : isDark ? "bg-[#1e1e1c]" : "bg-[#F0F4F8]"
       }`}>
 
-        {/* Navbar */}
-        <nav className="bg-[#0A3A6A] h-14 flex items-center px-6 sticky top-0 z-50 shadow-sm gap-4">
+        {/* Navbar: algunas páginas (ej. chat de mensajería en mobile) piden ocultarlo
+            por completo vía context, no solo taparlo visualmente */}
+        {!navbarHidden && (
+        <nav className="bg-[#0A3A6A] h-14 flex items-center px-4 md:px-6 sticky top-0 z-50 shadow-sm gap-4">
 
           {/* Izquierda: Logo + links */}
           <div className="flex items-center gap-6 flex-1 min-w-0">
@@ -314,7 +337,7 @@ export default function Layout() {
           </div>
 
           {/* Centro: Barra de búsqueda */}
-          <div className="flex-shrink-0" ref={searchRef}>
+          <div className="hidden md:block flex-shrink-0" ref={searchRef}>
             <div className="relative">
               <form onSubmit={handleSearchSubmit}>
                 <div className="flex items-center w-64 focus-within:w-[28rem] rounded-full bg-[#0F4D8A]/50 border border-[#1a5fa8] focus-within:bg-[#0F4D8A]/80 focus-within:border-[#378ADD] transition-all duration-200 overflow-hidden">
@@ -415,7 +438,7 @@ export default function Layout() {
           <div className="flex items-center gap-1 flex-1 justify-end">
             <Link
               to={messagingPaths[role]}
-              className="p-1.5 rounded-lg transition-colors text-[#B5D4F4] hover:text-[#E6F1FB] hover:bg-[#0F4D8A]/40"
+              className="hidden md:flex p-1.5 rounded-lg transition-colors text-[#B5D4F4] hover:text-[#E6F1FB] hover:bg-[#0F4D8A]/40"
               title="Mensajes"
             >
               <Icon icon="mdi:message-outline" width={22} />
@@ -424,7 +447,7 @@ export default function Layout() {
             <NotificacionesBell role={role} />
 
             {/* Botón de accesibilidad: modo oscuro / alto contraste */}
-            <div className="relative" ref={accesibilidadRef}>
+            <div className="relative hidden md:block" ref={accesibilidadRef}>
               <button
                 onClick={() => setAccesibilidadOpen(!accesibilidadOpen)}
                 title="Accesibilidad"
@@ -481,7 +504,7 @@ export default function Layout() {
             </div>
 
             {/* Botón de perfil con popup */}
-            <div className="relative" ref={menuRef}>
+            <div className="relative hidden md:block" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
                 className={`relative p-1.5 rounded-lg transition-colors ${
@@ -540,17 +563,177 @@ export default function Layout() {
                 </div>
               )}
             </div>
+
+            {/* Botón hamburguesa: solo mobile */}
+            <button
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+              className="md:hidden p-1.5 rounded-lg transition-colors text-[#B5D4F4] hover:text-[#E6F1FB] hover:bg-[#0F4D8A]/40"
+            >
+              <Icon icon={mobileMenuOpen ? "mdi:close" : "mdi:menu"} width={24} />
+            </button>
           </div>
         </nav>
+        )}
+
+        {/* Drawer mobile */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <>
+              <motion.div
+                key="mobile-backdrop"
+                className="fixed inset-0 bg-black/50 z-40 md:hidden"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setMobileMenuOpen(false)}
+              />
+              <motion.div
+                key="mobile-drawer"
+                className={`fixed top-0 right-0 bottom-0 w-[85%] max-w-xs z-50 md:hidden overflow-y-auto shadow-2xl ${
+                  isDark ? "bg-[#262624]" : "bg-white"
+                }`}
+                initial={{ x: "100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "100%" }}
+                transition={{ type: "tween", duration: 0.22 }}
+              >
+                {/* Header del drawer */}
+                <div className={`h-14 flex items-center justify-between px-4 border-b ${isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]"}`}>
+                  <span className={`text-sm font-semibold ${isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]"}`}>Menú</span>
+                  <button
+                    onClick={() => setMobileMenuOpen(false)}
+                    aria-label="Cerrar menú"
+                    className={`p-1.5 rounded-lg ${isDark ? "text-[#B4B2A9] hover:bg-[#313130]" : "text-[#5F5E5A] hover:bg-[#F7F6F3]"}`}
+                  >
+                    <Icon icon="mdi:close" width={20} />
+                  </button>
+                </div>
+
+                {/* Links de navegación */}
+                <div className="flex flex-col py-2 mt-2">
+                  {/* Inicio */}
+                  <Link
+                    to={navLinks[role][0].to}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={drawerLinkCls(location.pathname === navLinks[role][0].to, isDark)}
+                  >
+                    <Icon icon={navLinks[role][0].icon} width={18} className={isDark ? "text-[#85B7EB]" : "text-[#0A3B6A]"} />
+                    {navLinks[role][0].label}
+                  </Link>
+
+                  {/* Mi perfil */}
+                  {profilePaths[role] && (
+                    <Link
+                      to={profilePaths[role]}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={drawerLinkCls(location.pathname === profilePaths[role], isDark)}
+                    >
+                      <Icon icon="mynaui:user-solid" width={18} className={isDark ? "text-[#85B7EB]" : "text-[#0A3B6A]"} />
+                      Mi perfil
+                    </Link>
+                  )}
+
+                  {/* Resto de links propios del rol (ej. Mis postulaciones) */}
+                  {navLinks[role].slice(1).map((link) => (
+                    <Link
+                      key={link.to}
+                      to={link.to}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={drawerLinkCls(location.pathname === link.to, isDark)}
+                    >
+                      <Icon icon={link.icon} width={18} className={isDark ? "text-[#85B7EB]" : "text-[#0A3B6A]"} />
+                      {link.label}
+                    </Link>
+                  ))}
+
+                  {/* Mensajes: siempre lleva a la lista de conversaciones */}
+                  <Link
+                    to={messagingPaths[role]}
+                    state={{ forceList: true }}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={drawerLinkCls(location.pathname === messagingPaths[role], isDark)}
+                  >
+                    <Icon icon="mdi:message-outline" width={18} className={isDark ? "text-[#85B7EB]" : "text-[#0A3B6A]"} />
+                    Mensajes
+                  </Link>
+
+                  {/* Seguidores */}
+                  {seguidoresPaths[role] && (
+                    <Link
+                      to={seguidoresPaths[role]}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={drawerLinkCls(location.pathname === seguidoresPaths[role], isDark)}
+                    >
+                      <Icon icon="mdi:account-group-outline" width={18} className={isDark ? "text-[#85B7EB]" : "text-[#0A3B6A]"} />
+                      Seguidores
+                    </Link>
+                  )}
+
+                  {role === "admin" && (
+                    <Link
+                      to="/admin/reportes"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={drawerLinkCls(location.pathname === "/admin/reportes", isDark)}
+                    >
+                      <Icon icon="mdi:flag-outline" width={18} className={isDark ? "text-[#85B7EB]" : "text-[#0A3B6A]"} />
+                      Reportes de contenido
+                    </Link>
+                  )}
+                </div>
+
+                {/* Accesibilidad */}
+                <div className={`border-t px-4 py-3 ${isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]"}`}>
+                  <div className={`flex items-center justify-between py-2 text-sm ${isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]"}`}>
+                    <div className="flex items-center gap-3">
+                      <Icon icon="ix:light-dark" width={20} className={isDark ? "text-[#85B7EB]" : "text-[#5F5E5A]"} />
+                      Modo oscuro
+                    </div>
+                    <button
+                      onClick={() => setIsDark(!isDark)}
+                      className={`w-8 h-[18px] rounded-full relative transition-colors duration-200 flex-shrink-0 ${isDark ? "bg-[#378ADD]" : "bg-[#D3D1C7]"}`}
+                    >
+                      <span className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white transition-all duration-200 ${isDark ? "left-[16px]" : "left-[2px]"}`} />
+                    </button>
+                  </div>
+                  <div className={`flex items-center justify-between py-2 text-sm ${isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]"}`}>
+                    <div className="flex items-center gap-3">
+                      <Icon icon="mdi:contrast-circle" width={18} className={isContrast ? "text-[#C45E00]" : isDark ? "text-[#888780]" : "text-[#5F5E5A]"} />
+                      Alto contraste
+                    </div>
+                    <button
+                      onClick={() => setTheme(isContrast ? (isDark ? "dark" : "light") : "colorblind")}
+                      className={`w-8 h-[18px] rounded-full relative transition-colors duration-200 flex-shrink-0 ${isContrast ? "bg-[#C45E00]" : isDark ? "bg-[#3a3a38]" : "bg-[#D3D1C7]"}`}
+                    >
+                      <span className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white transition-all duration-200 ${isContrast ? "left-[16px]" : "left-[2px]"}`} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Cerrar sesión */}
+                <div className={`border-t px-4 py-3 ${isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]"}`}>
+                  <Link
+                    to="/"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 py-2 text-sm text-red-400"
+                  >
+                    <Icon icon="ph:sign-out-bold" width={18} />
+                    Cerrar sesión
+                  </Link>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
         {/* Content */}
-        <main className="max-w-7xl mx-auto px-6 py-8">
-          <Outlet />
+        <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
+          <Outlet context={{ setNavbarHidden }} />
         </main>
 
-        {/* Flecha flotante: volver arriba */}
+        {/* Flecha flotante: volver arriba (no aplica en mensajería, que tiene su propio scroll interno) */}
         <AnimatePresence>
-          {mostrarSubir && (
+          {mostrarSubir && !location.pathname.includes("mensajeria") && (
             <motion.button
               key="scroll-top"
               type="button"

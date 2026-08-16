@@ -78,7 +78,7 @@ export default function MisPostulaciones() {
         action={
           <Link
             to="/estudiante/muro"
-            className={`text-sm px-4 py-2 rounded-lg border ${B} ${M} hover:text-[#378ADD] hover:border-[#378ADD] transition-colors`}
+            className={`hidden md:inline-flex text-sm px-4 py-2 rounded-lg border ${B} ${M} hover:text-[#378ADD] hover:border-[#378ADD] transition-colors`}
           >
             ← Volver al inicio
           </Link>
