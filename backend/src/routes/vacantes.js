@@ -53,6 +53,31 @@ router.get("/", verificarToken, async (req, res) => {
   }
 });
 
+// GET /api/vacantes/:id  — detalle de una vacante propia, con habilidades (para editar)
+router.get("/:id", verificarToken, soloRol("empresa"), async (req, res) => {
+  try {
+    const [[vacante]] = await db.query(
+      "SELECT * FROM vacantes WHERE id = ? AND empresa_id = ?",
+      [req.params.id, req.usuario.id]
+    );
+    if (!vacante) return res.status(404).json({ error: "Vacante no encontrada o sin permisos" });
+
+    const [habs] = await db.query(
+      `SELECT h.id, h.nombre, ch.nombre AS categoria
+       FROM vacante_habilidades vh
+       JOIN habilidades h ON h.id = vh.habilidad_id
+       JOIN categorias_habilidades ch ON ch.id = h.categoria_id
+       WHERE vh.vacante_id = ?`,
+      [req.params.id]
+    );
+    vacante.habilidades = habs;
+
+    res.json(vacante);
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
 // GET /api/vacantes/empresa/:id  — vacantes de una empresa con conteo de postulantes
 router.get("/empresa/:id", verificarToken, async (req, res) => {
   try {
@@ -117,6 +142,71 @@ router.post("/", verificarToken, soloRol("empresa"), compressAndUpload("archivo_
     }
 
     res.status(201).json({ id: vacanteId, mensaje: "Vacante publicada" });
+  } catch (err) {
+    res.status(500).json({ error: "Error del servidor", detalle: err.message });
+  }
+});
+
+// PUT /api/vacantes/:id  — editar vacante (solo empresa dueña)
+router.put("/:id", verificarToken, soloRol("empresa"), compressAndUpload("archivo_multimedia"), async (req, res) => {
+  const { titulo, descripcion, requisitos, area, modalidad, duracion, horario, remuneracion, direccion, beneficios, fecha_limite, habilidades, tipo } = req.body;
+  if (!titulo || !descripcion)
+    return res.status(400).json({ error: "titulo y descripcion son requeridos" });
+  const tipoValido = tipo === "puesto_laboral" ? "puesto_laboral" : "practica";
+  try {
+    const [[vacante]] = await db.query(
+      "SELECT id FROM vacantes WHERE id = ? AND empresa_id = ?",
+      [req.params.id, req.usuario.id]
+    );
+    if (!vacante) return res.status(404).json({ error: "Vacante no encontrada o sin permisos" });
+
+    await db.query(
+      `UPDATE vacantes SET
+         tipo = ?, titulo = ?, descripcion = ?, requisitos = ?, area = ?, modalidad = ?,
+         duracion = ?, horario = ?, remuneracion = ?, direccion = ?, beneficios = ?, fecha_limite = ?
+       WHERE id = ?`,
+      [
+        tipoValido, titulo, descripcion,
+        requisitos || null, area || null,
+        modalidad || "presencial",
+        duracion || null, horario || null,
+        remuneracion || null, direccion || null,
+        beneficios || null, fecha_limite || null,
+        req.params.id,
+      ]
+    );
+
+    // Reemplazar habilidades requeridas
+    const habilidadesIds = habilidades
+      ? (Array.isArray(habilidades) ? habilidades : JSON.parse(habilidades))
+      : [];
+    await db.query("DELETE FROM vacante_habilidades WHERE vacante_id = ?", [req.params.id]);
+    if (habilidadesIds.length > 0) {
+      const values = habilidadesIds.map((hid) => [req.params.id, hid]);
+      await db.query("INSERT INTO vacante_habilidades (vacante_id, habilidad_id) VALUES ?", [values]);
+    }
+
+    // Sincronizar la publicación del feed vinculada a la vacante
+    const [[pubVinculada]] = await db.query(
+      "SELECT publicacion_id FROM publicaciones_vacantes WHERE vacante_id = ?",
+      [req.params.id]
+    );
+    if (pubVinculada) {
+      if (req.file) {
+        const url_multimedia = `/api/media/${req.file.key}`;
+        await db.query(
+          "UPDATE publicaciones SET titulo = ?, contenido = ?, url_multimedia = ? WHERE id = ?",
+          [titulo, descripcion, url_multimedia, pubVinculada.publicacion_id]
+        );
+      } else {
+        await db.query(
+          "UPDATE publicaciones SET titulo = ?, contenido = ? WHERE id = ?",
+          [titulo, descripcion, pubVinculada.publicacion_id]
+        );
+      }
+    }
+
+    res.json({ mensaje: "Vacante actualizada" });
   } catch (err) {
     res.status(500).json({ error: "Error del servidor", detalle: err.message });
   }

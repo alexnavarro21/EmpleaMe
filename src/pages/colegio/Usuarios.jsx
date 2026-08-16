@@ -1326,9 +1326,9 @@ function TabTests({ isDark }) {
             <h3 className={`text-sm font-semibold ${T}`}>Subir resultados de test socioemocional</h3>
             <button
               onClick={() => descargarPlantilla("/admin/tests/template", "plantilla_tests.xlsx", setDlError)}
-              className="flex items-center gap-1.5 text-xs text-[#378ADD] hover:underline"
+              className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg border border-[#378ADD] text-[#378ADD] hover:bg-[#378ADD]/10 transition-colors"
             >
-              <Icon icon="mdi:download" width={14} />
+              <Icon icon="mdi:download" width={16} />
               Descargar plantilla
             </button>
           </div>
@@ -1441,9 +1441,9 @@ function TabPromedios({ isDark }) {
             <h3 className={`text-sm font-semibold ${T}`}>Subir promedios académicos</h3>
             <button
               onClick={() => descargarPlantilla("/admin/promedios/template", "plantilla_promedios.xlsx", setDlError)}
-              className="flex items-center gap-1.5 text-xs text-[#378ADD] hover:underline"
+              className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg border border-[#378ADD] text-[#378ADD] hover:bg-[#378ADD]/10 transition-colors"
             >
-              <Icon icon="mdi:download" width={14} />
+              <Icon icon="mdi:download" width={16} />
               Descargar plantilla
             </button>
           </div>
@@ -1805,15 +1805,15 @@ function TabCrearAlumnos({ isDark }) {
             <h3 className={`text-sm font-semibold ${T}`}>Crear cuentas de alumnos en masa</h3>
             <button
               onClick={() => descargarPlantilla("/admin/alumnos/template", "plantilla_alumnos.xlsx", setDlError)}
-              className="flex items-center gap-1.5 text-xs text-[#378ADD] hover:underline"
+              className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg border border-[#378ADD] text-[#378ADD] hover:bg-[#378ADD]/10 transition-colors"
             >
-              <Icon icon="mdi:download" width={14} />
+              <Icon icon="mdi:download" width={16} />
               Descargar plantilla
             </button>
           </div>
           {dlError && <p className="text-xs text-red-400 mb-2">Error: {dlError}</p>}
           <p className={`text-xs ${M} mb-4`}>
-            Completa la plantilla con <strong>Nombre Completo</strong>, <strong>Correo</strong>, <strong>Teléfono</strong> y <strong>Contraseña</strong> de cada alumno. Los estudiantes podrán completar el resto de su perfil al ingresar. Los correos ya registrados se omiten sin generar error.
+            Completa la plantilla con <strong>Nombre</strong>, <strong>Correo</strong>, <strong>Teléfono</strong> y <strong>Contraseña</strong> de cada alumno; el resto lo completan ellos al ingresar. Los correos ya registrados se omiten automáticamente.
           </p>
 
           <div
@@ -1913,14 +1913,7 @@ function TabCrearAlumnos({ isDark }) {
         <Card>
           <h3 className={`text-sm font-semibold ${T} mb-1`}>Importar nómina del colegio</h3>
           <p className={`text-xs ${M} mb-4`}>
-            Sube el archivo de nómina exportado desde la base de datos del colegio (.xls, .xlsx o .csv).
-            El sistema extrae el <strong>RUN</strong>, nombre y datos de contacto de cada fila.
-            El RUT es el identificador de la cuenta: si el correo ya está en uso por otra persona
-            (por ejemplo, el mismo correo de un apoderado entre hermanos) la cuenta se crea igual,
-            sin correo, y el alumno inicia sesión con su RUT.
-            Los estudiantes ya registrados (mismo RUT) se omiten automáticamente.
-            La contraseña inicial de cada alumno es la primera letra de su nombre + los últimos 4 dígitos
-            de su RUN (ej. <code>G9679</code>).
+            Sube la nómina exportada del colegio (.xls, .xlsx o .csv). Se usa el <strong>RUT</strong> como identificador: si el correo ya está en uso (ej. hermanos con el mismo apoderado), la cuenta se crea sin correo y el alumno inicia sesión con su RUT. Alumnos ya registrados se omiten. Contraseña inicial: primera letra del nombre + últimos 4 dígitos del RUN (ej. <code>G9679</code>).
           </p>
 
           <div
@@ -1998,7 +1991,7 @@ const TABS = [
   { key: "tests",             label: "Tests socioemocionales",icon: "hugeicons:brain-02" },
   { key: "promedios",         label: "Promedios académicos",  icon: "mdi:school-outline" },
   { key: "habilidades",       label: "Habilidades",           icon: "mdi:tag-multiple-outline" },
-  { key: "crear_alumnos",     label: "Crear alumnos",         icon: "mdi:account-multiple-plus-outline" },
+  { key: "crear_alumnos",     label: "Importar alumnos",      icon: "mdi:account-multiple-plus-outline" },
 ];
 
 export default function GestionEstudiantes() {
@@ -2016,8 +2009,11 @@ export default function GestionEstudiantes() {
     setTab("editar_estudiante");
   };
 
+  const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const B = isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
+  const BG = isDark ? "bg-[#262624]" : "bg-white";
+  const TOOLBAR_BG = isDark ? "bg-[#1e1e1c]" : "bg-[#F0F4F8]";
 
   const cargarHabilidades = () => getHabilidades().then(setHabilidades).catch(() => {});
 
@@ -2042,39 +2038,45 @@ export default function GestionEstudiantes() {
         subtitle="Usuarios, evaluaciones, habilidades, tests y promedios académicos"
       />
 
-      <div className={`flex border-b ${B} mb-6 gap-0.25`}>
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`flex items-center gap-2 px-5 py-3 text-sm border-b-2 -mb-px transition-colors ${
-              tab === t.key
-                ? "border-[#0F4D8A] text-[#0F4D8A] font-medium"
-                : `border-transparent ${M} hover:text-[#0F4D8A]`
-            }`}
-          >
-            <Icon icon={t.icon} width={15} />
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {loading ? (
-        <div className={`flex items-center justify-center py-20 ${M}`}>
-          <Icon icon="mdi:loading" width={28} className="animate-spin mr-2" />
-          Cargando datos...
+      <div className={`rounded-lg border ${B} ${BG} overflow-hidden mb-6`}>
+        <div className={`flex gap-1 px-2 pt-2 ${TOOLBAR_BG} overflow-x-auto ${
+          isDark ? "shadow-[inset_0_-1px_0_0_#3a3a38]" : "shadow-[inset_0_-1px_0_0_#D3D1C7]"
+        }`}>
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm rounded-t-md whitespace-nowrap transition-colors ${
+                tab === t.key
+                  ? `${BG} ${T} font-medium border-x border-t ${B}`
+                  : `${M} hover:text-[#0F4D8A]`
+              }`}
+            >
+              <Icon icon={t.icon} width={15} className={tab === t.key ? "text-[#0F4D8A]" : ""} />
+              {t.label}
+            </button>
+          ))}
         </div>
-      ) : (
-        <>
-          {tab === "usuarios"          && <TabUsuarios        rawUsers={rawUsers} isDark={isDark} onEditarEstudiante={handleEditarEstudiante} />}
-          {tab === "editar_estudiante" && <TabEditarEstudiante estudiantes={estudiantes} habilidades={habilidades} isDark={isDark} initialId={editarId} />}
-          {tab === "evaluacion"        && <TabEvaluacion      estudiantes={estudiantes} habilidades={habilidades} isDark={isDark} />}
-          {tab === "tests"             && <TabTests  isDark={isDark} />}
-          {tab === "promedios"         && <TabPromedios isDark={isDark} />}
-          {tab === "habilidades"       && <TabHabilidades habilidades={habilidades} onRefresh={cargarHabilidades} isDark={isDark} />}
-          {tab === "crear_alumnos"     && <TabCrearAlumnos isDark={isDark} />}
-        </>
-      )}
+
+        <div className="p-6">
+        {loading ? (
+          <div className={`flex items-center justify-center py-20 ${M}`}>
+            <Icon icon="mdi:loading" width={28} className="animate-spin mr-2" />
+            Cargando datos...
+          </div>
+        ) : (
+          <>
+            {tab === "usuarios"          && <TabUsuarios        rawUsers={rawUsers} isDark={isDark} onEditarEstudiante={handleEditarEstudiante} />}
+            {tab === "editar_estudiante" && <TabEditarEstudiante estudiantes={estudiantes} habilidades={habilidades} isDark={isDark} initialId={editarId} />}
+            {tab === "evaluacion"        && <TabEvaluacion      estudiantes={estudiantes} habilidades={habilidades} isDark={isDark} />}
+            {tab === "tests"             && <TabTests  isDark={isDark} />}
+            {tab === "promedios"         && <TabPromedios isDark={isDark} />}
+            {tab === "habilidades"       && <TabHabilidades habilidades={habilidades} onRefresh={cargarHabilidades} isDark={isDark} />}
+            {tab === "crear_alumnos"     && <TabCrearAlumnos isDark={isDark} />}
+          </>
+        )}
+        </div>
+      </div>
     </div>
   );
 }

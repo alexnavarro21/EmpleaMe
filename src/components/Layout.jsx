@@ -19,7 +19,7 @@ const navLinks = {
   ],
   empresa: [
     { to: "/empresa/muro", label: "Inicio" },
-    { to: "/empresa/dashboard", label: "Mis Vacantes" },
+    { to: "/empresa/dashboard", label: "Panel Empresa" },
     { to: "/empresa/publicar", label: "Publicar Vacante" },
   ],
   admin: [
@@ -70,11 +70,20 @@ const seguidoresPaths = {
 };
 
 const TIPO_CONFIG = {
-  estudiante: { icon: "mynaui:user-solid",           label: "Estudiante", color: "bg-blue-500/20 text-blue-400" },
-  empresa:    { icon: "mdi:office-building-outline", label: "Empresa",    color: "bg-green-500/20 text-green-400" },
-  vacante:    { icon: "mdi:briefcase-outline",       label: "Vacante",    color: "bg-orange-500/20 text-orange-400" },
-  taller:     { icon: "mdi:school-outline",          label: "Taller",     color: "bg-purple-500/20 text-purple-400" },
-  colegio:    { icon: "mdi:domain",                  label: "Colegio",    color: "bg-teal-500/20 text-teal-400" },
+  estudiante: { icon: "mynaui:user-solid",           label: "Estudiante", labelPlural: "Estudiantes", color: "bg-blue-500/20 text-blue-400" },
+  empresa:    { icon: "mdi:office-building-outline", label: "Empresa",    labelPlural: "Empresas",    color: "bg-green-500/20 text-green-400" },
+  vacante:    { icon: "mdi:briefcase-outline",       label: "Vacante",    labelPlural: "Vacantes",    color: "bg-orange-500/20 text-orange-400" },
+  taller:     { icon: "mdi:school-outline",          label: "Taller",     labelPlural: "Talleres",    color: "bg-purple-500/20 text-purple-400" },
+  colegio:    { icon: "mdi:domain",                  label: "Colegio",    labelPlural: "Colegios",    color: "bg-teal-500/20 text-teal-400" },
+};
+
+const CATEGORIA_ORDEN = ["estudiante", "empresa", "vacante", "taller", "colegio"];
+
+const PLACEHOLDER_POR_ROL = {
+  estudiante: "Buscar vacantes, empresas...",
+  empresa: "Buscar estudiantes, colegios...",
+  admin: "Buscar empresas, talleres...",
+  slep: "Buscar empresas, colegios...",
 };
 
 export default function Layout() {
@@ -199,6 +208,7 @@ export default function Layout() {
     if (!val.trim()) {
       setSuggestions([]);
       setShowSuggestions(false);
+      setSearchLoading(false);
       return;
     }
     setShowSuggestions(true);
@@ -291,7 +301,7 @@ export default function Layout() {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`text-sm px-3 py-1.5 rounded-lg transition-colors ${
+                  className={`text-sm px-3 py-1.5 rounded-lg whitespace-nowrap flex-shrink-0 transition-colors ${
                     location.pathname === link.to
                       ? "bg-[#0F4D8A] text-[#E6F1FB] font-medium"
                       : "text-[#B5D4F4] hover:text-[#E6F1FB] hover:bg-[#0F4D8A]/40"
@@ -313,7 +323,7 @@ export default function Layout() {
                     value={searchQuery}
                     onChange={handleSearchChange}
                     onFocus={() => { if (searchQuery.trim() && suggestions.length > 0) setShowSuggestions(true); }}
-                    placeholder="Buscar estudiantes, empresas..."
+                    placeholder={PLACEHOLDER_POR_ROL[role] || "Buscar en EmpleaMe..."}
                     className="flex-1 min-w-0 pl-4 pr-2 py-1.5 text-sm bg-transparent text-[#E6F1FB] placeholder-[#85B7EB] outline-none"
                   />
                   <button
@@ -332,7 +342,7 @@ export default function Layout() {
 
               {/* Dropdown sugerencias */}
               {showSuggestions && (
-                <div className={`absolute top-full mt-2 left-1/2 -translate-x-1/2 w-80 rounded-2xl shadow-2xl border overflow-hidden z-50 ${
+                <div className={`absolute top-full mt-2 left-1/2 -translate-x-1/2 w-[28rem] max-h-[28rem] overflow-y-auto rounded-2xl shadow-2xl border z-50 ${
                   isDark ? "bg-[#262624] border-[#3a3a38]" : "bg-white border-[#D3D1C7]"
                 }`}>
                   {searchLoading ? (
@@ -346,45 +356,48 @@ export default function Layout() {
                     </div>
                   ) : (
                     <>
-                      {suggestions.map((item, i) => {
-                        const cfg = TIPO_CONFIG[item.tipo] || TIPO_CONFIG.estudiante;
+                      {CATEGORIA_ORDEN.map((tipo) => {
+                        const items = suggestions.filter((s) => s.tipo === tipo);
+                        if (items.length === 0) return null;
+                        const cfg = TIPO_CONFIG[tipo];
                         return (
-                          <button
-                            key={`${item.tipo}-${item.id}-${i}`}
-                            onClick={() => handleSuggestionClick(item)}
-                            className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors border-b last:border-0 ${
-                              isDark
-                                ? "border-[#3a3a38] hover:bg-[#0F4D8A]/25 text-[#D3D1C7]"
-                                : "border-[#F0EDE8] hover:bg-[#EFF6FF] text-[#2C2C2A]"
-                            }`}
-                          >
-                            {/* Ícono tipo */}
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isDark ? "bg-[#313130]" : "bg-[#F7F6F3]"}`}>
-                              <Icon icon={cfg.icon} width={16} className="text-[#378ADD]" />
-                            </div>
-                            {/* Nombre + sub */}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">{item.nombre}</p>
-                              {item.sub && (
-                                <p className={`text-xs truncate ${isDark ? "text-[#888780]" : "text-[#5F5E5A]"}`}>
-                                  {item.sub}
-                                </p>
-                              )}
-                            </div>
-                            {/* Badge tipo */}
-                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${cfg.color}`}>
-                              {cfg.label}
-                            </span>
-                          </button>
+                          <div key={tipo} className={`border-b last:border-0 ${isDark ? "border-[#3a3a38]" : "border-[#F0EDE8]"}`}>
+                            <p className={`px-4 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wide ${isDark ? "text-[#888780]" : "text-[#5F5E5A]"}`}>
+                              {cfg.labelPlural}
+                            </p>
+                            {items.map((item, i) => (
+                              <button
+                                key={`${item.tipo}-${item.id}-${i}`}
+                                onClick={() => handleSuggestionClick(item)}
+                                className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors ${
+                                  isDark
+                                    ? "hover:bg-[#0F4D8A]/25 text-[#D3D1C7]"
+                                    : "hover:bg-[#EFF6FF] text-[#2C2C2A]"
+                                }`}
+                              >
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isDark ? "bg-[#313130]" : "bg-[#F7F6F3]"}`}>
+                                  <Icon icon={cfg.icon} width={16} className="text-[#378ADD]" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">{item.nombre}</p>
+                                  {item.sub && (
+                                    <p className={`text-xs truncate ${isDark ? "text-[#888780]" : "text-[#5F5E5A]"}`}>
+                                      {item.sub}
+                                    </p>
+                                  )}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
                         );
                       })}
                       {/* Ver todos */}
                       <button
                         onClick={handleSearchSubmit}
-                        className={`w-full text-left px-4 py-2.5 text-xs flex items-center gap-2 transition-colors ${
+                        className={`w-full text-left px-4 py-2.5 text-xs flex items-center gap-2 transition-colors sticky bottom-0 ${
                           isDark
-                            ? "text-[#378ADD] hover:bg-[#0F4D8A]/20 border-t border-[#3a3a38]"
-                            : "text-[#378ADD] hover:bg-[#EFF6FF] border-t border-[#E8E6E1]"
+                            ? "text-[#378ADD] bg-[#262624] hover:bg-[#0F4D8A]/20 border-t border-[#3a3a38]"
+                            : "text-[#378ADD] bg-white hover:bg-[#EFF6FF] border-t border-[#E8E6E1]"
                         }`}
                       >
                         <Icon icon="mdi:magnify" width={14} />

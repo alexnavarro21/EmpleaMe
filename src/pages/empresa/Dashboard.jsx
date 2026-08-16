@@ -6,9 +6,6 @@ import { Card, Badge, StatCard, PageHeader, PrimaryButton, Paginacion } from "..
 import { getVacantesEmpresa, getPostulantesEmpresa, getPostulantesAceptados, getPostulantesRechazados, actualizarEstadoPostulacion, iniciarConversacion, enviarMensaje, activarVacante, desactivarVacante, completarPractica, getMediaUrl } from "../../services/api";
 import PostulantesVacanteModal from "../../components/PostulantesVacanteModal";
 
-const postColor = { pendiente: "blue", aceptado: "green", rechazado: "gray" };
-const postLabel = { pendiente: "nuevo", aceptado: "aceptado", rechazado: "rechazado" };
-
 function MotivoModal({ titulo, descripcion, placeholder, requerido, confirmLabel, confirmClass, onConfirmar, onCancelar, isDark, T, M, B, BG }) {
   const [motivo, setMotivo] = useState("");
   return (
@@ -73,6 +70,9 @@ export default function EmpresaDashboard() {
   const [paginaVacantes, setPaginaVacantes] = useState(1);
   const [porPaginaVacantes, setPorPaginaVacantes] = useState(6);
   const [busquedaVacante, setBusquedaVacante] = useState("");
+  const [paginaAceptados, setPaginaAceptados] = useState(1);
+  const [porPaginaAceptados, setPorPaginaAceptados] = useState(6);
+  const [estadoAceptar, setEstadoAceptar] = useState({}); // { [postulanteId]: "loading" | "ok" }
 
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
@@ -155,17 +155,31 @@ export default function EmpresaDashboard() {
   };
 
   const handleAceptar = async (postulante) => {
+    setEstadoAceptar((prev) => ({ ...prev, [postulante.id]: "loading" }));
     try {
       await actualizarEstadoPostulacion(postulante.id, "aceptado");
+      setEstadoAceptar((prev) => ({ ...prev, [postulante.id]: "ok" }));
       setAceptados((prev) => [{ ...postulante, estado: "aceptado" }, ...prev]);
-      setPostulantes((prev) => prev.filter((p) => p.id !== postulante.id));
       // Auto-message
       const conv = await iniciarConversacion(postulante.estudiante_id);
       await enviarMensaje(conv.id,
         `¡Felicidades, ${postulante.nombre_completo}! Has sido aceptado/a en la vacante "${postulante.vacante_titulo}". La empresa se pondrá en contacto contigo pronto para coordinar los detalles. ¡Mucho éxito!`
       );
+      setTimeout(() => {
+        setPostulantes((prev) => prev.filter((p) => p.id !== postulante.id));
+        setEstadoAceptar((prev) => {
+          const next = { ...prev };
+          delete next[postulante.id];
+          return next;
+        });
+      }, 1100);
     } catch (err) {
       console.error("Error al aceptar postulante:", err);
+      setEstadoAceptar((prev) => {
+        const next = { ...prev };
+        delete next[postulante.id];
+        return next;
+      });
     }
   };
 
@@ -232,6 +246,9 @@ export default function EmpresaDashboard() {
   const totalPagsPost = Math.ceil(postulantes.length / porPaginaPost);
   const paginaPostSegura = Math.min(paginaPost, totalPagsPost) || 1;
   const postulantesPagina = postulantes.slice((paginaPostSegura - 1) * porPaginaPost, paginaPostSegura * porPaginaPost);
+  const totalPagsAceptados = Math.ceil(aceptados.length / porPaginaAceptados);
+  const paginaAceptadosSegura = Math.min(paginaAceptados, totalPagsAceptados) || 1;
+  const aceptadosPagina = aceptados.slice((paginaAceptadosSegura - 1) * porPaginaAceptados, paginaAceptadosSegura * porPaginaAceptados);
 
   if (loading) {
     return (
@@ -246,14 +263,14 @@ export default function EmpresaDashboard() {
     <div>
       <PageHeader
         title="Panel Empresa"
-        subtitle={usuario.nombre_empresa || "Mi empresa"}
+        subtitle="Gestiona tus vacantes, postulantes y prácticas."
         action={
           <Link
             to="/empresa/publicar"
             className="flex items-center gap-2 text-base font-semibold bg-[#0F4D8A] hover:bg-[#0A3A6A] text-[#E6F1FB] px-6 py-3 rounded-lg transition-colors"
           >
             <Icon icon="mdi:plus" width={20} />
-            Publicar vacante
+            Nueva vacante
           </Link>
         }
       />
@@ -288,7 +305,7 @@ export default function EmpresaDashboard() {
                 />
               </div>
             )}
-            <Link to="/empresa/publicar" className="text-xs text-[#378ADD] hover:underline">+ Nueva</Link>
+
           </div>
 
           <div className="flex-1">
@@ -312,6 +329,13 @@ export default function EmpresaDashboard() {
                   <div className="flex items-center justify-between gap-2">
                     <span className={`text-xs ${M}`}>{v.total_postulantes || 0} postulantes</span>
                     <div className="flex items-center gap-2">
+                      <Link
+                        to={`/empresa/editar/${v.id}`}
+                        title="Editar vacante"
+                        className={`p-1 rounded transition-colors ${M} hover:text-[#378ADD]`}
+                      >
+                        <Icon icon="mdi:pencil-outline" width={15} />
+                      </Link>
                       <button
                         onClick={() => handleToggleVacante(v)}
                         disabled={toggling === v.id}
@@ -365,68 +389,87 @@ export default function EmpresaDashboard() {
           ) : (
             <div className="flex flex-col gap-3">
               {postulantesPagina.map((p) => (
-                <div key={p.id} className={`flex items-center gap-3 p-3 rounded-lg border ${B}`}>
-                  <Link to={`/empresa/candidato/${p.estudiante_id}`} className="flex-shrink-0">
-                    {p.foto_perfil ? (
-                      <img src={getMediaUrl(p.foto_perfil)} className="w-9 h-9 rounded-full object-cover" alt="" />
-                    ) : (
-                      <div className={`w-9 h-9 rounded-full flex items-center justify-center ${S}`}>
-                        <Icon icon="mynaui:user-solid" width={20} className="text-[#378ADD]" />
-                      </div>
-                    )}
-                  </Link>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <Link to={`/empresa/candidato/${p.estudiante_id}`} className={`text-sm font-medium ${T} truncate hover:text-[#378ADD] transition-colors`}>
-                        {p.nombre_completo}
+                <div key={p.id} className={`p-3 rounded-lg border ${B}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Link to={`/empresa/candidato/${p.estudiante_id}`} className="flex-shrink-0">
+                        {p.foto_perfil ? (
+                          <img src={getMediaUrl(p.foto_perfil)} className="w-9 h-9 rounded-full object-cover" alt="" />
+                        ) : (
+                          <div className={`w-9 h-9 rounded-full flex items-center justify-center ${S}`}>
+                            <Icon icon="mynaui:user-solid" width={20} className="text-[#378ADD]" />
+                          </div>
+                        )}
                       </Link>
-                      <Badge color={postColor[p.estado]}>{postLabel[p.estado]}</Badge>
+                      <div className="min-w-0">
+                        <Link to={`/empresa/candidato/${p.estudiante_id}`} className={`text-sm font-medium ${T} truncate hover:text-[#378ADD] transition-colors block`}>
+                          {p.nombre_completo}
+                        </Link>
+                        <p className={`text-xs ${M} truncate`}>{p.carrera}</p>
+                        {p.vacante_titulo && (
+                          <p className={`text-xs text-[#378ADD] truncate`}>
+                            <Icon icon="mdi:briefcase-outline" width={11} className="inline mr-0.5 mb-0.5" />
+                            {p.vacante_titulo}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <p className={`text-xs ${M}`}>
-                      {p.carrera} {p.promedio ? `· Nota: ${parseFloat(p.promedio).toFixed(1)}` : ""}
-                    </p>
-                    {p.vacante_titulo && (
-                      <p className={`text-xs text-[#378ADD] truncate`}>
-                        <Icon icon="mdi:briefcase-outline" width={11} className="inline mr-0.5 mb-0.5" />
-                        {p.vacante_titulo}
-                      </p>
-                    )}
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <button
+                        onClick={() => handleContactar(p.estudiante_id)}
+                        disabled={contactandoId === p.estudiante_id}
+                        title="Enviar mensaje"
+                        className={`p-1.5 rounded-lg transition-colors ${M} hover:text-[#378ADD] disabled:opacity-50`}
+                      >
+                        <Icon
+                          icon={contactandoId === p.estudiante_id ? "mdi:loading" : "mdi:message-outline"}
+                          width={19}
+                          className={contactandoId === p.estudiante_id ? "animate-spin" : ""}
+                        />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex gap-1 flex-shrink-0">
-                    {p.estado === "pendiente" && (
-                      <>
+
+                  <div className="flex items-center justify-between gap-2 mt-3">
+                    <div className="flex gap-4">
+                      <div>
+                        <p className={`text-xs ${M}`}>Promedio</p>
+                        <p className={`text-sm font-semibold ${T}`}>{p.promedio ? parseFloat(p.promedio).toFixed(1) : "—"}</p>
+                      </div>
+                      {p.calificacion_docente && (
+                        <div>
+                          <p className={`text-xs ${M}`}>Eval. docente</p>
+                          <p className={`text-sm font-semibold ${T} flex items-center gap-1`}>
+                            <Icon icon="solar:star-bold-duotone" width={14} className="text-yellow-400" />
+                            {parseFloat(p.calificacion_docente).toFixed(1)}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    {estadoAceptar[p.id] === "ok" ? (
+                      <div className={`fade-swap flex items-center gap-1.5 text-sm font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 ${isDark ? "bg-green-500/15 text-green-400" : "bg-green-100 text-green-700"}`}>
+                        <Icon icon="mdi:check-circle" width={16} />
+                        Aceptado
+                      </div>
+                    ) : p.estado === "pendiente" && (
+                      <div className="flex gap-1.5 flex-shrink-0">
                         <button
                           onClick={() => handleAceptar(p)}
-                          className={`text-xs px-2 py-1 rounded transition-colors ${isDark ? "bg-green-500/15 text-green-400 hover:bg-green-500/25" : "bg-green-100 text-green-700 hover:bg-green-200"}`}
+                          disabled={estadoAceptar[p.id] === "loading"}
+                          className={`flex items-center gap-1.5 text-sm px-2.5 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-60 ${isDark ? "bg-green-500/15 text-green-400 hover:bg-green-500/25" : "bg-green-100 text-green-700 hover:bg-green-200"}`}
                         >
+                          {estadoAceptar[p.id] === "loading" && <Icon icon="mdi:loading" width={14} className="animate-spin" />}
                           Aceptar
                         </button>
                         <button
                           onClick={() => setModalRechazar(p)}
-                          className={`text-xs px-2 py-1 rounded transition-colors ${isDark ? "bg-red-500/15 text-red-400 hover:bg-red-500/25" : "bg-red-100 text-red-700 hover:bg-red-200"}`}
+                          disabled={estadoAceptar[p.id] === "loading"}
+                          className={`text-sm px-2.5 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-60 ${isDark ? "bg-red-500/15 text-red-400 hover:bg-red-500/25" : "bg-red-100 text-red-700 hover:bg-red-200"}`}
                         >
                           Rechazar
                         </button>
-                      </>
+                      </div>
                     )}
-                    <button
-                      onClick={() => handleContactar(p.estudiante_id)}
-                      disabled={contactandoId === p.estudiante_id}
-                      title="Enviar mensaje"
-                      className={`${M} hover:text-[#378ADD] transition-colors disabled:opacity-50`}
-                    >
-                      <Icon
-                        icon={contactandoId === p.estudiante_id ? "mdi:loading" : "mdi:message-outline"}
-                        width={18}
-                        className={contactandoId === p.estudiante_id ? "animate-spin" : ""}
-                      />
-                    </button>
-                    <Link
-                      to={`/empresa/candidato/${p.estudiante_id}`}
-                      className={`${M} hover:text-[#378ADD] transition-colors`}
-                    >
-                      <Icon icon="mdi:chevron-right" width={20} />
-                    </Link>
                   </div>
                 </div>
               ))}
@@ -456,7 +499,7 @@ export default function EmpresaDashboard() {
           </div>
 
           <div className="flex flex-col gap-3">
-            {aceptados.map((p) => (
+            {aceptadosPagina.map((p) => (
               <div key={p.id} className={`flex items-center gap-3 p-3 rounded-lg border ${B}`}>
                 {p.foto_perfil ? (
                   <img src={getMediaUrl(p.foto_perfil)} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
@@ -466,7 +509,12 @@ export default function EmpresaDashboard() {
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium ${T} truncate`}>{p.nombre_completo}</p>
+                  <Link
+                    to={`/empresa/candidato/${p.estudiante_id}`}
+                    className={`text-sm font-medium ${T} truncate hover:text-[#378ADD] transition-colors block`}
+                  >
+                    {p.nombre_completo}
+                  </Link>
                   <p className={`text-xs ${M}`}>{p.carrera}</p>
                   {p.vacante_titulo && (
                     <p className={`text-xs text-[#378ADD] truncate`}>
@@ -488,16 +536,31 @@ export default function EmpresaDashboard() {
                     />
                     {completando === p.id ? "Procesando..." : "Marcar como completada"}
                   </button>
-                  <Link
-                    to={`/empresa/candidato/${p.estudiante_id}`}
-                    className={`${M} hover:text-[#378ADD] transition-colors`}
-                  >
-                    <Icon icon="mdi:chevron-right" width={20} />
-                  </Link>
+                </div>
+              </div>
+            ))}
+            {totalPagsAceptados > 1 && Array.from({ length: porPaginaAceptados - aceptadosPagina.length }).map((_, i) => (
+              <div key={`ph-${i}`} className="flex items-center gap-3 p-3 rounded-lg border border-transparent invisible" aria-hidden="true">
+                <div className="w-9 h-9 rounded-full flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm">&nbsp;</p>
+                  <p className="text-xs">&nbsp;</p>
+                  <p className="text-xs">&nbsp;</p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="text-xs px-3 py-1.5">&nbsp;</span>
                 </div>
               </div>
             ))}
           </div>
+          <Paginacion
+            paginaActual={paginaAceptadosSegura}
+            totalPaginas={totalPagsAceptados}
+            onCambiar={setPaginaAceptados}
+            porPagina={porPaginaAceptados}
+            opciones={[3, 6, 9, 15]}
+            onCambiarPorPagina={(n) => { setPorPaginaAceptados(n); setPaginaAceptados(1); }}
+          />
         </Card>
       )}
 

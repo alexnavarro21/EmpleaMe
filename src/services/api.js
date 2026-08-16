@@ -140,6 +140,15 @@ export async function getVacantesEmpresa(empresaId) {
   return data;
 }
 
+export async function getVacante(vacanteId) {
+  const res = await fetch(`${BASE_URL}/vacantes/${vacanteId}`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al obtener la vacante");
+  return data;
+}
+
 export async function desactivarVacante(vacanteId) {
   const res = await fetch(`${BASE_URL}/vacantes/${vacanteId}/desactivar`, {
     method: "PUT",
@@ -180,6 +189,27 @@ export async function crearVacante(datos, archivo = null) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Error al crear vacante");
   return data; // { id, mensaje }
+}
+
+export async function actualizarVacante(vacanteId, datos, archivo = null) {
+  let body, headers;
+  if (archivo) {
+    const formData = new FormData();
+    Object.entries(datos).forEach(([k, v]) => {
+      if (v === undefined) return;
+      formData.append(k, Array.isArray(v) ? JSON.stringify(v) : v);
+    });
+    formData.append("archivo_multimedia", archivo);
+    body = formData;
+    headers = { Authorization: `Bearer ${getToken()}` };
+  } else {
+    body = JSON.stringify(datos);
+    headers = authHeaders();
+  }
+  const res = await fetch(`${BASE_URL}/vacantes/${vacanteId}`, { method: "PUT", headers, body });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error al actualizar vacante");
+  return data;
 }
 
 // ── Perfiles ──────────────────────────────────────────────────────────────────
