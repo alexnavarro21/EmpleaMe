@@ -219,7 +219,7 @@ export default function Login() {
 
             <div className="flex flex-col gap-5">
               {[
-                { n: "1", title: "Crea tu cuenta", desc: "Regístrate con tu correo o RUT y completa tu perfil con tus datos y habilidades" },
+                { n: "1", title: "Crea tu cuenta", desc: "Regístrate con tu correo o RUT y completa tu perfil con tus datos y experiencia" },
                 { n: "2", title: "Explora prácticas", desc: "Filtra vacantes por área, modalidad y ubicación según tu carrera" },
                 { n: "3", title: "Postula con un click", desc: "Aplica directamente desde la plataforma y haz seguimiento a tus postulaciones" },
               ].map((step, i) => (
