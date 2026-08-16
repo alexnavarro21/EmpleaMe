@@ -16,7 +16,7 @@ router.get("/sugerencias", verificarToken, async (req, res) => {
     const queries = [
       db.query(
         `SELECT pe.usuario_id AS id, pe.nombre_completo AS nombre,
-                c.nombre AS sub, 'estudiante' AS tipo,
+                c.nombre AS sub, 'estudiante' AS tipo, pe.foto_perfil AS foto,
                 CASE WHEN LOWER(pe.nombre_completo) LIKE ? THEN 0 ELSE 1 END AS starts_with
          FROM perfiles_estudiantes pe
          LEFT JOIN carreras c ON c.id = pe.carrera_id
@@ -27,7 +27,7 @@ router.get("/sugerencias", verificarToken, async (req, res) => {
       ),
       db.query(
         `SELECT emp.usuario_id AS id, emp.nombre_empresa AS nombre,
-                NULL AS sub, 'empresa' AS tipo,
+                NULL AS sub, 'empresa' AS tipo, emp.foto_perfil AS foto,
                 CASE WHEN LOWER(emp.nombre_empresa) LIKE ? THEN 0 ELSE 1 END AS starts_with
          FROM perfiles_empresas emp
          WHERE LOWER(emp.nombre_empresa) LIKE ?
@@ -37,7 +37,7 @@ router.get("/sugerencias", verificarToken, async (req, res) => {
       ),
       db.query(
         `SELECT v.id, v.titulo AS nombre,
-                pe.nombre_empresa AS sub, 'vacante' AS tipo,
+                pe.nombre_empresa AS sub, 'vacante' AS tipo, pe.foto_perfil AS foto,
                 CASE WHEN LOWER(v.titulo) LIKE ? THEN 0 ELSE 1 END AS starts_with
          FROM vacantes v
          JOIN perfiles_empresas pe ON pe.usuario_id = v.empresa_id
@@ -59,7 +59,7 @@ router.get("/sugerencias", verificarToken, async (req, res) => {
       puedeVerColegios
         ? db.query(
             `SELECT pc.usuario_id AS id, pc.nombre_institucion AS nombre,
-                    pc.region AS sub, 'colegio' AS tipo,
+                    pc.region AS sub, 'colegio' AS tipo, pc.foto_perfil AS foto,
                     CASE WHEN LOWER(pc.nombre_institucion) LIKE ? THEN 0 ELSE 1 END AS starts_with
              FROM perfiles_colegios pc
              WHERE LOWER(pc.nombre_institucion) LIKE ?
