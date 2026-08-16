@@ -1025,14 +1025,6 @@ export default function EstudianteDashboard() {
   const isSlep = location.pathname.startsWith("/slep");
   const navigate = useNavigate();
 
-  const buscarPath = isEstudiante ? "/estudiante/buscar" : isEmpresa ? "/empresa/buscar" : isAdmin ? "/admin/buscar" : "/slep/buscar";
-  const [mobileSearch, setMobileSearch] = useState("");
-  const handleMobileSearchSubmit = (e) => {
-    e.preventDefault();
-    const q = mobileSearch.trim();
-    navigate(q ? `${buscarPath}?q=${encodeURIComponent(q)}` : buscarPath);
-  };
-
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
   const [perfil, setPerfil] = useState(null);
   const [publicaciones, setPublicaciones] = useState([]);
@@ -1513,33 +1505,6 @@ export default function EstudianteDashboard() {
 
       {/* ── CENTER FEED ── */}
       <div className="flex flex-col gap-4">
-        {/* Búsqueda: solo mobile, reemplaza la barra del navbar oculta en ese ancho */}
-        <form onSubmit={handleMobileSearchSubmit} className="flex md:hidden">
-          <div className={`flex items-center w-full rounded-full border overflow-hidden ${
-            isDark ? "bg-[#313130] border-[#3a3a38]" : "bg-[#F7F6F3] border-[#D3D1C7]"
-          }`}>
-            <input
-              type="text"
-              value={mobileSearch}
-              onChange={(e) => setMobileSearch(e.target.value)}
-              placeholder="Buscar en EmpleaMe..."
-              style={{ fontSize: 16 }}
-              className={`flex-1 min-w-0 pl-4 pr-2 py-2.5 text-sm bg-transparent outline-none ${
-                isDark ? "text-[#D3D1C7] placeholder-[#5F5E5A]" : "text-[#2C2C2A] placeholder-[#B4B2A9]"
-              }`}
-            />
-            <button
-              type="submit"
-              aria-label="Buscar"
-              className={`flex-shrink-0 self-stretch px-4 flex items-center justify-center border-l ${
-                isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]"
-              }`}
-            >
-              <Icon icon="mdi:magnify" width={16} className={isDark ? "text-[#85B7EB]" : "text-[#0A3B6A]"} />
-            </button>
-          </div>
-        </form>
-
         {isEmpresa && (
           <div className="flex items-center justify-between gap-4 rounded-xl bg-gradient-to-r from-[#0A3A6A] to-[#378ADD] px-5 py-4">
             <div className="flex items-center gap-3 min-w-0">

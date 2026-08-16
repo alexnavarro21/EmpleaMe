@@ -309,7 +309,16 @@ export default function Layout() {
         {/* Navbar: algunas páginas (ej. chat de mensajería en mobile) piden ocultarlo
             por completo vía context, no solo taparlo visualmente */}
         {!navbarHidden && (
-        <nav className="bg-[#0A3A6A] h-14 flex items-center px-4 md:px-6 sticky top-0 z-50 shadow-sm gap-4">
+        <nav className="bg-[#0A3A6A] h-14 flex items-center px-4 md:px-6 sticky top-0 z-50 shadow-sm gap-1 md:gap-4">
+
+          {/* Botón hamburguesa: solo mobile, a la izquierda del logo */}
+          <button
+            onClick={() => setMobileMenuOpen((v) => !v)}
+            aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+            className="md:hidden p-1.5 -ml-1 rounded-lg transition-colors text-[#B5D4F4] hover:text-[#E6F1FB] hover:bg-[#0F4D8A]/40 flex-shrink-0"
+          >
+            <Icon icon={mobileMenuOpen ? "mdi:close" : "mdi:menu"} width={24} />
+          </button>
 
           {/* Izquierda: Logo + links */}
           <div className="flex items-center gap-6 flex-1 min-w-0">
@@ -398,8 +407,12 @@ export default function Layout() {
                                     : "hover:bg-[#EFF6FF] text-[#2C2C2A]"
                                 }`}
                               >
-                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isDark ? "bg-[#313130]" : "bg-[#F7F6F3]"}`}>
-                                  <Icon icon={cfg.icon} width={16} className="text-[#378ADD]" />
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden ${isDark ? "bg-[#313130]" : "bg-[#F7F6F3]"}`}>
+                                  {item.foto ? (
+                                    <img src={resolverFoto(item.foto)} alt="" className="w-full h-full object-cover" />
+                                  ) : (
+                                    <Icon icon={cfg.icon} width={16} className="text-[#378ADD]" />
+                                  )}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="text-sm font-medium truncate">{item.nombre}</p>
@@ -442,6 +455,16 @@ export default function Layout() {
               title="Mensajes"
             >
               <Icon icon="mdi:message-outline" width={22} />
+            </Link>
+
+            {/* Lupa: solo mobile, reemplaza la barra de búsqueda oculta en ese ancho */}
+            <Link
+              to={buscarPaths[role]}
+              className="md:hidden p-1.5 rounded-lg transition-colors text-[#B5D4F4] hover:text-[#E6F1FB] hover:bg-[#0F4D8A]/40"
+              aria-label="Buscar"
+              title="Buscar"
+            >
+              <Icon icon="mdi:magnify" width={22} />
             </Link>
 
             <NotificacionesBell role={role} />
@@ -563,15 +586,6 @@ export default function Layout() {
                 </div>
               )}
             </div>
-
-            {/* Botón hamburguesa: solo mobile */}
-            <button
-              onClick={() => setMobileMenuOpen((v) => !v)}
-              aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
-              className="md:hidden p-1.5 rounded-lg transition-colors text-[#B5D4F4] hover:text-[#E6F1FB] hover:bg-[#0F4D8A]/40"
-            >
-              <Icon icon={mobileMenuOpen ? "mdi:close" : "mdi:menu"} width={24} />
-            </button>
           </div>
         </nav>
         )}
@@ -590,12 +604,12 @@ export default function Layout() {
               />
               <motion.div
                 key="mobile-drawer"
-                className={`fixed top-0 right-0 bottom-0 w-[85%] max-w-xs z-50 md:hidden overflow-y-auto shadow-2xl ${
+                className={`fixed top-0 left-0 bottom-0 w-[85%] max-w-xs z-50 md:hidden overflow-y-auto shadow-2xl ${
                   isDark ? "bg-[#262624]" : "bg-white"
                 }`}
-                initial={{ x: "100%" }}
+                initial={{ x: "-100%" }}
                 animate={{ x: 0 }}
-                exit={{ x: "100%" }}
+                exit={{ x: "-100%" }}
                 transition={{ type: "tween", duration: 0.22 }}
               >
                 {/* Header del drawer */}
