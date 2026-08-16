@@ -62,6 +62,7 @@ export default function App() {
             <Route path="/empresa/dashboard" element={<EmpresaDashboard />} />
             <Route path="/empresa/perfil" element={<EmpresaPerfil />} />
             <Route path="/empresa/publicar" element={<EmpresaPublicar />} />
+            <Route path="/empresa/editar/:id" element={<EmpresaPublicar />} />
             <Route path="/empresa/buscador" element={<EmpresaBuscador />} />
             <Route path="/empresa/buscar" element={<BuscarPerfiles />} />
             <Route path="/empresa/candidato/:id" element={<PerfilCandidato />} />
