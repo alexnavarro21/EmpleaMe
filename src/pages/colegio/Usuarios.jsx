@@ -609,6 +609,8 @@ function TabEditarEstudiante({ estudiantes, habilidades, isDark, initialId }) {
   const [currentSkills, setCurrentSkills] = useState([]);
   const [saving, setSaving]               = useState(false);
   const [msg, setMsg]                     = useState("");
+  const [buscarTecPanel, setBuscarTecPanel]       = useState("");
+  const [buscarBlandaPanel, setBuscarBlandaPanel] = useState("");
 
   // Idiomas
   const [idiomas, setIdiomas]             = useState([]);
@@ -634,6 +636,9 @@ function TabEditarEstudiante({ estudiantes, habilidades, isDark, initialId }) {
 
   const tecnicas = habilidades.filter((h) => h.categoria === "tecnica" || h.categoria === "técnica");
   const blandas  = habilidades.filter((h) => h.categoria === "blanda");
+
+  const tecnicasVisibles = tecnicas.filter((h) => h.nombre.toLowerCase().includes(buscarTecPanel.trim().toLowerCase()));
+  const blandasVisibles  = blandas.filter((h) => h.nombre.toLowerCase().includes(buscarBlandaPanel.trim().toLowerCase()));
 
   function toggleTecnica(hId) {
     setSelected((prev) => {
@@ -852,10 +857,25 @@ function TabEditarEstudiante({ estudiantes, habilidades, isDark, initialId }) {
                   <div className={`px-4 py-2.5 text-xs font-semibold ${M} ${S} border-b ${B}`}>
                     Selecciona las habilidades y el nivel de dominio
                   </div>
-                  <div className="divide-y" style={{ maxHeight: 380, overflowY: "auto" }}>
-                    {tecnicas.map((h) => (
-                      <SkillRow key={h.id} h={h} activo={!!selected[h.id]} onToggle={toggleTecnica} showLevel />
-                    ))}
+                  <div className={`px-4 py-2.5 border-b ${B}`}>
+                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${isDark ? "bg-[#313130] border-[#3a3a38]" : "bg-white border-[#D3D1C7]"}`}>
+                      <Icon icon="mdi:magnify" width={15} className={M} />
+                      <input
+                        value={buscarTecPanel}
+                        onChange={(e) => setBuscarTecPanel(e.target.value)}
+                        placeholder="Buscar habilidad..."
+                        className={`flex-1 bg-transparent text-sm outline-none ${T} placeholder-[#B4B2A9]`}
+                      />
+                    </div>
+                  </div>
+                  <div className="divide-y" style={{ height: 380, overflowY: "auto" }}>
+                    {tecnicasVisibles.length === 0 ? (
+                      <p className={`text-xs ${M} px-4 py-6 text-center`}>Sin resultados para tu búsqueda.</p>
+                    ) : (
+                      tecnicasVisibles.map((h) => (
+                        <SkillRow key={h.id} h={h} activo={!!selected[h.id]} onToggle={toggleTecnica} showLevel />
+                      ))
+                    )}
                   </div>
                 </div>
               )}
@@ -904,8 +924,22 @@ function TabEditarEstudiante({ estudiantes, habilidades, isDark, initialId }) {
                     Selecciona las habilidades
                     <span className={`ml-auto font-normal ${M}`}>escala 0 – 100</span>
                   </div>
-                  <div className="divide-y" style={{ maxHeight: 380, overflowY: "auto" }}>
-                    {blandas.map((h) => {
+                  <div className={`px-4 py-2.5 border-b ${B}`}>
+                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${isDark ? "bg-[#313130] border-[#3a3a38]" : "bg-white border-[#D3D1C7]"}`}>
+                      <Icon icon="mdi:magnify" width={15} className={M} />
+                      <input
+                        value={buscarBlandaPanel}
+                        onChange={(e) => setBuscarBlandaPanel(e.target.value)}
+                        placeholder="Buscar habilidad..."
+                        className={`flex-1 bg-transparent text-sm outline-none ${T} placeholder-[#B4B2A9]`}
+                      />
+                    </div>
+                  </div>
+                  <div className="divide-y" style={{ height: 380, overflowY: "auto" }}>
+                    {blandasVisibles.length === 0 && (
+                      <p className={`text-xs ${M} px-4 py-6 text-center`}>Sin resultados para tu búsqueda.</p>
+                    )}
+                    {blandasVisibles.map((h) => {
                       const activo = selectedBlandas2[h.id] !== undefined;
                       return (
                         <div key={h.id} className={`flex items-center gap-3 px-4 py-3 transition-colors ${
@@ -1531,6 +1565,84 @@ function TabPromedios({ isDark }) {
 
 // ── TabHabilidades ────────────────────────────────────────────────────────────
 
+function HabilidadLista({
+  lista, total, titulo, search, onSearchChange, isDark, B, BG, T, M, inputCls,
+  editando, setEditando, guardando, handleEditar, eliminando, handleEliminar,
+}) {
+  return (
+    <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
+      <div className={`px-4 py-3 border-b ${B} flex items-center justify-between`}>
+        <p className={`text-sm font-semibold ${T}`}>{titulo}</p>
+        <span className={`text-xs ${M}`}>{lista.length} de {total}</span>
+      </div>
+      <div className={`px-4 py-2.5 border-b ${B}`}>
+        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${isDark ? "bg-[#313130] border-[#3a3a38]" : "bg-[#F7F6F3] border-[#D3D1C7]"}`}>
+          <Icon icon="mdi:magnify" width={15} className={M} />
+          <input
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Buscar habilidad..."
+            className={`flex-1 bg-transparent text-sm outline-none ${T} placeholder-[#B4B2A9]`}
+          />
+        </div>
+      </div>
+      <div style={{ height: 380, overflowY: "auto" }}>
+        {lista.length === 0 ? (
+          <p className={`text-xs ${M} px-4 py-6 text-center`}>
+            {total === 0 ? "Sin habilidades en esta categoría." : "Sin resultados para tu búsqueda."}
+          </p>
+        ) : (
+          lista.map((h, i) => (
+            editando?.id === h.id ? (
+              <div key={h.id} className={`flex items-center gap-2 px-4 py-3 ${i < lista.length - 1 ? `border-b ${B}` : ""}`}>
+                <input
+                  value={editando.nombre}
+                  onChange={(e) => setEditando((p) => ({ ...p, nombre: e.target.value }))}
+                  className={`${inputCls} flex-1`}
+                  autoFocus
+                />
+                <select
+                  value={editando.categoria}
+                  onChange={(e) => setEditando((p) => ({ ...p, categoria: e.target.value }))}
+                  className={`${inputCls} w-32`}
+                >
+                  <option value="tecnica">Técnica</option>
+                  <option value="blanda">Socioemocional</option>
+                </select>
+                <button onClick={handleEditar} disabled={guardando} className="px-3 py-1.5 text-xs rounded-lg bg-[#0F4D8A] text-white hover:bg-[#0A3A6A] transition-colors disabled:opacity-50">
+                  {guardando ? "..." : "Guardar"}
+                </button>
+                <button onClick={() => setEditando(null)} className={`px-3 py-1.5 text-xs rounded-lg border ${B} ${M} hover:border-[#378ADD] transition-colors`}>
+                  Cancelar
+                </button>
+              </div>
+            ) : (
+              <div key={h.id} className={`flex items-center gap-3 px-4 py-3 ${i < lista.length - 1 ? `border-b ${B}` : ""}`}>
+                <span className={`flex-1 text-sm ${T}`}>{h.nombre}</span>
+                <button
+                  onClick={() => setEditando({ id: h.id, nombre: h.nombre, categoria: h.categoria })}
+                  className={`p-1.5 rounded-lg transition-colors ${isDark ? "hover:bg-[#3a3a38]" : "hover:bg-[#F0F4F8]"} ${M}`}
+                  title="Editar"
+                >
+                  <Icon icon="mdi:pencil-outline" width={15} />
+                </button>
+                <button
+                  onClick={() => handleEliminar(h)}
+                  disabled={eliminando === h.id}
+                  className={`p-1.5 rounded-lg transition-colors ${isDark ? "hover:bg-red-900/30" : "hover:bg-red-50"} text-red-500 disabled:opacity-40`}
+                  title="Eliminar"
+                >
+                  <Icon icon={eliminando === h.id ? "mdi:loading" : "mdi:trash-can-outline"} width={15} className={eliminando === h.id ? "animate-spin" : ""} />
+                </button>
+              </div>
+            )
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 function TabHabilidades({ habilidades, onRefresh, isDark }) {
   const T = isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isDark ? "text-[#888780]" : "text-[#5F5E5A]";
@@ -1589,68 +1701,14 @@ function TabHabilidades({ habilidades, onRefresh, isDark }) {
     finally { setEliminando(null); }
   };
 
+  const [buscarTecnicas, setBuscarTecnicas] = useState("");
+  const [buscarBlandas, setBuscarBlandas] = useState("");
+
   const tecnicas = habilidades.filter((h) => h.categoria === "tecnica" || h.categoria === "técnica");
   const blandas  = habilidades.filter((h) => h.categoria === "blanda");
 
-  const HabilidadLista = ({ lista, titulo, colorBadge }) => (
-    <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
-      <div className={`px-4 py-3 border-b ${B} flex items-center justify-between`}>
-        <p className={`text-sm font-semibold ${T}`}>{titulo}</p>
-        <span className={`text-xs ${M}`}>{lista.length} habilidades</span>
-      </div>
-      {lista.length === 0 ? (
-        <p className={`text-xs ${M} px-4 py-6 text-center`}>Sin habilidades en esta categoría.</p>
-      ) : (
-        <div>
-          {lista.map((h, i) => (
-            editando?.id === h.id ? (
-              <div key={h.id} className={`flex items-center gap-2 px-4 py-3 ${i < lista.length - 1 ? `border-b ${B}` : ""}`}>
-                <input
-                  value={editando.nombre}
-                  onChange={(e) => setEditando((p) => ({ ...p, nombre: e.target.value }))}
-                  className={`${inputCls} flex-1`}
-                  autoFocus
-                />
-                <select
-                  value={editando.categoria}
-                  onChange={(e) => setEditando((p) => ({ ...p, categoria: e.target.value }))}
-                  className={`${inputCls} w-32`}
-                >
-                  <option value="tecnica">Técnica</option>
-                  <option value="blanda">Socioemocional</option>
-                </select>
-                <button onClick={handleEditar} disabled={guardando} className="px-3 py-1.5 text-xs rounded-lg bg-[#0F4D8A] text-white hover:bg-[#0A3A6A] transition-colors disabled:opacity-50">
-                  {guardando ? "..." : "Guardar"}
-                </button>
-                <button onClick={() => setEditando(null)} className={`px-3 py-1.5 text-xs rounded-lg border ${B} ${M} hover:border-[#378ADD] transition-colors`}>
-                  Cancelar
-                </button>
-              </div>
-            ) : (
-              <div key={h.id} className={`flex items-center gap-3 px-4 py-3 ${i < lista.length - 1 ? `border-b ${B}` : ""}`}>
-                <span className={`flex-1 text-sm ${T}`}>{h.nombre}</span>
-                <button
-                  onClick={() => setEditando({ id: h.id, nombre: h.nombre, categoria: h.categoria })}
-                  className={`p-1.5 rounded-lg transition-colors ${isDark ? "hover:bg-[#3a3a38]" : "hover:bg-[#F0F4F8]"} ${M}`}
-                  title="Editar"
-                >
-                  <Icon icon="mdi:pencil-outline" width={15} />
-                </button>
-                <button
-                  onClick={() => handleEliminar(h)}
-                  disabled={eliminando === h.id}
-                  className={`p-1.5 rounded-lg transition-colors ${isDark ? "hover:bg-red-900/30" : "hover:bg-red-50"} text-red-500 disabled:opacity-40`}
-                  title="Eliminar"
-                >
-                  <Icon icon={eliminando === h.id ? "mdi:loading" : "mdi:trash-can-outline"} width={15} className={eliminando === h.id ? "animate-spin" : ""} />
-                </button>
-              </div>
-            )
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  const tecnicasFiltradas = tecnicas.filter((h) => h.nombre.toLowerCase().includes(buscarTecnicas.trim().toLowerCase()));
+  const blandasFiltradas  = blandas.filter((h) => h.nombre.toLowerCase().includes(buscarBlandas.trim().toLowerCase()));
 
   return (
     <div className="flex flex-col gap-6">
@@ -1683,8 +1741,26 @@ function TabHabilidades({ habilidades, onRefresh, isDark }) {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <HabilidadLista lista={tecnicas} titulo="Habilidades técnicas" colorBadge="blue" />
-        <HabilidadLista lista={blandas}  titulo="Competencias socioemocionales"  colorBadge="green" />
+        <HabilidadLista
+          lista={tecnicasFiltradas}
+          total={tecnicas.length}
+          titulo="Habilidades técnicas"
+          search={buscarTecnicas}
+          onSearchChange={setBuscarTecnicas}
+          isDark={isDark} B={B} BG={BG} T={T} M={M} inputCls={inputCls}
+          editando={editando} setEditando={setEditando} guardando={guardando}
+          handleEditar={handleEditar} eliminando={eliminando} handleEliminar={handleEliminar}
+        />
+        <HabilidadLista
+          lista={blandasFiltradas}
+          total={blandas.length}
+          titulo="Competencias socioemocionales"
+          search={buscarBlandas}
+          onSearchChange={setBuscarBlandas}
+          isDark={isDark} B={B} BG={BG} T={T} M={M} inputCls={inputCls}
+          editando={editando} setEditando={setEditando} guardando={guardando}
+          handleEditar={handleEditar} eliminando={eliminando} handleEliminar={handleEliminar}
+        />
       </div>
 
       {/* Modal confirmación eliminar */}

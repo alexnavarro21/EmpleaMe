@@ -66,6 +66,7 @@ router.get("/usuarios", ...auth, async (req, res) => {
              pe.nombre_completo AS nombre,
              pe.rut,
              pe.nivel,
+             pe.foto_perfil,
              c.nombre AS carrera
       FROM usuarios u
       JOIN perfiles_estudiantes pe ON pe.usuario_id = u.id
