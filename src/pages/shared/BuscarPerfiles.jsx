@@ -553,6 +553,7 @@ export default function BuscarPerfiles() {
   const paginaSegura = Math.min(pagina, totalPaginas);
   const paginar = (arr) => arr.slice((paginaSegura - 1) * porPagina, paginaSegura * porPagina);
   const cambiarPorPagina = (v) => { setPorPagina(v); setPagina(1); };
+  const cambiarPagina = (p) => { setPagina(p); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
   // Reserva la altura máxima alcanzada por la grilla de resultados, así la paginación
   // no salta hacia arriba cuando una página trae menos resultados que las anteriores.
@@ -1169,7 +1170,7 @@ export default function BuscarPerfiles() {
             <Paginacion
               paginaActual={paginaSegura}
               totalPaginas={totalPaginas}
-              onCambiar={setPagina}
+              onCambiar={cambiarPagina}
               porPagina={porPagina}
               opciones={[10, 20, 50]}
               onCambiarPorPagina={cambiarPorPagina}

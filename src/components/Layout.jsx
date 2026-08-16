@@ -597,35 +597,6 @@ export default function Layout() {
                   </button>
                 </div>
 
-                {/* Búsqueda */}
-                <form
-                  onSubmit={(e) => { handleSearchSubmit(e); setMobileMenuOpen(false); }}
-                  className="px-4 pt-4"
-                >
-                  <div className={`flex items-center rounded-full border overflow-hidden ${
-                    isDark ? "bg-[#313130] border-[#3a3a38]" : "bg-[#F7F6F3] border-[#D3D1C7]"
-                  }`}>
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={handleSearchChange}
-                      placeholder={PLACEHOLDER_POR_ROL[role] || "Buscar en EmpleaMe..."}
-                      className={`flex-1 min-w-0 pl-4 pr-2 py-2 text-sm bg-transparent outline-none ${
-                        isDark ? "text-[#D3D1C7] placeholder-[#5F5E5A]" : "text-[#2C2C2A] placeholder-[#B4B2A9]"
-                      }`}
-                    />
-                    <button
-                      type="submit"
-                      aria-label="Buscar"
-                      className={`flex-shrink-0 self-stretch px-3 flex items-center justify-center border-l ${
-                        isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]"
-                      }`}
-                    >
-                      <Icon icon="mdi:magnify" width={16} className={isDark ? "text-[#85B7EB]" : "text-[#0A3B6A]"} />
-                    </button>
-                  </div>
-                </form>
-
                 {/* Links de navegación */}
                 <div className="flex flex-col py-2 mt-2">
                   {/* Inicio */}
