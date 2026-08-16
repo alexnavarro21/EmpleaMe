@@ -1523,6 +1523,7 @@ export default function EstudianteDashboard() {
               value={mobileSearch}
               onChange={(e) => setMobileSearch(e.target.value)}
               placeholder="Buscar en EmpleaMe..."
+              style={{ fontSize: 16 }}
               className={`flex-1 min-w-0 pl-4 pr-2 py-2.5 text-sm bg-transparent outline-none ${
                 isDark ? "text-[#D3D1C7] placeholder-[#5F5E5A]" : "text-[#2C2C2A] placeholder-[#B4B2A9]"
               }`}

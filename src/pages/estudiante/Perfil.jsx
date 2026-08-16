@@ -213,22 +213,12 @@ export default function EstudiantePerfil() {
 
   return (
     <div>
-      <PageHeader
-        title="Mi Perfil"
-        subtitle="Gestiona tu información y descarga tu CV"
-        action={
-          <div className="flex flex-wrap gap-2 items-center">
-            {saveMsg && <span className="text-xs text-green-600">{saveMsg}</span>}
-            <SecondaryButton onClick={() => { setEditMode(!editMode); setSaveMsg(""); }}>
-              {editMode ? "Cancelar" : "Editar perfil"}
-            </SecondaryButton>
-            <PrimaryButton className="flex items-center gap-2" onClick={descargarCV} disabled={generandoCV}>
-              <Icon icon={generandoCV ? "mdi:loading" : "material-symbols:download"} width={16} className={generandoCV ? "animate-spin" : ""} />
-              {generandoCV ? "Generando PDF…" : "Descargar CV PDF"}
-            </PrimaryButton>
-          </div>
-        }
-      />
+      <div className="hidden md:block">
+        <PageHeader
+          title="Mi Perfil"
+          subtitle="Gestiona tu información y descarga tu CV"
+        />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: profile card */}
@@ -281,6 +271,14 @@ export default function EstudiantePerfil() {
             )}
             {rut && <p className={`text-xs ${M} mb-2`}>RUT: {rut}</p>}
             <Badge color="blue">Estudiante Activo</Badge>
+
+            {/* Promedio: solo mobile, bajo la badge */}
+            {promedio && (
+              <p className={`md:hidden mt-2 text-lg font-semibold ${T}`}>
+                {parseFloat(promedio).toFixed(1)} <span className={`text-xs font-normal ${M}`}>/ 7.0</span>
+              </p>
+            )}
+
             <div className={`mt-4 pt-4 border-t ${B} text-left`}>
               <div className="flex justify-between text-xs mb-1">
                 <span className={M}>Perfil completado</span>
@@ -290,10 +288,25 @@ export default function EstudiantePerfil() {
                 <div className="h-1.5 bg-[#378ADD] rounded-full" style={{ width: `${pctCompleto}%` }} />
               </div>
             </div>
+
+            {/* Acciones: centradas, debajo de la barra de completitud */}
+            <div className={`mt-4 pt-4 border-t ${B} flex flex-col items-center gap-2`}>
+              {saveMsg && <span className="text-xs text-green-600">{saveMsg}</span>}
+              <div className="flex flex-wrap gap-2 justify-center">
+                <SecondaryButton onClick={() => { setEditMode(!editMode); setSaveMsg(""); }}>
+                  {editMode ? "Cancelar" : "Editar perfil"}
+                </SecondaryButton>
+                <PrimaryButton className="flex items-center gap-2" onClick={descargarCV} disabled={generandoCV}>
+                  <Icon icon={generandoCV ? "mdi:loading" : "material-symbols:download"} width={16} className={generandoCV ? "animate-spin" : ""} />
+                  {generandoCV ? "Generando PDF…" : "Descargar CV PDF"}
+                </PrimaryButton>
+              </div>
+            </div>
           </Card>
 
+          {/* Promedio académico: card independiente, oculta en mobile (se muestra arriba junto a la badge) */}
           {promedio && (
-            <Card>
+            <Card className="hidden md:block">
               <p className={`text-xs font-medium ${T} mb-1`}>Promedio académico</p>
               <p className={`text-2xl font-semibold ${T}`}>{parseFloat(promedio).toFixed(1)}</p>
               <p className={`text-xs ${M}`}>Escala 1.0 — 7.0</p>
@@ -442,10 +455,10 @@ export default function EstudiantePerfil() {
                       {habilidadesTecnicas.map((h) => (
                         <span
                           key={h.id || h.nombre}
-                          className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full border ${B} ${T}`}
+                          className={`text-sm px-3 py-1.5 rounded-full border max-w-full ${B} ${T}`}
                         >
                           {h.nombre}
-                          <span className={`text-xs ${M}`}>· {h.nivel_dominio}</span>
+                          {h.nivel_dominio && <span className={`ml-1 text-xs ${M}`}>· {h.nivel_dominio}</span>}
                         </span>
                       ))}
                     </div>
@@ -480,9 +493,9 @@ export default function EstudiantePerfil() {
                     ) : (
                       <div className="flex flex-wrap gap-2">
                         {idiomas.map((i) => (
-                          <span key={i.id} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full border ${B} ${T}`}>
+                          <span key={i.id} className={`text-sm px-3 py-1.5 rounded-full border max-w-full ${B} ${T}`}>
                             {i.idioma}
-                            <span className={`text-xs ${M}`}>· {i.nivel}</span>
+                            <span className={`ml-1 text-xs ${M}`}>· {i.nivel}</span>
                           </span>
                         ))}
                       </div>

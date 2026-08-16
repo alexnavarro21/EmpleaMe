@@ -614,9 +614,31 @@ export default function BuscarPerfiles() {
       {modalVacante && <VacanteModal vacante={modalVacante} role={role} onClose={() => setModalVacante(null)} perfilCompleto={perfilCompleto} />}
       {modalTaller  && <TallerModal  taller={modalTaller}  role={role} onClose={() => setModalTaller(null)}  />}
 
-      <div className="mb-6">
+      {/* Título + subtítulo: desde md */}
+      <div className="hidden md:block mb-6">
         <h1 className={`text-xl font-bold ${T}`}>Búsqueda</h1>
         <p className={`text-sm ${M} mt-0.5`}>{count} {tabLabel}{count !== 1 ? "s" : ""} encontrado{count !== 1 ? "s" : ""}</p>
+      </div>
+
+      {/* Barra de búsqueda: solo mobile, reemplaza título/subtítulo */}
+      <div className={`flex md:hidden items-center rounded-full border overflow-hidden mb-6 ${
+        isDark ? "bg-[#313130] border-[#3a3a38]" : "bg-[#F7F6F3] border-[#D3D1C7]"
+      }`}>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar en EmpleaMe..."
+          style={{ fontSize: 16 }}
+          className={`flex-1 min-w-0 pl-4 pr-2 py-2.5 text-sm bg-transparent outline-none ${
+            isDark ? "text-[#D3D1C7] placeholder-[#5F5E5A]" : "text-[#2C2C2A] placeholder-[#B4B2A9]"
+          }`}
+        />
+        <span className={`flex-shrink-0 self-stretch px-4 flex items-center justify-center border-l ${
+          isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]"
+        }`}>
+          <Icon icon="mdi:magnify" width={16} className={isDark ? "text-[#85B7EB]" : "text-[#0A3B6A]"} />
+        </span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -1167,14 +1189,16 @@ export default function BuscarPerfiles() {
         </div>
 
           {count > 0 && (
-            <Paginacion
-              paginaActual={paginaSegura}
-              totalPaginas={totalPaginas}
-              onCambiar={cambiarPagina}
-              porPagina={porPagina}
-              opciones={[10, 20, 50]}
-              onCambiarPorPagina={cambiarPorPagina}
-            />
+            <div className="pb-10 md:pb-0">
+              <Paginacion
+                paginaActual={paginaSegura}
+                totalPaginas={totalPaginas}
+                onCambiar={cambiarPagina}
+                porPagina={porPagina}
+                opciones={[10, 20, 50]}
+                onCambiarPorPagina={cambiarPorPagina}
+              />
+            </div>
           )}
         </div>
       </div>
