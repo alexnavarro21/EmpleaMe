@@ -8,6 +8,14 @@
   animation: fade-swap 0.3s ease;
 }
 
+@keyframes logo-in {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.logo-in {
+  animation: logo-in 0.6s ease-out both;
+}
+
 /* Título de panel clickeable — adaptado de Uiverse.io by satyamchaudharydev,
    colores ajustados a la paleta de EmpleaMe */
 .titulo-link {

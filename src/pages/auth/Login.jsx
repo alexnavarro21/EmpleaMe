@@ -203,7 +203,7 @@ export default function Login() {
           {/* Left panel */}
           <div className={`relative flex flex-col justify-center px-10 py-16 ${isDark ? "bg-[#02192e]" : "bg-[#042C53]"}`}>
             {/* Logo centrado arriba */}
-            <div className="flex items-center justify-center gap-4 mb-8 -translate-x-8"> 
+            <div className="logo-in flex items-center justify-center gap-4 mb-8 -translate-x-8">
               <img src="/empleame-icono.svg" alt="EmpleaMe" className="h-20 w-20" />
               <span className="text-4xl font-semibold tracking-tight">
                 <span className="text-white">Emplea</span>
