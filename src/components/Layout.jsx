@@ -93,6 +93,9 @@ export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [accesibilidadOpen, setAccesibilidadOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Páginas (ej. chat de mensajería en mobile) pueden pedir ocultar el navbar
+  // por completo (no solo taparlo) vía useOutletContext().setNavbarHidden(true).
+  const [navbarHidden, setNavbarHidden] = useState(false);
   const menuRef = useRef(null);
   const accesibilidadRef = useRef(null);
   const searchRef = useRef(null);
@@ -175,7 +178,14 @@ export default function Layout() {
 
   useEffect(() => {
     setMobileMenuOpen(false);
+    setNavbarHidden(false);
   }, [location.pathname]);
+
+  // Sincroniza el color de la barra del navegador (mobile) con el navbar
+  useEffect(() => {
+    const meta = document.getElementById("meta-theme-color");
+    if (meta) meta.setAttribute("content", "#0A3A6A");
+  }, []);
 
   const isOnBuscar = location.pathname.includes("/buscar");
 
@@ -296,7 +306,9 @@ export default function Layout() {
         isContrast ? "bg-[#FFF9E8]" : isDark ? "bg-[#1e1e1c]" : "bg-[#F0F4F8]"
       }`}>
 
-        {/* Navbar */}
+        {/* Navbar: algunas páginas (ej. chat de mensajería en mobile) piden ocultarlo
+            por completo vía context, no solo taparlo visualmente */}
+        {!navbarHidden && (
         <nav className="bg-[#0A3A6A] h-14 flex items-center px-4 md:px-6 sticky top-0 z-50 shadow-sm gap-4">
 
           {/* Izquierda: Logo + links */}
@@ -562,6 +574,7 @@ export default function Layout() {
             </button>
           </div>
         </nav>
+        )}
 
         {/* Drawer mobile */}
         <AnimatePresence>
@@ -715,12 +728,12 @@ export default function Layout() {
 
         {/* Content */}
         <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
-          <Outlet />
+          <Outlet context={{ setNavbarHidden }} />
         </main>
 
-        {/* Flecha flotante: volver arriba */}
+        {/* Flecha flotante: volver arriba (no aplica en mensajería, que tiene su propio scroll interno) */}
         <AnimatePresence>
-          {mostrarSubir && (
+          {mostrarSubir && !location.pathname.includes("mensajeria") && (
             <motion.button
               key="scroll-top"
               type="button"

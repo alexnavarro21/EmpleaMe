@@ -219,13 +219,19 @@ function buildCVHtml(datos) {
   const formHtml = mainSection("Formación", formItems.join(""));
 
   /* ── HTML completo ───────────────────── */
+  // min-height fija la proporción A4 (794px de ancho ⇒ ~1123px de alto) para que
+  // la franja lateral y el footer siempre lleguen hasta abajo del documento,
+  // sin importar cuánto contenido tenga el CV.
   return `
     <div style="
       width:794px;
+      min-height:1123px;
       font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;
       background:#fff;
       position:relative;
       overflow:hidden;
+      display:flex;
+      flex-direction:column;
     ">
       <!-- Decoración esquina superior derecha -->
       <div style="position:absolute;top:0;right:0;width:0;height:0;
@@ -238,7 +244,7 @@ function buildCVHtml(datos) {
       <!-- Header -->
       <div style="display:flex;align-items:center;gap:20px;
                   padding:24px 28px 20px 24px;background:#fff;
-                  border-bottom:3px solid ${C.navy};position:relative;z-index:1;">
+                  border-bottom:3px solid ${C.navy};position:relative;z-index:1;flex-shrink:0;">
         <svg width="80" height="80" viewBox="0 0 130 130" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
           <rect width="130" height="130" rx="28" fill="#185FA5"/>
           <rect x="32" y="48" width="66" height="48" rx="8" fill="white"/>
@@ -255,8 +261,8 @@ function buildCVHtml(datos) {
         </div>
       </div>
 
-      <!-- Body: sidebar + main -->
-      <div style="display:flex;">
+      <!-- Body: sidebar + main (se estira para llenar el alto disponible) -->
+      <div style="display:flex;flex:1;">
 
         <!-- Sidebar -->
         <div style="width:240px;background:${C.navy};padding:20px 16px;flex-shrink:0;">
@@ -274,7 +280,7 @@ function buildCVHtml(datos) {
 
       <!-- Footer -->
       <div style="font-size:7.5px;color:#bbb;text-align:center;padding:6px 0 8px;
-                  background:#fff;letter-spacing:1px;border-top:1px solid #f0f0f0;">
+                  background:#fff;letter-spacing:1px;border-top:1px solid #f0f0f0;flex-shrink:0;">
         GENERADO POR EMPLEAME${colegio_nombre ? ` · ${colegio_nombre.toUpperCase()}` : ""}
       </div>
     </div>`;
@@ -338,13 +344,17 @@ export async function generarCV(datos, onProgreso) {
 
     const imgData = canvas.toDataURL("image/jpeg", 0.95);
 
-    if (imgH <= pdfH) {
+    // Margen de tolerancia para evitar una página extra casi en blanco
+    // cuando el contenido queda apenas por sobre pdfH por redondeo.
+    const TOLERANCIA_MM = 3;
+
+    if (imgH <= pdfH + TOLERANCIA_MM) {
       // Cabe en una sola página
       pdf.addImage(imgData, "JPEG", 0, 0, pdfW, imgH);
     } else {
       // Partir en páginas si el contenido es muy largo
       let yOffset = 0;
-      while (yOffset < imgH) {
+      while (yOffset < imgH - TOLERANCIA_MM) {
         if (yOffset > 0) pdf.addPage();
         pdf.addImage(imgData, "JPEG", 0, -yOffset, pdfW, imgH);
         yOffset += pdfH;

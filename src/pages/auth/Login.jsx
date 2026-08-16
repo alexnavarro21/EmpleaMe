@@ -51,6 +51,16 @@ export default function Login() {
     listarColegios().then(setColegios).catch(() => {});
   }, []);
 
+  // Sincroniza el color de la barra del navegador (mobile) con el banner del login
+  useEffect(() => {
+    const meta = document.getElementById("meta-theme-color");
+    const previo = meta?.getAttribute("content");
+    if (meta) meta.setAttribute("content", isDark ? "#02192e" : "#042C53");
+    return () => {
+      if (meta && previo) meta.setAttribute("content", previo);
+    };
+  }, [isDark]);
+
   useEffect(() => {
     if (!regColegioId) {
       setRegCarreras([]);
@@ -197,13 +207,20 @@ export default function Login() {
     <div className={isDark ? "dark" : ""}>
       <div className={`min-h-screen font-sans ${isDark ? "bg-[#1e1e1c]" : "bg-white"}`}>
 
-        {/* Header compacto solo mobile */}
-        <div className={`logo-in flex md:hidden items-center justify-center gap-3 py-8 px-4 ${isDark ? "bg-[#02192e]" : "bg-[#042C53]"}`}>
-          <img src="/empleame-icono.svg" alt="EmpleaMe" className="h-12 w-12" />
-          <span className="text-2xl font-semibold tracking-tight">
-            <span className="text-white">Emplea</span>
-            <span className="text-[#85B7EB]">Me</span>
-          </span>
+        {/* Header compacto solo mobile: sticky (no solo fondo sólido) para que Safari en iOS
+            extienda este color hacia la barra de estado (Website Tinting). La animación
+            va solo en el contenido, no en este contenedor. */}
+        <div
+          className={`sticky top-0 z-10 flex md:hidden items-center justify-center gap-3 py-8 px-4 ${isDark ? "bg-[#02192e]" : "bg-[#042C53]"}`}
+          style={{ paddingTop: `calc(env(safe-area-inset-top) + 2rem)` }}
+        >
+          <div className="logo-in flex items-center justify-center gap-3">
+            <img src="/empleame-icono.svg" alt="EmpleaMe" className="h-12 w-12" />
+            <span className="text-2xl font-semibold tracking-tight">
+              <span className="text-white">Emplea</span>
+              <span className="text-[#85B7EB]">Me</span>
+            </span>
+          </div>
         </div>
 
         {/* Main grid */}
