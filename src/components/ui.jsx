@@ -162,7 +162,7 @@ export function PageHeader({ title, subtitle, action }) {
   const T = isContrast ? "text-[#1A1510]" : isDark ? "text-[#D3D1C7]" : "text-[#2C2C2A]";
   const M = isContrast ? "text-[#3A3428]" : isDark ? "text-[#888780]" : "text-[#5F5E5A]";
   return (
-    <div className="flex items-center justify-between mb-6">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
       <div>
         <h1 className={`text-xl font-semibold ${T}`}>{title}</h1>
         {subtitle && <p className={`text-sm mt-0.5 ${M}`}>{subtitle}</p>}
@@ -258,7 +258,7 @@ export function Paginacion({ paginaActual, totalPaginas, onCambiar, porPagina, o
   const btnBase = `w-8 h-8 rounded-lg text-sm flex items-center justify-center transition-colors border`;
 
   return (
-    <div className={`grid items-center mt-4 gap-3 flex-wrap ${showPerPage ? "grid-cols-[1fr_auto_1fr]" : "grid-cols-1 justify-center"}`}>
+    <div className={`grid items-center mt-4 gap-3 flex-wrap ${showPerPage ? "grid-cols-1 sm:grid-cols-[1fr_auto_1fr]" : "grid-cols-1 justify-center"}`}>
       {showPerPage && <div />}
       <div className="flex items-center gap-1 justify-self-center">
         <button

@@ -52,8 +52,8 @@ function UsuarioCard({ usuario, isDark, puedeDejarDeSeguir, onDejarDeSeguir }) {
   };
 
   return (
-    <div className={`flex items-center justify-between p-4 rounded-xl border ${B} ${BG}`}>
-      <div className="flex items-center gap-3">
+    <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl border ${B} ${BG}`}>
+      <div className="flex items-center gap-3 min-w-0">
         {foto ? (
           <img src={foto} className="w-11 h-11 rounded-full object-cover flex-shrink-0" alt="" />
         ) : (
@@ -75,7 +75,7 @@ function UsuarioCard({ usuario, isDark, puedeDejarDeSeguir, onDejarDeSeguir }) {
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <Link
           to={perfilLink}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${B} ${T} ${HV}`}
@@ -152,7 +152,7 @@ export default function Seguidores() {
       />
 
       {/* Tabs + búsqueda */}
-      <div className={`flex items-center gap-4 mb-6 border-b ${B} pb-0`}>
+      <div className={`flex flex-wrap items-center gap-3 sm:gap-4 mb-6 border-b ${B} pb-2 sm:pb-0`}>
         <button
           onClick={() => { setTab("seguidores"); setBusqueda(""); }}
           className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px ${
@@ -192,14 +192,14 @@ export default function Seguidores() {
         </button>
 
         {/* Buscador */}
-        <div className="relative ml-auto">
+        <div className="relative w-full sm:w-auto sm:ml-auto order-last sm:order-none">
           <Icon icon="mdi:search" width={14} className={`absolute left-2.5 top-1/2 -translate-y-1/2 ${M}`} />
           <input
             type="text"
             placeholder="Buscar..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            className={`pl-8 pr-3 py-1.5 rounded-lg text-xs outline-none border transition-all focus:border-[#378ADD] w-44 ${
+            className={`w-full sm:w-44 pl-8 pr-3 py-1.5 rounded-lg text-xs outline-none border transition-all focus:border-[#378ADD] ${
               isDark
                 ? "bg-[#313130] border-[#3a3a38] text-[#D3D1C7] placeholder-[#5F5E5A]"
                 : "bg-[#F7F6F3] border-[#D3D1C7] text-[#2C2C2A] placeholder-[#B4B2A9]"

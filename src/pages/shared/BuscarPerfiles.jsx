@@ -97,7 +97,7 @@ function VacanteModal({ vacante, role, onClose, perfilCompleto }) {
         {/* Body */}
         <div className="overflow-y-auto flex-1 px-6 py-5 flex flex-col gap-6">
           {/* Info grid */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {infoFields.map((item, i) => (
               <div key={i} className={`flex items-start gap-2.5 p-3 rounded-xl border ${B} ${S}`}>
                 <Icon icon={item.icon} width={16} className="text-[#378ADD] flex-shrink-0 mt-0.5" />
@@ -256,7 +256,7 @@ function TallerModal({ taller, role, onClose }) {
         {/* Body */}
         <div className="overflow-y-auto flex-1 px-6 py-5 flex flex-col gap-6">
           {/* Info grid */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {infoFields.map((item, i) => (
               <div key={i} className={`flex items-start gap-2.5 p-3 rounded-xl border ${B} ${S}`}>
                 <Icon icon={item.icon} width={16} className="text-[#378ADD] flex-shrink-0 mt-0.5" />
@@ -380,6 +380,7 @@ export default function BuscarPerfiles() {
   const [pagina,             setPagina]             = useState(1);
   const [porPagina,          setPorPagina]          = useState(10);
   const [minAltura,          setMinAltura]          = useState(0);
+  const [filtrosMobileOpen,  setFiltrosMobileOpen]  = useState(false);
   const resultadosRef = useRef(null);
   const [perfilCompleto,     setPerfilCompleto]     = useState(false);
   const [estadosPostulacion, setEstadosPostulacion] = useState({}); // { [vacanteId]: idle|loading|ok|duplicado|error|incompleto }
@@ -617,10 +618,21 @@ export default function BuscarPerfiles() {
         <p className={`text-sm ${M} mt-0.5`}>{count} {tabLabel}{count !== 1 ? "s" : ""} encontrado{count !== 1 ? "s" : ""}</p>
       </div>
 
-      <div className="grid grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* ── Panel izquierdo ── */}
         <div className="flex flex-col gap-4">
-          <Card>
+          <button
+            type="button"
+            onClick={() => setFiltrosMobileOpen((v) => !v)}
+            className={`lg:hidden flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-medium ${B} ${T} ${isDark ? "bg-[#262624]" : "bg-white"}`}
+          >
+            <span className="flex items-center gap-2">
+              <Icon icon="mdi:filter-variant" width={16} className="text-[#378ADD]" />
+              Filtros
+            </span>
+            <Icon icon={filtrosMobileOpen ? "mdi:chevron-up" : "mdi:chevron-down"} width={18} className={M} />
+          </button>
+          <Card className={`${filtrosMobileOpen ? "block" : "hidden"} lg:block`}>
             <p className={`text-sm font-semibold ${T} mb-4`}>Filtros</p>
 
             {/* Categoría */}
@@ -865,11 +877,11 @@ export default function BuscarPerfiles() {
         </div>
 
         {/* ── Resultados ── */}
-        <div className="col-span-3 flex flex-col gap-4">
+        <div className="lg:col-span-3 flex flex-col gap-4">
         <div ref={resultadosRef} style={minAltura ? { minHeight: minAltura } : undefined}>
           {/* Estudiantes */}
           {tab === "estudiantes" && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {paginar(filteredStudents).map((s) => {
                 const nombreCarrera = careerDisplay[s.carrera] || s.carrera;
                 return (
@@ -937,7 +949,7 @@ export default function BuscarPerfiles() {
 
           {/* Empresas */}
           {tab === "empresas" && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {paginar(filteredCompanies).map((c) => (
                 <Card key={c.usuario_id} className="hover:border-[#378ADD] transition-colors cursor-pointer" onClick={() => navigate(`/empresa-publica/${c.usuario_id}`)}>
                   <div className="flex items-start gap-3 mb-3">
@@ -985,7 +997,7 @@ export default function BuscarPerfiles() {
 
           {/* Vacantes */}
           {tab === "vacantes" && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {paginar(filteredVacantes).map((v) => (
                 <Card key={v.id} className="hover:border-[#378ADD] transition-colors cursor-pointer flex flex-col" onClick={() => setModalVacante(v)}>
                   <div className="flex items-start justify-between gap-2 mb-2">
@@ -1041,7 +1053,7 @@ export default function BuscarPerfiles() {
 
           {/* Colegios */}
           {tab === "colegios" && canSeeColegios && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {paginar(filteredColegios).map((c) => (
                 <Card key={c.usuario_id} className="hover:border-[#378ADD] transition-colors cursor-pointer flex flex-col" onClick={() => navigate(`/colegio-publico/${c.usuario_id}`)}>
                   <div className="flex items-start gap-3 mb-3">
@@ -1100,7 +1112,7 @@ export default function BuscarPerfiles() {
 
           {/* Talleres */}
           {tab === "talleres" && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {paginar(filteredTalleres).map((t) => {
                 const puedeInscribirse = (t.esta_activo === true || t.esta_activo === 1) && (t.permite_inscripcion === true || t.permite_inscripcion === 1);
                 return (

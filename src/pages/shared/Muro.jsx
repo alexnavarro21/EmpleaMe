@@ -1181,7 +1181,7 @@ export default function EstudianteDashboard() {
 
       {/* ── LEFT SIDEBAR EMPRESA ── */}
       {isEmpresa && (
-        <div className="flex flex-col gap-4 sticky top-20">
+        <div className="flex flex-col gap-4 lg:sticky lg:top-20">
           {/* Tarjeta empresa */}
           <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
             <div className="h-16 bg-gradient-to-r from-[#0A3A6A] to-[#378ADD]" />
@@ -1251,7 +1251,7 @@ export default function EstudianteDashboard() {
 
       {/* ── LEFT SIDEBAR ADMIN ── */}
       {isAdmin && (
-        <div className="flex flex-col gap-4 sticky top-20">
+        <div className="flex flex-col gap-4 lg:sticky lg:top-20">
           {/* Tarjeta perfil admin */}
           <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
             <div className="h-16 bg-gradient-to-r from-[#0A3A6A] to-[#0F4D8A]" />
@@ -1341,7 +1341,7 @@ export default function EstudianteDashboard() {
 
       {/* ── LEFT SIDEBAR SLEP ── */}
       {isSlep && (
-        <div className="flex flex-col gap-4 sticky top-20">
+        <div className="flex flex-col gap-4 lg:sticky lg:top-20">
           <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
             <div className="h-16 bg-gradient-to-r from-[#0A3A6A] to-[#0F4D8A]" />
             <div className="px-4 pb-4">
@@ -1413,7 +1413,7 @@ export default function EstudianteDashboard() {
       )}
 
       {/* ── LEFT SIDEBAR ── */}
-      {isEstudiante && <div className="flex flex-col gap-4 sticky top-20">
+      {isEstudiante && <div className="flex flex-col gap-4 lg:sticky lg:top-20">
         {/* Profile card */}
         <div className={`rounded-xl border ${B} ${BG} overflow-hidden`}>
           {/* Banner */}
@@ -1745,7 +1745,7 @@ export default function EstudianteDashboard() {
 
       {/* ── RIGHT SIDEBAR EMPRESA ── */}
       {isEmpresa && (
-        <div className="flex flex-col gap-4 sticky top-20 max-h-[calc(100vh-5rem)] overflow-y-auto pr-0.5">
+        <div className="flex flex-col gap-4 lg:sticky lg:top-20 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto lg:pr-0.5">
 
           {/* Mensajes no leídos */}
           <div className={`rounded-xl border ${B} ${BG} p-4`}>
@@ -1831,7 +1831,7 @@ export default function EstudianteDashboard() {
 
       {/* ── RIGHT SIDEBAR ADMIN ── */}
       {isAdmin && (
-        <div className="flex flex-col gap-4 sticky top-20 max-h-[calc(100vh-5rem)] overflow-y-auto pr-0.5">
+        <div className="flex flex-col gap-4 lg:sticky lg:top-20 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto lg:pr-0.5">
 
           {/* Estadísticas del sistema */}
           <div className={`rounded-xl border ${B} ${BG} p-4`}>
@@ -1911,7 +1911,7 @@ export default function EstudianteDashboard() {
 
       {/* ── RIGHT SIDEBAR SLEP ── */}
       {isSlep && (
-        <div className="flex flex-col gap-4 sticky top-20 max-h-[calc(100vh-5rem)] overflow-y-auto pr-0.5">
+        <div className="flex flex-col gap-4 lg:sticky lg:top-20 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto lg:pr-0.5">
           {/* Conversaciones recientes */}
           <div className={`rounded-xl border ${B} ${BG} p-4`}>
             <div className="flex items-center justify-between mb-3">
@@ -1986,7 +1986,7 @@ export default function EstudianteDashboard() {
       )}
 
       {/* ── RIGHT SIDEBAR ESTUDIANTE ── */}
-      {isEstudiante && <div className="flex flex-col gap-4 sticky top-20 max-h-[calc(100vh-5rem)] overflow-y-auto pr-0.5">
+      {isEstudiante && <div className="flex flex-col gap-4 lg:sticky lg:top-20 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto lg:pr-0.5">
 
         {/* Mis postulaciones */}
         <div className={`rounded-xl border ${B} ${BG} p-4`}>

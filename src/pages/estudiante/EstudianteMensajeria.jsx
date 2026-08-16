@@ -85,6 +85,7 @@ export default function EstudianteMensajeria() {
   useEffect(() => {
     const targetEmpresa = location.state?.conversacionId;
     const targetDirecta = location.state?.directaId;
+    const forceList = location.state?.forceList;
 
     Promise.allSettled([getConversaciones(), getMensajesDirectos()])
       .then(([empRes, dirRes]) => {
@@ -97,6 +98,8 @@ export default function EstudianteMensajeria() {
           setSelected({ id: targetEmpresa, esDirecta: false });
         } else if (targetDirecta) {
           setSelected({ id: targetDirecta, esDirecta: true });
+        } else if (forceList) {
+          setSelected(null);
         } else if (empresas.length > 0 || directas.length > 0) {
           // Seleccionar la más reciente entre ambas listas
           const todas = [
@@ -211,7 +214,7 @@ export default function EstudianteMensajeria() {
   return (
     <div className="fixed inset-x-0 bottom-0 flex overflow-hidden" style={{ top: "56px" }}>
         {/* Lista de conversaciones */}
-        <div className={`w-72 flex-shrink-0 border-r ${B} flex flex-col ${cardBg}`}>
+        <div className={`${selected ? "hidden md:flex" : "flex"} w-full md:w-72 flex-shrink-0 border-r ${B} flex-col ${cardBg}`}>
           <div className="flex-1 overflow-y-auto pt-2">
             {todasLasConvs.length === 0 ? (
               <p className={`text-xs ${M} text-center py-8 px-4`}>
@@ -276,16 +279,24 @@ export default function EstudianteMensajeria() {
         </div>
 
         {/* Hilo del chat */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className={`${selected ? "flex" : "hidden md:flex"} flex-1 flex-col min-w-0`}>
           {!activeConv ? (
-            <div className={`flex-1 flex items-center justify-center ${M}`}>
+            <div className={`flex-1 hidden md:flex items-center justify-center ${M}`}>
               <p className="text-sm">Selecciona una conversación</p>
             </div>
           ) : (
             <>
               {/* Header del chat */}
-              <div className={`px-5 py-3 border-b ${B} ${cardBg} flex items-center justify-between flex-shrink-0`}>
-                <div className="flex items-center gap-3">
+              <div className={`px-3 md:px-5 py-3 border-b ${B} ${cardBg} flex items-center justify-between flex-shrink-0`}>
+                <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => setSelected(null)}
+                    aria-label="Volver a conversaciones"
+                    className={`md:hidden p-1.5 -ml-1.5 rounded-lg flex-shrink-0 ${M} ${isDark ? "hover:bg-[#313130]" : "hover:bg-[#F7F6F3]"}`}
+                  >
+                    <Icon icon="mdi:arrow-left" width={20} />
+                  </button>
                   {activeConv.foto ? (
                     <img src={getMediaUrl(activeConv.foto)} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
                   ) : (
@@ -293,11 +304,11 @@ export default function EstudianteMensajeria() {
                       {(activeConv.contraparte || "?")[0].toUpperCase()}
                     </div>
                   )}
-                  <div>
-                    <div className="flex items-center gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
                       <Link
                         to={profileLink}
-                        className={`text-sm font-semibold hover:underline hover:text-[#378ADD] transition-colors ${T}`}
+                        className={`text-sm font-semibold truncate hover:underline hover:text-[#378ADD] transition-colors ${T}`}
                       >
                         {activeConv.contraparte}
                       </Link>
@@ -309,7 +320,7 @@ export default function EstudianteMensajeria() {
 
               {/* Aviso privacidad solo para empresa */}
               {!activeConv.esDirecta && (
-                <div className={`px-5 py-2 text-xs flex items-center gap-2 flex-shrink-0 ${
+                <div className={`px-3 md:px-5 py-2 text-xs flex items-center gap-2 flex-shrink-0 ${
                   isDark ? "bg-[#2a2416] text-[#e5b34a]" : "bg-[#fff8e6] text-[#b38600]"
                 }`}>
                   <Icon icon="mdi:shield-lock-outline" width={14} />
@@ -318,7 +329,7 @@ export default function EstudianteMensajeria() {
               )}
 
               {/* Mensajes */}
-              <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
+              <div className="flex-1 overflow-y-auto px-3 md:px-5 py-4 flex flex-col gap-3">
                 {loadingMsgs ? (
                   <div className={`flex items-center justify-center py-8 ${M}`}>
                     <Icon icon="mdi:loading" width={20} className="animate-spin mr-2" />
@@ -352,9 +363,9 @@ export default function EstudianteMensajeria() {
               </div>
 
               {errorEnvio && (
-                <p className="px-5 py-1 text-xs text-red-500 bg-red-50 dark:bg-red-900/20">{errorEnvio}</p>
+                <p className="px-3 md:px-5 py-1 text-xs text-red-500 bg-red-50 dark:bg-red-900/20">{errorEnvio}</p>
               )}
-              <form onSubmit={handleSend} className={`px-5 py-3 border-t ${B} ${cardBg} flex gap-2 flex-shrink-0`}>
+              <form onSubmit={handleSend} className={`px-3 md:px-5 py-3 border-t ${B} ${cardBg} flex gap-2 flex-shrink-0`}>
                 <input
                   type="text"
                   placeholder="Escribe un mensaje..."
