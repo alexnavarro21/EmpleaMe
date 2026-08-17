@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DarkModeProvider } from "./context/DarkModeContext";
 import Layout from "./components/Layout";
+import RequireAuth from "./components/RequireAuth";
 import Login from "./pages/auth/Login";
 
 import Muro from "./pages/shared/Muro";
@@ -41,6 +42,7 @@ export default function App() {
       <DarkModeProvider>
         <Routes>
           <Route path="/" element={<Login />} />
+          <Route element={<RequireAuth />}>
           <Route element={<Layout />}>
 
             {/* Perfiles públicos — accesibles desde cualquier rol */}
@@ -94,6 +96,7 @@ export default function App() {
             <Route path="/slep/buscar"          element={<BuscarPerfiles />} />
             <Route path="/slep/mensajeria"     element={<SlepMensajeria />} />
             <Route path="/slep/notificaciones" element={<Notificaciones />} />
+          </Route>
           </Route>
         </Routes>
       </DarkModeProvider>

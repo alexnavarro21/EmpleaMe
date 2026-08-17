@@ -577,7 +577,7 @@ export default function Layout() {
                   {/* Cerrar sesión */}
                   <Link
                     to="/"
-                    onClick={() => setMenuOpen(false)}
+                    onClick={() => { localStorage.removeItem("token"); localStorage.removeItem("usuario"); setMenuOpen(false); }}
                     className="flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-400/10 transition-colors"
                   >
                     <Icon icon="ph:sign-out-bold" width={18} />
@@ -728,7 +728,7 @@ export default function Layout() {
                 <div className={`border-t px-4 py-3 ${isDark ? "border-[#3a3a38]" : "border-[#D3D1C7]"}`}>
                   <Link
                     to="/"
-                    onClick={() => setMobileMenuOpen(false)}
+                    onClick={() => { localStorage.removeItem("token"); localStorage.removeItem("usuario"); setMobileMenuOpen(false); }}
                     className="flex items-center gap-3 py-2 text-sm text-red-400"
                   >
                     <Icon icon="ph:sign-out-bold" width={18} />
