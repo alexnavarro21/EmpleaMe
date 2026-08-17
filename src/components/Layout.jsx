@@ -24,8 +24,8 @@ const navLinks = {
   ],
   admin: [
     { to: "/admin/muro", label: "Inicio", icon: "mdi:home-outline" },
-    { to: "/admin/panel", label: "Panel", icon: "mdi:view-dashboard-outline" },
-    { to: "/admin/usuarios", label: "Estudiantes", icon: "mdi:account-group-outline" },
+    { to: "/admin/panel", label: "Resumen", icon: "mdi:view-dashboard-outline" },
+    { to: "/admin/usuarios", label: "Mis Estudiantes", icon: "mdi:account-group-outline" },
     { to: "/admin/talleres", label: "Talleres", icon: "mdi:school-outline" },
   ],
   slep: [
