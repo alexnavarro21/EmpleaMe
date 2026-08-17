@@ -19,7 +19,7 @@ const navLinks = {
   ],
   empresa: [
     { to: "/empresa/muro", label: "Inicio", icon: "mdi:home-outline" },
-    { to: "/empresa/dashboard", label: "Panel Empresa", icon: "mdi:view-dashboard-outline" },
+    { to: "/empresa/dashboard", label: "Mis Vacantes", icon: "mdi:view-dashboard-outline" },
     { to: "/empresa/publicar", label: "Publicar Vacante", icon: "mdi:plus-box-outline" },
   ],
   admin: [
